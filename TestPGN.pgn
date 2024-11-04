@@ -1,0 +1,88 @@
+[Event "Entrainement"]
+[Site "Maison"]
+[Round "1"]
+[Date "2024.10.11"]
+[White "Bruno"]
+[Black "Stockfish 17"]
+[Result "*"]
+[ECO ""]
+[WhiteElo "1842"]
+[BlackElo "2150"]
+[PlyCount "10"]
+
+1. g4 e5 2. Bg2 d5 3. h3 h5 4. gxh5 Bc5 5. Nf3 e4 
+
+[Event "Entrainement"]
+[Site "Maison"]
+[Round ""]
+[Date "2024.10.11"]
+[White "Bruno"]
+[Black "Stockfish 17"]
+[Result "0-1"]
+[ECO ""]
+[WhiteElo "1842"]
+[BlackElo "2140"]
+[PlyCount "24"]
+
+1. e4 e5 2. Nc3 Bc5 3. Bc4 Nf6 4. f4 d5 5. Nxd5 Nxd5 6. Bxd5 Bxg1 7. Rxg1  
+Qh4+ 8. g3 Qxh2 9. Kf1 Bh3+ 10. Ke1 Qxg1+ 11. Ke2 Bg4+ 12. Kd3 Qd4# 0-1
+
+[Event "Entrainement"]
+[Site "Maison"]
+[Round ""]
+[Date "2024.10.12"]
+[White "Bruno"]
+[Black "Stockfish 17"]
+[Result "1-0"]
+[ECO ""]
+[WhiteElo "1842"]
+[BlackElo "1850"]
+[PlyCount "77"]
+
+1. d4 d5 2. Bf4 g6 3. e3 c6 4. Bd3 Nf6 5. Nf3 c5 6. c3 Qb6 7. Qc2 Nc6 8. O-O  
+cxd4 9. exd4 Bg7 10. Re1 Bg4 11. Nbd2 e6 12. h3 Bxf3 13. Nxf3 O-O 14. Ne5  
+Rfe8 15. Rab1 Rec8 16. Qd2 a6 17. a3 Re8 18. Bh6 Qc7 19. Bxg7 Kxg7 20. Re3  
+Nd7 21. f4 Na5 22. Qe2 f6 23. Ng4 f5 24. Ne5 b5 25. g4 Nf6 26. Rg3 Nb7 27. gxf5  
+exf5 28. Bxf5 Kh8 29. Bc2 Rg8 30. Kf2 Raf8 31. Rbg1 Na5 32. Ke1 Nh5 33. Nxg6+  
+Rxg6 34. Qxh5 Qxf4 35. Bxg6 Qf2+ 36. Kd1 Rf7 37. Bxf7 Qf1+ 38. Rxf1 Nc4 39. Rg8#  
+1-0
+
+[Event "Entrainement"]
+[Site "Maison"]
+[Round ""]
+[Date "2024.10.13"]
+[White "Bruno"]
+[Black "Stockfish 17"]
+[Result "1-0"]
+[ECO ""]
+[WhiteElo "1842"]
+[BlackElo "1850"]
+[PlyCount "53"]
+
+1. e4 e6 2. d4 d5 3. Nd2 c5 4. Ngf3 Be7 5. exd5 cxd4 6. Nxd4 h6 7. Bb5+ Kf8  
+8. O-O a6 9. Ba4 Qxd5 10. N2f3 b5 11. Bb3 Qb7 12. Re1 Nd7 13. Rxe6 a5 14. Re1  
+g5 15. Ne5 Ngf6 16. Nxf7 Bb4 17. c3 Qxg2+ 18. Kxg2 Nc5 19. Nxh8 Bh3+ 20. Kxh3  
+Nfe4 21. Rxe4 a4 22. Bd5 Kg7 23. Re7+ Kf6 24. Rf7+ Ke5 25. Bxa8 Nb3 26. Qe2+  
+Kd6 27. Qe7# 1-0
+
+[Event "Entrainement"]
+[Site "Maison"]
+[Round ""]
+[Date "2024.10.13"]
+[White "Bruno"]
+[Black "Stockfish 17"]
+[Result "1-0"]
+[ECO ""]
+[WhiteElo "1842"]
+[BlackElo "1850"]
+[PlyCount "101"]
+
+1. d4 d5 2. Bf4 Nf6 3. Nf3 e6 4. e3 Be7 5. c4 Nh5 6. Bg3 Nd7 7. Nc3 Ndf6 8. Ne5  
+Nxg3 9. hxg3 Nd7 10. Nf3 Nf6 11. Qc2 b6 12. cxd5 Nxd5 13. Bd3 Nb4 14. Qa4+  
+Bd7 15. Bb5 a6 16. Bxd7+ Qxd7 17. Qxd7+ Kxd7 18. Ne5+ Kc8 19. O-O-O f5 20. g4  
+Bf6 21. gxf5 exf5 22. Nd3 a5 23. a3 Nxd3+ 24. Rxd3 Kb7 25. f3 Bg5 26. Kc2  
+h6 27. e4 fxe4 28. fxe4 Rhd8 29. e5 c6 30. Ne4 Rd7 31. Nxg5 hxg5 32. Rh5 a4  
+33. Rxg5 Kc7 34. g4 Rf8 35. Kc3 Rf1 36. Rd2 Rf3+ 37. Rd3 Rf1 38. Rf5 Rg1 39. g5  
+Rg4 40. e6 Rd5 41. Rxd5 cxd5 42. Re3 Re4 43. Rxe4 Kd8 44. Re5 Ke7 45. Kb4  
+Kd8 46. Kb5 Ke7 47. Kxb6 Ke8 48. Kc6 Kf8 49. Kd7 Kg8 50. e7 Kf7 51. e8=Q#  
+1-0
