@@ -1,0 +1,12 @@
+Moteur = stockfish17-windows-x86-64-avx2.exe
+Sitemoteur = https://stockfishchess.org/
+Casesombre = CornflowerBlue
+Caseclaire = AliceBlue
+Dureereflexion = 2000
+LimiteForce = true
+Forcemoteur = 1850
+Tempsreflexion = 2000
+NombrelignesPV = 3
+NombreCoeursThread = 4
+TableHachage = 256 min
+Bibliotheque = Perfect2023.bin

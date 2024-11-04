@@ -1,0 +1,110 @@
+STOCKFISH 17
+
+Evaluation NNUE
+
+Depuis la version 12, Stockfish intègre une évaluation basée sur la connaissance d'un réseau de neurones artificiels, qui intervient en amont d'une évaluation plus classique, en profondeur. C'est même le premier moteur d'échecs à avoir utilisé cette technique, testée initalement sur le jeu de Shogi. Le gain en force a été immédiatement considérable. Il a permis à la version 14 de faire jeu égal avec Leela Chess Zero et de reprendre sa place de plus fort moteur du monde, avec un classement proche de 3550 Elo sur CCRL 40/15. De plus, contrairement à un moteur 100% neuronal comme Leela Zero, dont les perfomances sont tributaires de la présence dans la machine d'une puissante carte graphique, le noyau neuronal de Stockfish se débrouille très bien avec un bon CPU.
+L'évaluation NNUE de Stockfish évalue moins de positions mais elle le fait plus efficacement que l'évaluation classique seule*. Il n'y a donc pas lieu de la désactiver, d'autant plus que le jeu à base d'évaluation NNUE est censé avoir une allure plus humaine.
+
+A noter : le réseau neuronal de la version 14, intégrée au binaire du moteur, a été constitué en combinant le réseau neuronal constitué par l'équipe de développement de Leela Chess Zero et le réseau constitué des milliards de positions évaluées par Stockfish. L'architecture de ce réseau a été par ailleurs sensiblement améliorée et continue de l'être. Chaque nouvelle version de Stockfish contient ainsi un réseau amélioré.
+
+
+* Selon les auteurs, Stockfish en version NNUE explore une quantité de positions inférieure d'environ 20% à son évaluation classique.
+
+Style
+
+Moteur aux capacités tactiques exceptionnellement élevées, Stockfish avait naturellement un style assez offensif et se révélait souvent moins bon positionnellement qu'un moteur comme Komodo - l'un de ses plus proches concurrents. Je l'avais même classé un temps parmi les moteurs "Kasparoviens". L'intégration de la technologie NNUE a rebattu les cartes. D'après ce que j'ai pu voir et lire, la note reste très offensive mais le jeu semble plus équilibré, plus proche d'un style humain qu'auparavant. Bien que conservant des facultés tactiques impressionnantes, il est meilleur positionnellement, en particulier en début de jeu.
+
+
+Téléchargement et installation
+
+On trouve le moteur sur le site officiel : Télécharger Stockfish ?
+Actuellement (décembre 2023), le moteur est disponible en version 16, pour Windows, MacOs, iOS, Androïd et Linux.
+Pour Windows, seuls deux versions sont proposées sur cette page :  pour ordinateurs récents supportant l'architecture AVX2 et pour ordinateurs plus anciens supportant au minimum PopCnt. Pour les architectures encore plus anciennes, vous pourrez aussi trouver sur cette autre page un Stockfish 16 pour architecture standard 64 bits.
+Utiliser la version la mieux adaptée à votre machine peut vous faire gagner entre 10 et 25% de vitesse supplémentaire. Si vous ne savez pas laquelle installer, essayez-les toutes. Si ca plante, passez à la suivante.
+Il n'est plus proposé de version pour Windows 32 bits. Ceux qui ont encore de très vieilles machines configurées sur 32 bits devront se contenter de versions plus anciennes de Stockfish.  
+
+
+Configuration
+
+Paramètres généraux
+
+Debug log file : si vous voulez avoir un retour du fonctionnement du moteur, créez avec le bloc-notes de Windows un fichier "logfile.txt" et utilisez le sélecteur de fichier pour y conduire le moteur.
+
+Threads (+++) : indiquez ici le nombre de coeurs physiques de votre ordinateur. C'est très important si vous utilisez Stockfish pour l'analyse ou le conseil. Il sera beaucoup plus rapide s'il utilise deux coeurs ou plus au lieu d'un seul.
+
+Hash (+++) : taille de la table de hachage. La valeur par défaut, 16 Mo, est ridiculement faible pour un moteur tactique aussi puissant que Stockfish. Surtout s'il est utilisé à pleine puissance pour l'analyse. Choisissez au minimum 128 Mo. Si vous pouvez passer à 256, voire plus ce sera encore mieux.
+
+Clear hash : cliquez sur ce bouton pour vider la table de hachage.
+
+
+Ponder (pondération) (+) : réflexion sur temps adverse. Mieux vaut la laisser "off". Stockfish est déjà bien assez fort. Par ailleurs, inutile si le moteur est utilisé pour l'analyse.
+
+MultiPv (+) : par défaut le MultiPv est sur 1, c'est-à-dire désactivé. Vous pouvez demander à Stockfish de suivre plus de lignes en même temps, au prix d'une baisse sensible de son niveau de jeu. Mais si vous utilisez Stockfish en mode d'analyse et que vous lui laissez le temps nécessaire pour réfléchir, il peut y avoir intérêt à activer 2 ou 3 pistes de Multi-Pv. La qualité de l'analyse sera meilleure.
+
+Move Overhead : fixe le nombre x de millisecondes nécessaire à l'interface pour gérer correctement la partie. Par défaut : 10. Augmenter ce chiffre si Stockfish perd au temps.
+
+Slow Mover : ce paramètre détermine si le moteur va préférer prendre moins de temps entre chaque coup pour réfléchir (Slow Mover bas) ou plus de temps (Slow Mover haut), ce qui lui permettra d'explorer plus profondément au risque de manquer de temps en milieu ou fin de partie, voire de perdre au temps. Plage de réglage entre 10 et 1000. Par défaut 100, valeur moyenne qu'il vaut mieux conserver  - à moins que Stockfish semble ne pas gérer correctement le temps.
+
+Nodestime : indique au moteur de se baser sur les nœuds recherchés plutôt que sur la limite de temps pour tenir compte du temps écoulé. Sans intérêt pour une utilisation courante.
+
+UCI_Chess 960 (+) : cochez si vous voulez que Stockfish joue à cette variante des échecs.
+
+UCI_ShowWDL (+) : La base de l'évaluation d'une position par un moteur algorithmique réside dans le bilan matériel de la position. C'est pourquoi une fois tous les critères examinés le moteur donne à chaque position une valeur exprimée en pions - ou plus exactement en centième de pions (centipions). L'évaluation par un réseau neuronal fonctionne totalement différemment. Elle calcule pour chaque nouvelle position une probabilité de gagner, de perdre ou de faire match nul, données dites "Win Draw Loss" ou "WDL". Comme les interfaces d'échecs ne savent qu'interpréter un résultat en centipions, le moteur calcule une sortie approximative en centipions. Toutefois, si l'interface le permet, l'affichage d'une partie sous forme d'un graphe WDL peut être très riche d'enseignements. Voici un exemple de graphe WDL d'une partie de Leela contre Stockfish dans laquelle le premier a été fortement dominé par le second :
+
+
+A l'heure actuelle, trois interface prennent en charge cette fonction : Nibbler, Banksia et Fritz 17. Si vous utilisez une autre interface, laissez l'option décochée.
+
+UCI_AnalyseMode (+++) : si coché, Stockfish pourra être utilisé pour l'analyse. Certaines interfaces prennent cette fonction en charge automatiquement. C'est le cas par exemple d'Arena, qui ne propose donc pas UCI_AnalyseMode dans le menu de configuration du moteur. Pour d'autres interfaces, Lucas Chess en particulier, le choix apparait dans le menu de configuration du moteur et, par défaut, il est désactivé. N'oubliez pas de l'activer si vous utiliser le moteur pour l'analyse ou le conseil.
+
+
+Niveau de force : Skill Level et UCI_LimitStregth
+
+Deux méthodes différentes permettent de limiter le niveau de force du moteur :
+a) Activation de la fonction UCI_LimitStregth.
+b) Activation de Skill Level.
+Si UCI_LimitStregth est activé, Skill Level est automatiquement désactivé.
+
+Skill level (+++) : vous pouvez choisir un niveau de force entre 0 et 20. Le module fonctionne de la façon suivante : il active en interne le MultiPv et choisira un coup plus faible selon une probabilité qui dépend du niveau de Skill Level choisi. A 20, Skill level est désactivé et Stockfish jouera au maximum de ses possibilités.
+Inconvénients : on ne sait pas à quel niveau de force correspondent les 19 premières graduations ; on risque d'oublier d'avoir abaissé le niveau de fonctionnement du moteur. Avantages : niveau de jeu amoindri réaliste.
+
+
+UCI_LimitStregth (+++) : ce module pilote la commande UCI_Elo, qui permet de choisir un niveau de force entre 1350 et 2850 Elo. Avec BrunoGUI8Stockfish, le choix se fait depuis le menu et non depuis le menu de configuration. On y accède par l'option "Nouvelle Partie"
+
+Gestion des bases de finales SyzygyPath
+
+
+SyzygyPath (++) : si vous avez les tables Syzygy, utilisez le sélecteur de fichiers de SyzygyPath pour lui indiquer le chemin de leur emplacement.
+
+SyzygyProbeDepth (++) détermine la profondeur en 1/2 coups à partir de laquelle les EGTB seront sondées à la place de l'évaluation interne. La valeur par défaut, "1", sera tout à fait inadaptée à la plupart des  utilisateurs. Elle signifie en effet que le recours aux tables de finales se fera sans aucune restriction. Or, si vous avez 2 coeurs, 4 Go de mémoire et un disque dur mécanique - ce qui est le cas de la machine avec laquelle je teste tous les programmes d'échecs - au lieu d'améliorer le jeu du moteur le recours systématique aux EGTB va le dégrader. En effet les accès disque et la décompression des données ralentissent sensiblement la réflexion de Stockfish. Mes propositions en fonction du matériel, "à la hache", basées  sur des discussions de forums :
+
+➤Portable basique : Syzygy Probe Depth entre 20 et 25
+➤Portable moyen : Syzygy Probe Depth entre 15 et 20
+➤Machine de bureau à 2 coeurs, 4 go de ram et disque dur mécanique: Syzygy Probe Depth entre 10 et 15
+➤Machine de bureau à 4 coeurs, 4 go de ram et disque dur mécanique récent: Syzygy Probe Depth entre 5 et 10
+➤Machine de bureau de 4 à 6 coeurs, à 8 go de ram et disque dur SSD: Syzygy Probe Depth entre 1 et 5.
+
+SyzygyProbeLimit (++) détermine le nombre de pièces sur l'échiquier à partir duquel Stockfish commence à sonder les tables Syzygy. Par défaut, il est défini sur 6. Comme vous n'avez probablement que les tables Syzygy à 5 pièces, ramenez le à 5. Vous pouvez le laisser à cette valeur si vous avez au moins 4 Go de ram. Si vous avez les tables à 6 pièces, j'espère pour vous que votre machine est en rapport. Il ne serait pas du tout raisonnable de les utiliser avec une machine ordinaire à disque dur mécanique et avec 4 Go de ram.  Dans le cas contraire, mieux vaut ramener SyzygyProbeLimit à 5.
+
+Syzygy50MoveRule (+) : cocher pour imposer au moteur la "règle des 50 coups"
+
+Pour en savoir plus sur la gestion des tables de finales Syzygy voir cette page.
+
+
+Evaluation NNUE
+
+Use NNUE (+++) et EvalFile : si Use NNUE est coché, Stockfish utilisera un réseau neuronal intégré au binaire pour évaluer les positions, plutôt que son évaluation algorithmique classique.
+
+A noter :  il est possible de faire fonctionner le moteur avec un réseau de neurones alternatif. Dans ce cas, utiliser EvalFile pour indiquer son emplacement au moteur. Cette possibilité n'intéressera cependant que les hyper-spécialistes. Il est peu probable que l'on puisse trouver avant longtemps un réseau de neurores de meilleure qualité que celui qui est intégré à Stockfish.
+
+Bibliothèque d'ouvertures
+
+Stockfish ne propose aucune bibliothèque d'ouvertures et la documentation ne dit rien à ce sujet. Et pour cause : les auteurs ont fait le
+choix d'abandonner le support des livres d'ouvertures et de s'en remettre entièrement à l'interface utilisée. S'agissant d'Arena, il suffira d'imposer au moteur une de celles que contient l'interface : menu "Modules" > "Gérer" puis choix du moteur dans la liste, onglet "Détails", onglet "Bibliothèque" et cocher "Utiliser bibliothèque principale d'Arena" - ou bien utiliser le sélecteur de fichiers pour en choisir une autre, au format abk d'Arena.
+Depuis 2002, Sedat Canbaz optimise une bibliothèque d'ouvertures ultra-performante pour tournois de moteurs appelée "Perfect".  Arena fournit la version 2010. Vous pourriez utiliser la version 2023, proposée avec d'autres, plus anciennes, sur cette page :
+https://sites.google.com/site/computerschess/download
+Pour toutes les interfaces acceptant les bibliothèques polyglot (reconnaissables à l'extension *.bin) - c'est le cas notamment de Lucas Chess et Pychess - je vous conseille d'associer à Stockfish la bibliothèque principale de Rodent IV, "rodent.bin", présente dans la distribution de ce moteur.
+
+L'absence d'une documentation vraiment détaillée et solide a longtemps été un handicap pour un moteur aussi puissant que Stokfish. Les "mécanos" qui aiment pousser un moteur dans ses derniers retranchements seront certainement ravis d'apprendre qu'un très bon Wiki est maintenant disponible, à l'attention des utilisateurs mais aussi des développeurs. Vous le trouverez ici :
+
+https://github.com/official-stockfish/Stockfish/wiki
+C'est en anglais mais Google Traduction se débrouille assez bien malgré pour traduire tout ça. 
