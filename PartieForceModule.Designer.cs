@@ -43,6 +43,9 @@
             this.GroupeTempsRefflexion = new Krypton.Toolkit.KryptonGroupBox();
             this.TempsReflexion = new Krypton.Toolkit.KryptonNumericUpDown();
             this.LabelDureeReflexion = new Krypton.Toolkit.KryptonLabel();
+            this.kryptonGroupBox1 = new Krypton.Toolkit.KryptonGroupBox();
+            this.LabelAdversaire = new Krypton.Toolkit.KryptonLabel();
+            this.TextBoxNomAdvesaire = new System.Windows.Forms.RichTextBox();
             ((System.ComponentModel.ISupportInitialize)(this.GroupeNoirsBlancs)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.GroupeNoirsBlancs.Panel)).BeginInit();
             this.GroupeNoirsBlancs.Panel.SuspendLayout();
@@ -55,11 +58,15 @@
             ((System.ComponentModel.ISupportInitialize)(this.GroupeTempsRefflexion.Panel)).BeginInit();
             this.GroupeTempsRefflexion.Panel.SuspendLayout();
             this.GroupeTempsRefflexion.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBox1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBox1.Panel)).BeginInit();
+            this.kryptonGroupBox1.Panel.SuspendLayout();
+            this.kryptonGroupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
             // GroupeNoirsBlancs
             // 
-            this.GroupeNoirsBlancs.Location = new System.Drawing.Point(13, 0);
+            this.GroupeNoirsBlancs.Location = new System.Drawing.Point(13, 3);
             this.GroupeNoirsBlancs.Name = "GroupeNoirsBlancs";
             this.GroupeNoirsBlancs.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365BlueDarkMode;
             // 
@@ -110,7 +117,7 @@
             // 
             // GroupeForceMoteur
             // 
-            this.GroupeForceMoteur.Location = new System.Drawing.Point(12, 59);
+            this.GroupeForceMoteur.Location = new System.Drawing.Point(13, 119);
             this.GroupeForceMoteur.Name = "GroupeForceMoteur";
             this.GroupeForceMoteur.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365BlueDarkMode;
             // 
@@ -127,7 +134,7 @@
             this.GroupeForceMoteur.StateCommon.Border.Rounding = 20F;
             this.GroupeForceMoteur.StateCommon.Border.Width = 1;
             this.GroupeForceMoteur.TabIndex = 1;
-            this.GroupeForceMoteur.ToolTipValues.Description = "Sélectionnez la force du moteur  en  classemnt ELO";
+            this.GroupeForceMoteur.ToolTipValues.Description = "Sélectionnez la force du moteur en classement ELO";
             this.GroupeForceMoteur.ToolTipValues.EnableToolTips = true;
             this.GroupeForceMoteur.ToolTipValues.Heading = "";
             this.GroupeForceMoteur.Values.Heading = "     Force Moteur";
@@ -191,7 +198,7 @@
             // 
             // ForceMoteurOk
             // 
-            this.ForceMoteurOk.Location = new System.Drawing.Point(129, 232);
+            this.ForceMoteurOk.Location = new System.Drawing.Point(129, 289);
             this.ForceMoteurOk.Name = "ForceMoteurOk";
             this.ForceMoteurOk.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365BlueDarkMode;
             this.ForceMoteurOk.Size = new System.Drawing.Size(90, 25);
@@ -207,7 +214,7 @@
             // ForceMoteurAnnuler
             // 
             this.ForceMoteurAnnuler.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.ForceMoteurAnnuler.Location = new System.Drawing.Point(228, 232);
+            this.ForceMoteurAnnuler.Location = new System.Drawing.Point(228, 289);
             this.ForceMoteurAnnuler.Name = "ForceMoteurAnnuler";
             this.ForceMoteurAnnuler.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365BlueDarkMode;
             this.ForceMoteurAnnuler.Size = new System.Drawing.Size(90, 25);
@@ -222,7 +229,7 @@
             // 
             // GroupeTempsRefflexion
             // 
-            this.GroupeTempsRefflexion.Location = new System.Drawing.Point(13, 168);
+            this.GroupeTempsRefflexion.Location = new System.Drawing.Point(12, 225);
             this.GroupeTempsRefflexion.Name = "GroupeTempsRefflexion";
             this.GroupeTempsRefflexion.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365BlueDarkMode;
             // 
@@ -282,13 +289,52 @@
             this.LabelDureeReflexion.TabIndex = 0;
             this.LabelDureeReflexion.Values.Text = "Durée réflexion (en secondes) :";
             // 
+            // kryptonGroupBox1
+            // 
+            this.kryptonGroupBox1.Location = new System.Drawing.Point(12, 58);
+            this.kryptonGroupBox1.Name = "kryptonGroupBox1";
+            this.kryptonGroupBox1.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365BlueDarkMode;
+            // 
+            // kryptonGroupBox1.Panel
+            // 
+            this.kryptonGroupBox1.Panel.Controls.Add(this.TextBoxNomAdvesaire);
+            this.kryptonGroupBox1.Panel.Controls.Add(this.LabelAdversaire);
+            this.kryptonGroupBox1.Size = new System.Drawing.Size(305, 55);
+            this.kryptonGroupBox1.StateCommon.Border.DrawBorders = ((Krypton.Toolkit.PaletteDrawBorders)((((Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom) 
+            | Krypton.Toolkit.PaletteDrawBorders.Left) 
+            | Krypton.Toolkit.PaletteDrawBorders.Right)));
+            this.kryptonGroupBox1.StateCommon.Border.Rounding = 20F;
+            this.kryptonGroupBox1.StateCommon.Border.Width = 1;
+            this.kryptonGroupBox1.TabIndex = 5;
+            this.kryptonGroupBox1.ToolTipValues.Description = "Entrez le nom de l\'adversaire de Stockfish";
+            this.kryptonGroupBox1.ToolTipValues.EnableToolTips = true;
+            this.kryptonGroupBox1.ToolTipValues.Heading = "";
+            this.kryptonGroupBox1.Values.Heading = "    Adversaire";
+            // 
+            // LabelAdversaire
+            // 
+            this.LabelAdversaire.Location = new System.Drawing.Point(8, 3);
+            this.LabelAdversaire.Name = "LabelAdversaire";
+            this.LabelAdversaire.Size = new System.Drawing.Size(135, 20);
+            this.LabelAdversaire.TabIndex = 0;
+            this.LabelAdversaire.Values.Text = "Adversaire du moteur : ";
+            // 
+            // TextBoxNomAdvesaire
+            // 
+            this.TextBoxNomAdvesaire.Location = new System.Drawing.Point(140, 3);
+            this.TextBoxNomAdvesaire.Name = "TextBoxNomAdvesaire";
+            this.TextBoxNomAdvesaire.Size = new System.Drawing.Size(142, 20);
+            this.TextBoxNomAdvesaire.TabIndex = 1;
+            this.TextBoxNomAdvesaire.Text = "";
+            // 
             // PartieForceModule
             // 
             this.AcceptButton = this.ForceMoteurOk;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.ForceMoteurAnnuler;
-            this.ClientSize = new System.Drawing.Size(334, 269);
+            this.ClientSize = new System.Drawing.Size(334, 326);
+            this.Controls.Add(this.kryptonGroupBox1);
             this.Controls.Add(this.GroupeTempsRefflexion);
             this.Controls.Add(this.ForceMoteurAnnuler);
             this.Controls.Add(this.ForceMoteurOk);
@@ -312,6 +358,11 @@
             this.GroupeTempsRefflexion.Panel.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.GroupeTempsRefflexion)).EndInit();
             this.GroupeTempsRefflexion.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBox1.Panel)).EndInit();
+            this.kryptonGroupBox1.Panel.ResumeLayout(false);
+            this.kryptonGroupBox1.Panel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBox1)).EndInit();
+            this.kryptonGroupBox1.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -332,5 +383,8 @@
         private Krypton.Toolkit.KryptonGroupBox GroupeTempsRefflexion;
         private Krypton.Toolkit.KryptonNumericUpDown TempsReflexion;
         private Krypton.Toolkit.KryptonLabel LabelDureeReflexion;
+        private Krypton.Toolkit.KryptonGroupBox kryptonGroupBox1;
+        private Krypton.Toolkit.KryptonLabel LabelAdversaire;
+        private System.Windows.Forms.RichTextBox TextBoxNomAdvesaire;
     }
 }

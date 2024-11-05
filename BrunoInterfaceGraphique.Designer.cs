@@ -677,6 +677,8 @@
             this.ListeCoupsBouton.StateCommon.Border.DrawBorders = ((Krypton.Toolkit.PaletteDrawBorders)((((Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom) 
             | Krypton.Toolkit.PaletteDrawBorders.Left) 
             | Krypton.Toolkit.PaletteDrawBorders.Right)));
+            this.ListeCoupsBouton.StateCommon.Border.Rounding = 20F;
+            this.ListeCoupsBouton.StateCommon.Border.Width = 1;
             this.ListeCoupsBouton.StateCommon.Content.ShortText.Color1 = System.Drawing.Color.Black;
             this.ListeCoupsBouton.StateNormal.Border.DrawBorders = ((Krypton.Toolkit.PaletteDrawBorders)((((Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom) 
             | Krypton.Toolkit.PaletteDrawBorders.Left) 

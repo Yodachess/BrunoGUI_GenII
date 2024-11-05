@@ -129,3 +129,38 @@ b3 47. Rb5 b2 48. Nb1 Ne8 49. Rxb8 Qxb8 50. Qxd5 Nf6 51. Qc4 g6 52. Kg1 Kg7
 53. Kh1 Qb7 54. Qc2 Qb4 55. Kg1 Qe1+ 56. Kg2 Qc1 57. g5 hxg5 58. Qb3 Qxb1  
 59. f4 gxf4 60. Qb6 Qc2+ 61. Kf1 b1=Q+ 62. Qxb1 Qxb1+ 63. Kf2 Qc2+ 64. Kg1  
 f3 65. Kh1 Qg2# 0-1
+
+[Event "Entrainement"]
+[Site "Maison"]
+[Round ""]
+[Date "2024.11.04"]
+[White "Bruno"]
+[Black "Stockfish 17"]
+[Result "1-0"]
+[ECO ""]
+[WhiteElo "1842"]
+[BlackElo "1650"]
+[PlyCount "45"]
+
+1. e4 e5 2. Nc3 Nc6 3. Bc4 Nf6 4. d3 Bb4 5. Nge2 Ba5 6. O-O d6 7. Kh1 Ne7  
+8. f4 O-O 9. f5 d5 10. Bb3 c6 11. Ng3 dxe4 12. dxe4 b5 13. Qf3 Ba6 14. Bg5  
+Kh8 15. Rad1 Qb6 16. Bxf6 gxf6 17. Nh5 Rac8 18. Nxf6 Ng8 19. Nxh7 f6 20. Qh5  
+Nh6 21. Qxh6 Rf7 22. Bxf7 Qe3 23. Ng5# 1-0
+
+[Event "Entrainement"]
+[Site "Maison"]
+[Round ""]
+[Date "2024.11.04"]
+[White "Stockfish 17"]
+[Black "Bruno"]
+[Result "0-1"]
+[ECO ""]
+[WhiteElo "1650"]
+[BlackElo "1842"]
+[PlyCount "52"]
+
+1. a3 a5 2. e4 d5 3. Bb5+ Bd7 4. Nc3 Bxb5 5. b3 dxe4 6. a4 Ba6 7. h4 f5 8. d4  
+Nf6 9. Nge2 Nbd7 10. Nb5 c6 11. c4 cxb5 12. cxb5 e5 13. O-O Bb4 14. Bg5 h6  
+15. dxe5 hxg5 16. bxa6 bxa6 17. Qd4 Ng4 18. Qc4 Ngxe5 19. hxg5 Qxg5 20. Qc2  
+Rh1+ 21. Kxh1 Qh4+ 22. Kg1 Ng4 23. Rfc1 Qxf2+ 24. Kh1 Ke7 25. Qc7 Rh8+ 26. Qh2  
+Rxh2# 0-1
