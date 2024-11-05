@@ -6,6 +6,7 @@ namespace BrunoGUI_Stockfish
     public partial class PartieForceModule : Form
     {
         public string ChoixCouleur { get; set; }
+        public string NomAdversaire { get; set; }
         public int ForceModule { get; set; }
         public int DureeReflexionSeconde { get; set; }
         public bool ForceMaximale { get; set; }
@@ -19,6 +20,8 @@ namespace BrunoGUI_Stockfish
             ForceMoteurMaximum.Checked = true;  // Force Maximum par défaut
             DureeReflexionSeconde = 2000;
             ValeurLimiteElo.Value = 1850;       // Valeur par défaut du ELO si pas max
+            NomAdversaire = "Bruno";
+            TextBoxNomAdvesaire.Text = NomAdversaire;
             ValeurLimiteElo.Enabled = false;    // Désactiver le NumericUpDown par défaut
             TempsReflexion.Enabled = true;
 
@@ -39,6 +42,7 @@ namespace BrunoGUI_Stockfish
         private void ForceMoteurOk_Click(object sender, EventArgs e)
         {
             ChoixCouleur = ModuleJoueBlancs.Checked ? "Blancs" : "Noirs";
+            NomAdversaire = TextBoxNomAdvesaire.Text;
             ForceMaximale = ForceMoteurMaximum.Checked;
             ForceModule = (int)ValeurLimiteElo.Value;
             DureeReflexionSeconde = ((int)TempsReflexion.Value) * 1000;

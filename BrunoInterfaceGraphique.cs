@@ -248,7 +248,7 @@ namespace BrunoGUI_Stockfish
                 {
                     PartieEnCours.White = LabelJoueurBlanc.Text = MoteurChoisi;
                     PartieEnCours.WhiteElo = EloBlanc.Text = ForceMoteurElo.ToString();
-                    PartieEnCours.Black = LabelJoueurNoir.Text = NomHumain;
+                    PartieEnCours.Black = LabelJoueurNoir.Text = maNouvellePartieForceModule.NomAdversaire;
                     PartieEnCours.BlackElo = EloNoir.Text = joueurElo;
                     OrdinateurJoueNoir = false;
                     CommencerPartie();
@@ -262,7 +262,7 @@ namespace BrunoGUI_Stockfish
                 }
                 else
                 {
-                    PartieEnCours.White = LabelJoueurBlanc.Text = NomHumain;
+                    PartieEnCours.White = LabelJoueurBlanc.Text = maNouvellePartieForceModule.NomAdversaire;
                     PartieEnCours.WhiteElo = EloBlanc.Text = joueurElo;
                     PartieEnCours.Black = LabelJoueurNoir.Text = MoteurChoisi;
                     PartieEnCours.BlackElo = EloNoir.Text = ForceMoteurElo.ToString();
@@ -301,6 +301,7 @@ namespace BrunoGUI_Stockfish
                 InformationPourJoueur.Text = StatusProgramme.Text = "Aux Blancs de jouer";
             }
             GestionChronometre(maNouvellePartieForceModule.DureeReflexionSeconde / 1000);
+            RetourArriere.Visible = true;
         }
         private void ParametresJoueurHumain(string Couleur, string Affichage)
         {   // Paramètres selon joueur humain noir ou blanc
@@ -508,7 +509,7 @@ namespace BrunoGUI_Stockfish
                     StatusProgramme.Text = InformationPourJoueur.Text = "A vous de jouer";
                     CaseSource = MonoMoteurUci.CoupUci.Substring(0, 2);                 // CoupUci contient le "best move" sous la forme e2e4
                     CaseDestination = MonoMoteurUci.CoupUci.Substring(2, 2);
-                    if (LogiqueMouvements.EchecetMat == false)                          // Nore : Si c'est Mat, on n"execute pas de coup
+                    if (LogiqueMouvements.EchecetMat == false)                          // Note : Si c'est Mat, on n"execute pas de coup
                     {
                         LogiqueMouvements.ExecutionCoup(CaseSource, CaseDestination);   // Exécute un coup du moteur UCI
                     }
@@ -520,7 +521,8 @@ namespace BrunoGUI_Stockfish
                     DernierCoupMoteurUci = LogiqueMouvements.RenvoieCaseIndex120(CaseDestination);
                     TraceContour(DernierCoupMoteurUci);
                     RetourArriere.Enabled = AnalysePosition.Enabled = ListeCoupsBouton.Enabled = true;      // On réautorise si le moteur a fini de réfléchir
-                    BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = true;          // et on peut "juger" la partie
+                    if (LogiqueMouvements.EchecetMat == false)
+                        BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = true;          
                 }
                 else
                 {   // c'est une analyse, on affiche la meilleure variante
@@ -533,7 +535,8 @@ namespace BrunoGUI_Stockfish
                                             "\n Evaluation --- " + meilleureVariante[1] + "(" + EvaluationCourante + ")" + " --- " +
                                             "\n" + meilleureVariante[3], "Analyse Moteur", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
-                    InformationPourJoueur.Text = "Analyse terminée...   A vous de jouer ";
+                    InformationPourJoueur.Text = StatusProgramme.Text = "Analyse terminée... ";
+                    RetourArriere.Enabled = AnalysePosition.Enabled = ListeCoupsBouton.Enabled = true;      // On réautorise si le moteur a fini de réfléchir
                     AnalyseEnCours = false;
                 }
             }
@@ -604,6 +607,8 @@ namespace BrunoGUI_Stockfish
             {                               // Couleur du Roi mat = Noir
                 GestionResultat("1-0", " Gain Blanc");
             }
+            BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = false;     // Le résultat est déjà défini
+            RetourArriere.Visible = false;
             InformationPourJoueur.Text = VarianteMoteurCourante.Text = "Le Roi " + couleurRoiMat + " est échec et mat";
             StatusProgramme.Text = "Partie terminée";
             Application.DoEvents();
@@ -623,15 +628,15 @@ namespace BrunoGUI_Stockfish
         }
         private void BoutonGainBlanc_Click(object sender, EventArgs e)
         {
-            GestionResultat("1-0", " 1-0 / Gain Blanc");
+            GestionResultat("1-0", " Gain Blanc");
         }
         private void BoutonGainNoir_Click(object sender, EventArgs e)
         {
-            GestionResultat("0-1", " 0-1 /  Gain Noir");
+            GestionResultat("0-1", " Gain Noir");
         }
         private void BoutonNulle_Click(object sender, EventArgs e)
         {
-            GestionResultat("1/2-1/2", " 1/2-1/2 Nulle");
+            GestionResultat("1/2-1/2", " Nulle");
         }
         private void PartieNulle_Repetition()
         {
@@ -647,6 +652,7 @@ namespace BrunoGUI_Stockfish
             StatusProgramme.Text = "Partie terminée";
             InformationsPartie.Text = resultat + "  (" + vainqueur + ")";
             BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = false;
+            RetourArriere.Visible = false;
             PlateauEnable(false);
         }
 
@@ -753,18 +759,18 @@ namespace BrunoGUI_Stockfish
             if (mafenetrePartie == null || mafenetrePartie.IsDisposed)
             {
                 mafenetrePartie = new FenetrePartie(this);
-                mafenetrePartie.FeuillePartie.Rows.Clear();
                 mafenetrePartie.Show();
-                mafenetrePartie.LblJoueurBlanc.Text = PartieEnCours.White;
-                mafenetrePartie.LblJoueurNoir.Text = PartieEnCours.Black;
-                mafenetrePartie.LblEloBlanc.Text = PartieEnCours.WhiteElo;
-                mafenetrePartie.LblEloNoir.Text = PartieEnCours.BlackElo;
             }
             else
             {   // La fenêtre est déjà ouverte, lui redonner le focus
+                mafenetrePartie.FeuillePartie.Rows.Clear();
                 mafenetrePartie.BringToFront();
                 mafenetrePartie.Focus();
             }
+            mafenetrePartie.LblJoueurBlanc.Text = PartieEnCours.White;
+            mafenetrePartie.LblJoueurNoir.Text = PartieEnCours.Black;
+            mafenetrePartie.LblEloBlanc.Text = PartieEnCours.WhiteElo;
+            mafenetrePartie.LblEloNoir.Text = PartieEnCours.BlackElo;
             // Nombre de coups à traiter (sans compter le résultat s'il est à la fin)
             int nombreCoups = LogiqueMouvements.ListeCoupsPgnFr.Count;
             if (nombreCoups != 0)
@@ -835,6 +841,10 @@ namespace BrunoGUI_Stockfish
         {
             SaisieBalises SaisieBalises = new SaisieBalises(PartieEnCours);
             SaisieBalises.ShowDialog();
+            LabelJoueurBlanc.Text = PartieEnCours.White;        // On affiche les noms et ELO des joueurs qui sont dans l'entête PGN
+            LabelJoueurNoir.Text = PartieEnCours.Black;
+            EloBlanc.Text = PartieEnCours.WhiteElo;
+            EloNoir.Text = PartieEnCours.BlackElo;
         }
         private void MontreDonneesUci_Click(object sender, EventArgs e)
         {

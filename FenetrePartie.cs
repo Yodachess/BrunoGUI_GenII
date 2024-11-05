@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace BrunoGUI_Stockfish
 {
-    public partial class FenetrePartie : Form
+    public partial class FenetrePartie : Form       // Classe pour le parcours de la feuille de partie
     {
         private int ligneActuelle = 0;      // Ligne actuelle (index)
         private int colonneActuelle = 1;    // 1: Blancs, 2: Noirs (par défaut on commence avec les Blancs)
