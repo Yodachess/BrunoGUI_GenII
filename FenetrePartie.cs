@@ -119,18 +119,24 @@ namespace BrunoGUI_Stockfish
         }
         private void FermeFeuillePartie_Click(object sender, EventArgs e)
         {   // Si on ferme la liste de coups, il faut revenir à la fin de la partie ...
-            LogiqueMouvements.MiseenplaceFen(LogiqueMouvements.ListeCoupsFen[LogiqueMouvements.ListeCoupsFen.Count - 1]);
-            BrunoInterfaceGraphique.NumeroDemiCoup = LogiqueMouvements.ListeCoupsFen.Count - 1; // A la sortie de la liste de coups, il faut revenir à la fin de la partie
+            if (LogiqueMouvements.ListeCoupsFen.Count > 0)
+            {   // retour fin de partie uniquement si la liste n'est pas vide ...
+                LogiqueMouvements.MiseenplaceFen(LogiqueMouvements.ListeCoupsFen[LogiqueMouvements.ListeCoupsFen.Count - 1]);
+                BrunoInterfaceGraphique.NumeroDemiCoup = LogiqueMouvements.ListeCoupsFen.Count - 1; // A la sortie de la liste de coups, il faut revenir à la fin de la partie
+            }
             _brunoInterfaceGraphique.PlateauEnable(true);                                       // et autoriser de jouer
-            _brunoInterfaceGraphique.AnalysePosition.Enabled = _brunoInterfaceGraphique.RetourArriere.Enabled = true;
+            _brunoInterfaceGraphique.AnalysePosition.Enabled = true;
             this.Close();
         }
         private void FenetrePartie_FormClosing(object sender, FormClosingEventArgs e)
         {   // Fermeture de la fenêtre par la croix rouge en haut à droite ...
-            LogiqueMouvements.MiseenplaceFen(LogiqueMouvements.ListeCoupsFen[LogiqueMouvements.ListeCoupsFen.Count - 1]);
-            BrunoInterfaceGraphique.NumeroDemiCoup = LogiqueMouvements.ListeCoupsFen.Count - 1; // A la sortie de la liste de coups, il faut revenir à la fin de la partie
+            if (LogiqueMouvements.ListeCoupsFen.Count > 0)
+            {   // retour fin de partie uniquement si la liste n'est pas vide ...
+                LogiqueMouvements.MiseenplaceFen(LogiqueMouvements.ListeCoupsFen[LogiqueMouvements.ListeCoupsFen.Count - 1]);
+                BrunoInterfaceGraphique.NumeroDemiCoup = LogiqueMouvements.ListeCoupsFen.Count - 1; // A la sortie de la liste de coups, il faut revenir à la fin de la partie
+            }
             _brunoInterfaceGraphique.PlateauEnable(true);                                       // et autoriser de jouer
-            _brunoInterfaceGraphique.AnalysePosition.Enabled = _brunoInterfaceGraphique.RetourArriere.Enabled = true;
+            _brunoInterfaceGraphique.AnalysePosition.Enabled = true;
         }
     }
 }

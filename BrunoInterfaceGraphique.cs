@@ -1,20 +1,20 @@
 ﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_Stockfish est développé par Bruno COURTOIS.  Copyright © 2024 █  
+// █ BrunoGUI_Stockfish est développé par Bruno COURTOIS.  Copyright © 2024 █
 // █ BrunoGUI_Stockfish est gratuit, sauf s'il est utilisé commercialement  █
 // └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 // Informations reflexion moteur - Temps de reflexion - Réglage force moteur
-// Gestion par menus - Sauvegarde PGN - Affichage Score - Personnalisation couleurs 
+// Gestion par menus - Sauvegarde PGN - Affichage Score - Personnalisation couleurs
 
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
-using static BrunoGUI_Stockfish.LogiqueMouvements;
-using static BrunoGUI_Stockfish.GestionPartiePgn;
 using System.Globalization;
-using System.Text.RegularExpressions;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Windows.Forms;
+using static BrunoGUI_Stockfish.GestionPartiePgn;
+using static BrunoGUI_Stockfish.LogiqueMouvements;
 
 namespace BrunoGUI_Stockfish
 {
@@ -23,7 +23,7 @@ namespace BrunoGUI_Stockfish
         // Les listes
         private readonly Dictionary<LogiqueMouvements.TypePiece, Bitmap> ListeBitmapsPiece = new Dictionary<LogiqueMouvements.TypePiece, Bitmap>(); // liste des Bitmaps pour les pièces
         private readonly Dictionary<LogiqueMouvements.TypeSymbole, Bitmap> ListeBitmapsSymbole = new Dictionary<LogiqueMouvements.TypeSymbole, Bitmap>(); // liste des Bitmaps pour les symboles
-        private readonly List<PictureBox> PictJeux = new List<PictureBox>(); // les 120 cases du jeu 
+        private readonly List<PictureBox> PictJeux = new List<PictureBox>(); // les 120 cases du jeu
         private readonly List<LogiqueMouvements.TypePiece> ListeNoire = new List<LogiqueMouvements.TypePiece>()          // Reine, Tour, Fou et Cavalier noirs pour promotion
             { LogiqueMouvements.TypePiece.ReineNoire, LogiqueMouvements.TypePiece.TourNoire, LogiqueMouvements.TypePiece.FouNoir, LogiqueMouvements.TypePiece.CavalierNoir };
         private readonly List<LogiqueMouvements.TypePiece> ListeBlanche = new List<LogiqueMouvements.TypePiece>()       // Reine, Tour, Fou et Cavalier blancs pour promotion
@@ -33,6 +33,7 @@ namespace BrunoGUI_Stockfish
 
         // les Bitmaps
         private readonly Bitmap PionBlanc = new Bitmap(Properties.Resources.PionBlanc);
+
         private readonly Bitmap TourBlanche = new Bitmap(Properties.Resources.TourBlanche);
         private readonly Bitmap CavalierBlanc = new Bitmap(Properties.Resources.CavalierBlanc);
         private readonly Bitmap FouBlanc = new Bitmap(Properties.Resources.FouBlanc);
@@ -51,23 +52,25 @@ namespace BrunoGUI_Stockfish
 
         // les variables
         public static int NumeroDemiCoup { get; set; } = 0;
+
         private int IndexSource120, ForceMoteurElo, TempsRestant;
         private int DernierCoupMoteurUci;   // dernière case jouée par le moteur UCI
         private int NumeroLigne;    // Indices dans la DataGrid FeuillePartie
         private string CaseSource, CaseDestination, CouleurHumain;
-        private string CheminMoteur, MoteurChoisi, NomHumain, joueurElo;   
+        private string CheminMoteur, MoteurChoisi, NomHumain, joueurElo;
         private string VariationMoteur, MeilleureSuite, ScoreCourant, EvaluationCourante;
-        private string[] DonneesUci;        // Données en provenance du Moteur UCI 
-        private bool ClickCaseSource, VisuSymbole, MontreDonneesBrutesUci, Montre3VariantesUci, AnalyseEnCours;
+        private string[] DonneesUci;        // Données en provenance du Moteur UCI
+        private bool ClickCaseSource, VisuSymbole, MontreDonneesBrutesUci, Montre3VariantesUci, AnalyseEnCours, PartieTerminee;
         private bool Humain, OrdinateurJoueBlanc;   // True pour simuler 2 joueurs humains et False pour jouer contre le moteur UCI
         private bool VisuCoteNoir;          // True quand les Noirs sont en bas de l'écran
         private Color CouleurCasesombre, CouleurCaseclaire;
         private LogiqueMouvements.TypePiece SelectionPromotion, PieceSource;
         public bool OrdinateurJoueNoir;
-        Color violetCustom = Color.FromArgb(128, 128, 255);  // Rouge = 128, Vert = 128, Bleu = 255
+        private Color violetCustom = Color.FromArgb(128, 128, 255);  // Rouge = 128, Vert = 128, Bleu = 255
 
         // les classes
         public LogiqueMouvements LogiqueMouvements = new LogiqueMouvements();
+
         public MonoMoteurUci monoMoteurUci = new MonoMoteurUci();
         public GestionPartiePgn GestionPartiePgn = new GestionPartiePgn();
         public PartieForceModule maNouvellePartieForceModule = new PartieForceModule();
@@ -83,6 +86,7 @@ namespace BrunoGUI_Stockfish
             InitializeComponent();
             mesparametresDeBase = new ParametresDeBase(this);
         }
+
         private void BrunoInterfaceGraphique_Load(object sender, EventArgs e)   // Forme Interface graphique
         {
             // les évènements dans les classes
@@ -120,7 +124,7 @@ namespace BrunoGUI_Stockfish
             CouleurCasesombre = violetCustom;           // Color.CornflowerBlue;   // Couleurs cases noires par défaut
             CouleurCaseclaire = Color.Lavender;         // Color.AliceBlue;        // Couleurs cases blanches par défaut
             VisuCoteNoir = OrdinateurJoueBlanc = false; // On commence avec la vue côté Blanc, l'odinateur a les Noirs
-            MontreDonneesBrutesUci = AnalyseEnCours = false;
+            MontreDonneesBrutesUci = AnalyseEnCours = PartieTerminee = false;
             AnalysePosition.Enabled = ListeCoupsBouton.Enabled = false;
             BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = false;
             OrdinateurJoueNoir = true;
@@ -137,7 +141,7 @@ namespace BrunoGUI_Stockfish
             Directory.SetCurrentDirectory(CheminMoteur + @"\stockfish");
             MoteurChoisi = Path.Combine(CheminMoteur + @"\stockfish", "stockfish17-windows-x86-64-avx2.exe");
             PartieEnCours.White = NomHumain = LabelJoueurBlanc.Text = "Bruno"; PartieEnCours.WhiteElo = joueurElo = EloBlanc.Text = "1842";
-            PartieEnCours.Black = LabelJoueurNoir.Text = "Stockfish 17 ";  PartieEnCours.BlackElo = EloNoir.Text = "3150";
+            PartieEnCours.Black = LabelJoueurNoir.Text = "Stockfish 17 "; PartieEnCours.BlackElo = EloNoir.Text = "3150";
 
             DessineEchiquier();
             for (int i = 0; i <= 119; i++)
@@ -227,9 +231,10 @@ namespace BrunoGUI_Stockfish
                 Console.WriteLine($"StackTrace : {ex.StackTrace}");
             }
         }
+
         private void NouvellePartie_Click(object sender, EventArgs e)
         {   // Affiche la boîte de dialogue nouvelle partie
-            Humain = AnalyseEnCours = false;
+            Humain = AnalyseEnCours = PartieTerminee = ListeCoupsBouton.Enabled = AnalysePosition.Enabled = false;
             QuiJoue = ColorPiece.Blanc;
             if (maNouvellePartieForceModule.ShowDialog() == DialogResult.OK)
             {   // Utilise les sélections faites par l'utilisateur
@@ -255,7 +260,7 @@ namespace BrunoGUI_Stockfish
                     if (VisuCoteNoir == false)
                         TourneEchiquier();                                          // On met la vue côté Noir
                     ParametresJoueurHumain("Noirs", "Le moteur UCI joue");
-                    RetourArriere.Enabled = AnalysePosition.Enabled = ListeCoupsBouton.Enabled = false;         // Il faut empêcher tout cela si le moteur réfléchit
+                    RetourArriere.Enabled = false;         // Il faut empêcher le retour si le moteur réfléchit
                     BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = false;
                     MonoMoteurUci.JeuMoteurUci(LogiqueMouvements.FenDepart, maNouvellePartieForceModule.DureeReflexionSeconde); // On fait jouer le moteur, avec le temps de réflexion choisi
                     Console.WriteLine($"Durée Réflexion envoyé (nouvelle partie) =  {maNouvellePartieForceModule.DureeReflexionSeconde}");
@@ -275,8 +280,10 @@ namespace BrunoGUI_Stockfish
                 }
             }
         }
+
         private void CommencerPartie()              // Début d'une nouvelle partie
         {
+            PartieTerminee = false;
             DernierCoupMoteurUci = -1;
             ClickCaseSource = true;
             PartieEnCours.CoupsPartiePGN = "";
@@ -303,6 +310,7 @@ namespace BrunoGUI_Stockfish
             GestionChronometre(maNouvellePartieForceModule.DureeReflexionSeconde / 1000);
             RetourArriere.Visible = true;
         }
+
         private void ParametresJoueurHumain(string Couleur, string Affichage)
         {   // Paramètres selon joueur humain noir ou blanc
             CouleurHumain = Couleur;
@@ -326,6 +334,7 @@ namespace BrunoGUI_Stockfish
             Decompteur.Text = FormateTemps(TempsRestant);
             ChronometreTempsFixe.Start();  // Démarrer le chronomètre
         }
+
         private void ChronometreTempsFixe_Tick(object sender, EventArgs e)
         {
             if (TempsRestant > 0)
@@ -339,6 +348,7 @@ namespace BrunoGUI_Stockfish
                 Decompteur.Text = "Terminé !";  // Afficher un message
             }
         }
+
         private string FormateTemps(int centiemeSeconde)
         {   // Méthode pour formater le temps en secondes et centièmes de seconde
             int seconde = centiemeSeconde / 100;    // Convertir en secondes
@@ -362,14 +372,16 @@ namespace BrunoGUI_Stockfish
                 DonneesUci = MonoMoteurUci.DataUci.Split(' ');                      // Découpage des informations du moteur UCI
             if (string.IsNullOrWhiteSpace(DonneesUci[0]) == false & DonneesUci.Length > 2)
             {                                                   // true si la chaine est " ", "\n", null, ""
-                switch (DonneesUci[0])          // identifier le premier mot 
+                switch (DonneesUci[0])          // identifier le premier mot
                 {
                     case "\n":                  // Analyse réponse moteur UCI
                     case " ":
                         break;
-                    case "bestmove":            // le moteur UCI propose le meilleur coup 
+
+                    case "bestmove":            // le moteur UCI propose le meilleur coup
                         VarianteMoteurCourante.Text = "Coup joué : " + DonneesUci[1] + "    (" + "Conseil :     " + DonneesUci[3] + ")";
                         break;
+
                     case "id":
                         {
                             switch (DonneesUci[1])
@@ -377,12 +389,14 @@ namespace BrunoGUI_Stockfish
                                 case "name":
                                     MoteurChoisi = MonoMoteurUci.DataUci.Substring(8);
                                     break;
+
                                 case "author":
                                     // AuteurProgramme.Text = "     Auteur(s) : \n" + MonoMoteurUci.DataUci.Substring(10);
                                     break;
                             }
                         }
                         break;
+
                     case "info":                // Infos de réflexion moteur
                         {                       // Parcours des données Uci
                             for (int ucindex = 1; (ucindex < DonneesUci.Length); ucindex++) // Recherche des informations sur la chaine DonneesUci
@@ -394,9 +408,11 @@ namespace BrunoGUI_Stockfish
                                             VarianteMoteurUci1.Text = "    Le moteur est dans sa bibliothèque d'ouvertures";
                                         }));
                                         break;
+
                                     case "multipv":
                                         numeroVarianteNomBox = "VarianteMoteurUci" + DonneesUci[ucindex + 1];
                                         break;
+
                                     case "cp":
                                         ScoreCourant = (Decimal.Parse(DonneesUci[ucindex + 1]) / 100).ToString("N2", CultureInfo.InvariantCulture);
                                         if (numeroVarianteNomBox == "VarianteMoteurUci1")
@@ -405,6 +421,7 @@ namespace BrunoGUI_Stockfish
                                             AfficheEvaluation(ScoreCourant);
                                         }
                                         break;
+
                                     case "mate":
                                         string nombreCoupsMat = "MAT en " + Math.Abs(int.Parse(DonneesUci[ucindex + 1]));
                                         ScoreCourant = "M" + Math.Abs(int.Parse(DonneesUci[ucindex + 1]));
@@ -413,6 +430,7 @@ namespace BrunoGUI_Stockfish
                                             InformationPourJoueur.Text = ScoreMoteur.Text = nombreCoupsMat;
                                         }
                                         break;
+
                                     case "pv":          // Affichage de la variation principlale
                                         int position = MonoMoteurUci.DataUci.IndexOf(" pv ");
                                         VariationMoteur = MonoMoteurUci.DataUci.Substring(position + 3);
@@ -422,13 +440,13 @@ namespace BrunoGUI_Stockfish
                                         varianteExaminee = string.Join(" ", VariationMoteur.Split(' ').Take(3));
                                         if (numeroVarianteNomBox != "")     // Par exemple Sargon n'a pas de multipv ?
                                         {
-                                            RichTextBox numeroVarianteBox = Controls.Find(numeroVarianteNomBox, true).FirstOrDefault() as RichTextBox; 
+                                            RichTextBox numeroVarianteBox = Controls.Find(numeroVarianteNomBox, true).FirstOrDefault() as RichTextBox;
                                             numeroVarianteBox?.Invoke(new Action(() =>    // Si numeroVarianteBox n'est pas nul
                                             {
                                                 numeroVarianteBox.Text = " " + numeroVarianteNomBox[numeroVarianteNomBox.Length - 1] + ". (" + varianteExaminee + ") █[ " +
                                                 ScoreCourant + " ]█  " + "[ " + VariationMoteur + " ]";
                                                 Console.WriteLine($"Variation : {numeroVarianteBox.Name}, / {VariationMoteur}");
-                                            }));     
+                                            }));
                                         }
                                         else
                                         {                                       // Pour ceux qui n'ont qu'une variante principale (Sargon, ...) ?!
@@ -445,6 +463,7 @@ namespace BrunoGUI_Stockfish
                 }
             }
         }
+
         private void AfficheEvaluation(string ScoreCourant)
         {
             if (!AnalyseEnCours)
@@ -468,7 +487,7 @@ namespace BrunoGUI_Stockfish
                 }
                 else if (score >= 2.5m)
                 {
-                     EvaluationUci.Text = EvaluationCourante = "Gain Blanc";
+                    EvaluationUci.Text = EvaluationCourante = "Gain Blanc";
                 }
                 else if (score <= -2.5m)
                 {
@@ -476,6 +495,7 @@ namespace BrunoGUI_Stockfish
                 }
             }
         }
+
         private void AfficheDonneesBrutes()
         {
             if (InvokeRequired)
@@ -495,6 +515,7 @@ namespace BrunoGUI_Stockfish
                 donneesBrutesUci.DonneesBrutesVue.ScrollToCaret();   // Pour garder l'affichage dans toute la fenêtre
             }
         }
+
         private void AfficheCoupMoteur()        // Le moteur UCI joue son meilleur coup
         {
             if (InvokeRequired)
@@ -522,7 +543,7 @@ namespace BrunoGUI_Stockfish
                     TraceContour(DernierCoupMoteurUci);
                     RetourArriere.Enabled = AnalysePosition.Enabled = ListeCoupsBouton.Enabled = true;      // On réautorise si le moteur a fini de réfléchir
                     if (LogiqueMouvements.EchecetMat == false)
-                        BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = true;          
+                        BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = true;
                 }
                 else
                 {   // c'est une analyse, on affiche la meilleure variante
@@ -531,7 +552,7 @@ namespace BrunoGUI_Stockfish
                         string[] meilleureVariante = VarianteMoteurUci1.Text.Split(new char[] { '[', ']' }, StringSplitOptions.RemoveEmptyEntries);
                         string debutVariante = Regex.Match(meilleureVariante[0], @"\((.*?)\)").Groups[1].Value;
                         MeilleureSuite = debutVariante + " Evaluation --- " + meilleureVariante[1] + "(" + EvaluationCourante + ")" + " --- \n" + meilleureVariante[3];
-                        _ = MessageBox.Show("La meilleure suite est : " + debutVariante + 
+                        _ = MessageBox.Show("La meilleure suite est : " + debutVariante +
                                             "\n Evaluation --- " + meilleureVariante[1] + "(" + EvaluationCourante + ")" + " --- " +
                                             "\n" + meilleureVariante[3], "Analyse Moteur", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
@@ -541,6 +562,7 @@ namespace BrunoGUI_Stockfish
                 }
             }
         }
+
         private void AfficheCoupBlanc(string coupBlanc) // Affiche le coup joué par les blancs
         {                                               // Comme c'est le coup Blanc, il faut afficher le numéro du coup
             if (LogiqueMouvements.EchecetMat == false)
@@ -561,6 +583,7 @@ namespace BrunoGUI_Stockfish
                 StatusProgramme.Text = "Partie terminée";
             }
         }
+
         private void AfficheCoupNoir(string coupNoir)       //  Affiche le coup joué par les noirs
         {                                                   // Comme c'est le coup Noir, on n'a pas besoin d'afficher le numéro du coup
             if (LogiqueMouvements.EchecetMat == false)
@@ -580,6 +603,7 @@ namespace BrunoGUI_Stockfish
                 StatusProgramme.Text = "Partie terminée";
             }
         }
+
         private void AfficheTour(string Couleur)        // Affiche la couleur du joueur humain courant
         {
             if (Humain)
@@ -587,6 +611,7 @@ namespace BrunoGUI_Stockfish
             else
                 PlateauEnable(Couleur == CouleurHumain); // active les Picturebox si c'est au tour du joueur humain
         }
+
         private void AfficheEchecEtMat(string couleurRoiMat)   // Affiche l'échec et mat du roi de la couleur en paramètre
         {
             int indexCouleur = couleurRoiMat == "Blanc" ? 2 : 1;
@@ -614,6 +639,7 @@ namespace BrunoGUI_Stockfish
             Application.DoEvents();
             PlateauEnable(false);
         }
+
         private void AfficheInfoEchec(string infoechec)    // Affiche le texte dans l'étiquette
         {
             InformationsPartie.Text = infoechec;
@@ -626,22 +652,27 @@ namespace BrunoGUI_Stockfish
                 PlateauEnable(false); // un des joueurs est pat : fin de la partie
             }
         }
+
         private void BoutonGainBlanc_Click(object sender, EventArgs e)
         {
             GestionResultat("1-0", " Gain Blanc");
         }
+
         private void BoutonGainNoir_Click(object sender, EventArgs e)
         {
             GestionResultat("0-1", " Gain Noir");
         }
+
         private void BoutonNulle_Click(object sender, EventArgs e)
         {
             GestionResultat("1/2-1/2", " Nulle");
         }
+
         private void PartieNulle_Repetition()
         {
             GestionResultat("1/2-1/2", "Nulle par répétition");
         }
+
         private void GestionResultat(string resultat, string vainqueur)
         {
             LogiqueMouvements.ListeCoupsPgn.Add(resultat);
@@ -649,8 +680,9 @@ namespace BrunoGUI_Stockfish
             LogiqueMouvements.ListeCoupsNal.Add(resultat);
             PartieEnCours.Result = EvaluationUci.Text = resultat;
             ScoreMoteur.Text = vainqueur;
-            StatusProgramme.Text = "Partie terminée";
             InformationsPartie.Text = resultat + "  (" + vainqueur + ")";
+            StatusProgramme.Text = "Partie terminée";
+            PartieTerminee = true;
             BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = false;
             RetourArriere.Visible = false;
             PlateauEnable(false);
@@ -662,7 +694,7 @@ namespace BrunoGUI_Stockfish
         private void HumainContreHumain_Click(object sender, EventArgs e)
         {
             PartieEnCours.White = "Humain1";
-            PartieEnCours.Black = "Humain2";          
+            PartieEnCours.Black = "Humain2";
             // On demande confirmation car la partie est remise à zéro
             string confirmation = "Vous jouez contre votre ami/partenaire." + "\nToute position précédente sera effacée,\n confirmez avec Oui, sinon Annuler";
             DialogResult Resultat = MessageBox.Show(confirmation, "Vous jouez entre amis, sans ordinateur", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
@@ -679,6 +711,7 @@ namespace BrunoGUI_Stockfish
                 CommencerPartie();
             }
         }
+
         private void AnalysePosition_Click(object sender, EventArgs e)
         {
             InformationPourJoueur.Text = StatusProgramme.Text = "Analyse de la position ...";
@@ -692,6 +725,7 @@ namespace BrunoGUI_Stockfish
                 Console.WriteLine($"Durée Réflexion (analyse postion) =  {maNouvellePartieForceModule.DureeReflexionSeconde}");
             }
         }
+
         private void RetourArriere_Click(object sender, EventArgs e)
         {
             if (LogiqueMouvements.ListeCoupsFen.Count <= 1)
@@ -706,7 +740,7 @@ namespace BrunoGUI_Stockfish
                     NumeroDemiCoup--;
                     LogiqueMouvements.ListeCoupsFen.RemoveAt(LogiqueMouvements.ListeCoupsFen.Count - 1);    // On supprime le dernier 1/2 coup
                     LogiqueMouvements.ListeCoupsPgn.RemoveAt(LogiqueMouvements.ListeCoupsPgn.Count - 1);    // pour les 4 listes
-                    LogiqueMouvements.ListeCoupsPgnFr.RemoveAt(LogiqueMouvements.ListeCoupsPgnFr.Count - 1); 
+                    LogiqueMouvements.ListeCoupsPgnFr.RemoveAt(LogiqueMouvements.ListeCoupsPgnFr.Count - 1);
                     LogiqueMouvements.ListeCoupsNal.RemoveAt(LogiqueMouvements.ListeCoupsNal.Count - 1);
                     // Réactivation du roque si besoin ...  (champ 3 du FEN, mais indice 2 du Split)
                     string[] FenPrecedent = LogiqueMouvements.ListeCoupsFen[LogiqueMouvements.ListeCoupsFen.Count - 1].Split(' ');  // Récupère le dernier FEN découpé
@@ -740,21 +774,24 @@ namespace BrunoGUI_Stockfish
                 }
             }
         }
+
         private void ParametresDeBase_Click(object sender, EventArgs e)
         {
             mesparametresDeBase.Show();
         }
+
         private void ParametresAvances_Click(object sender, EventArgs e)
         {
             mesParametresUciStockfish.Show();
         }
+
         private void ListeCoupsBouton_Click(object sender, EventArgs e)
         {
             string numeroCoup = "";
             string blancs = "";
             string noirs = "";
             PlateauEnable(false);   // Blocage du plateau car je ne veux pas autoriser de jouer pendant le parcours de la partie ....
-            RetourArriere.Enabled = false;
+            // RetourArriere.Enabled = false;
             // Si la fenêtre n'existe pas ou est déjà fermée, la créer
             if (mafenetrePartie == null || mafenetrePartie.IsDisposed)
             {
@@ -818,6 +855,7 @@ namespace BrunoGUI_Stockfish
             }
             Console.WriteLine($"Nombre coups de la liste Pgn : {nombreCoups}, Coûp valide : {CoupValide}");                           // 01/02  DEBUG
         }
+
         private void VisualisationPgn_Click(object sender, EventArgs e)
         {   // Bouton pour voir la partie en PGN
             if (affichePgn == null || affichePgn.IsDisposed)
@@ -833,10 +871,12 @@ namespace BrunoGUI_Stockfish
             string contenuPgnFr = GestionPartiePgn.RetourneContenuPgn(PartieEnCours, "Fr");
             affichePgn.AffichePgnDansZone(contenuPgnIntl, contenuPgnFr);
         }
+
         private void visualiserPgn_Click(object sender, EventArgs e)
         {   // Option de menu  pour voir la partie en PGN
             VisualisationPgn_Click(sender, e);
         }
+
         private void BoutonBalises_Click(object sender, EventArgs e)
         {
             SaisieBalises SaisieBalises = new SaisieBalises(PartieEnCours);
@@ -846,25 +886,29 @@ namespace BrunoGUI_Stockfish
             EloBlanc.Text = PartieEnCours.WhiteElo;
             EloNoir.Text = PartieEnCours.BlackElo;
         }
+
         private void MontreDonneesUci_Click(object sender, EventArgs e)
         {
             MontreDonneesBrutesUci = !MontreDonneesBrutesUci;       // Affiche ou masque les données UCI à chaque clic
             MontreDonneesUci.Text = MontreDonneesBrutesUci ? "Masque protocole UCI" : "Affiche protocole UCI";
             if (MontreDonneesBrutesUci) donneesBrutesUci.Show();    // On affiche les données brutes UCI
-                else donneesBrutesUci.Hide();                       // On masque les données brutes UCI
+            else donneesBrutesUci.Hide();                       // On masque les données brutes UCI
             donneesBrutesUci.DonneesBrutesVue.ScrollToCaret();      // Pour garder l'affichage dans toute la fenêtre
         }
+
         private void MontreVariantesUci_Click(object sender, EventArgs e)
         {
             Montre3VariantesUci = !Montre3VariantesUci;       // Affiche ou masque les 3 variantes UCI à chaque clic
             MontreVariantesUci.Text = Montre3VariantesUci ? "Affiche variantes UCI" : "Masque variantes UCI";
             VarianteMoteurUci1.Visible = VarianteMoteurUci2.Visible = VarianteMoteurUci3.Visible = !Montre3VariantesUci;
         }
+
         private void InverseEchiquier_Click(object sender, EventArgs e)
         {
             PlateauEnable(true);
             TourneEchiquier();
         }
+
         private void CaseSombre_Click(object sender, EventArgs e)
         {
             if (CouleurDialogue.ShowDialog() == DialogResult.OK)
@@ -887,6 +931,7 @@ namespace BrunoGUI_Stockfish
                 }
             }
         }
+
         private void CaseClaire_Click(object sender, EventArgs e)
         {
             if (CouleurDialogue.ShowDialog() == DialogResult.OK)
@@ -909,6 +954,7 @@ namespace BrunoGUI_Stockfish
                 }
             }
         }
+
         //          Gestion de la promotion de Pion
         private void Promo0_Click(object sender, EventArgs e)
         {
@@ -917,6 +963,7 @@ namespace BrunoGUI_Stockfish
             SelectionPromotion = LogiqueMouvements.QuiJoue == LogiqueMouvements.ColorPiece.Blanc ? ListeBlanche[indexSelect] : ListeNoire[indexSelect];
             LogiqueMouvements.PromotionPiece = SelectionPromotion;
         }
+
         private void AffichePromotionPion(string Couleur)        // Promotion d'un pion
         {
             SelectionPromotion = LogiqueMouvements.TypePiece.Vide;
@@ -929,20 +976,24 @@ namespace BrunoGUI_Stockfish
                 Application.DoEvents();
             GroupPromo.Visible = false;
         }
+
         private void PointArret_Click(object sender, EventArgs e)
         {
             InformationPourJoueur.Text = "Point d'arrêt pour déboguer ...";
         }
+
         private void StopMoteur_Click(object sender, EventArgs e)
         {
             MonoMoteurUci.StandardInputDataToUci("stop");
             InformationPourJoueur.Text = "Arrêt réflexion Moteur ";
         }
+
         private void Apropos_Click(object sender, EventArgs e)
         {
-            _ = MessageBox.Show("      BrunoGUI Stockfish\n       Version 1.05\n--  Bruno COURTOIS  -- \n Copyright © 2024", "A propos de",
+            _ = MessageBox.Show("      BrunoGUI Stockfish\n       Version 1.051\n--  Bruno COURTOIS  -- \n Copyright © 2024", "A propos de",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
+
         private void Quitter_Click(object sender, EventArgs e)
         {
             Close();
@@ -980,7 +1031,7 @@ namespace BrunoGUI_Stockfish
                                 InformationPourJoueur.Text = "La partie est ajoutée dans le fichier " + Path.GetFileName(cheminPgn);
                             }
                             else if (resultat == DialogResult.Cancel)
-                            {   // Affiche la nouvelle partie 
+                            {   // Affiche la nouvelle partie
                                 MessageBox.Show($"Fichier PGN :\n {contenuPgn}", "Affichage fichier PGN", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             }
                         }
@@ -997,6 +1048,7 @@ namespace BrunoGUI_Stockfish
                 Console.WriteLine($"StackTrace : {ex.StackTrace}");
             }
         }
+
         private void EnregistrerFen_Click(object sender, EventArgs e)
         {
             {               // Ecriture du fichier FEN (position courante)
@@ -1008,10 +1060,11 @@ namespace BrunoGUI_Stockfish
                 }
             }
         }
-            // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-            // Routines de Dessin 
-            // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-            private void DessineEchiquier()
+
+        // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+        // Routines de Dessin
+        // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+        private void DessineEchiquier()
         {
             Color Couleur;
             int Index = 0;
@@ -1027,7 +1080,7 @@ namespace BrunoGUI_Stockfish
                         BackColor = Couleur,
                         SizeMode = PictureBoxSizeMode.StretchImage,
                         Size = new Size(60, 60),    // Taille des case = 60 * 60 pixels
-                        Location = new Point(-39 + (Colonne * 60), 560 - (Ligne * 60)), // -39 semble OK mais à checker ?    
+                        Location = new Point(-39 + (Colonne * 60), 560 - (Ligne * 60)), // -39 semble OK mais à checker ?
                         Visible = Ligne > 1 & Ligne < 10 & Colonne > 0 & Colonne < 9, // On ne rend visible que les 64 cases utiles
                         Enabled = false
                     };
@@ -1041,6 +1094,7 @@ namespace BrunoGUI_Stockfish
                 }
             }
         }
+
         // Dessine une pièce sur l'échiquier avec l'indexSource120 et le type de la Piece
         private void DessinePiece(int IndexCase, LogiqueMouvements.TypePiece Piece)
         {
@@ -1063,6 +1117,7 @@ namespace BrunoGUI_Stockfish
                 Console.WriteLine($"StackTrace : {ex.StackTrace}");
             }
         }
+
         // Trace un contour pour la case jouée par le moteur Uci
         private void TraceContour(int IndexCase)
         {
@@ -1070,14 +1125,14 @@ namespace BrunoGUI_Stockfish
             {
                 if (PictJeux[IndexCase].Image != null)
                 {
-                Bitmap CaseJeu = new Bitmap(PictJeux[IndexCase].Image);
-                Graphics g = Graphics.FromImage(CaseJeu);
-                Pen Pinceau = new Pen(Color.Black, 5);
-                g.DrawLine(Pinceau, 0, 0, 100, 0);
-                g.DrawLine(Pinceau, 0, 0, 0, 100);
-                g.DrawLine(Pinceau, 85, 0, 85, 100);    // plutôt g.DrawLine(Pinceau, 0, 0, 100, 0);   ??   // Côté droit   DEBUG 26/02
-                g.DrawLine(Pinceau, 0, 85, 100, 85);    // plutôt g.DrawLine(Pinceau, 0, 100, 100, 100); ?? // Côté inférieur
-                PictJeux[IndexCase].Image = CaseJeu;
+                    Bitmap CaseJeu = new Bitmap(PictJeux[IndexCase].Image);
+                    Graphics g = Graphics.FromImage(CaseJeu);
+                    Pen Pinceau = new Pen(Color.Black, 5);
+                    g.DrawLine(Pinceau, 0, 0, 100, 0);
+                    g.DrawLine(Pinceau, 0, 0, 0, 100);
+                    g.DrawLine(Pinceau, 85, 0, 85, 100);    // plutôt g.DrawLine(Pinceau, 0, 0, 100, 0);   ??   // Côté droit   DEBUG 26/02
+                    g.DrawLine(Pinceau, 0, 85, 100, 85);    // plutôt g.DrawLine(Pinceau, 0, 100, 100, 100); ?? // Côté inférieur
+                    PictJeux[IndexCase].Image = CaseJeu;
                 }
             }
             catch (Exception ex)
@@ -1086,12 +1141,13 @@ namespace BrunoGUI_Stockfish
                 Console.WriteLine($"StackTrace : {ex.StackTrace}");
             }
         }
-        // Dessine un des 4 symboles sur l'échiquier si ceux sont visibles 
+
+        // Dessine un des 4 symboles sur l'échiquier si ceux sont visibles
         private void DessineSymbole(int IndexCase, LogiqueMouvements.TypeSymbole Symbole)
         {
             if (VisuSymbole == true)
             {
-                if (PictJeux[IndexCase].Image == null)                          // Si la case est vide, 
+                if (PictJeux[IndexCase].Image == null)                          // Si la case est vide,
                     PictJeux[IndexCase].Image = ListeBitmapsSymbole[Symbole];   // On dessine le symbole passé en paramètre
                 else
                 {                                                               // Si la case n'est pas vide
@@ -1102,12 +1158,17 @@ namespace BrunoGUI_Stockfish
                 }
             }
         }
-        public void PlateauEnable(bool Statut)                 // Active ou désactive les cases du plateau de jeu
+
+        public void PlateauEnable(bool statut)                 // Active ou désactive les cases du plateau de jeu
         {
-            for (int i = 0; i <= 119; i++)
-                if (PictJeux[i].Visible)
-                    PictJeux[i].Enabled = Statut;
+            if (!(statut && PartieTerminee))
+            {
+                for (int i = 0; i <= 119; i++)
+                    if (PictJeux[i].Visible)
+                        PictJeux[i].Enabled = statut;
+            }
         }
+
         private void TourneEchiquier()
         {
             PictJeux.Reverse();             // On inverse les liste des PictureBox ce qui revient à faire une rotation à 180°
@@ -1116,6 +1177,7 @@ namespace BrunoGUI_Stockfish
             LogiqueMouvements.DessinPieces();       // On dessine les pièces
             VisuCoteNoir = !VisuCoteNoir;   // On inverse le flag de côté de visualisation
         }
+
         private void MiseaZeroAffichages()
         {
             LogiqueMouvements.InitialisationEchiquier();
