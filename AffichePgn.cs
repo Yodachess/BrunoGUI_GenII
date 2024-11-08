@@ -7,7 +7,8 @@ namespace BrunoGUI_Stockfish
     {
         private AffichePgn afficheZone;
         private string partieFormatPgnIntl;
-        private string partieFormatPgnFr;   
+        private string partieFormatPgnFr;
+
         public AffichePgn()
         {
             InitializeComponent();
@@ -58,7 +59,7 @@ namespace BrunoGUI_Stockfish
         private void AffichePgn_FormClosing(object sender, FormClosingEventArgs e)
         {
             e.Cancel = true;  // Annule la fermeture de la fenêtre
-            this.Hide();      // Masque la fenêtre au lieu de la fermer; 
-        } 
+            this.Hide();      // Masque la fenêtre au lieu de la fermer;
+        }
     }
 }
