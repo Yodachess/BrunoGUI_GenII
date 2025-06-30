@@ -132,14 +132,15 @@ namespace BrunoGUI_Stockfish
             PartieEnCours.Date = Aujourdhui.ToString("yyyy.MM.dd");
             PartieEnCours.Lieu = "Maison"; PartieEnCours.Tournament = "Entrainement";
             PartieEnCours.WhiteElo = PartieEnCours.BlackElo = "?"; PartieEnCours.Result = "*";
+            /* 
+            // Moteur UCI par défaut, remonte de 2 niveaux depuis le répertoire "bin\Debug"
+            string cheminProjet = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.FullName;
+            // Construire le chemin complet vers le fichier Stockfish
+            MoteurChoisi = Path.Combine(cheminProjet, "stockfish", "stockfish17-windows-x86-64-avx2.exe");
+            */
+            // Obtenir le répertoire de l'exécutable principal
+            MoteurChoisi = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "stockfish", "stockfish17-windows-x86-64-avx2.exe");
 
-            // Moteur UCI par défaut
-            CheminMoteur = Application.ExecutablePath;          // Chemin complet de l'application ....bin/debug
-            CheminMoteur = Directory.GetParent(CheminMoteur)?.ToString();    // Tu arrives dans le répertoire debug
-            CheminMoteur = Directory.GetParent(CheminMoteur)?.ToString();    // Tu arrives dans le répertoire bin
-            CheminMoteur = Directory.GetParent(CheminMoteur)?.ToString();    // Tu arrives dans le répertoire de l'application
-            Directory.SetCurrentDirectory(CheminMoteur + @"\stockfish");
-            MoteurChoisi = Path.Combine(CheminMoteur + @"\stockfish", "stockfish17-windows-x86-64-avx2.exe");
             PartieEnCours.White = NomHumain = LabelJoueurBlanc.Text = "Bruno"; PartieEnCours.WhiteElo = joueurElo = EloBlanc.Text = "1842";
             PartieEnCours.Black = LabelJoueurNoir.Text = "Stockfish 17 "; PartieEnCours.BlackElo = EloNoir.Text = "3150";
 
@@ -285,7 +286,7 @@ namespace BrunoGUI_Stockfish
         {
             PartieTerminee = false;
             DernierCoupMoteurUci = -1;
-            ClickCaseSource = true;
+            ClickCaseSource = VisuSymbole = true;
             PartieEnCours.CoupsPartiePGN = "";
             for (int i = 0; i <= 119; i++)
             {

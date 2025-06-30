@@ -1,5 +1,8 @@
 STOCKFISH 17
 
+https://official-stockfish.github.io/docs/stockfish-wiki/UCI-&-Commands.html
+
+
 Evaluation NNUE
 
 Depuis la version 12, Stockfish intègre une évaluation basée sur la connaissance d'un réseau de neurones artificiels, qui intervient en amont d'une évaluation plus classique, en profondeur. C'est même le premier moteur d'échecs à avoir utilisé cette technique, testée initalement sur le jeu de Shogi. Le gain en force a été immédiatement considérable. Il a permis à la version 14 de faire jeu égal avec Leela Chess Zero et de reprendre sa place de plus fort moteur du monde, avec un classement proche de 3550 Elo sur CCRL 40/15. De plus, contrairement à un moteur 100% neuronal comme Leela Zero, dont les perfomances sont tributaires de la présence dans la machine d'une puissante carte graphique, le noyau neuronal de Stockfish se débrouille très bien avec un bon CPU.
