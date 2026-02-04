@@ -1,4 +1,5 @@
 Bienvenue dans l'aide de BrunoGUI_GenII
+
 Ce programme permet de jouer aux échecs contre un moteur dont le niveau va de 1350 à +3000 ELO.
 Utilisation
 
