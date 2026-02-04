@@ -20,21 +20,23 @@ c. « Paramètres avancés » : réglage (optionnel) fin des paramètres du mote
 3. Nouvelle Partie :
 a. « Humain contre ordinateur » : lance une nouvelle partie contre Stockfish ou le moteur que vous avez sélectionné. Vous avez les Blancs, le moteur joue les Noirs
 b. « Ordinateur contre humain » : lance une nouvelle partie contre Stockfish ou le moteur que vous avez sélectionné. Vous avez les Noirs, le moteur joue les Blancs
-c. « Entre humains (ou saisie) » : Le moteur ne joue pas, vous jouez contre votre partenaire, ou vous saisissez une partie, dans les 2 cas, vous pouvez utiliser [Analyse Position ]
-Lors de la saisie d’une partie, vous pouvez voir la liste des coups  avec [Partie PGN ] et éditer les informations sur la partie avec  [En-Tête PGN ]
+c. « Entre humains (ou saisie) » : Le moteur ne joue pas, vous jouez contre votre partenaire, ou vous saisissez une partie, dans les 2 cas,
+vous pouvez utiliser [Analyse Position ]. Lors de la saisie d’une partie, vous pouvez voir la liste des coups  avec [Partie PGN ]
+ et éditer les informations sur la partie avec  [En-Tête PGN ]
 
-4. Moteurs/Bibliothèques :
+5. Moteurs/Bibliothèques :
 a. « Sélectionnez un moteur » : permet de jouer contre d’autres moteurs que Stockfish, à la condition qu’ils respectent le protocole UCI. J’ai joint un choix de moteurs UCI non exclusifs.
 b. « Sélectionnez un bibliothèque » : permet de sélectionner diverses bibliothèques d’ouvertures spécialisée ou non (au format Polyglot *.bin). Celle par défaut est généraliste mais complète, j’ai joint des bibliothèques spécialisées pout travailler une ouverture précise.
-	c. « Rodent IV » : moteur original très fort mais équilibré et polyvalent.
-	d. « Sargon I (1978) » : Le 1er moteur qui a tourné sur un micro-ordinateur en 1978 !!
+c. « Rodent IV » : moteur original très fort mais équilibré et polyvalent.
+d. « Sargon I (1978) » : Le 1er moteur qui a tourné sur un micro-ordinateur en 1978 !!
 
  
 5. Options :
-	a. « Personnaliser » : permet de changer le couleur des cases de l’échiquier
-	b. « Partie PGN » : visualise la partie au format PGN. Identique à [Partie PGN ]
-	c. « Saisie en-têtes PGN » : édite les en-têtes PGN. Identique à [En-Tête PGN ]
-	d. « Aide/Documentation » : ouvre une fenêtre qui affiche ce fichier ..
+a. « Personnaliser » : permet de changer le couleur des cases de l’échiquier
+b. « Partie PGN » : visualise la partie au format PGN. Identique à [Partie PGN ]
+c. « Saisie en-têtes PGN » : édite les en-têtes PGN. Identique à [En-Tête PGN ]
+d. « Aide/Documentation » : ouvre une fenêtre qui affiche ce fichier ..
 
 
-6. A propos :	Version programme et nom de l’auteur, votre serviteur …
+6. A propos :
+   Version programme et nom de l’auteur, votre serviteur …
