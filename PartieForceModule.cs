@@ -1,11 +1,22 @@
-﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_Stockfish est développé par Bruno COURTOIS.  Copyright © 2024 █
-// █ BrunoGUI_Stockfish est gratuit, sauf s'il est utilisé commercialement  █
-// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII est développé par Bruno COURTOIS.  Copyright © 2025 █
+// █ BrunoGUI_GenII est gratuit, sauf s'il est utilisé commercialement  █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+
+// Fenêtre d'édition pour nouvellle partie contre Stockfish ...
+//      └─ Classe "PartieForceModule" 
+//                      ├─ "PartieForceModule"     (Init)
+//                      ├─ "NouvellePartieForceModule_Load"
+//                      ├─ "ForceMoteurMaximum_CheckedChanged"  
+//                      ├─ "ForceMoteurDefinie_CheckedChanged"  
+//                      ├─ "ForceMoteurOk_Click"  
+//                      └─ "ForceMoteurAnnuler_Click"
+
 using System;
 using System.Windows.Forms;
+using System.Diagnostics;
 
-namespace BrunoGUI_Stockfish
+namespace BrunoGUI_GenII
 {
     public partial class PartieForceModule : Form
     {
@@ -14,6 +25,7 @@ namespace BrunoGUI_Stockfish
         public int ForceModule { get; set; }
         public int DureeReflexionSeconde { get; set; }
         public bool ForceMaximale { get; set; }
+
         public PartieForceModule()
         {
             InitializeComponent();
@@ -22,7 +34,7 @@ namespace BrunoGUI_Stockfish
         {
             ModuleJoueNoirs.Checked = true;     // Les Noirs par défaut
             ForceMoteurMaximum.Checked = true;  // Force Maximum par défaut
-            DureeReflexionSeconde = 2000;
+            DureeReflexionSeconde = 2;
             ValeurLimiteElo.Value = 1850;       // Valeur par défaut du ELO si pas max
             NomAdversaire = "Bruno";
             TextBoxNomAdvesaire.Text = NomAdversaire;
@@ -49,9 +61,8 @@ namespace BrunoGUI_Stockfish
             NomAdversaire = TextBoxNomAdvesaire.Text;
             ForceMaximale = ForceMoteurMaximum.Checked;
             ForceModule = (int)ValeurLimiteElo.Value;
-            DureeReflexionSeconde = ((int)TempsReflexion.Value) * 1000;
-            Console.WriteLine($"Durée Réflexion =  {DureeReflexionSeconde}");
-
+            DureeReflexionSeconde = ((int)TempsReflexion.Value);
+            Debug.WriteLine($"ForceMoteurOk_Click / Durée Réflexion secondes =  {DureeReflexionSeconde}");
             this.DialogResult = DialogResult.OK;
             this.Close();
         }

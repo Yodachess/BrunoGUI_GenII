@@ -1,19 +1,32 @@
-﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_Stockfish est développé par Bruno COURTOIS.  Copyright © 2024 █
-// █ BrunoGUI_Stockfish est gratuit, sauf s'il est utilisé commercialement  █
-// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII est développé par Bruno COURTOIS.  Copyright © 2025 █
+// █ BrunoGUI_GenII est gratuit, sauf s'il est utilisé commercialement  █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+
+// Fenêtre d'affichage des coups et parcours de la liste ...
+//  └─ Classe "FenetrePartie" qui affiche la liste des coups et les boutons
+//              ├─ "FenetrePartie"
+//              ├─ "MettreAJourSelection"  
+//              ├─ "AfficherPositionActuelle"  
+//              ├─ "BoutonDebut_Click"  
+//              ├─ "BoutonGauche_Click"  
+//              ├─ "BoutonDroit_Click"  
+//              ├─ "BoutonFin_Click"  
+//              ├─ "FermeFeuillePartie_Click"  
+//              └─ "FenetrePartie_FormClosing"
+
 using System;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace BrunoGUI_Stockfish
+namespace BrunoGUI_GenII
 {
     public partial class FenetrePartie : Form       // Classe pour le parcours de la feuille de partie
     {
         private int ligneActuelle = 0;      // Ligne actuelle (index)
         private int colonneActuelle = 1;    // 1: Blancs, 2: Noirs (par défaut on commence avec les Blancs)
-        private BrunoInterfaceGraphique _brunoInterfaceGraphique;
-        public FenetrePartie(BrunoInterfaceGraphique brunoInterfaceGraphique)
+        private EchiquierPrincipal _brunoInterfaceGraphique;
+        public FenetrePartie(EchiquierPrincipal brunoInterfaceGraphique)
         {
             InitializeComponent();
             FeuillePartie.ScrollBars = ScrollBars.Vertical; // Toujours afficher le défilement vertical
@@ -41,7 +54,7 @@ namespace BrunoGUI_Stockfish
                     if (ligneActuelle * 2 < demiCoupsTotaux)
                     {   // Vérifie que l'index pour les Blancs est valide
                         fenActuel = LogiqueMouvements.ListeCoupsFen[ligneActuelle * 2];  // Index des Blancs
-                        BrunoInterfaceGraphique.NumeroDemiCoup = ligneActuelle * 2;
+                        EchiquierPrincipal.NumeroDemiCoup = ligneActuelle * 2;
                     }
                 }
                 else if (colonneActuelle == 2)
@@ -49,12 +62,11 @@ namespace BrunoGUI_Stockfish
                     if ((ligneActuelle * 2 + 1) < demiCoupsTotaux)
                     {   // Vérifie que l'index pour les Noirs est valide
                         fenActuel = LogiqueMouvements.ListeCoupsFen[ligneActuelle * 2 + 1];  // Index des Noirs
-                        BrunoInterfaceGraphique.NumeroDemiCoup = ligneActuelle * 2 + 1;
+                        EchiquierPrincipal.NumeroDemiCoup = ligneActuelle * 2 + 1;
                     }
                 }
-                // Affiche la position dans la fenêtre en fonction du FEN actuel, si trouvé
                 if (!string.IsNullOrEmpty(fenActuel))
-                {
+                {   // Affiche la position dans la fenêtre en fonction du FEN actuel, si trouvé
                     LogiqueMouvements.MiseenplaceFen(fenActuel);
                 }
             }
@@ -125,22 +137,24 @@ namespace BrunoGUI_Stockfish
         {   // Si on ferme la liste de coups, il faut revenir à la fin de la partie ...
             if (LogiqueMouvements.ListeCoupsFen.Count > 0)
             {   // retour fin de partie uniquement si la liste n'est pas vide ...
-                LogiqueMouvements.MiseenplaceFen(LogiqueMouvements.ListeCoupsFen[LogiqueMouvements.ListeCoupsFen.Count - 1]);
-                BrunoInterfaceGraphique.NumeroDemiCoup = LogiqueMouvements.ListeCoupsFen.Count - 1; // A la sortie de la liste de coups, il faut revenir à la fin de la partie
+                LogiqueMouvements.MiseenplaceFen(LogiqueMouvements.ListeCoupsFen[^1]);
+                // A la sortie de la liste de coups, il faut revenir à la fin de la partie
+                EchiquierPrincipal.NumeroDemiCoup = LogiqueMouvements.ListeCoupsFen.Count - 1; 
             }
-            _brunoInterfaceGraphique.PlateauEnable(true);                                       // et autoriser de jouer
-            _brunoInterfaceGraphique.AnalysePosition.Enabled = true;
+            _brunoInterfaceGraphique.PlateauEnable(true);   // et autoriser de jouer
+            _brunoInterfaceGraphique.AnalysePosition.Enabled = _brunoInterfaceGraphique.RetourArriere.Enabled = true;
             this.Close();
         }
         private void FenetrePartie_FormClosing(object sender, FormClosingEventArgs e)
         {   // Fermeture de la fenêtre par la croix rouge en haut à droite ...
             if (LogiqueMouvements.ListeCoupsFen.Count > 0)
             {   // retour fin de partie uniquement si la liste n'est pas vide ...
-                LogiqueMouvements.MiseenplaceFen(LogiqueMouvements.ListeCoupsFen[LogiqueMouvements.ListeCoupsFen.Count - 1]);
-                BrunoInterfaceGraphique.NumeroDemiCoup = LogiqueMouvements.ListeCoupsFen.Count - 1; // A la sortie de la liste de coups, il faut revenir à la fin de la partie
+                LogiqueMouvements.MiseenplaceFen(LogiqueMouvements.ListeCoupsFen[^1]);
+                // A la sortie de la liste de coups, il faut revenir à la fin de la partie
+                EchiquierPrincipal.NumeroDemiCoup = LogiqueMouvements.ListeCoupsFen.Count - 1; 
             }
-            _brunoInterfaceGraphique.PlateauEnable(true);                                       // et autoriser de jouer
-            _brunoInterfaceGraphique.AnalysePosition.Enabled = true;
+            _brunoInterfaceGraphique.PlateauEnable(true);   // et autoriser de jouer
+            _brunoInterfaceGraphique.AnalysePosition.Enabled = _brunoInterfaceGraphique.RetourArriere.Enabled = true;
         }
     }
 }

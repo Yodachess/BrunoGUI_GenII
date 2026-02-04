@@ -86,3 +86,95 @@ h6 27. e4 fxe4 28. fxe4 Rhd8 29. e5 c6 30. Ne4 Rd7 31. Nxg5 hxg5 32. Rh5 a4
 Rg4 40. e6 Rd5 41. Rxd5 cxd5 42. Re3 Re4 43. Rxe4 Kd8 44. Re5 Ke7 45. Kb4  
 Kd8 46. Kb5 Ke7 47. Kxb6 Ke8 48. Kc6 Kf8 49. Kd7 Kg8 50. e7 Kf7 51. e8=Q#  
 1-0
+
+[Event "Entrainement"]
+[Site "Maison"]
+[Round ""]
+[Date "2025.11.12"]
+[White "Bruno"]
+[Black "Stockfish 17"]
+[Result "1-0"]
+[ECO ""]
+[WhiteElo ""]
+[BlackElo "2048"]
+[PlyCount "113"]
+
+1. e4 c6 2. Nc3 d5 3. Nf3 Bg4 4. h3 Bxf3 5. Qxf3 e6 6. exd5 e5 7. Bc4 Qc7  
+8. O-O Bd6 9. Re1 Nf6 10. dxc6 Nxc6 11. Nb5 Qd8 12. d4 O-O 13. Bg5 Nxd4 14. Nxd4  
+Rc8 15. Bd3 exd4 16. Qf5 Qd7 17. Bxf6 Qxf5 18. Bxf5 Rc5 19. Bxd4 Rxf5 20. Rad1  
+Ra5 21. a3 g6 22. Rd3 Rc8 23. c3 f5 24. Re6 Rd5 25. Rde3 b5 26. Re8+ Rxe8  
+27. Rxe8+ Bf8 28. Ra8 Rd7 29. f4 h5 30. Kf2 h4 31. Kf3 Rc7 32. Rb8 a5 33. Rxb5  
+Kf7 34. Rxa5 Ke6 35. Be5 Rd7 36. Ke3 Ke7 37. c4 Rd8 38. c5 Kd7 39. Ra6 Be7  
+40. c6+ Ke6 41. b4 Rc8 42. b5 g5 43. a4 gxf4+ 44. Bxf4 Bf8 45. c7+ Kd7 46. b6  
+Kc6 47. a5 Bd6 48. Ra7 Re8+ 49. Kf3 Kc5 50. b7 Bxc7 51. Bxc7 f4 52. a6 Kc6  
+53. Bxf4 Re6 54. b8=Q Re1 55. Rc7+ Kd5 56. Qb3+ Kd4 57. Qc4# 1-0
+
+[Event "Entrainement"]
+[Site "Maison"]
+[Round ""]
+[Date "2025.11.12"]
+[White "Bruno"]
+[Black "Stockfish 17"]
+[Result "1-0"]
+[ECO ""]
+[WhiteElo ""]
+[BlackElo "2012"]
+[PlyCount "61"]
+
+1. e4 e5 2. Nc3 Nc6 3. f4 exf4 4. Nf3 d6 5. d4 g6 6. Bxf4 Bg7 7. Be3 a6 8. Qd2  
+Bg4 9. Be2 f5 10. O-O Nf6 11. h3 Nxe4 12. Nxe4 Bxf3 13. Bxf3 h6 14. Nc3 O-O  
+15. Bxh6 g5 16. Bxg7 Kxg7 17. Rae1 g4 18. hxg4 f4 19. g3 fxg3 20. Nd5 Ne5  
+21. Be4 Rf2 22. Rxf2 Qh4 23. Rg2 Nxg4 24. Ree2 Nf2 25. Rexf2 Kh8 26. Rf6 Qh5  
+27. Rh6+ Kg7 28. Rxh5 b5 29. Qg5+ Kf7 30. Qf6+ Kg8 31. Rh8# 1-0
+
+[Event "Entrainement"]
+[Site "Maison"]
+[Round ""]
+[Date "2025.11.12"]
+[White "Lc0 v0.32.1"]
+[Black ""]
+[Result "1-0"]
+[ECO ""]
+[WhiteElo "1950"]
+[BlackElo "2012"]
+[PlyCount "31"]
+
+1. e4 d6 2. d4 Nf6 3. f3 c6 4. Be3 Nbd7 5. c4 e5 6. d5 c5 7. Nc3 Qa5 8. g4  
+Be7 9. Nge2 O-O 10. Ng3 h6 11. h4 Rd8 12. Nf5 Bf8 13. a4 Qb4 14. Bd2 Qb6 15. Nb5  
+a6 16. a5 1-0
+
+[Event "Entrainement"]
+[Site "Maison"]
+[Round ""]
+[Date "2025.11.12"]
+[White "Lc0 v0.32.1"]
+[Black "Bruno"]
+[Result "1-0"]
+[ECO ""]
+[WhiteElo "3000"]
+[BlackElo "2012"]
+[PlyCount "27"]
+
+1. d3 d6 2. c4 e5 3. g3 c6 4. Nf3 Bg4 5. Nc3 f5 6. d4 e4 7. Nh4 Be7 8. h3  
+Bxe2 9. Bxe2 Bxh4 10. gxh4 Qxh4 11. Qb3 Qe7 12. Bf4 Nf6 13. O-O-O O-O 14. Bxd6  
+1-0
+
+[Event "Entrainement"]
+[Site "Maison"]
+[Round ""]
+[Date "2025.11.27"]
+[White "Bruno"]
+[Black "Stockfish 17"]
+[Result "1-0"]
+[ECO ""]
+[WhiteElo "?"]
+[BlackElo "1950"]
+[PlyCount "77"]
+
+1. e4 c5 2. a3 e6 3. b4 cxb4 4. axb4 Bxb4 5. c3 Be7 6. d4 d6 7. Bd3 e5 8. f4  
+Nc6 9. fxe5 dxe5 10. Nf3 Bh4+ 11. g3 Bf6 12. d5 Nce7 13. Na3 Ng6 14. Nb5 N8e7  
+15. d6 O-O 16. dxe7 Bxe7 17. O-O Bh3 18. Rf2 Qb6 19. Ba3 Rad8 20. Bxe7 Nxe7  
+21. Qe2 Qc5 22. Rxa7 h6 23. Rxb7 Kh7 24. Rc7 Nc6 25. Nxe5 Qxf2+ 26. Qxf2 Nxe5  
+27. Bc2 Rc8 28. Rxc8 Nf3+ 29. Qxf3 Bxc8 30. Kf2 f5 31. exf5 g6 32. f6 Ba6  
+33. Nd6 Rd8 34. f7 Rxd6 35. f8=Q Rd7 36. Qf7+ Rxf7+ 37. Qxf7+ Kh8 38. Bxg6  
+Bd3 39. Qh7# 1-0

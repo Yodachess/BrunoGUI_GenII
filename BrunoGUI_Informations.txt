@@ -5,7 +5,7 @@ https://official-stockfish.github.io/docs/stockfish-wiki/UCI-&-Commands.html
 
 Evaluation NNUE
 
-Depuis la version 12, Stockfish intègre une évaluation basée sur la connaissance d'un réseau de neurones artificiels, qui intervient en amont d'une évaluation plus classique, en profondeur. C'est même le premier moteur d'échecs à avoir utilisé cette technique, testée initalement sur le jeu de Shogi. Le gain en force a été immédiatement considérable. Il a permis à la version 14 de faire jeu égal avec Leela Chess Zero et de reprendre sa place de plus fort moteur du monde, avec un classement proche de 3550 Elo sur CCRL 40/15. De plus, contrairement à un moteur 100% neuronal comme Leela Zero, dont les perfomances sont tributaires de la présence dans la machine d'une puissante carte graphique, le noyau neuronal de Stockfish se débrouille très bien avec un bon CPU.
+Depuis la version 12, Stockfish intègre une évaluation basée sur la connaissance d'un réseau de neurones artificiels, qui intervient en amont d'une évaluation plus classique, en profondeur. C'est même le premier moteur d'échecs à avoir utilisé cette technique, testée initialement sur le jeu de Shogi. Le gain en force a été immédiatement considérable. Il a permis à la version 14 de faire jeu égal avec Leela Chess Zero et de reprendre sa place de plus fort moteur du monde, avec un classement proche de 3550 Elo sur CCRL 40/15. De plus, contrairement à un moteur 100% neuronal comme Leela Zero, dont les performances sont tributaires de la présence dans la machine d'une puissante carte graphique, le noyau neuronal de Stockfish se débrouille très bien avec un bon CPU.
 L'évaluation NNUE de Stockfish évalue moins de positions mais elle le fait plus efficacement que l'évaluation classique seule*. Il n'y a donc pas lieu de la désactiver, d'autant plus que le jeu à base d'évaluation NNUE est censé avoir une allure plus humaine.
 
 A noter : le réseau neuronal de la version 14, intégrée au binaire du moteur, a été constitué en combinant le réseau neuronal constitué par l'équipe de développement de Leela Chess Zero et le réseau constitué des milliards de positions évaluées par Stockfish. L'architecture de ce réseau a été par ailleurs sensiblement améliorée et continue de l'être. Chaque nouvelle version de Stockfish contient ainsi un réseau amélioré.
@@ -33,7 +33,7 @@ Paramètres généraux
 
 Debug log file : si vous voulez avoir un retour du fonctionnement du moteur, créez avec le bloc-notes de Windows un fichier "logfile.txt" et utilisez le sélecteur de fichier pour y conduire le moteur.
 
-Threads (+++) : indiquez ici le nombre de coeurs physiques de votre ordinateur. C'est très important si vous utilisez Stockfish pour l'analyse ou le conseil. Il sera beaucoup plus rapide s'il utilise deux coeurs ou plus au lieu d'un seul.
+Threads (+++) : indiquez ici le nombre de cœurs physiques de votre ordinateur. C'est très important si vous utilisez Stockfish pour l'analyse ou le conseil. Il sera beaucoup plus rapide s'il utilise deux cœurs ou plus au lieu d'un seul.
 
 Hash (+++) : taille de la table de hachage. La valeur par défaut, 16 Mo, est ridiculement faible pour un moteur tactique aussi puissant que Stockfish. Surtout s'il est utilisé à pleine puissance pour l'analyse. Choisissez au minimum 128 Mo. Si vous pouvez passer à 256, voire plus ce sera encore mieux.
 

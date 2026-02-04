@@ -262,6 +262,9 @@
   <data name="plateau_vierge_800_800" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\plateau_vierge_800_800.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="PrisePossible" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\AvecPrise.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="ReineBlanche" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ReineBlanche.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>

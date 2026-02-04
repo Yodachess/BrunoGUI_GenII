@@ -1,16 +1,17 @@
-﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_Stockfish est développé par Bruno COURTOIS.  Copyright © 2024 █  
-// █ BrunoGUI_Stockfish est gratuit, sauf s'il est utilisé commercialement  █
-// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII est développé par Bruno COURTOIS.  Copyright © 2025 █
+// █ BrunoGUI_GenII est gratuit, sauf s'il est utilisé commercialement  █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 // Informations reflexion moteur - Temps de reflexion - Réglage force moteur
 // Gestion par menus - Sauvegarde PGN - Affichage Score - Personnalisation couleurs 
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace BrunoGUI_Stockfish
+namespace BrunoGUI_GenII
 {
     public delegate void AffichageCoupJoue(string Coup); 
     public delegate void AfficheInfo(string Chaine); 
@@ -48,7 +49,7 @@ namespace BrunoGUI_Stockfish
         public static event AfficheInfo AfficheEchecEtMat;
         public static event AfficheInfo AfficheTour;
         public static event AfficheInfo AffichePromotionPion;
-        public static event AfficheInfo AfficheFen;
+        // public static event AfficheInfo AfficheFen;
         public static event AffichagePiece DessinePiece;
         public static event AffichageSymbole DessineSymbole;
 
@@ -81,7 +82,6 @@ namespace BrunoGUI_Stockfish
         {
             Vide, Blanc, Noir, BordPlateau
         }
-
         [Flags]
         // Pour gérer si les roques sont possibles ou non
         public enum FlagEnableRoque
@@ -113,9 +113,9 @@ namespace BrunoGUI_Stockfish
         private static string MouvementCoup { get; set; }
         private static string MouvementCoupPgn { get; set; }
         private static string MouvementCoupNal { get; set; }
+        private static string? MouvementCoupUci { get; set; }
         private static FlagMouvementRoque Roque { get; set; }
         public static TypePiece PromotionPiece { get; set; }
-
 
         private static readonly Dictionary<FlagMouvementRoque, string> ListeCasesTraverseesRoi = new Dictionary<FlagMouvementRoque, string>// liste des cases traversées par le roi lors d'un roque
         {
@@ -136,9 +136,10 @@ namespace BrunoGUI_Stockfish
 
         // Contient la liste de coups dans différents formats  
         public static List<string> ListeCoupsFen = new List<string>(); // https://www.pousseurdebois.fr/cours/notation-fen/
-        public static List<string> ListeCoupsPgn = new List<string>(); // https://fr.wikipedia.org/wiki/Portable_Game_Notation
+        public static List<string> ListeCoupsPgnIntl = new List<string>(); // https://fr.wikipedia.org/wiki/Portable_Game_Notation
         public static List<string> ListeCoupsPgnFr = new List<string>(); // https://fr.wikipedia.org/wiki/Portable_Game_Notation
         public static List<string> ListeCoupsNal = new List<string>(); // Notation Algébrique longue (NAL)  
+        public static List<string> ListeCoupsUci = [];      // Notation protocole UCI
 
         // Information Fen
         public static ColorPiece QuiJoue { get; set; }          // le champ 2  : w ou b ( Blanc ou Noir ), indique la couleur qui a le trait
@@ -154,9 +155,8 @@ namespace BrunoGUI_Stockfish
         public static Single NombreCoupsJoues { get; set; }     //le champ 6  : on avance de 0.5 en 0.5 et on récupère la partie entière
 
 
-        // Remplit le Fen à partir d'une string FEN au départ de la partie et affiche l'échiquier de départ
         public static void InitialisationEchiquier()
-        {
+        {   // Remplit le Fen à partir d'une string FEN au départ de la partie et affiche l'échiquier de départ
             FlagEnPassant = false;
             TestSecondPion = false;
             PromotionPiece = TypePiece.Vide;
@@ -181,15 +181,13 @@ namespace BrunoGUI_Stockfish
             }
         }
 
-        // Dessine les piéces sur le plateau à l'initialisation
         public static void DessinePiecePlateau(int IndexCase, TypePiece Piece)
-        {
+        {   // Dessine les piéces sur le plateau à l'initialisation
             PiecesEchiquier[IndexCase] = Piece;
             DessinePiece(IndexCase, Piece);
         }
-        //  Dessine toutes les pièces
         public static void DessinPieces()
-        {
+        {   //  Dessine toutes les pièces
             for (int ligne = 2; ligne <= 9; ligne++)
             {
                 for (int colonne = 1; colonne <= 8; colonne++)
@@ -243,8 +241,9 @@ namespace BrunoGUI_Stockfish
             }
         }
 
-        public static void MiseenplaceFen(string Fenautiliser)     // Préparation du logiciel avec la position FEN
-        {
+        public static void MiseenplaceFen(string Fenautiliser)
+        {   // Préparation du logiciel avec la position FEN
+
             string[] ChampsFen = Fenautiliser.Split(' ');           // On récupère les 6 champs du FEN dans un tableau
 
             QuiJoue = ChampsFen[1] == "w" ?
@@ -375,9 +374,8 @@ namespace BrunoGUI_Stockfish
             }
         }
 
-        // Dessin des mouvements possibles pour une pièce ainsi que les menaces adverses pour cette même pièce 
         public static void DessineMouvements(string caseSource, bool visu)
-        {
+        {   // Dessin des mouvements possibles pour une pièce ainsi que les menaces adverses pour cette même pièce 
             TypeSymbole Symbole;
             int Indexcase;
             List<string> MouvementsPiece = RetourneMouvements(caseSource);
@@ -393,7 +391,8 @@ namespace BrunoGUI_Stockfish
                             if (MouvementsPiece[i].StartsWith("x") == false)
                                 Symbole = TypeSymbole.SymboleMouvementSansPrise; // Mouvement possible sans prise
                             else
-                                Symbole = TypeSymbole.SymboleMouvementAvecPrise; // Mouvement possible avec prise
+                                // Symbole = TypeSymbole.SymboleMouvementAvecPrise; // Mouvement possible avec prise   
+                                Symbole = TypeSymbole.SymboleMenacePiece; // Mouvement possible avec prise
                         }
                         Indexcase = RenvoieCaseIndex120(CaseDestination);
                         ListeMouvementsPiece.Add(Indexcase, PiecesEchiquier[Indexcase]);
@@ -413,14 +412,12 @@ namespace BrunoGUI_Stockfish
                     }
         }
 
-        // Dessine une case vide pour le pion adverse capturé lors d'un mouvement en passant pour un pion
         public static void DessineCaseVide(int IndexCasePion, TypePiece Vide)
-        {
+        {   // Dessine une case vide pour le pion adverse capturé lors d'un mouvement en passant pour un pion
             DessinePiece(IndexCasePion, Vide);
         }
-        // Efface les symboles sur l'échiquier si ceux-ci sont visibles
         public static void EffaceSymboles(bool visu)
-        {
+        {   // Efface les symboles sur l'échiquier si ceux-ci sont visibles
             if (visu)
             {
                 if (ListeMouvementsPiece.Count > 0)
@@ -431,16 +428,15 @@ namespace BrunoGUI_Stockfish
             ListeMouvementsPiece.Clear();
             ListeMenacesPiece.Clear();
         }
-        // Efface les symboles à l'écran
         private static void EffaceListe(Dictionary<int, TypePiece> ListeEfface)
-        {
+        {   // Efface les symboles à l'écran
             foreach (KeyValuePair<int, TypePiece> Element in ListeEfface)
                 DessinePiece(Element.Key, Element.Value);
         }
-        public static string RetourneChaineFenActuel()          // Retourne le FEN correspondant à la position actuelle
-        {
+        public static string RetourneChaineFenActuel()
+        {   // Retourne le FEN correspondant à la position actuelle
             string LigneFen;
-            List<string> ListLignesFen = new List<string>();
+            List<string> ListLignesFen = [];
             int NombreCasesVides;
             for (int i = 90; i >= 20; i -= 10)
             {       // Création des 8 lignes sous la forme "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R"
@@ -489,9 +485,8 @@ namespace BrunoGUI_Stockfish
             return ChaineFen + " " + (IndexCaseEnPassant != 0 ? NomCaseAlgebrique(IndexCaseEnPassant) : "-") + " " + SansPrise + " " + Math.Truncate(NombreCoupsJoues).ToString();
         }
 
-        // Exécute un coup pour le joueur humain ou le moteur UCI
         public static void ExecutionCoup(string caseSource, string caseDestination)
-        {
+        {   // Exécute un coup pour le joueur humain ou le moteur UCI
             string CouleurEchec = string.Empty;
             CoupValide = false;
             EchecetMat = false;
@@ -502,8 +497,21 @@ namespace BrunoGUI_Stockfish
                 {
                     AfficheInfoEchec(string.Empty);
                     MouvementCoup = CoupNotationAlgebriquePGN(caseSource, caseDestination);
-                    Console.WriteLine($"Mouvement Coup Francais joué : {MouvementCoup}, Coup valide : {CoupValide}");                           // 01/02  DEBUG
+                    Debug.WriteLine($"Mouvement Coup Francais joué : {MouvementCoup}, Coup valide : {CoupValide}");     // 01/02  DEBUG
                     FaireMouvement(caseSource, caseDestination);
+
+                    // *******Traitement promotion *********
+                    string lettrePromo = PromotionPiece switch
+                    {   // On rajoute la pièce promue avant de stocker dans le PGN
+                        TypePiece.ReineBlanche or TypePiece.ReineNoire => "Q",
+                        TypePiece.TourBlanche or TypePiece.TourNoire => "R",
+                        TypePiece.FouBlanc or TypePiece.FouNoir => "B",
+                        TypePiece.CavalierBlanc or TypePiece.CavalierNoir => "N",
+                        _ => ""
+                    };
+                    MouvementCoup += lettrePromo;
+                    PromotionPiece = TypePiece.Vide;
+                    // *******Traitement promotion *********
 
                     string ChaineFen = RetourneChaineFenActuel();       // Remplissage de liste de coups FEN
                     ListeCoupsFen.Add(ChaineFen);                       // Mise en liste des FEN
@@ -523,7 +531,7 @@ namespace BrunoGUI_Stockfish
                     {
                         if (char.IsLower(MouvementCoupPgn[0]))
                         {   // C'est un coup de Pion
-                            MouvementCoupNal = caseSource + 'x' + MouvementCoupPgn[2] + MouvementCoupPgn[3];
+                            MouvementCoupNal = caseSource + 'x' + MouvementCoupPgn[2] + MouvementCoupPgn[3] + lettrePromo;
                         }
                         else
                         {   // C'est un coup de Pièce
@@ -569,13 +577,13 @@ namespace BrunoGUI_Stockfish
                     {
                         if (FenTableau[1] == "b")   // Champ 1 =  couleur au trait: w si c'est aux blancs de jouer, b pour les noirs
                         {
-                            ListeCoupsPgn.Add(NumeroCoup + ". " + MouvementCoupPgn + "# "); // C'est mat, il faut mettre le # pour l'indiquer
+                            ListeCoupsPgnIntl.Add(NumeroCoup + ". " + MouvementCoupPgn + "# "); // C'est mat, il faut mettre le # pour l'indiquer
                             ListeCoupsPgnFr.Add(NumeroCoup + ". " + MouvementCoup + "# ");  // dans les 2 listes de coups, internationale et francaise
                             ListeCoupsNal.Add(NumeroCoup + ". " + MouvementCoupNal + "# ");
                         }
                         if (FenTableau[1] == "w")   // Champ 1 =  couleur au trait: w si c'est aux blancs de jouer, b pour les noirs
                         {
-                            ListeCoupsPgn.Add(MouvementCoupPgn + "# ");                     // C'est mat, il faut mettre le # pour l'indiquer
+                            ListeCoupsPgnIntl.Add(MouvementCoupPgn + "# ");                     // C'est mat, il faut mettre le # pour l'indiquer
                             ListeCoupsPgnFr.Add(MouvementCoup + "# ");                      // dans les 2 listes de coups, internationale et francaise
                             ListeCoupsNal.Add(MouvementCoupNal + "# ");
                         }
@@ -585,13 +593,13 @@ namespace BrunoGUI_Stockfish
                     {
                         if (FenTableau[1] == "b")   // Champ 1 =  couleur au trait: w si c'est aux blancs de jouer, b pour les noirs
                         {
-                            ListeCoupsPgn.Add(NumeroCoup + ". " + MouvementCoupPgn + "+ "); // C'est Echec, il faut mettre le + pour l'indiquer
+                            ListeCoupsPgnIntl.Add(NumeroCoup + ". " + MouvementCoupPgn + "+ "); // C'est Echec, il faut mettre le + pour l'indiquer
                             ListeCoupsPgnFr.Add(NumeroCoup + ". " + MouvementCoup + "+ ");  // dans les 2 listes de coups, internationale et francaise
                             ListeCoupsNal.Add(NumeroCoup + ". " + MouvementCoupNal + "+ ");
                         }
                         if (FenTableau[1] == "w")   // Champ 1 =  couleur au trait: w si c'est aux blancs de jouer, b pour les noirs
                         {
-                            ListeCoupsPgn.Add(MouvementCoupPgn + "+ ");                     // C'est Echec, il faut mettre le + pour l'indiquer
+                            ListeCoupsPgnIntl.Add(MouvementCoupPgn + "+ ");                     // C'est Echec, il faut mettre le + pour l'indiquer
                             ListeCoupsPgnFr.Add(MouvementCoup + "+ ");                      // dans les 2 listes de coups, internationale et francaise
                             ListeCoupsNal.Add(MouvementCoupNal + "+ ");
                         }
@@ -600,17 +608,20 @@ namespace BrunoGUI_Stockfish
                     {
                         if (FenTableau[1] == "b")   // Champ 1 =  couleur au trait: w si c'est aux blancs de jouer, b pour les noirs
                         {
-                            ListeCoupsPgn.Add(NumeroCoup + ". " + MouvementCoupPgn + " ");  // Ni Echec, ni Mat, il faut mettre un espace
+                            ListeCoupsPgnIntl.Add(NumeroCoup + ". " + MouvementCoupPgn + " ");  // Ni Echec, ni Mat, il faut mettre un espace
                             ListeCoupsPgnFr.Add(NumeroCoup + ". " + MouvementCoup + " ");   // dans les 2 listes de coups, internationale et francaise
                             ListeCoupsNal.Add(NumeroCoup + ". " + MouvementCoupNal + " ");
                         }
                         if (FenTableau[1] == "w")   // Champ 1 =  couleur au trait: w si c'est aux blancs de jouer, b pour les noirs
                         {
-                            ListeCoupsPgn.Add(MouvementCoupPgn + " ");                      // Ni Echec, ni Mat, il faut mettre un espace
+                            ListeCoupsPgnIntl.Add(MouvementCoupPgn + " ");                      // Ni Echec, ni Mat, il faut mettre un espace
                             ListeCoupsPgnFr.Add(MouvementCoup + " ");                       // dans les 2 listes de coups, internationale et francaise
                             ListeCoupsNal.Add(MouvementCoupNal + " ");
                         }
                     }
+                    // Traitement des coups au format UCI
+                    MouvementCoupUci = caseSource + caseDestination + lettrePromo;
+                    ListeCoupsUci.Add(MouvementCoupUci + " ");
 
                     CouleurEchec = QuiJoue == ColorPiece.Noir ? "Noir" : "Blanc";
                     // Affiche si le roi est en échec
@@ -626,7 +637,7 @@ namespace BrunoGUI_Stockfish
                     {
                         AfficheCoupNoir(MouvementCoup);
                     }
-                    // Console.WriteLine($"Execution Coup Pgn International : {ListeCoupsPgn[ListeCoupsPgn.Count - 1]}, Source : {caseSource}, Destination : {caseDestination}");    // 01/02  DEBUG
+                    // Console.WriteLine($"Execution Coup Pgn International : {ListeCoupsPgnIntl[ListeCoupsPgnIntl.Count - 1]}, Source : {caseSource}, Destination : {caseDestination}");    // 01/02  DEBUG
                 }
             }
             if (MouvementCoup != string.Empty)
@@ -648,9 +659,8 @@ namespace BrunoGUI_Stockfish
             }
         }
 
-        // Retourne la liste des pièces pouvant prendre la pièce sur la case passée en paramètre
         private static List<string> CasesPiecesMenacantes(string CaseEchiquierMenacee)
-        {
+        {   // Retourne la liste des pièces pouvant prendre la pièce sur la case passée en paramètre
             ColorPiece CouleurMenace;
             List<string> CaseMenaces = new List<string>();
             int IndexCase = RenvoieCaseIndex120(CaseEchiquierMenacee);
@@ -666,9 +676,8 @@ namespace BrunoGUI_Stockfish
             return CaseMenaces;
         }
 
-        // Renvoie la liste des prises possibles pour une case 
         private static List<string> PrisesPossibles(string CaseEchiquier)
-        {
+        {   // Renvoie la liste des prises possibles pour une case 
             List<string> Prises = new List<string>();
             List<string> Mouvements = RetourneMouvements(CaseEchiquier); // récupère l'ensemble des coups pour une case
             if (Mouvements.Count > 0)
@@ -681,12 +690,10 @@ namespace BrunoGUI_Stockfish
             return Prises;
         }
 
-        // Teste la validité d'un coup
         private static bool TestMouvementValide(string caseSource, string caseDestination)
-        {
-            // reçoit un mouvement du type e2e4
-            int IndexSource = RenvoieCaseIndex120(caseSource);
-            int IndexDestination = RenvoieCaseIndex120(caseDestination);
+        {   // Teste la validité d'un coup (reçoit un mouvement du type e2e4)
+            int IndexSource = RenvoieCaseIndex120(caseSource);              // ex: e2
+            int IndexDestination = RenvoieCaseIndex120(caseDestination);    // ex: e4
             if (CouleurCase(IndexSource) != QuiJoue)
                 return false;
             List<string> MouvementsPossibles = RetourneMouvements(caseSource);
@@ -695,7 +702,14 @@ namespace BrunoGUI_Stockfish
             {
                 Roque = TestSiRoque(IndexSource, IndexDestination);
                 if (Roque != FlagMouvementRoque.PasDeRoque)
-                {   // Teste si le roque est un mouvement valide : la case que le roi traverse ne doit pas être contrôlée par une pièce adverse 
+                {   // 1. On cherche l'emplacement du roi du joueur courant
+                    string CaseRoiActuelle = QuiJoue == ColorPiece.Noir ? PositionRoi(TypePiece.RoiNoir) : PositionRoi(TypePiece.RoiBlanc);
+                    // 2. On vérifie s'il est actuellement menacé
+                    if (CasesPiecesMenacantes(CaseRoiActuelle).Count > 0)
+                    {   // Le roi est en échec au départ, le roque est impossible.
+                        return false;
+                    }
+                    // Teste si le roque est un mouvement valide : la case que le roi traverse ne doit pas être contrôlée par une pièce adverse 
                     if (TestMouvementValide(caseSource, ListeCasesTraverseesRoi[Roque]) == false)
                         return false;
                 }
@@ -713,8 +727,8 @@ namespace BrunoGUI_Stockfish
             else
                 return false;
         }
-        public static bool TripleRepetition()       // Détection de la triple répétition des coups qui donne partie nulle !
-        {
+        public static bool TripleRepetition()
+        {   // Détection de la triple répétition des coups qui donne partie nulle !
             Dictionary<string, int> positionsVues = new Dictionary<string, int>();
             // Parcourir la liste des FEN pour détecter la triple répétition
             foreach (string fen in ListeCoupsFen)
@@ -739,10 +753,9 @@ namespace BrunoGUI_Stockfish
             }
             return false; // Pas de triple répétition
         }
-        // Déplace une pièce dans le tableau des pièces avec les 2 index des cases
-        // Si visu = true le déplacement se fait aussi sur le plateau de jeu à l'écran
         public static void DeplacementPiece(int IndexSource, int IndexDestination, bool visu)
-        {
+        {   // Déplace une pièce dans le tableau des pièces avec les 2 index des cases
+            // Si visu = true le déplacement se fait aussi sur le plateau de jeu à l'écran
             PiecesEchiquier[IndexDestination] = PiecesEchiquier[IndexSource];
             PiecesEchiquier[IndexSource] = TypePiece.Vide;
             if (visu)
@@ -751,9 +764,8 @@ namespace BrunoGUI_Stockfish
                 DessinePiece(IndexSource, TypePiece.Vide);
             }
         }
-        // Retourne tous les déplacements possibles pour une case selon la pièce sur cette case
         public static List<string> RetourneMouvements(string CaseEchiquier)
-        {
+        {   // Retourne tous les déplacements possibles pour une case selon la pièce sur cette case
             int indexCase = RenvoieCaseIndex120(CaseEchiquier);
             switch (PiecesEchiquier[indexCase])
             {
@@ -779,33 +791,29 @@ namespace BrunoGUI_Stockfish
                     return null;
             }
         }
-        // Déplacements du cavalier
         private static List<string> MouvementsCavalier(int IndexCase, List<int> listDeplacementsCavalier)
-        {
+        {   // Déplacements du cavalier
             List<string> Mouvements = new List<string>();
             for (int i = 0; i <= listDeplacementsCavalier.Count - 1; i++) // les directions du déplacement
                 AjouteMouvements(IndexCase, IndexCase + listDeplacementsCavalier[i], Mouvements, true);
             return Mouvements;
         }
-        // Déplacements de la reine ( sert aussi pour le Roi mais d'une seule case )
         public static List<string> MouvementsReine(int IndexCase)
-        {
+        {   // Déplacements de la reine ( sert aussi pour le Roi mais d'une seule case )
             // on combine les Mouvements du fou et de la tour
             List<string> Mouvements = MouvementsPiece(IndexCase, ListDeplacementsFou);
             Mouvements.AddRange(MouvementsPiece(IndexCase, ListDeplacementsTour));
             return Mouvements;
         }
-        // Déplacements d'une tour ou d'un fou
         private static List<string> MouvementsPiece(int IndexCase, List<int> ListDeplacements)
-        {
+        {   // Déplacements d'une tour ou d'un fou
             List<string> Mouvements = new List<string>();
             for (int i = 0; i <= ListDeplacements.Count - 1; i++) // les directions du déplacement
                 AjouteMouvements(IndexCase, ListDeplacements[i], Mouvements);
             return Mouvements;
         }
-        // Ajoute les coups possibles pour le roi, la reine, le fou et la tour 
         public static void AjouteMouvements(int IndexCaseSource, int Direction, List<string> Mouvements)
-        {
+        {   // Ajoute les coups possibles pour le roi, la reine, le fou et la tour 
             int IndexCaseSuivante = IndexCaseSource + Direction;
             while (PiecesEchiquier[IndexCaseSuivante] != TypePiece.Bordure && PiecesEchiquier[IndexCaseSuivante] == TypePiece.Vide)
             {
@@ -817,9 +825,8 @@ namespace BrunoGUI_Stockfish
             if (CouleurCase(IndexCaseSuivante) == CouleurAdversaireCase(IndexCaseSource))
                 Mouvements.Add("x" + NomCaseAlgebrique(IndexCaseSuivante));
         }
-        // Ajoute les coups possibles pour le cavalier et les pions
         public static void AjouteMouvements(int IndexCaseSource, int IndexCaseDestination, List<string> Mouvements, bool AvecPrise)
-        {
+        {   // Ajoute les coups possibles pour le cavalier et les pions
             if (PiecesEchiquier[IndexCaseDestination] != TypePiece.Bordure)
             {
                 if (PiecesEchiquier[IndexCaseDestination] == TypePiece.Vide)
@@ -840,9 +847,8 @@ namespace BrunoGUI_Stockfish
                     NbMouvements += RetourneMouvementsValides(NomCaseAlgebrique(i)).Count;
             return (NbMouvements > 0);
         }
-        // Retourne les coups valides pour une case
         private static List<string> RetourneMouvementsValides(string CaseEchiquier)
-        {
+        {   // Retourne les coups valides pour une case
             List<string> MouvementsValides = new List<string>();
             List<string> Mouvements = RetourneMouvements(CaseEchiquier);
             if (Mouvements.Count > 0)
@@ -851,12 +857,11 @@ namespace BrunoGUI_Stockfish
                         MouvementsValides.Add(Mouvements[i]);
             return MouvementsValides;
         }
-        // Effectue un mouvement de pièce sans vérifier la validité du mouvement
         private static void FaireMouvement(string caseSource, string caseDestination)
-        {
-            // reçoit un mouvement du type e2e4
+        {   // Effectue un mouvement de pièce sans vérifier la validité du mouvement (reçoit un mouvement du type e2e4)
             int IndexSource = RenvoieCaseIndex120(caseSource);  // convertit la case source en index
             int IndexDestination = RenvoieCaseIndex120(caseDestination); // convertit la case destination en index
+            Debug.WriteLine($"caseSource : {caseSource}, caseDestination : {caseDestination}, Pièce promue : {PromotionPiece} ");
             {
                 // On vérifie que le mouvement n'est pas le roque
                 Roque = TestSiRoque(IndexSource, IndexDestination);
@@ -916,8 +921,15 @@ namespace BrunoGUI_Stockfish
                     }
                     // test si promotion d'un pion
                     string CouleurPromotion = string.Empty;
-                    if (MouvementCoup.EndsWith("="))
+                    // *******Traitement promotion *********
+                    if ((PiecesEchiquier[IndexSource] == TypePiece.PionBlanc || PiecesEchiquier[IndexSource] == TypePiece.PionNoir) &&
+                        (
+                            MouvementCoup.EndsWith("=q") || MouvementCoup.EndsWith("=r") || MouvementCoup.EndsWith("=b") || MouvementCoup.EndsWith("=n") ||
+                            (IndexDestination >= 21 && IndexDestination <= 28) || (IndexDestination >= 91 && IndexDestination <= 98)
+                        ))
+                    // *******Traitement promotion *********
                     {
+                        Debug.WriteLine($"Pièce promue : {PromotionPiece}, IndexDestination : {IndexDestination}, Couleur Promotion : {CouleurPromotion} ");
                         if (IndexDestination < 29)
                             CouleurPromotion = "Noir";
                         if (IndexDestination > 90)
@@ -930,7 +942,6 @@ namespace BrunoGUI_Stockfish
                             }
                             // promotion d'un pion noir ou blanc
                             DessinePiece(IndexDestination, PromotionPiece); // On affiche la pièce promue
-                            MouvementCoup += NomsPieceLocale(PromotionPiece);
                             PiecesEchiquier[IndexDestination] = PromotionPiece;
                             // test si la pièce promue met en échec le roi adverse
                             Echec = TestEchecPromotionPion(IndexDestination, CouleurPromotion == "Noir" ? TypePiece.RoiBlanc : TypePiece.RoiNoir);
@@ -945,12 +956,11 @@ namespace BrunoGUI_Stockfish
                 QuiJoue = (QuiJoue == ColorPiece.Blanc) ? ColorPiece.Noir : ColorPiece.Blanc;
                 AfficheTour((QuiJoue == ColorPiece.Blanc) ? "Blancs" : "Noirs");
                 NombreCoupsJoues += Convert.ToSingle(0.5);      // On incrémente d'un demi-coup
-                Console.WriteLine($"Nombre coups joues : {NombreCoupsJoues}, Couleur à jouer : {QuiJoue} ");
+                Debug.WriteLine($"Nombre coups joues : {NombreCoupsJoues}, Couleur à jouer : {QuiJoue} ");
             }
         }
-        // Retourne le nom des pièces françaises ( RNBQR in anglais et TCFDR in français)
         private static string NomsPieceLocale(TypePiece lettreInitiale)
-        {
+        {   // Retourne le nom des pièces françaises ( RNBQR in anglais et TCFDR in français)
             switch (lettreInitiale)
             {
                 case TypePiece.TourBlanche:
@@ -972,9 +982,8 @@ namespace BrunoGUI_Stockfish
                     return string.Empty;
             }
         }
-        // Retourne le coup joué par l'humain ou le moteur UCI en notation algébrique
         public static string CoupNotationAlgebriquePGN(string caseSource, string CaseDestination)
-        {
+        {   // Retourne le coup joué par l'humain ou le moteur UCI en notation algébrique
             // reçoit un mouvement du type e2e4
             int IndexSource = RenvoieCaseIndex120(caseSource);  // convertit la case source en index
             int IndexDestination = RenvoieCaseIndex120(CaseDestination); // convertit la case destination en index
@@ -1045,10 +1054,9 @@ namespace BrunoGUI_Stockfish
             PiecesEchiquier[IndexDestination] = BackupPiece; // on récupère la pièce d'origine
             return MouvementSpecifique == string.Empty ? MouvementParDefaut : MouvementSpecifique;
         }
-        // Renvoie la position de la seconde pièce ( -1 si elle n'est pas présente )
-        // Valable pour tour et cavalier (pas le fou, car chaque fou est sur une case de couleur différente )
         private static int PositionSecondePiece(int IndexCase)
-        {
+        {   // Renvoie la position de la seconde pièce ( -1 si elle n'est pas présente )
+            // Valable pour tour et cavalier (pas le fou, car chaque fou est sur une case de couleur différente )
             TypePiece Piece = PiecesEchiquier[IndexCase];
             if (Piece != TypePiece.Vide)
                 for (int i = 0; i <= 99; i++)
@@ -1056,18 +1064,16 @@ namespace BrunoGUI_Stockfish
                         return i;
             return -1;
         }
-        // Renvoie le nom d'une case sous la forme e2 ou un caractère vide en cas d'erreur
         public static string NomCaseAlgebrique(int IndexCase)
-        {
+        {   // Renvoie le nom d'une case sous la forme e2 ou un caractère vide en cas d'erreur
             if (IndexCase != -1)
                 return Convert.ToChar((IndexCase % 10) + 96) + ((IndexCase / 10) - 1).ToString();
             //  Le reste de IndexCase /10 + 96 pour avoir ASCII   + IndexCase / 10 - 1 pour avoir la ligne
             else
                 return string.Empty;
         }
-        // Renvoie l'index d'une case à partir de son nom (sous la forme "e2")
         public static int RenvoieCaseIndex120(string NomCase) // Crash quand il y a Mat :-- 'Le format de la chaîne d'entrée est incorrect.'
-        {
+        {   // Renvoie l'index d'une case à partir de son nom (sous la forme "e2")
             try
             {
                 return (Convert.ToInt32(NomCase.Substring(1, 1)) * 10) + (Convert.ToInt32(Convert.ToChar(NomCase.Substring(0, 1))) - 96) + 10;
@@ -1077,18 +1083,16 @@ namespace BrunoGUI_Stockfish
             catch (Exception ex)
             {
                 MessageBox.Show($"Une erreur s'est produite : {ex.Message}", "dans RenvoieCaseIndex120", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                Console.WriteLine($"StackTrace : {ex.StackTrace}");
+                Debug.WriteLine($"StackTrace : {ex.StackTrace}");
                 return -1;
             }
         }
-        // Renvoie la couleur de l'adversaire du joueur courant
         public static ColorPiece CouleurAdversaireJoueurCourant()
-        {
+        {   // Renvoie la couleur de l'adversaire du joueur courant
             return (QuiJoue == ColorPiece.Blanc ? ColorPiece.Noir : ColorPiece.Blanc);
         }
-        // Renvoie la couleur de l'adversaire selon la couleur d'une case
         public static ColorPiece CouleurAdversaireCase(int IndexCase)
-        {
+        {   // Renvoie la couleur de l'adversaire selon la couleur d'une case
             ColorPiece CouleurPiece = CouleurCase(IndexCase);
             if (CouleurPiece != ColorPiece.Vide && CouleurPiece != ColorPiece.BordPlateau)
                 // case avec une pièce ( on prend la couleur de l'adversaire )
@@ -1097,9 +1101,8 @@ namespace BrunoGUI_Stockfish
                 // case vide ou case bordure
                 return CouleurPiece;
         }
-        // Renvoie la couleur de la pièce sur la case ( 0 : vide , 1 :blanc, 2 : noire , 3 : bord )²
         public static ColorPiece CouleurCase(int IndexCase)
-        {
+        {   // Renvoie la couleur de la pièce sur la case ( 0 : vide , 1 :blanc, 2 : noire , 3 : bord )²
             if (PiecesEchiquier[IndexCase] == TypePiece.Bordure)
                 // on est en dehors du plateau de jeu ( sur la bordure )
                 return ColorPiece.BordPlateau;
@@ -1110,10 +1113,9 @@ namespace BrunoGUI_Stockfish
                 // on est sur une case avec une pièce noire ou blanche
                 return (int)PiecesEchiquier[IndexCase] % 2 == 0 ? ColorPiece.Noir : ColorPiece.Blanc;
         }
-        // Vérifie si le déplacement correspond à un roque 
-        // Renvoie le roque correspondant ou pas de roque
         private static FlagMouvementRoque TestSiRoque(int IndexSource, int IndexDestination)
-        {
+        {   // Vérifie si le déplacement correspond à un roque 
+            // Renvoie le roque correspondant ou pas de roque
             if (IndexSource == 25 && PiecesEchiquier[IndexSource] == TypePiece.RoiBlanc) // case e1 ( roi blanc )
             {
                 if (IndexDestination == 27)
@@ -1130,14 +1132,12 @@ namespace BrunoGUI_Stockfish
             }
             return FlagMouvementRoque.PasDeRoque;
         }
-        // Cherche la case contenant le roi
         private static string PositionRoi(TypePiece Roi)
-        {
+        {   // Cherche la case contenant le roi
             return NomCaseAlgebrique(PiecesEchiquier.FindIndex(p => p == Roi));
         }
-        // Déplacements du roi avec gestion des roques mais sans vérifier les échecs
         private static List<string> MouvementsRoi(int IndexCase)
-        {
+        {   // Déplacements du roi avec gestion des roques mais sans vérifier les échecs
             List<string> MouvementsDuRoi = MouvementsReine(IndexCase); // 8 déplacements, comme la reine mais d'une seule case )
             // on traite les 2 petits roques
             if ((IndexCase == 25 && StatutRoque.HasFlag(FlagEnableRoque.RoqueBlanc)) || (IndexCase == 95 && StatutRoque.HasFlag(FlagEnableRoque.RoqueNoir)))
@@ -1149,9 +1149,8 @@ namespace BrunoGUI_Stockfish
                     AjouteMouvements(IndexCase, -2, MouvementsDuRoi);
             return MouvementsDuRoi;
         }
-        // Déplace le roi et la tour pour un roque donné sous forme d'un char du champ FEN
         private static string MouvementsPourRoque(FlagMouvementRoque roque)
-        {
+        {   // Déplace le roi et la tour pour un roque donné sous forme d'un char du champ FEN
             IndexCaseEnPassant = 0;
             SansPrise++;
             switch (roque)
@@ -1184,9 +1183,8 @@ namespace BrunoGUI_Stockfish
                     return string.Empty;
             }
         }
-        // Promotion d'un pion ( retourne si le roi adverse est en échec )
         private static bool TestEchecPromotionPion(int IndexCasePromotion, TypePiece Roi)
-        {
+        {   // Promotion d'un pion ( retourne si le roi adverse est en échec )
             List<string> MouvementsPiecePromue = RetourneMouvements(NomCaseAlgebrique(IndexCasePromotion));
             if (MouvementsPiecePromue.Count > 0)
                 // true si le roi est menacé
@@ -1194,9 +1192,8 @@ namespace BrunoGUI_Stockfish
             else
                 return false;
         }
-        // Déplacement du pion
         private static List<string> MouvementsPion(int IndexCase)
-        {
+        {   // Déplacement du pion
             List<string> MouvementsDuPion = new List<string>();
             switch (PiecesEchiquier[IndexCase])
             {
@@ -1219,9 +1216,8 @@ namespace BrunoGUI_Stockfish
             }
             return MouvementsDuPion;
         }
-        // Ajoute une prise en vérifiant que la case de destination est prenable  
         private static void AjoutePrise(int IndexSource, int IndexDestination, List<string> Mouvements)
-        {
+        {   // Ajoute une prise en vérifiant que la case de destination est prenable  
             if (CouleurCase(IndexDestination) == CouleurAdversaireCase(IndexSource))
                 Mouvements.Add("x" + NomCaseAlgebrique(IndexDestination));
             // si la pièce de départ est de la couleur de celui qui doit jouer pour la prise en passant avec un pion
@@ -1232,10 +1228,9 @@ namespace BrunoGUI_Stockfish
         {   // si on arrive sur la case en passant et si c'est un pion blanc ou noir
             return IndexCaseEnPassant == IndexDestination && (PiecesEchiquier[IndexSource] == TypePiece.PionBlanc || PiecesEchiquier[IndexSource] == TypePiece.PionNoir);
         }
-        // Enlève le pion adverse dans un mouvement en passant
-        // On teste en même temps si un second pion peut faire la même prise en passant
         private static void MouvementsEnPassant(int IndexSource)
-        {
+        {   // Enlève le pion adverse dans un mouvement en passant
+            // On teste en même temps si un second pion peut faire la même prise en passant
             int indexCasePion;
             int colonne = IndexSource % 10;
             int ligne = (IndexSource / 10) - 1;

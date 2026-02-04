@@ -1,16 +1,24 @@
-﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_Stockfish est développé par Bruno COURTOIS.  Copyright © 2024 █
-// █ BrunoGUI_Stockfish est gratuit, sauf s'il est utilisé commercialement  █
-// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII est développé par Bruno COURTOIS.  Copyright © 2025 █
+// █ BrunoGUI_GenII est gratuit, sauf s'il est utilisé commercialement  █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+
+// Fenêtre d'édition des paramètres base de Stockfish ...
+// └─ Classe "ParametresDeBase" 
+//              ├─ "ParametresDeBase"     (Init)
+//              ├─ "BaseBoutonOk_Click"
+//              ├─ "BaseBoutonAnnuler_Click"  
+//              └─ "ParametresDeBase_FormClosing"
+
 using System;
 using System.Windows.Forms;
 
-namespace BrunoGUI_Stockfish
+namespace BrunoGUI_GenII
 {
     public partial class ParametresDeBase : Form
     {
-        private BrunoInterfaceGraphique interfaceGraphique;     // Stocke la référence de la classe principale
-        public ParametresDeBase(BrunoInterfaceGraphique brunoigInstance)
+        private readonly EchiquierPrincipal interfaceGraphique;     // Stocke la référence de la classe principale
+        public ParametresDeBase(EchiquierPrincipal brunoigInstance)
         {
             InitializeComponent();
             interfaceGraphique = brunoigInstance;
@@ -19,10 +27,10 @@ namespace BrunoGUI_Stockfish
         private void BaseBoutonOk_Click(object sender, EventArgs e)
         {
             PartieForceModule maNouvellePartieForceModule = new PartieForceModule();
-            MonoMoteurUci.DefinitLimiteElo(baseEloNumerique.Value.ToString());
-            MonoMoteurUci.StandardInputDataToUci("setoption name Threads value " + (int)baseThreadsNumerique.Value);
-            MonoMoteurUci.StandardInputDataToUci("setoption name MultiPV value " + (int)baseMultipvNumerique.Value);
-            maNouvellePartieForceModule.DureeReflexionSeconde = ((int)baseReflexionNumerique.Value) * 1000;
+            MoteurUci.DefinitLimiteElo(baseEloNumerique.Value.ToString());
+            MoteurUci.StandardInputDataToUci("setoption name Threads value " + (int)baseThreadsNumerique.Value);
+            MoteurUci.StandardInputDataToUci("setoption name MultiPV value " + (int)baseMultipvNumerique.Value);
+            maNouvellePartieForceModule.DureeReflexionSeconde = interfaceGraphique.TrackBarTempsReflexion.Value = ((int)baseReflexionNumerique.Value);
             if (interfaceGraphique.OrdinateurJoueNoir)
                 interfaceGraphique.PartieEnCours.BlackElo = interfaceGraphique.EloNoir.Text = baseEloNumerique.Value.ToString();
             else
@@ -31,7 +39,7 @@ namespace BrunoGUI_Stockfish
             this.Hide();
         }
         private void BaseBoutonAnnuler_Click(object sender, EventArgs e)
-        {
+        {   // Le formulaire ne se ferme jamais, même si l’utilisateur clique sur la croix. Il est simplement caché.
             this.DialogResult = DialogResult.Cancel;
             this.Hide();
         }
