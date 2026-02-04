@@ -1,11 +1,21 @@
-﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_Stockfish est développé par Bruno COURTOIS.  Copyright © 2024 █
-// █ BrunoGUI_Stockfish est gratuit, sauf s'il est utilisé commercialement  █
-// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII est développé par Bruno COURTOIS.  Copyright © 2025 █
+// █ BrunoGUI_GenII est gratuit, sauf s'il est utilisé commercialement  █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+
+// Fenêtre d'édition de tous les paramètres de Stockfish ...
+// └─ Classe "ParametresUciStockfish" 
+//              ├─ "ParametresUciStockfish"     (Init)
+//              ├─ "ParametresUciStockfish_Load"
+//              ├─ "ClearHashButton_Click"  
+//              ├─ "ParametresFermer_Click"  
+//              └─ "ParametresUciStockfish_FormClosing"
+
+
 using System;
 using System.Windows.Forms;
 
-namespace BrunoGUI_Stockfish
+namespace BrunoGUI_GenII
 {
     public partial class ParametresUciStockfish : Form
     {
@@ -18,21 +28,21 @@ namespace BrunoGUI_Stockfish
         }
         private void ParametresUciStockfish_Load(object sender, EventArgs e)
         {   // Affichage des paramêtres dans la console
-            MonoMoteurUci.StandardInputDataToUci("uci");
+            MoteurUci.StandardInputDataToUci("uci");
         } 
         private void ClearHashButton_Click(object sender, EventArgs e)
         {   // Traitement du bouton de vidage des hash tables
-            MonoMoteurUci.StandardInputDataToUci("setoption name Clear Hash");
+            MoteurUci.StandardInputDataToUci("setoption name Clear Hash");
         }
         private void ParametresFermer_Click(object sender, EventArgs e)
         {   // Passage au moteur des paramètres sélectionnés 
-            MonoMoteurUci.StandardInputDataToUci("setoption name Ponder " + (bool)checkBoxPonder.Checked);
-            MonoMoteurUci.StandardInputDataToUci("setoption name Threads value " + (int)ThreadsUpDown.Value);
-            MonoMoteurUci.StandardInputDataToUci("setoption name Hash value " + (int)HashSizeUpDown.Value);
-            MonoMoteurUci.StandardInputDataToUci("setoption name MultiPV value " + (int)MultiPVUpDown.Value);
-            MonoMoteurUci.StandardInputDataToUci("setoption name Skill Level value " + (int)SkillLevelUpDown.Value);
-            MonoMoteurUci.StandardInputDataToUci("setoption name Move Overhead value " + (int)MoveOverheadUpDown.Value);
-            MonoMoteurUci.StandardInputDataToUci("setoption name nodestime value " + (int)NodesTimeUpDown.Value);
+            MoteurUci.StandardInputDataToUci("setoption name Ponder " + (bool)checkBoxPonder.Checked);
+            MoteurUci.StandardInputDataToUci("setoption name Threads value " + (int)ThreadsUpDown.Value);
+            MoteurUci.StandardInputDataToUci("setoption name Hash value " + (int)HashSizeUpDown.Value);
+            MoteurUci.StandardInputDataToUci("setoption name MultiPV value " + (int)MultiPVUpDown.Value);
+            MoteurUci.StandardInputDataToUci("setoption name Skill Level value " + (int)SkillLevelUpDown.Value);
+            MoteurUci.StandardInputDataToUci("setoption name Move Overhead value " + (int)MoveOverheadUpDown.Value);
+            MoteurUci.StandardInputDataToUci("setoption name nodestime value " + (int)NodesTimeUpDown.Value);
             this.Hide();
         }
         private void ParametresUciStockfish_FormClosing(object sender, FormClosingEventArgs e)

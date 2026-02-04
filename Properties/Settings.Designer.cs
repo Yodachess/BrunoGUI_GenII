@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace BrunoGUI_Stockfish.Properties
+namespace BrunoGUI_GenII.Properties
 {
 
 

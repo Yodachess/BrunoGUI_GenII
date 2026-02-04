@@ -1,4 +1,4 @@
-﻿namespace BrunoGUI_Stockfish
+﻿namespace BrunoGUI_GenII
 {
     partial class FenetrePartie
     {
@@ -29,217 +29,226 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FenetrePartie));
-            this.FeuillePartie = new System.Windows.Forms.DataGridView();
-            this.FermeFeuillePartie = new Krypton.Toolkit.KryptonButton();
-            this.LblJoueurBlanc = new System.Windows.Forms.Label();
-            this.LblEloBlanc = new System.Windows.Forms.Label();
-            this.LblJoueurNoir = new System.Windows.Forms.Label();
-            this.LblEloNoir = new System.Windows.Forms.Label();
-            this.gourpeBoutons = new System.Windows.Forms.GroupBox();
-            this.BoutonFin = new System.Windows.Forms.Button();
-            this.BoutonGauche = new System.Windows.Forms.Button();
-            this.BoutonDroit = new System.Windows.Forms.Button();
-            this.BoutonDebut = new System.Windows.Forms.Button();
-            this.NumeroLigneColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.BlancsColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.NoirsColumn3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            ((System.ComponentModel.ISupportInitialize)(this.FeuillePartie)).BeginInit();
-            this.gourpeBoutons.SuspendLayout();
-            this.SuspendLayout();
+            FeuillePartie = new System.Windows.Forms.DataGridView();
+            NumeroLigneColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            BlancsColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            NoirsColumn3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            FermeFeuillePartie = new Krypton.Toolkit.KryptonButton();
+            LblJoueurBlanc = new System.Windows.Forms.Label();
+            LblEloBlanc = new System.Windows.Forms.Label();
+            LblJoueurNoir = new System.Windows.Forms.Label();
+            LblEloNoir = new System.Windows.Forms.Label();
+            gourpeBoutons = new System.Windows.Forms.GroupBox();
+            BoutonFin = new System.Windows.Forms.Button();
+            BoutonGauche = new System.Windows.Forms.Button();
+            BoutonDroit = new System.Windows.Forms.Button();
+            BoutonDebut = new System.Windows.Forms.Button();
+            ((System.ComponentModel.ISupportInitialize)FeuillePartie).BeginInit();
+            gourpeBoutons.SuspendLayout();
+            SuspendLayout();
             // 
             // FeuillePartie
             // 
-            this.FeuillePartie.AllowUserToAddRows = false;
-            this.FeuillePartie.AllowUserToResizeColumns = false;
-            this.FeuillePartie.BackgroundColor = System.Drawing.Color.LightSteelBlue;
-            this.FeuillePartie.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.FeuillePartie.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.FeuillePartie.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.NumeroLigneColumn1,
-            this.BlancsColumn2,
-            this.NoirsColumn3});
-            this.FeuillePartie.Location = new System.Drawing.Point(10, 60);
-            this.FeuillePartie.Name = "FeuillePartie";
-            this.FeuillePartie.RowHeadersVisible = false;
-            this.FeuillePartie.RowTemplate.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.FeuillePartie.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.FeuillePartie.Size = new System.Drawing.Size(213, 527);
-            this.FeuillePartie.TabIndex = 0;
-            // 
-            // FermeFeuillePartie
-            // 
-            this.FermeFeuillePartie.Location = new System.Drawing.Point(68, 649);
-            this.FermeFeuillePartie.Name = "FermeFeuillePartie";
-            this.FermeFeuillePartie.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365BlueDarkMode;
-            this.FermeFeuillePartie.Size = new System.Drawing.Size(90, 25);
-            this.FermeFeuillePartie.StateCommon.Border.Color1 = System.Drawing.Color.Gray;
-            this.FermeFeuillePartie.StateCommon.Border.DrawBorders = ((Krypton.Toolkit.PaletteDrawBorders)((((Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom) 
-            | Krypton.Toolkit.PaletteDrawBorders.Left) 
-            | Krypton.Toolkit.PaletteDrawBorders.Right)));
-            this.FermeFeuillePartie.StateCommon.Border.Rounding = 20F;
-            this.FermeFeuillePartie.StateCommon.Border.Width = 3;
-            this.FermeFeuillePartie.StateCommon.Content.ShortText.Color1 = System.Drawing.Color.Black;
-            this.FermeFeuillePartie.TabIndex = 1;
-            this.FermeFeuillePartie.Values.Text = "Fermer";
-            this.FermeFeuillePartie.Click += new System.EventHandler(this.FermeFeuillePartie_Click);
-            // 
-            // LblJoueurBlanc
-            // 
-            this.LblJoueurBlanc.BackColor = System.Drawing.Color.White;
-            this.LblJoueurBlanc.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.LblJoueurBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.LblJoueurBlanc.Location = new System.Drawing.Point(10, 33);
-            this.LblJoueurBlanc.Name = "LblJoueurBlanc";
-            this.LblJoueurBlanc.Size = new System.Drawing.Size(128, 20);
-            this.LblJoueurBlanc.TabIndex = 3;
-            this.LblJoueurBlanc.Text = "Joueur Blanc";
-            this.LblJoueurBlanc.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // LblEloBlanc
-            // 
-            this.LblEloBlanc.BackColor = System.Drawing.Color.White;
-            this.LblEloBlanc.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.LblEloBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.LblEloBlanc.Location = new System.Drawing.Point(147, 33);
-            this.LblEloBlanc.Name = "LblEloBlanc";
-            this.LblEloBlanc.Size = new System.Drawing.Size(75, 20);
-            this.LblEloBlanc.TabIndex = 2;
-            this.LblEloBlanc.Text = "Elo Blanc";
-            this.LblEloBlanc.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // LblJoueurNoir
-            // 
-            this.LblJoueurNoir.BackColor = System.Drawing.Color.Black;
-            this.LblJoueurNoir.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.LblJoueurNoir.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.LblJoueurNoir.ForeColor = System.Drawing.Color.White;
-            this.LblJoueurNoir.Location = new System.Drawing.Point(10, 10);
-            this.LblJoueurNoir.Name = "LblJoueurNoir";
-            this.LblJoueurNoir.Size = new System.Drawing.Size(128, 20);
-            this.LblJoueurNoir.TabIndex = 5;
-            this.LblJoueurNoir.Text = "Joueur Noir";
-            this.LblJoueurNoir.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // LblEloNoir
-            // 
-            this.LblEloNoir.BackColor = System.Drawing.Color.Black;
-            this.LblEloNoir.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.LblEloNoir.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.LblEloNoir.ForeColor = System.Drawing.Color.White;
-            this.LblEloNoir.Location = new System.Drawing.Point(147, 10);
-            this.LblEloNoir.Name = "LblEloNoir";
-            this.LblEloNoir.Size = new System.Drawing.Size(75, 20);
-            this.LblEloNoir.TabIndex = 4;
-            this.LblEloNoir.Text = "Elo Noir";
-            this.LblEloNoir.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // gourpeBoutons
-            // 
-            this.gourpeBoutons.BackColor = System.Drawing.Color.LightGray;
-            this.gourpeBoutons.Controls.Add(this.BoutonFin);
-            this.gourpeBoutons.Controls.Add(this.BoutonGauche);
-            this.gourpeBoutons.Controls.Add(this.BoutonDroit);
-            this.gourpeBoutons.Controls.Add(this.BoutonDebut);
-            this.gourpeBoutons.Location = new System.Drawing.Point(32, 594);
-            this.gourpeBoutons.Name = "gourpeBoutons";
-            this.gourpeBoutons.Size = new System.Drawing.Size(164, 49);
-            this.gourpeBoutons.TabIndex = 6;
-            this.gourpeBoutons.TabStop = false;
-            this.gourpeBoutons.Text = "Parcours de la partie";
-            // 
-            // BoutonFin
-            // 
-            this.BoutonFin.BackColor = System.Drawing.Color.Silver;
-            this.BoutonFin.FlatAppearance.BorderColor = System.Drawing.Color.White;
-            this.BoutonFin.FlatAppearance.BorderSize = 3;
-            this.BoutonFin.Image = ((System.Drawing.Image)(resources.GetObject("BoutonFin.Image")));
-            this.BoutonFin.Location = new System.Drawing.Point(121, 13);
-            this.BoutonFin.Name = "BoutonFin";
-            this.BoutonFin.Size = new System.Drawing.Size(32, 30);
-            this.BoutonFin.TabIndex = 3;
-            this.BoutonFin.UseVisualStyleBackColor = true;
-            this.BoutonFin.Click += new System.EventHandler(this.BoutonFin_Click);
-            // 
-            // BoutonGauche
-            // 
-            this.BoutonGauche.BackColor = System.Drawing.Color.Silver;
-            this.BoutonGauche.FlatAppearance.BorderColor = System.Drawing.Color.White;
-            this.BoutonGauche.FlatAppearance.BorderSize = 3;
-            this.BoutonGauche.Image = ((System.Drawing.Image)(resources.GetObject("BoutonGauche.Image")));
-            this.BoutonGauche.Location = new System.Drawing.Point(45, 13);
-            this.BoutonGauche.Name = "BoutonGauche";
-            this.BoutonGauche.Size = new System.Drawing.Size(32, 30);
-            this.BoutonGauche.TabIndex = 2;
-            this.BoutonGauche.UseVisualStyleBackColor = true;
-            this.BoutonGauche.Click += new System.EventHandler(this.BoutonGauche_Click);
-            // 
-            // BoutonDroit
-            // 
-            this.BoutonDroit.BackColor = System.Drawing.Color.Silver;
-            this.BoutonDroit.FlatAppearance.BorderColor = System.Drawing.Color.White;
-            this.BoutonDroit.FlatAppearance.BorderSize = 3;
-            this.BoutonDroit.Image = ((System.Drawing.Image)(resources.GetObject("BoutonDroit.Image")));
-            this.BoutonDroit.Location = new System.Drawing.Point(83, 13);
-            this.BoutonDroit.Name = "BoutonDroit";
-            this.BoutonDroit.Size = new System.Drawing.Size(32, 30);
-            this.BoutonDroit.TabIndex = 1;
-            this.BoutonDroit.UseVisualStyleBackColor = true;
-            this.BoutonDroit.Click += new System.EventHandler(this.BoutonDroit_Click);
-            // 
-            // BoutonDebut
-            // 
-            this.BoutonDebut.BackColor = System.Drawing.Color.Silver;
-            this.BoutonDebut.FlatAppearance.BorderColor = System.Drawing.Color.White;
-            this.BoutonDebut.FlatAppearance.BorderSize = 3;
-            this.BoutonDebut.Image = ((System.Drawing.Image)(resources.GetObject("BoutonDebut.Image")));
-            this.BoutonDebut.Location = new System.Drawing.Point(7, 13);
-            this.BoutonDebut.Name = "BoutonDebut";
-            this.BoutonDebut.Size = new System.Drawing.Size(32, 30);
-            this.BoutonDebut.TabIndex = 0;
-            this.BoutonDebut.UseVisualStyleBackColor = true;
-            this.BoutonDebut.Click += new System.EventHandler(this.BoutonDebut_Click);
+            FeuillePartie.AllowUserToAddRows = false;
+            FeuillePartie.AllowUserToResizeColumns = false;
+            FeuillePartie.BackgroundColor = System.Drawing.Color.LightSteelBlue;
+            FeuillePartie.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            FeuillePartie.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            FeuillePartie.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] { NumeroLigneColumn1, BlancsColumn2, NoirsColumn3 });
+            FeuillePartie.Location = new System.Drawing.Point(12, 69);
+            FeuillePartie.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            FeuillePartie.Name = "FeuillePartie";
+            FeuillePartie.RowHeadersVisible = false;
+            FeuillePartie.RowTemplate.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            FeuillePartie.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            FeuillePartie.Size = new System.Drawing.Size(248, 608);
+            FeuillePartie.TabIndex = 0;
             // 
             // NumeroLigneColumn1
             // 
-            this.NumeroLigneColumn1.Frozen = true;
-            this.NumeroLigneColumn1.HeaderText = "N° coup";
-            this.NumeroLigneColumn1.Name = "NumeroLigneColumn1";
-            this.NumeroLigneColumn1.Width = 50;
+            NumeroLigneColumn1.Frozen = true;
+            NumeroLigneColumn1.HeaderText = "N° coup";
+            NumeroLigneColumn1.Name = "NumeroLigneColumn1";
+            NumeroLigneColumn1.Width = 50;
             // 
             // BlancsColumn2
             // 
-            this.BlancsColumn2.Frozen = true;
-            this.BlancsColumn2.HeaderText = "Blancs";
-            this.BlancsColumn2.Name = "BlancsColumn2";
-            this.BlancsColumn2.Width = 75;
+            BlancsColumn2.Frozen = true;
+            BlancsColumn2.HeaderText = "Blancs";
+            BlancsColumn2.Name = "BlancsColumn2";
+            BlancsColumn2.Width = 75;
             // 
             // NoirsColumn3
             // 
-            this.NoirsColumn3.Frozen = true;
-            this.NoirsColumn3.HeaderText = "Noirs";
-            this.NoirsColumn3.Name = "NoirsColumn3";
-            this.NoirsColumn3.Width = 75;
+            NoirsColumn3.Frozen = true;
+            NoirsColumn3.HeaderText = "Noirs";
+            NoirsColumn3.Name = "NoirsColumn3";
+            NoirsColumn3.Width = 75;
+            // 
+            // FermeFeuillePartie
+            // 
+            FermeFeuillePartie.Location = new System.Drawing.Point(79, 749);
+            FermeFeuillePartie.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            FermeFeuillePartie.Name = "FermeFeuillePartie";
+            FermeFeuillePartie.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
+            FermeFeuillePartie.Size = new System.Drawing.Size(105, 29);
+            FermeFeuillePartie.StateCommon.Border.Color1 = System.Drawing.Color.Gray;
+            FermeFeuillePartie.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
+            FermeFeuillePartie.StateCommon.Border.Rounding = 20F;
+            FermeFeuillePartie.StateCommon.Border.Width = 3;
+            FermeFeuillePartie.StateCommon.Content.ShortText.Color1 = System.Drawing.Color.Black;
+            FermeFeuillePartie.TabIndex = 1;
+            FermeFeuillePartie.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            FermeFeuillePartie.Values.Text = "Fermer";
+            FermeFeuillePartie.Click += FermeFeuillePartie_Click;
+            // 
+            // LblJoueurBlanc
+            // 
+            LblJoueurBlanc.BackColor = System.Drawing.Color.White;
+            LblJoueurBlanc.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            LblJoueurBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            LblJoueurBlanc.Location = new System.Drawing.Point(12, 38);
+            LblJoueurBlanc.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            LblJoueurBlanc.Name = "LblJoueurBlanc";
+            LblJoueurBlanc.Size = new System.Drawing.Size(149, 23);
+            LblJoueurBlanc.TabIndex = 3;
+            LblJoueurBlanc.Text = "Joueur Blanc";
+            LblJoueurBlanc.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // LblEloBlanc
+            // 
+            LblEloBlanc.BackColor = System.Drawing.Color.White;
+            LblEloBlanc.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            LblEloBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            LblEloBlanc.Location = new System.Drawing.Point(172, 38);
+            LblEloBlanc.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            LblEloBlanc.Name = "LblEloBlanc";
+            LblEloBlanc.Size = new System.Drawing.Size(88, 23);
+            LblEloBlanc.TabIndex = 2;
+            LblEloBlanc.Text = "Elo Blanc";
+            LblEloBlanc.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // LblJoueurNoir
+            // 
+            LblJoueurNoir.BackColor = System.Drawing.Color.Black;
+            LblJoueurNoir.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            LblJoueurNoir.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            LblJoueurNoir.ForeColor = System.Drawing.Color.White;
+            LblJoueurNoir.Location = new System.Drawing.Point(12, 12);
+            LblJoueurNoir.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            LblJoueurNoir.Name = "LblJoueurNoir";
+            LblJoueurNoir.Size = new System.Drawing.Size(149, 23);
+            LblJoueurNoir.TabIndex = 5;
+            LblJoueurNoir.Text = "Joueur Noir";
+            LblJoueurNoir.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // LblEloNoir
+            // 
+            LblEloNoir.BackColor = System.Drawing.Color.Black;
+            LblEloNoir.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            LblEloNoir.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            LblEloNoir.ForeColor = System.Drawing.Color.White;
+            LblEloNoir.Location = new System.Drawing.Point(172, 12);
+            LblEloNoir.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            LblEloNoir.Name = "LblEloNoir";
+            LblEloNoir.Size = new System.Drawing.Size(88, 23);
+            LblEloNoir.TabIndex = 4;
+            LblEloNoir.Text = "Elo Noir";
+            LblEloNoir.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // gourpeBoutons
+            // 
+            gourpeBoutons.BackColor = System.Drawing.Color.LightGray;
+            gourpeBoutons.Controls.Add(BoutonFin);
+            gourpeBoutons.Controls.Add(BoutonGauche);
+            gourpeBoutons.Controls.Add(BoutonDroit);
+            gourpeBoutons.Controls.Add(BoutonDebut);
+            gourpeBoutons.Location = new System.Drawing.Point(37, 685);
+            gourpeBoutons.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            gourpeBoutons.Name = "gourpeBoutons";
+            gourpeBoutons.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            gourpeBoutons.Size = new System.Drawing.Size(191, 57);
+            gourpeBoutons.TabIndex = 6;
+            gourpeBoutons.TabStop = false;
+            gourpeBoutons.Text = "Parcours de la partie";
+            // 
+            // BoutonFin
+            // 
+            BoutonFin.BackColor = System.Drawing.Color.Silver;
+            BoutonFin.FlatAppearance.BorderColor = System.Drawing.Color.White;
+            BoutonFin.FlatAppearance.BorderSize = 3;
+            BoutonFin.Image = (System.Drawing.Image)resources.GetObject("BoutonFin.Image");
+            BoutonFin.Location = new System.Drawing.Point(141, 15);
+            BoutonFin.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            BoutonFin.Name = "BoutonFin";
+            BoutonFin.Size = new System.Drawing.Size(37, 35);
+            BoutonFin.TabIndex = 3;
+            BoutonFin.UseVisualStyleBackColor = true;
+            BoutonFin.Click += BoutonFin_Click;
+            // 
+            // BoutonGauche
+            // 
+            BoutonGauche.BackColor = System.Drawing.Color.Silver;
+            BoutonGauche.FlatAppearance.BorderColor = System.Drawing.Color.White;
+            BoutonGauche.FlatAppearance.BorderSize = 3;
+            BoutonGauche.Image = (System.Drawing.Image)resources.GetObject("BoutonGauche.Image");
+            BoutonGauche.Location = new System.Drawing.Point(52, 15);
+            BoutonGauche.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            BoutonGauche.Name = "BoutonGauche";
+            BoutonGauche.Size = new System.Drawing.Size(37, 35);
+            BoutonGauche.TabIndex = 2;
+            BoutonGauche.UseVisualStyleBackColor = true;
+            BoutonGauche.Click += BoutonGauche_Click;
+            // 
+            // BoutonDroit
+            // 
+            BoutonDroit.BackColor = System.Drawing.Color.Silver;
+            BoutonDroit.FlatAppearance.BorderColor = System.Drawing.Color.White;
+            BoutonDroit.FlatAppearance.BorderSize = 3;
+            BoutonDroit.Image = (System.Drawing.Image)resources.GetObject("BoutonDroit.Image");
+            BoutonDroit.Location = new System.Drawing.Point(97, 15);
+            BoutonDroit.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            BoutonDroit.Name = "BoutonDroit";
+            BoutonDroit.Size = new System.Drawing.Size(37, 35);
+            BoutonDroit.TabIndex = 1;
+            BoutonDroit.UseVisualStyleBackColor = true;
+            BoutonDroit.Click += BoutonDroit_Click;
+            // 
+            // BoutonDebut
+            // 
+            BoutonDebut.BackColor = System.Drawing.Color.Silver;
+            BoutonDebut.FlatAppearance.BorderColor = System.Drawing.Color.White;
+            BoutonDebut.FlatAppearance.BorderSize = 3;
+            BoutonDebut.Image = (System.Drawing.Image)resources.GetObject("BoutonDebut.Image");
+            BoutonDebut.Location = new System.Drawing.Point(8, 15);
+            BoutonDebut.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            BoutonDebut.Name = "BoutonDebut";
+            BoutonDebut.Size = new System.Drawing.Size(37, 35);
+            BoutonDebut.TabIndex = 0;
+            BoutonDebut.UseVisualStyleBackColor = true;
+            BoutonDebut.Click += BoutonDebut_Click;
             // 
             // FenetrePartie
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(232, 678);
-            this.Controls.Add(this.gourpeBoutons);
-            this.Controls.Add(this.LblJoueurNoir);
-            this.Controls.Add(this.LblEloNoir);
-            this.Controls.Add(this.LblJoueurBlanc);
-            this.Controls.Add(this.LblEloBlanc);
-            this.Controls.Add(this.FermeFeuillePartie);
-            this.Controls.Add(this.FeuillePartie);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Name = "FenetrePartie";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Fenetre Partie";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FenetrePartie_FormClosing);
-            ((System.ComponentModel.ISupportInitialize)(this.FeuillePartie)).EndInit();
-            this.gourpeBoutons.ResumeLayout(false);
-            this.ResumeLayout(false);
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            ClientSize = new System.Drawing.Size(271, 782);
+            Controls.Add(gourpeBoutons);
+            Controls.Add(LblJoueurNoir);
+            Controls.Add(LblEloNoir);
+            Controls.Add(LblJoueurBlanc);
+            Controls.Add(LblEloBlanc);
+            Controls.Add(FermeFeuillePartie);
+            Controls.Add(FeuillePartie);
+            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
+            Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            Name = "FenetrePartie";
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            Text = "Fenetre Partie";
+            FormClosing += FenetrePartie_FormClosing;
+            ((System.ComponentModel.ISupportInitialize)FeuillePartie).EndInit();
+            gourpeBoutons.ResumeLayout(false);
+            ResumeLayout(false);
 
         }
 

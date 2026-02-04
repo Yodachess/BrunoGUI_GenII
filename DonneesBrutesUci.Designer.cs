@@ -1,4 +1,4 @@
-﻿namespace BrunoGUI_Stockfish
+﻿namespace BrunoGUI_GenII
 {
     partial class DonneesBrutesUci
     {
@@ -29,30 +29,33 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DonneesBrutesUci));
-            this.DonneesBrutesVue = new System.Windows.Forms.RichTextBox();
-            this.SuspendLayout();
+            DonneesBrutesVue = new System.Windows.Forms.RichTextBox();
+            SuspendLayout();
             // 
             // DonneesBrutesVue
             // 
-            this.DonneesBrutesVue.BackColor = System.Drawing.Color.LightSteelBlue;
-            this.DonneesBrutesVue.ForeColor = System.Drawing.Color.DarkBlue;
-            this.DonneesBrutesVue.Location = new System.Drawing.Point(0, 4);
-            this.DonneesBrutesVue.Name = "DonneesBrutesVue";
-            this.DonneesBrutesVue.Size = new System.Drawing.Size(1218, 337);
-            this.DonneesBrutesVue.TabIndex = 0;
-            this.DonneesBrutesVue.Text = "";
+            DonneesBrutesVue.BackColor = System.Drawing.Color.Silver;
+            DonneesBrutesVue.ForeColor = System.Drawing.Color.DarkBlue;
+            DonneesBrutesVue.Location = new System.Drawing.Point(0, 5);
+            DonneesBrutesVue.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            DonneesBrutesVue.Name = "DonneesBrutesVue";
+            DonneesBrutesVue.Size = new System.Drawing.Size(1420, 388);
+            DonneesBrutesVue.TabIndex = 0;
+            DonneesBrutesVue.Text = "";
             // 
             // DonneesBrutesUci
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1220, 342);
-            this.Controls.Add(this.DonneesBrutesVue);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Name = "DonneesBrutesUci";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Donnees Brutes protocole Uci";
-            this.ResumeLayout(false);
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            BackColor = System.Drawing.SystemColors.ActiveCaption;
+            ClientSize = new System.Drawing.Size(1423, 395);
+            Controls.Add(DonneesBrutesVue);
+            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
+            Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            Name = "DonneesBrutesUci";
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            Text = "Donnees Brutes protocole Uci";
+            ResumeLayout(false);
 
         }
 

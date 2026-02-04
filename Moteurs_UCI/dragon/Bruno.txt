@@ -1,0 +1,3 @@
+Créé en 2007 par Don Dailey et Larry Kaufman, deux grands noms des échecs informatiques, Komodo a gravi rapidement les échelons jusqu'à aujourd'hui sans jamais quitter le peloton de tête des plus forts moteurs d'échecs du monde. En 2021 Komodo a intégré la nouvelle technologie NNUE et a donné naissance à une nouvelle lignée : Dragon by Komodo, qui affiche en octobre 2023 plus de 3500, à quelques petits points Elo derrière Stockfish et ShashChess.
+Komodo et Dragon sont des moteurs équilibrés entre stratégie positionnelle et capacités tactiques. Moyennement forts en calcul, mais soutenus par une connaissance aiguë de la position, ils offrent un jeu très solide et qui reste d'apparence humaine.
+https://komodochess.com/

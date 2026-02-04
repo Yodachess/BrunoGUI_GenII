@@ -1,0 +1,4 @@
+Leela Chess Zero, parfois abégé en LCZero ou lc0, est un moteur d'échecs neuronal libre et open source pour PC. Le développement a été notamment mené par Gary Linscott, qui est aussi un développeur du programme Stockfish. 
+Comme Leela Zero et AlphaGo Zero, Leela Chess Zero ne connaît que les règles et rien d'autre4. Leela Chess Zero est entraîné sur un site web dédié. En août 2018, il avait ainsi joué contre lui-même plus de 23 millions de parties.
+En février 2019, Leela Chess Zero remporte son premier tournoi majeur en battant Houdini lors de la deuxième coupe TCEC en ne perdant aucune partie du tournoi.
+https://lczero.org/

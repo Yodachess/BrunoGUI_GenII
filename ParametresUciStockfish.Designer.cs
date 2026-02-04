@@ -1,4 +1,4 @@
-﻿namespace BrunoGUI_Stockfish
+﻿namespace BrunoGUI_GenII
 {
     partial class ParametresUciStockfish
     {
@@ -29,641 +29,597 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ParametresUciStockfish));
-            this.labelDebugLogFile = new System.Windows.Forms.Label();
-            this.labelNumaPolicy = new System.Windows.Forms.Label();
-            this.labelThreads = new System.Windows.Forms.Label();
-            this.labelHash = new System.Windows.Forms.Label();
-            this.labelPonder = new System.Windows.Forms.Label();
-            this.labelMultiPV = new System.Windows.Forms.Label();
-            this.labelSkillLevel = new System.Windows.Forms.Label();
-            this.labelMoveOverhead = new System.Windows.Forms.Label();
-            this.labelNodesTime = new System.Windows.Forms.Label();
-            this.labelUCI_Chess960 = new System.Windows.Forms.Label();
-            this.labelClearHash = new System.Windows.Forms.Label();
-            this.labelUCI_LimitStrength = new System.Windows.Forms.Label();
-            this.labelUCI_ELO = new System.Windows.Forms.Label();
-            this.labelUCI_ShowWDL = new System.Windows.Forms.Label();
-            this.labelSyzygyPath = new System.Windows.Forms.Label();
-            this.labelSyzygyProbeDepth = new System.Windows.Forms.Label();
-            this.labelSyzygy50MoveRule = new System.Windows.Forms.Label();
-            this.labelSyzygyProbeLimit = new System.Windows.Forms.Label();
-            this.labelEvalFile = new System.Windows.Forms.Label();
-            this.labelEvalFileSmall = new System.Windows.Forms.Label();
-            this.checkBoxPonder = new System.Windows.Forms.CheckBox();
-            this.checkBox1 = new System.Windows.Forms.CheckBox();
-            this.checkBox2 = new System.Windows.Forms.CheckBox();
-            this.checkBox3 = new System.Windows.Forms.CheckBox();
-            this.checkBox4 = new System.Windows.Forms.CheckBox();
-            this.ThreadsUpDown = new System.Windows.Forms.NumericUpDown();
-            this.HashSizeUpDown = new System.Windows.Forms.NumericUpDown();
-            this.MultiPVUpDown = new System.Windows.Forms.NumericUpDown();
-            this.SkillLevelUpDown = new System.Windows.Forms.NumericUpDown();
-            this.MoveOverheadUpDown = new System.Windows.Forms.NumericUpDown();
-            this.NodesTimeUpDown = new System.Windows.Forms.NumericUpDown();
-            this.UciEloUpDown = new System.Windows.Forms.NumericUpDown();
-            this.SyzygyProbeDepthUpDown = new System.Windows.Forms.NumericUpDown();
-            this.SyzygyProbeLimitUpDown = new System.Windows.Forms.NumericUpDown();
-            this.NumaPolicyTextBox = new System.Windows.Forms.RichTextBox();
-            this.richTextBox1 = new System.Windows.Forms.RichTextBox();
-            this.richTextBox2 = new System.Windows.Forms.RichTextBox();
-            this.richTextBox3 = new System.Windows.Forms.RichTextBox();
-            this.richTextBox4 = new System.Windows.Forms.RichTextBox();
-            this.ClearHashButton = new Krypton.Toolkit.KryptonButton();
-            this.ParametresFermer = new Krypton.Toolkit.KryptonButton();
-            ((System.ComponentModel.ISupportInitialize)(this.ThreadsUpDown)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.HashSizeUpDown)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.MultiPVUpDown)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.SkillLevelUpDown)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.MoveOverheadUpDown)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.NodesTimeUpDown)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.UciEloUpDown)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.SyzygyProbeDepthUpDown)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.SyzygyProbeLimitUpDown)).BeginInit();
-            this.SuspendLayout();
+            labelDebugLogFile = new System.Windows.Forms.Label();
+            labelNumaPolicy = new System.Windows.Forms.Label();
+            labelThreads = new System.Windows.Forms.Label();
+            labelHash = new System.Windows.Forms.Label();
+            labelPonder = new System.Windows.Forms.Label();
+            labelMultiPV = new System.Windows.Forms.Label();
+            labelSkillLevel = new System.Windows.Forms.Label();
+            labelMoveOverhead = new System.Windows.Forms.Label();
+            labelNodesTime = new System.Windows.Forms.Label();
+            labelUCI_Chess960 = new System.Windows.Forms.Label();
+            labelClearHash = new System.Windows.Forms.Label();
+            labelUCI_LimitStrength = new System.Windows.Forms.Label();
+            labelUCI_ELO = new System.Windows.Forms.Label();
+            labelUCI_ShowWDL = new System.Windows.Forms.Label();
+            labelSyzygyPath = new System.Windows.Forms.Label();
+            labelSyzygyProbeDepth = new System.Windows.Forms.Label();
+            labelSyzygy50MoveRule = new System.Windows.Forms.Label();
+            labelSyzygyProbeLimit = new System.Windows.Forms.Label();
+            labelEvalFile = new System.Windows.Forms.Label();
+            labelEvalFileSmall = new System.Windows.Forms.Label();
+            checkBoxPonder = new System.Windows.Forms.CheckBox();
+            checkBox1 = new System.Windows.Forms.CheckBox();
+            checkBox2 = new System.Windows.Forms.CheckBox();
+            checkBox3 = new System.Windows.Forms.CheckBox();
+            checkBox4 = new System.Windows.Forms.CheckBox();
+            ThreadsUpDown = new System.Windows.Forms.NumericUpDown();
+            HashSizeUpDown = new System.Windows.Forms.NumericUpDown();
+            MultiPVUpDown = new System.Windows.Forms.NumericUpDown();
+            SkillLevelUpDown = new System.Windows.Forms.NumericUpDown();
+            MoveOverheadUpDown = new System.Windows.Forms.NumericUpDown();
+            NodesTimeUpDown = new System.Windows.Forms.NumericUpDown();
+            UciEloUpDown = new System.Windows.Forms.NumericUpDown();
+            SyzygyProbeDepthUpDown = new System.Windows.Forms.NumericUpDown();
+            SyzygyProbeLimitUpDown = new System.Windows.Forms.NumericUpDown();
+            NumaPolicyTextBox = new System.Windows.Forms.RichTextBox();
+            richTextBox1 = new System.Windows.Forms.RichTextBox();
+            richTextBox2 = new System.Windows.Forms.RichTextBox();
+            richTextBox3 = new System.Windows.Forms.RichTextBox();
+            richTextBox4 = new System.Windows.Forms.RichTextBox();
+            ClearHashButton = new Krypton.Toolkit.KryptonButton();
+            ParametresFermer = new Krypton.Toolkit.KryptonButton();
+            ((System.ComponentModel.ISupportInitialize)ThreadsUpDown).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)HashSizeUpDown).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)MultiPVUpDown).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)SkillLevelUpDown).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)MoveOverheadUpDown).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)NodesTimeUpDown).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)UciEloUpDown).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)SyzygyProbeDepthUpDown).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)SyzygyProbeLimitUpDown).BeginInit();
+            SuspendLayout();
             // 
             // labelDebugLogFile
             // 
-            this.labelDebugLogFile.BackColor = System.Drawing.Color.Lavender;
-            this.labelDebugLogFile.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelDebugLogFile.Location = new System.Drawing.Point(10, 10);
-            this.labelDebugLogFile.Name = "labelDebugLogFile";
-            this.labelDebugLogFile.Size = new System.Drawing.Size(180, 20);
-            this.labelDebugLogFile.TabIndex = 0;
-            this.labelDebugLogFile.Text = "Debug Log ";
-            this.labelDebugLogFile.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            labelDebugLogFile.BackColor = System.Drawing.Color.Lavender;
+            labelDebugLogFile.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelDebugLogFile.Location = new System.Drawing.Point(12, 12);
+            labelDebugLogFile.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelDebugLogFile.Name = "labelDebugLogFile";
+            labelDebugLogFile.Size = new System.Drawing.Size(210, 23);
+            labelDebugLogFile.TabIndex = 0;
+            labelDebugLogFile.Text = "Debug Log ";
+            labelDebugLogFile.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // labelNumaPolicy
             // 
-            this.labelNumaPolicy.BackColor = System.Drawing.Color.Lavender;
-            this.labelNumaPolicy.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelNumaPolicy.Location = new System.Drawing.Point(350, 10);
-            this.labelNumaPolicy.Name = "labelNumaPolicy";
-            this.labelNumaPolicy.Size = new System.Drawing.Size(180, 20);
-            this.labelNumaPolicy.TabIndex = 1;
-            this.labelNumaPolicy.Text = "Numa Policy ";
-            this.labelNumaPolicy.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            labelNumaPolicy.BackColor = System.Drawing.Color.Lavender;
+            labelNumaPolicy.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelNumaPolicy.Location = new System.Drawing.Point(408, 12);
+            labelNumaPolicy.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelNumaPolicy.Name = "labelNumaPolicy";
+            labelNumaPolicy.Size = new System.Drawing.Size(210, 23);
+            labelNumaPolicy.TabIndex = 1;
+            labelNumaPolicy.Text = "Numa Policy ";
+            labelNumaPolicy.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // labelThreads
             // 
-            this.labelThreads.BackColor = System.Drawing.Color.Lavender;
-            this.labelThreads.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelThreads.Location = new System.Drawing.Point(10, 35);
-            this.labelThreads.Name = "labelThreads";
-            this.labelThreads.Size = new System.Drawing.Size(180, 20);
-            this.labelThreads.TabIndex = 2;
-            this.labelThreads.Text = "Threads (1 à 1024)";
-            this.labelThreads.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            labelThreads.BackColor = System.Drawing.Color.Lavender;
+            labelThreads.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelThreads.Location = new System.Drawing.Point(12, 40);
+            labelThreads.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelThreads.Name = "labelThreads";
+            labelThreads.Size = new System.Drawing.Size(210, 23);
+            labelThreads.TabIndex = 2;
+            labelThreads.Text = "Threads (1 à 1024)";
+            labelThreads.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // labelHash
             // 
-            this.labelHash.BackColor = System.Drawing.Color.Lavender;
-            this.labelHash.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelHash.Location = new System.Drawing.Point(10, 60);
-            this.labelHash.Name = "labelHash";
-            this.labelHash.Size = new System.Drawing.Size(180, 20);
-            this.labelHash.TabIndex = 3;
-            this.labelHash.Text = "Hash Size (1 à 33554432)";
-            this.labelHash.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            labelHash.BackColor = System.Drawing.Color.Lavender;
+            labelHash.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelHash.Location = new System.Drawing.Point(12, 69);
+            labelHash.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelHash.Name = "labelHash";
+            labelHash.Size = new System.Drawing.Size(210, 23);
+            labelHash.TabIndex = 3;
+            labelHash.Text = "Hash Size (1 à 33554432)";
+            labelHash.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // labelPonder
             // 
-            this.labelPonder.BackColor = System.Drawing.Color.Lavender;
-            this.labelPonder.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelPonder.Location = new System.Drawing.Point(350, 35);
-            this.labelPonder.Name = "labelPonder";
-            this.labelPonder.Size = new System.Drawing.Size(180, 20);
-            this.labelPonder.TabIndex = 4;
-            this.labelPonder.Text = "Ponder";
-            this.labelPonder.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            labelPonder.BackColor = System.Drawing.Color.Lavender;
+            labelPonder.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelPonder.Location = new System.Drawing.Point(408, 40);
+            labelPonder.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelPonder.Name = "labelPonder";
+            labelPonder.Size = new System.Drawing.Size(210, 23);
+            labelPonder.TabIndex = 4;
+            labelPonder.Text = "Ponder";
+            labelPonder.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // labelMultiPV
             // 
-            this.labelMultiPV.BackColor = System.Drawing.Color.Lavender;
-            this.labelMultiPV.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelMultiPV.Location = new System.Drawing.Point(10, 110);
-            this.labelMultiPV.Name = "labelMultiPV";
-            this.labelMultiPV.Size = new System.Drawing.Size(180, 20);
-            this.labelMultiPV.TabIndex = 5;
-            this.labelMultiPV.Text = "MultiPV (1 à 256)";
-            this.labelMultiPV.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            labelMultiPV.BackColor = System.Drawing.Color.Lavender;
+            labelMultiPV.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelMultiPV.Location = new System.Drawing.Point(12, 127);
+            labelMultiPV.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelMultiPV.Name = "labelMultiPV";
+            labelMultiPV.Size = new System.Drawing.Size(210, 23);
+            labelMultiPV.TabIndex = 5;
+            labelMultiPV.Text = "MultiPV (1 à 256)";
+            labelMultiPV.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // labelSkillLevel
             // 
-            this.labelSkillLevel.BackColor = System.Drawing.Color.Lavender;
-            this.labelSkillLevel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelSkillLevel.Location = new System.Drawing.Point(10, 135);
-            this.labelSkillLevel.Name = "labelSkillLevel";
-            this.labelSkillLevel.Size = new System.Drawing.Size(180, 20);
-            this.labelSkillLevel.TabIndex = 6;
-            this.labelSkillLevel.Text = "SkillLevel (0 à 20)";
-            this.labelSkillLevel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            labelSkillLevel.BackColor = System.Drawing.Color.Lavender;
+            labelSkillLevel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelSkillLevel.Location = new System.Drawing.Point(12, 156);
+            labelSkillLevel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelSkillLevel.Name = "labelSkillLevel";
+            labelSkillLevel.Size = new System.Drawing.Size(210, 23);
+            labelSkillLevel.TabIndex = 6;
+            labelSkillLevel.Text = "SkillLevel (0 à 20)";
+            labelSkillLevel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // labelMoveOverhead
             // 
-            this.labelMoveOverhead.BackColor = System.Drawing.Color.Lavender;
-            this.labelMoveOverhead.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelMoveOverhead.Location = new System.Drawing.Point(10, 160);
-            this.labelMoveOverhead.Name = "labelMoveOverhead";
-            this.labelMoveOverhead.Size = new System.Drawing.Size(180, 20);
-            this.labelMoveOverhead.TabIndex = 7;
-            this.labelMoveOverhead.Text = "Move Overhead (0 à 5000)";
-            this.labelMoveOverhead.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            labelMoveOverhead.BackColor = System.Drawing.Color.Lavender;
+            labelMoveOverhead.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelMoveOverhead.Location = new System.Drawing.Point(12, 185);
+            labelMoveOverhead.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelMoveOverhead.Name = "labelMoveOverhead";
+            labelMoveOverhead.Size = new System.Drawing.Size(210, 23);
+            labelMoveOverhead.TabIndex = 7;
+            labelMoveOverhead.Text = "Move Overhead (0 à 5000)";
+            labelMoveOverhead.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // labelNodesTime
             // 
-            this.labelNodesTime.BackColor = System.Drawing.Color.Lavender;
-            this.labelNodesTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelNodesTime.Location = new System.Drawing.Point(10, 185);
-            this.labelNodesTime.Name = "labelNodesTime";
-            this.labelNodesTime.Size = new System.Drawing.Size(180, 20);
-            this.labelNodesTime.TabIndex = 8;
-            this.labelNodesTime.Text = "Nodestime (0 à 10000)";
-            this.labelNodesTime.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            labelNodesTime.BackColor = System.Drawing.Color.Lavender;
+            labelNodesTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelNodesTime.Location = new System.Drawing.Point(12, 213);
+            labelNodesTime.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelNodesTime.Name = "labelNodesTime";
+            labelNodesTime.Size = new System.Drawing.Size(210, 23);
+            labelNodesTime.TabIndex = 8;
+            labelNodesTime.Text = "Nodestime (0 à 10000)";
+            labelNodesTime.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // labelUCI_Chess960
             // 
-            this.labelUCI_Chess960.BackColor = System.Drawing.Color.Lavender;
-            this.labelUCI_Chess960.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelUCI_Chess960.Location = new System.Drawing.Point(350, 60);
-            this.labelUCI_Chess960.Name = "labelUCI_Chess960";
-            this.labelUCI_Chess960.Size = new System.Drawing.Size(180, 20);
-            this.labelUCI_Chess960.TabIndex = 9;
-            this.labelUCI_Chess960.Text = "UCI_Chess960 ";
-            this.labelUCI_Chess960.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            labelUCI_Chess960.BackColor = System.Drawing.Color.Lavender;
+            labelUCI_Chess960.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelUCI_Chess960.Location = new System.Drawing.Point(408, 69);
+            labelUCI_Chess960.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelUCI_Chess960.Name = "labelUCI_Chess960";
+            labelUCI_Chess960.Size = new System.Drawing.Size(210, 23);
+            labelUCI_Chess960.TabIndex = 9;
+            labelUCI_Chess960.Text = "UCI_Chess960 ";
+            labelUCI_Chess960.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // labelClearHash
             // 
-            this.labelClearHash.BackColor = System.Drawing.Color.Lavender;
-            this.labelClearHash.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelClearHash.Location = new System.Drawing.Point(10, 85);
-            this.labelClearHash.Name = "labelClearHash";
-            this.labelClearHash.Size = new System.Drawing.Size(180, 20);
-            this.labelClearHash.TabIndex = 10;
-            this.labelClearHash.Text = "Clear Hash";
-            this.labelClearHash.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            labelClearHash.BackColor = System.Drawing.Color.Lavender;
+            labelClearHash.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelClearHash.Location = new System.Drawing.Point(12, 98);
+            labelClearHash.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelClearHash.Name = "labelClearHash";
+            labelClearHash.Size = new System.Drawing.Size(210, 23);
+            labelClearHash.TabIndex = 10;
+            labelClearHash.Text = "Clear Hash";
+            labelClearHash.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // labelUCI_LimitStrength
             // 
-            this.labelUCI_LimitStrength.BackColor = System.Drawing.Color.Lavender;
-            this.labelUCI_LimitStrength.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelUCI_LimitStrength.Location = new System.Drawing.Point(10, 210);
-            this.labelUCI_LimitStrength.Name = "labelUCI_LimitStrength";
-            this.labelUCI_LimitStrength.Size = new System.Drawing.Size(180, 20);
-            this.labelUCI_LimitStrength.TabIndex = 11;
-            this.labelUCI_LimitStrength.Text = "UCI_LimitStrength";
+            labelUCI_LimitStrength.BackColor = System.Drawing.Color.Lavender;
+            labelUCI_LimitStrength.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelUCI_LimitStrength.Location = new System.Drawing.Point(12, 242);
+            labelUCI_LimitStrength.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelUCI_LimitStrength.Name = "labelUCI_LimitStrength";
+            labelUCI_LimitStrength.Size = new System.Drawing.Size(210, 23);
+            labelUCI_LimitStrength.TabIndex = 11;
+            labelUCI_LimitStrength.Text = "UCI_LimitStrength";
             // 
             // labelUCI_ELO
             // 
-            this.labelUCI_ELO.BackColor = System.Drawing.Color.Lavender;
-            this.labelUCI_ELO.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelUCI_ELO.Location = new System.Drawing.Point(10, 235);
-            this.labelUCI_ELO.Name = "labelUCI_ELO";
-            this.labelUCI_ELO.Size = new System.Drawing.Size(180, 20);
-            this.labelUCI_ELO.TabIndex = 12;
-            this.labelUCI_ELO.Text = "UCI_ELO (1320 à 3190)";
-            this.labelUCI_ELO.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            labelUCI_ELO.BackColor = System.Drawing.Color.Lavender;
+            labelUCI_ELO.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelUCI_ELO.Location = new System.Drawing.Point(12, 271);
+            labelUCI_ELO.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelUCI_ELO.Name = "labelUCI_ELO";
+            labelUCI_ELO.Size = new System.Drawing.Size(210, 23);
+            labelUCI_ELO.TabIndex = 12;
+            labelUCI_ELO.Text = "UCI_ELO (1320 à 3190)";
+            labelUCI_ELO.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // labelUCI_ShowWDL
             // 
-            this.labelUCI_ShowWDL.BackColor = System.Drawing.Color.Lavender;
-            this.labelUCI_ShowWDL.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelUCI_ShowWDL.Location = new System.Drawing.Point(350, 85);
-            this.labelUCI_ShowWDL.Name = "labelUCI_ShowWDL";
-            this.labelUCI_ShowWDL.Size = new System.Drawing.Size(180, 20);
-            this.labelUCI_ShowWDL.TabIndex = 13;
-            this.labelUCI_ShowWDL.Text = "UCI_ShowWDL";
+            labelUCI_ShowWDL.BackColor = System.Drawing.Color.Lavender;
+            labelUCI_ShowWDL.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelUCI_ShowWDL.Location = new System.Drawing.Point(408, 98);
+            labelUCI_ShowWDL.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelUCI_ShowWDL.Name = "labelUCI_ShowWDL";
+            labelUCI_ShowWDL.Size = new System.Drawing.Size(210, 23);
+            labelUCI_ShowWDL.TabIndex = 13;
+            labelUCI_ShowWDL.Text = "UCI_ShowWDL";
             // 
             // labelSyzygyPath
             // 
-            this.labelSyzygyPath.BackColor = System.Drawing.Color.Lavender;
-            this.labelSyzygyPath.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelSyzygyPath.Location = new System.Drawing.Point(350, 110);
-            this.labelSyzygyPath.Name = "labelSyzygyPath";
-            this.labelSyzygyPath.Size = new System.Drawing.Size(180, 20);
-            this.labelSyzygyPath.TabIndex = 14;
-            this.labelSyzygyPath.Text = "SyzygyPath";
+            labelSyzygyPath.BackColor = System.Drawing.Color.Lavender;
+            labelSyzygyPath.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelSyzygyPath.Location = new System.Drawing.Point(408, 127);
+            labelSyzygyPath.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelSyzygyPath.Name = "labelSyzygyPath";
+            labelSyzygyPath.Size = new System.Drawing.Size(210, 23);
+            labelSyzygyPath.TabIndex = 14;
+            labelSyzygyPath.Text = "SyzygyPath";
             // 
             // labelSyzygyProbeDepth
             // 
-            this.labelSyzygyProbeDepth.BackColor = System.Drawing.Color.Lavender;
-            this.labelSyzygyProbeDepth.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelSyzygyProbeDepth.Location = new System.Drawing.Point(350, 135);
-            this.labelSyzygyProbeDepth.Name = "labelSyzygyProbeDepth";
-            this.labelSyzygyProbeDepth.Size = new System.Drawing.Size(180, 20);
-            this.labelSyzygyProbeDepth.TabIndex = 15;
-            this.labelSyzygyProbeDepth.Text = "SyzygyProbeDepth (1 à 100)";
+            labelSyzygyProbeDepth.BackColor = System.Drawing.Color.Lavender;
+            labelSyzygyProbeDepth.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelSyzygyProbeDepth.Location = new System.Drawing.Point(408, 156);
+            labelSyzygyProbeDepth.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelSyzygyProbeDepth.Name = "labelSyzygyProbeDepth";
+            labelSyzygyProbeDepth.Size = new System.Drawing.Size(210, 23);
+            labelSyzygyProbeDepth.TabIndex = 15;
+            labelSyzygyProbeDepth.Text = "SyzygyProbeDepth (1 à 100)";
             // 
             // labelSyzygy50MoveRule
             // 
-            this.labelSyzygy50MoveRule.BackColor = System.Drawing.Color.Lavender;
-            this.labelSyzygy50MoveRule.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelSyzygy50MoveRule.Location = new System.Drawing.Point(350, 160);
-            this.labelSyzygy50MoveRule.Name = "labelSyzygy50MoveRule";
-            this.labelSyzygy50MoveRule.Size = new System.Drawing.Size(180, 20);
-            this.labelSyzygy50MoveRule.TabIndex = 16;
-            this.labelSyzygy50MoveRule.Text = "Syzygy50MoveRule";
+            labelSyzygy50MoveRule.BackColor = System.Drawing.Color.Lavender;
+            labelSyzygy50MoveRule.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelSyzygy50MoveRule.Location = new System.Drawing.Point(408, 185);
+            labelSyzygy50MoveRule.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelSyzygy50MoveRule.Name = "labelSyzygy50MoveRule";
+            labelSyzygy50MoveRule.Size = new System.Drawing.Size(210, 23);
+            labelSyzygy50MoveRule.TabIndex = 16;
+            labelSyzygy50MoveRule.Text = "Syzygy50MoveRule";
             // 
             // labelSyzygyProbeLimit
             // 
-            this.labelSyzygyProbeLimit.BackColor = System.Drawing.Color.Lavender;
-            this.labelSyzygyProbeLimit.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelSyzygyProbeLimit.Location = new System.Drawing.Point(350, 185);
-            this.labelSyzygyProbeLimit.Name = "labelSyzygyProbeLimit";
-            this.labelSyzygyProbeLimit.Size = new System.Drawing.Size(180, 20);
-            this.labelSyzygyProbeLimit.TabIndex = 17;
-            this.labelSyzygyProbeLimit.Text = "SyzygyProbeLimit (0 à 7)";
+            labelSyzygyProbeLimit.BackColor = System.Drawing.Color.Lavender;
+            labelSyzygyProbeLimit.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelSyzygyProbeLimit.Location = new System.Drawing.Point(408, 213);
+            labelSyzygyProbeLimit.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelSyzygyProbeLimit.Name = "labelSyzygyProbeLimit";
+            labelSyzygyProbeLimit.Size = new System.Drawing.Size(210, 23);
+            labelSyzygyProbeLimit.TabIndex = 17;
+            labelSyzygyProbeLimit.Text = "SyzygyProbeLimit (0 à 7)";
             // 
             // labelEvalFile
             // 
-            this.labelEvalFile.BackColor = System.Drawing.Color.Lavender;
-            this.labelEvalFile.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelEvalFile.Location = new System.Drawing.Point(350, 210);
-            this.labelEvalFile.Name = "labelEvalFile";
-            this.labelEvalFile.Size = new System.Drawing.Size(180, 20);
-            this.labelEvalFile.TabIndex = 18;
-            this.labelEvalFile.Text = "EvalFile";
+            labelEvalFile.BackColor = System.Drawing.Color.Lavender;
+            labelEvalFile.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelEvalFile.Location = new System.Drawing.Point(408, 242);
+            labelEvalFile.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelEvalFile.Name = "labelEvalFile";
+            labelEvalFile.Size = new System.Drawing.Size(210, 23);
+            labelEvalFile.TabIndex = 18;
+            labelEvalFile.Text = "EvalFile";
             // 
             // labelEvalFileSmall
             // 
-            this.labelEvalFileSmall.BackColor = System.Drawing.Color.Lavender;
-            this.labelEvalFileSmall.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelEvalFileSmall.Location = new System.Drawing.Point(350, 235);
-            this.labelEvalFileSmall.Name = "labelEvalFileSmall";
-            this.labelEvalFileSmall.Size = new System.Drawing.Size(180, 20);
-            this.labelEvalFileSmall.TabIndex = 19;
-            this.labelEvalFileSmall.Text = "EvalFileSmall";
+            labelEvalFileSmall.BackColor = System.Drawing.Color.Lavender;
+            labelEvalFileSmall.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            labelEvalFileSmall.Location = new System.Drawing.Point(408, 271);
+            labelEvalFileSmall.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            labelEvalFileSmall.Name = "labelEvalFileSmall";
+            labelEvalFileSmall.Size = new System.Drawing.Size(210, 23);
+            labelEvalFileSmall.TabIndex = 19;
+            labelEvalFileSmall.Text = "EvalFileSmall";
             // 
             // checkBoxPonder
             // 
-            this.checkBoxPonder.AutoSize = true;
-            this.checkBoxPonder.BackColor = System.Drawing.Color.DarkBlue;
-            this.checkBoxPonder.Location = new System.Drawing.Point(540, 37);
-            this.checkBoxPonder.Name = "checkBoxPonder";
-            this.checkBoxPonder.Size = new System.Drawing.Size(15, 14);
-            this.checkBoxPonder.TabIndex = 20;
-            this.checkBoxPonder.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.checkBoxPonder.UseVisualStyleBackColor = false;
+            checkBoxPonder.AutoSize = true;
+            checkBoxPonder.BackColor = System.Drawing.Color.DarkBlue;
+            checkBoxPonder.Location = new System.Drawing.Point(630, 43);
+            checkBoxPonder.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            checkBoxPonder.Name = "checkBoxPonder";
+            checkBoxPonder.Size = new System.Drawing.Size(15, 14);
+            checkBoxPonder.TabIndex = 20;
+            checkBoxPonder.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            checkBoxPonder.UseVisualStyleBackColor = false;
             // 
             // checkBox1
             // 
-            this.checkBox1.AutoSize = true;
-            this.checkBox1.BackColor = System.Drawing.Color.DarkBlue;
-            this.checkBox1.Enabled = false;
-            this.checkBox1.Location = new System.Drawing.Point(540, 62);
-            this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Size = new System.Drawing.Size(15, 14);
-            this.checkBox1.TabIndex = 21;
-            this.checkBox1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.checkBox1.UseVisualStyleBackColor = false;
+            checkBox1.AutoSize = true;
+            checkBox1.BackColor = System.Drawing.Color.DarkBlue;
+            checkBox1.Enabled = false;
+            checkBox1.Location = new System.Drawing.Point(630, 72);
+            checkBox1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            checkBox1.Name = "checkBox1";
+            checkBox1.Size = new System.Drawing.Size(15, 14);
+            checkBox1.TabIndex = 21;
+            checkBox1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            checkBox1.UseVisualStyleBackColor = false;
             // 
             // checkBox2
             // 
-            this.checkBox2.AutoSize = true;
-            this.checkBox2.BackColor = System.Drawing.Color.DarkBlue;
-            this.checkBox2.Enabled = false;
-            this.checkBox2.Location = new System.Drawing.Point(540, 87);
-            this.checkBox2.Name = "checkBox2";
-            this.checkBox2.Size = new System.Drawing.Size(15, 14);
-            this.checkBox2.TabIndex = 22;
-            this.checkBox2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.checkBox2.UseVisualStyleBackColor = false;
+            checkBox2.AutoSize = true;
+            checkBox2.BackColor = System.Drawing.Color.DarkBlue;
+            checkBox2.Enabled = false;
+            checkBox2.Location = new System.Drawing.Point(630, 100);
+            checkBox2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            checkBox2.Name = "checkBox2";
+            checkBox2.Size = new System.Drawing.Size(15, 14);
+            checkBox2.TabIndex = 22;
+            checkBox2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            checkBox2.UseVisualStyleBackColor = false;
             // 
             // checkBox3
             // 
-            this.checkBox3.AutoSize = true;
-            this.checkBox3.BackColor = System.Drawing.Color.DarkBlue;
-            this.checkBox3.Checked = true;
-            this.checkBox3.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox3.Enabled = false;
-            this.checkBox3.Location = new System.Drawing.Point(540, 162);
-            this.checkBox3.Name = "checkBox3";
-            this.checkBox3.Size = new System.Drawing.Size(15, 14);
-            this.checkBox3.TabIndex = 23;
-            this.checkBox3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.checkBox3.UseVisualStyleBackColor = false;
+            checkBox3.AutoSize = true;
+            checkBox3.BackColor = System.Drawing.Color.DarkBlue;
+            checkBox3.Checked = true;
+            checkBox3.CheckState = System.Windows.Forms.CheckState.Checked;
+            checkBox3.Enabled = false;
+            checkBox3.Location = new System.Drawing.Point(630, 187);
+            checkBox3.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            checkBox3.Name = "checkBox3";
+            checkBox3.Size = new System.Drawing.Size(15, 14);
+            checkBox3.TabIndex = 23;
+            checkBox3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            checkBox3.UseVisualStyleBackColor = false;
             // 
             // checkBox4
             // 
-            this.checkBox4.AutoSize = true;
-            this.checkBox4.BackColor = System.Drawing.Color.DarkBlue;
-            this.checkBox4.Enabled = false;
-            this.checkBox4.Location = new System.Drawing.Point(200, 214);
-            this.checkBox4.Name = "checkBox4";
-            this.checkBox4.Size = new System.Drawing.Size(15, 14);
-            this.checkBox4.TabIndex = 24;
-            this.checkBox4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.checkBox4.UseVisualStyleBackColor = false;
+            checkBox4.AutoSize = true;
+            checkBox4.BackColor = System.Drawing.Color.DarkBlue;
+            checkBox4.Enabled = false;
+            checkBox4.Location = new System.Drawing.Point(233, 247);
+            checkBox4.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            checkBox4.Name = "checkBox4";
+            checkBox4.Size = new System.Drawing.Size(15, 14);
+            checkBox4.TabIndex = 24;
+            checkBox4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            checkBox4.UseVisualStyleBackColor = false;
             // 
             // ThreadsUpDown
             // 
-            this.ThreadsUpDown.Location = new System.Drawing.Point(200, 35);
-            this.ThreadsUpDown.Maximum = new decimal(new int[] {
-            1024,
-            0,
-            0,
-            0});
-            this.ThreadsUpDown.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.ThreadsUpDown.Name = "ThreadsUpDown";
-            this.ThreadsUpDown.Size = new System.Drawing.Size(120, 20);
-            this.ThreadsUpDown.TabIndex = 25;
-            this.ThreadsUpDown.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
+            ThreadsUpDown.Location = new System.Drawing.Point(233, 40);
+            ThreadsUpDown.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            ThreadsUpDown.Maximum = new decimal(new int[] { 1024, 0, 0, 0 });
+            ThreadsUpDown.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            ThreadsUpDown.Name = "ThreadsUpDown";
+            ThreadsUpDown.Size = new System.Drawing.Size(140, 23);
+            ThreadsUpDown.TabIndex = 25;
+            ThreadsUpDown.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
             // HashSizeUpDown
             // 
-            this.HashSizeUpDown.Location = new System.Drawing.Point(200, 60);
-            this.HashSizeUpDown.Maximum = new decimal(new int[] {
-            33554432,
-            0,
-            0,
-            0});
-            this.HashSizeUpDown.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.HashSizeUpDown.Name = "HashSizeUpDown";
-            this.HashSizeUpDown.Size = new System.Drawing.Size(120, 20);
-            this.HashSizeUpDown.TabIndex = 26;
-            this.HashSizeUpDown.Value = new decimal(new int[] {
-            16,
-            0,
-            0,
-            0});
+            HashSizeUpDown.Location = new System.Drawing.Point(233, 69);
+            HashSizeUpDown.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            HashSizeUpDown.Maximum = new decimal(new int[] { 33554432, 0, 0, 0 });
+            HashSizeUpDown.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            HashSizeUpDown.Name = "HashSizeUpDown";
+            HashSizeUpDown.Size = new System.Drawing.Size(140, 23);
+            HashSizeUpDown.TabIndex = 26;
+            HashSizeUpDown.Value = new decimal(new int[] { 16, 0, 0, 0 });
             // 
             // MultiPVUpDown
             // 
-            this.MultiPVUpDown.Location = new System.Drawing.Point(200, 110);
-            this.MultiPVUpDown.Maximum = new decimal(new int[] {
-            256,
-            0,
-            0,
-            0});
-            this.MultiPVUpDown.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.MultiPVUpDown.Name = "MultiPVUpDown";
-            this.MultiPVUpDown.Size = new System.Drawing.Size(120, 20);
-            this.MultiPVUpDown.TabIndex = 27;
-            this.MultiPVUpDown.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
+            MultiPVUpDown.Location = new System.Drawing.Point(233, 127);
+            MultiPVUpDown.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            MultiPVUpDown.Maximum = new decimal(new int[] { 256, 0, 0, 0 });
+            MultiPVUpDown.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            MultiPVUpDown.Name = "MultiPVUpDown";
+            MultiPVUpDown.Size = new System.Drawing.Size(140, 23);
+            MultiPVUpDown.TabIndex = 27;
+            MultiPVUpDown.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
             // SkillLevelUpDown
             // 
-            this.SkillLevelUpDown.Location = new System.Drawing.Point(200, 135);
-            this.SkillLevelUpDown.Maximum = new decimal(new int[] {
-            20,
-            0,
-            0,
-            0});
-            this.SkillLevelUpDown.Name = "SkillLevelUpDown";
-            this.SkillLevelUpDown.Size = new System.Drawing.Size(120, 20);
-            this.SkillLevelUpDown.TabIndex = 28;
-            this.SkillLevelUpDown.Value = new decimal(new int[] {
-            20,
-            0,
-            0,
-            0});
+            SkillLevelUpDown.Location = new System.Drawing.Point(233, 156);
+            SkillLevelUpDown.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            SkillLevelUpDown.Maximum = new decimal(new int[] { 20, 0, 0, 0 });
+            SkillLevelUpDown.Name = "SkillLevelUpDown";
+            SkillLevelUpDown.Size = new System.Drawing.Size(140, 23);
+            SkillLevelUpDown.TabIndex = 28;
+            SkillLevelUpDown.Value = new decimal(new int[] { 20, 0, 0, 0 });
             // 
             // MoveOverheadUpDown
             // 
-            this.MoveOverheadUpDown.Location = new System.Drawing.Point(200, 160);
-            this.MoveOverheadUpDown.Maximum = new decimal(new int[] {
-            5000,
-            0,
-            0,
-            0});
-            this.MoveOverheadUpDown.Name = "MoveOverheadUpDown";
-            this.MoveOverheadUpDown.Size = new System.Drawing.Size(120, 20);
-            this.MoveOverheadUpDown.TabIndex = 29;
-            this.MoveOverheadUpDown.Value = new decimal(new int[] {
-            10,
-            0,
-            0,
-            0});
+            MoveOverheadUpDown.Location = new System.Drawing.Point(233, 185);
+            MoveOverheadUpDown.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            MoveOverheadUpDown.Maximum = new decimal(new int[] { 5000, 0, 0, 0 });
+            MoveOverheadUpDown.Name = "MoveOverheadUpDown";
+            MoveOverheadUpDown.Size = new System.Drawing.Size(140, 23);
+            MoveOverheadUpDown.TabIndex = 29;
+            MoveOverheadUpDown.Value = new decimal(new int[] { 10, 0, 0, 0 });
             // 
             // NodesTimeUpDown
             // 
-            this.NodesTimeUpDown.Location = new System.Drawing.Point(200, 185);
-            this.NodesTimeUpDown.Maximum = new decimal(new int[] {
-            10000,
-            0,
-            0,
-            0});
-            this.NodesTimeUpDown.Name = "NodesTimeUpDown";
-            this.NodesTimeUpDown.Size = new System.Drawing.Size(120, 20);
-            this.NodesTimeUpDown.TabIndex = 30;
+            NodesTimeUpDown.Location = new System.Drawing.Point(233, 213);
+            NodesTimeUpDown.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            NodesTimeUpDown.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
+            NodesTimeUpDown.Name = "NodesTimeUpDown";
+            NodesTimeUpDown.Size = new System.Drawing.Size(140, 23);
+            NodesTimeUpDown.TabIndex = 30;
             // 
             // UciEloUpDown
             // 
-            this.UciEloUpDown.Enabled = false;
-            this.UciEloUpDown.Location = new System.Drawing.Point(200, 235);
-            this.UciEloUpDown.Maximum = new decimal(new int[] {
-            3190,
-            0,
-            0,
-            0});
-            this.UciEloUpDown.Minimum = new decimal(new int[] {
-            1320,
-            0,
-            0,
-            0});
-            this.UciEloUpDown.Name = "UciEloUpDown";
-            this.UciEloUpDown.Size = new System.Drawing.Size(120, 20);
-            this.UciEloUpDown.TabIndex = 31;
-            this.UciEloUpDown.Value = new decimal(new int[] {
-            1320,
-            0,
-            0,
-            0});
+            UciEloUpDown.Enabled = false;
+            UciEloUpDown.Location = new System.Drawing.Point(233, 271);
+            UciEloUpDown.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            UciEloUpDown.Maximum = new decimal(new int[] { 3190, 0, 0, 0 });
+            UciEloUpDown.Minimum = new decimal(new int[] { 1320, 0, 0, 0 });
+            UciEloUpDown.Name = "UciEloUpDown";
+            UciEloUpDown.Size = new System.Drawing.Size(140, 23);
+            UciEloUpDown.TabIndex = 31;
+            UciEloUpDown.Value = new decimal(new int[] { 1320, 0, 0, 0 });
             // 
             // SyzygyProbeDepthUpDown
             // 
-            this.SyzygyProbeDepthUpDown.Enabled = false;
-            this.SyzygyProbeDepthUpDown.Location = new System.Drawing.Point(540, 135);
-            this.SyzygyProbeDepthUpDown.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.SyzygyProbeDepthUpDown.Name = "SyzygyProbeDepthUpDown";
-            this.SyzygyProbeDepthUpDown.Size = new System.Drawing.Size(120, 20);
-            this.SyzygyProbeDepthUpDown.TabIndex = 32;
-            this.SyzygyProbeDepthUpDown.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
+            SyzygyProbeDepthUpDown.Enabled = false;
+            SyzygyProbeDepthUpDown.Location = new System.Drawing.Point(630, 156);
+            SyzygyProbeDepthUpDown.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            SyzygyProbeDepthUpDown.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            SyzygyProbeDepthUpDown.Name = "SyzygyProbeDepthUpDown";
+            SyzygyProbeDepthUpDown.Size = new System.Drawing.Size(140, 23);
+            SyzygyProbeDepthUpDown.TabIndex = 32;
+            SyzygyProbeDepthUpDown.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
             // SyzygyProbeLimitUpDown
             // 
-            this.SyzygyProbeLimitUpDown.Enabled = false;
-            this.SyzygyProbeLimitUpDown.Location = new System.Drawing.Point(540, 185);
-            this.SyzygyProbeLimitUpDown.Maximum = new decimal(new int[] {
-            7,
-            0,
-            0,
-            0});
-            this.SyzygyProbeLimitUpDown.Name = "SyzygyProbeLimitUpDown";
-            this.SyzygyProbeLimitUpDown.Size = new System.Drawing.Size(120, 20);
-            this.SyzygyProbeLimitUpDown.TabIndex = 33;
-            this.SyzygyProbeLimitUpDown.Value = new decimal(new int[] {
-            7,
-            0,
-            0,
-            0});
+            SyzygyProbeLimitUpDown.Enabled = false;
+            SyzygyProbeLimitUpDown.Location = new System.Drawing.Point(630, 213);
+            SyzygyProbeLimitUpDown.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            SyzygyProbeLimitUpDown.Maximum = new decimal(new int[] { 7, 0, 0, 0 });
+            SyzygyProbeLimitUpDown.Name = "SyzygyProbeLimitUpDown";
+            SyzygyProbeLimitUpDown.Size = new System.Drawing.Size(140, 23);
+            SyzygyProbeLimitUpDown.TabIndex = 33;
+            SyzygyProbeLimitUpDown.Value = new decimal(new int[] { 7, 0, 0, 0 });
             // 
             // NumaPolicyTextBox
             // 
-            this.NumaPolicyTextBox.Enabled = false;
-            this.NumaPolicyTextBox.Location = new System.Drawing.Point(540, 10);
-            this.NumaPolicyTextBox.Name = "NumaPolicyTextBox";
-            this.NumaPolicyTextBox.Size = new System.Drawing.Size(160, 20);
-            this.NumaPolicyTextBox.TabIndex = 34;
-            this.NumaPolicyTextBox.Text = "auto";
+            NumaPolicyTextBox.Enabled = false;
+            NumaPolicyTextBox.Location = new System.Drawing.Point(630, 12);
+            NumaPolicyTextBox.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            NumaPolicyTextBox.Name = "NumaPolicyTextBox";
+            NumaPolicyTextBox.Size = new System.Drawing.Size(186, 22);
+            NumaPolicyTextBox.TabIndex = 34;
+            NumaPolicyTextBox.Text = "auto";
             // 
             // richTextBox1
             // 
-            this.richTextBox1.Enabled = false;
-            this.richTextBox1.Location = new System.Drawing.Point(540, 210);
-            this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.Size = new System.Drawing.Size(160, 20);
-            this.richTextBox1.TabIndex = 35;
-            this.richTextBox1.Text = "nn-1111cefa1111.nnue";
+            richTextBox1.Enabled = false;
+            richTextBox1.Location = new System.Drawing.Point(630, 242);
+            richTextBox1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            richTextBox1.Name = "richTextBox1";
+            richTextBox1.Size = new System.Drawing.Size(186, 22);
+            richTextBox1.TabIndex = 35;
+            richTextBox1.Text = "nn-1111cefa1111.nnue";
             // 
             // richTextBox2
             // 
-            this.richTextBox2.Enabled = false;
-            this.richTextBox2.Location = new System.Drawing.Point(540, 235);
-            this.richTextBox2.Name = "richTextBox2";
-            this.richTextBox2.Size = new System.Drawing.Size(160, 20);
-            this.richTextBox2.TabIndex = 36;
-            this.richTextBox2.Text = "nn-37f18f62d772.nnue";
+            richTextBox2.Enabled = false;
+            richTextBox2.Location = new System.Drawing.Point(630, 271);
+            richTextBox2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            richTextBox2.Name = "richTextBox2";
+            richTextBox2.Size = new System.Drawing.Size(186, 22);
+            richTextBox2.TabIndex = 36;
+            richTextBox2.Text = "nn-37f18f62d772.nnue";
             // 
             // richTextBox3
             // 
-            this.richTextBox3.Enabled = false;
-            this.richTextBox3.Location = new System.Drawing.Point(540, 110);
-            this.richTextBox3.Name = "richTextBox3";
-            this.richTextBox3.Size = new System.Drawing.Size(160, 20);
-            this.richTextBox3.TabIndex = 37;
-            this.richTextBox3.Text = "<empty>";
+            richTextBox3.Enabled = false;
+            richTextBox3.Location = new System.Drawing.Point(630, 127);
+            richTextBox3.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            richTextBox3.Name = "richTextBox3";
+            richTextBox3.Size = new System.Drawing.Size(186, 22);
+            richTextBox3.TabIndex = 37;
+            richTextBox3.Text = "<empty>";
             // 
             // richTextBox4
             // 
-            this.richTextBox4.Enabled = false;
-            this.richTextBox4.Location = new System.Drawing.Point(200, 10);
-            this.richTextBox4.Name = "richTextBox4";
-            this.richTextBox4.Size = new System.Drawing.Size(100, 20);
-            this.richTextBox4.TabIndex = 38;
-            this.richTextBox4.Text = "<empty>";
+            richTextBox4.Enabled = false;
+            richTextBox4.Location = new System.Drawing.Point(233, 12);
+            richTextBox4.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            richTextBox4.Name = "richTextBox4";
+            richTextBox4.Size = new System.Drawing.Size(116, 22);
+            richTextBox4.TabIndex = 38;
+            richTextBox4.Text = "<empty>";
             // 
             // ClearHashButton
             // 
-            this.ClearHashButton.Location = new System.Drawing.Point(200, 85);
-            this.ClearHashButton.Name = "ClearHashButton";
-            this.ClearHashButton.Size = new System.Drawing.Size(120, 20);
-            this.ClearHashButton.StateNormal.Back.Color1 = System.Drawing.Color.Lavender;
-            this.ClearHashButton.StateNormal.Border.DrawBorders = ((Krypton.Toolkit.PaletteDrawBorders)((((Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom) 
-            | Krypton.Toolkit.PaletteDrawBorders.Left) 
-            | Krypton.Toolkit.PaletteDrawBorders.Right)));
-            this.ClearHashButton.StateNormal.Border.Rounding = 20F;
-            this.ClearHashButton.StateNormal.Border.Width = 1;
-            this.ClearHashButton.TabIndex = 39;
-            this.ClearHashButton.Values.Text = "Vide Hash Tables";
-            this.ClearHashButton.Click += new System.EventHandler(this.ClearHashButton_Click);
+            ClearHashButton.Location = new System.Drawing.Point(233, 98);
+            ClearHashButton.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            ClearHashButton.Name = "ClearHashButton";
+            ClearHashButton.Size = new System.Drawing.Size(140, 23);
+            ClearHashButton.StateNormal.Back.Color1 = System.Drawing.Color.Lavender;
+            ClearHashButton.StateNormal.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
+            ClearHashButton.StateNormal.Border.Rounding = 20F;
+            ClearHashButton.StateNormal.Border.Width = 1;
+            ClearHashButton.TabIndex = 39;
+            ClearHashButton.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            ClearHashButton.Values.Text = "Vide Hash Tables";
+            ClearHashButton.Click += ClearHashButton_Click;
             // 
             // ParametresFermer
             // 
-            this.ParametresFermer.Location = new System.Drawing.Point(270, 260);
-            this.ParametresFermer.Name = "ParametresFermer";
-            this.ParametresFermer.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365BlueDarkMode;
-            this.ParametresFermer.Size = new System.Drawing.Size(120, 20);
-            this.ParametresFermer.StateNormal.Back.Color1 = System.Drawing.Color.Lavender;
-            this.ParametresFermer.StateNormal.Border.Color1 = System.Drawing.Color.Gray;
-            this.ParametresFermer.StateNormal.Border.DrawBorders = ((Krypton.Toolkit.PaletteDrawBorders)((((Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom) 
-            | Krypton.Toolkit.PaletteDrawBorders.Left) 
-            | Krypton.Toolkit.PaletteDrawBorders.Right)));
-            this.ParametresFermer.StateNormal.Border.Rounding = 20F;
-            this.ParametresFermer.StateNormal.Border.Width = 3;
-            this.ParametresFermer.TabIndex = 40;
-            this.ParametresFermer.Values.Text = "Fermer";
-            this.ParametresFermer.Click += new System.EventHandler(this.ParametresFermer_Click);
+            ParametresFermer.Location = new System.Drawing.Point(315, 300);
+            ParametresFermer.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            ParametresFermer.Name = "ParametresFermer";
+            ParametresFermer.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
+            ParametresFermer.Size = new System.Drawing.Size(140, 23);
+            ParametresFermer.StateNormal.Back.Color1 = System.Drawing.Color.Lavender;
+            ParametresFermer.StateNormal.Border.Color1 = System.Drawing.Color.Gray;
+            ParametresFermer.StateNormal.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
+            ParametresFermer.StateNormal.Border.Rounding = 20F;
+            ParametresFermer.StateNormal.Border.Width = 3;
+            ParametresFermer.TabIndex = 40;
+            ParametresFermer.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            ParametresFermer.Values.Text = "Fermer";
+            ParametresFermer.Click += ParametresFermer_Click;
             // 
             // ParametresUciStockfish
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.LightSteelBlue;
-            this.ClientSize = new System.Drawing.Size(739, 284);
-            this.Controls.Add(this.ParametresFermer);
-            this.Controls.Add(this.ClearHashButton);
-            this.Controls.Add(this.richTextBox4);
-            this.Controls.Add(this.richTextBox3);
-            this.Controls.Add(this.richTextBox2);
-            this.Controls.Add(this.richTextBox1);
-            this.Controls.Add(this.NumaPolicyTextBox);
-            this.Controls.Add(this.SyzygyProbeLimitUpDown);
-            this.Controls.Add(this.SyzygyProbeDepthUpDown);
-            this.Controls.Add(this.UciEloUpDown);
-            this.Controls.Add(this.NodesTimeUpDown);
-            this.Controls.Add(this.MoveOverheadUpDown);
-            this.Controls.Add(this.SkillLevelUpDown);
-            this.Controls.Add(this.MultiPVUpDown);
-            this.Controls.Add(this.HashSizeUpDown);
-            this.Controls.Add(this.ThreadsUpDown);
-            this.Controls.Add(this.checkBox4);
-            this.Controls.Add(this.checkBox3);
-            this.Controls.Add(this.checkBox2);
-            this.Controls.Add(this.checkBox1);
-            this.Controls.Add(this.checkBoxPonder);
-            this.Controls.Add(this.labelEvalFileSmall);
-            this.Controls.Add(this.labelEvalFile);
-            this.Controls.Add(this.labelSyzygyProbeLimit);
-            this.Controls.Add(this.labelSyzygy50MoveRule);
-            this.Controls.Add(this.labelSyzygyProbeDepth);
-            this.Controls.Add(this.labelSyzygyPath);
-            this.Controls.Add(this.labelUCI_ShowWDL);
-            this.Controls.Add(this.labelUCI_ELO);
-            this.Controls.Add(this.labelUCI_LimitStrength);
-            this.Controls.Add(this.labelClearHash);
-            this.Controls.Add(this.labelUCI_Chess960);
-            this.Controls.Add(this.labelNodesTime);
-            this.Controls.Add(this.labelMoveOverhead);
-            this.Controls.Add(this.labelSkillLevel);
-            this.Controls.Add(this.labelMultiPV);
-            this.Controls.Add(this.labelPonder);
-            this.Controls.Add(this.labelHash);
-            this.Controls.Add(this.labelThreads);
-            this.Controls.Add(this.labelNumaPolicy);
-            this.Controls.Add(this.labelDebugLogFile);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Name = "ParametresUciStockfish";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Parametres du Moteur Uci Stockfish";
-            ((System.ComponentModel.ISupportInitialize)(this.ThreadsUpDown)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.HashSizeUpDown)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.MultiPVUpDown)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.SkillLevelUpDown)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.MoveOverheadUpDown)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.NodesTimeUpDown)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.UciEloUpDown)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.SyzygyProbeDepthUpDown)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.SyzygyProbeLimitUpDown)).EndInit();
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            BackColor = System.Drawing.Color.LightSteelBlue;
+            ClientSize = new System.Drawing.Size(862, 328);
+            Controls.Add(ParametresFermer);
+            Controls.Add(ClearHashButton);
+            Controls.Add(richTextBox4);
+            Controls.Add(richTextBox3);
+            Controls.Add(richTextBox2);
+            Controls.Add(richTextBox1);
+            Controls.Add(NumaPolicyTextBox);
+            Controls.Add(SyzygyProbeLimitUpDown);
+            Controls.Add(SyzygyProbeDepthUpDown);
+            Controls.Add(UciEloUpDown);
+            Controls.Add(NodesTimeUpDown);
+            Controls.Add(MoveOverheadUpDown);
+            Controls.Add(SkillLevelUpDown);
+            Controls.Add(MultiPVUpDown);
+            Controls.Add(HashSizeUpDown);
+            Controls.Add(ThreadsUpDown);
+            Controls.Add(checkBox4);
+            Controls.Add(checkBox3);
+            Controls.Add(checkBox2);
+            Controls.Add(checkBox1);
+            Controls.Add(checkBoxPonder);
+            Controls.Add(labelEvalFileSmall);
+            Controls.Add(labelEvalFile);
+            Controls.Add(labelSyzygyProbeLimit);
+            Controls.Add(labelSyzygy50MoveRule);
+            Controls.Add(labelSyzygyProbeDepth);
+            Controls.Add(labelSyzygyPath);
+            Controls.Add(labelUCI_ShowWDL);
+            Controls.Add(labelUCI_ELO);
+            Controls.Add(labelUCI_LimitStrength);
+            Controls.Add(labelClearHash);
+            Controls.Add(labelUCI_Chess960);
+            Controls.Add(labelNodesTime);
+            Controls.Add(labelMoveOverhead);
+            Controls.Add(labelSkillLevel);
+            Controls.Add(labelMultiPV);
+            Controls.Add(labelPonder);
+            Controls.Add(labelHash);
+            Controls.Add(labelThreads);
+            Controls.Add(labelNumaPolicy);
+            Controls.Add(labelDebugLogFile);
+            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
+            Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            Name = "ParametresUciStockfish";
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            Text = "Parametres du Moteur Uci Stockfish";
+            ((System.ComponentModel.ISupportInitialize)ThreadsUpDown).EndInit();
+            ((System.ComponentModel.ISupportInitialize)HashSizeUpDown).EndInit();
+            ((System.ComponentModel.ISupportInitialize)MultiPVUpDown).EndInit();
+            ((System.ComponentModel.ISupportInitialize)SkillLevelUpDown).EndInit();
+            ((System.ComponentModel.ISupportInitialize)MoveOverheadUpDown).EndInit();
+            ((System.ComponentModel.ISupportInitialize)NodesTimeUpDown).EndInit();
+            ((System.ComponentModel.ISupportInitialize)UciEloUpDown).EndInit();
+            ((System.ComponentModel.ISupportInitialize)SyzygyProbeDepthUpDown).EndInit();
+            ((System.ComponentModel.ISupportInitialize)SyzygyProbeLimitUpDown).EndInit();
+            ResumeLayout(false);
+            PerformLayout();
 
         }
 

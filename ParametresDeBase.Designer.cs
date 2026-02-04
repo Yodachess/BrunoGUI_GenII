@@ -1,4 +1,4 @@
-﻿namespace BrunoGUI_Stockfish
+﻿namespace BrunoGUI_GenII
 {
     partial class ParametresDeBase
     {
@@ -29,254 +29,191 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ParametresDeBase));
-            this.GroupParametreDeBase = new Krypton.Toolkit.KryptonGroupBox();
-            this.baseReflexionNumerique = new Krypton.Toolkit.KryptonNumericUpDown();
-            this.baseMultipvNumerique = new Krypton.Toolkit.KryptonNumericUpDown();
-            this.baseThreadsNumerique = new Krypton.Toolkit.KryptonNumericUpDown();
-            this.baseEloNumerique = new Krypton.Toolkit.KryptonNumericUpDown();
-            this.LabelBaseReflexion = new Krypton.Toolkit.KryptonLabel();
-            this.LabelBaseMultiPv = new Krypton.Toolkit.KryptonLabel();
-            this.LabelBaseThreads = new Krypton.Toolkit.KryptonLabel();
-            this.LabelBaseELo = new Krypton.Toolkit.KryptonLabel();
-            this.BaseBoutonOk = new Krypton.Toolkit.KryptonButton();
-            this.BaseBoutonAnnuler = new Krypton.Toolkit.KryptonButton();
-            ((System.ComponentModel.ISupportInitialize)(this.GroupParametreDeBase)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.GroupParametreDeBase.Panel)).BeginInit();
-            this.GroupParametreDeBase.Panel.SuspendLayout();
-            this.GroupParametreDeBase.SuspendLayout();
-            this.SuspendLayout();
+            GroupParametreDeBase = new Krypton.Toolkit.KryptonGroupBox();
+            baseReflexionNumerique = new Krypton.Toolkit.KryptonNumericUpDown();
+            baseMultipvNumerique = new Krypton.Toolkit.KryptonNumericUpDown();
+            baseThreadsNumerique = new Krypton.Toolkit.KryptonNumericUpDown();
+            baseEloNumerique = new Krypton.Toolkit.KryptonNumericUpDown();
+            LabelBaseReflexion = new Krypton.Toolkit.KryptonLabel();
+            LabelBaseMultiPv = new Krypton.Toolkit.KryptonLabel();
+            LabelBaseThreads = new Krypton.Toolkit.KryptonLabel();
+            LabelBaseELo = new Krypton.Toolkit.KryptonLabel();
+            BaseBoutonOk = new Krypton.Toolkit.KryptonButton();
+            BaseBoutonAnnuler = new Krypton.Toolkit.KryptonButton();
+            ((System.ComponentModel.ISupportInitialize)GroupParametreDeBase).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)GroupParametreDeBase.Panel).BeginInit();
+            GroupParametreDeBase.Panel.SuspendLayout();
+            SuspendLayout();
             // 
             // GroupParametreDeBase
             // 
-            this.GroupParametreDeBase.CausesValidation = false;
-            this.GroupParametreDeBase.Location = new System.Drawing.Point(12, 12);
-            this.GroupParametreDeBase.Name = "GroupParametreDeBase";
+            GroupParametreDeBase.CausesValidation = false;
+            GroupParametreDeBase.Location = new System.Drawing.Point(14, 14);
+            GroupParametreDeBase.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             // 
-            // GroupParametreDeBase.Panel
             // 
-            this.GroupParametreDeBase.Panel.Controls.Add(this.baseReflexionNumerique);
-            this.GroupParametreDeBase.Panel.Controls.Add(this.baseMultipvNumerique);
-            this.GroupParametreDeBase.Panel.Controls.Add(this.baseThreadsNumerique);
-            this.GroupParametreDeBase.Panel.Controls.Add(this.baseEloNumerique);
-            this.GroupParametreDeBase.Panel.Controls.Add(this.LabelBaseReflexion);
-            this.GroupParametreDeBase.Panel.Controls.Add(this.LabelBaseMultiPv);
-            this.GroupParametreDeBase.Panel.Controls.Add(this.LabelBaseThreads);
-            this.GroupParametreDeBase.Panel.Controls.Add(this.LabelBaseELo);
-            this.GroupParametreDeBase.Size = new System.Drawing.Size(340, 170);
-            this.GroupParametreDeBase.TabIndex = 0;
-            this.GroupParametreDeBase.Values.Heading = "  Paramètres de Base (ELO, Thread, MultiPV, Réflexion)";
+            // 
+            GroupParametreDeBase.Panel.Controls.Add(baseReflexionNumerique);
+            GroupParametreDeBase.Panel.Controls.Add(baseMultipvNumerique);
+            GroupParametreDeBase.Panel.Controls.Add(baseThreadsNumerique);
+            GroupParametreDeBase.Panel.Controls.Add(baseEloNumerique);
+            GroupParametreDeBase.Panel.Controls.Add(LabelBaseReflexion);
+            GroupParametreDeBase.Panel.Controls.Add(LabelBaseMultiPv);
+            GroupParametreDeBase.Panel.Controls.Add(LabelBaseThreads);
+            GroupParametreDeBase.Panel.Controls.Add(LabelBaseELo);
+            GroupParametreDeBase.Size = new System.Drawing.Size(397, 196);
+            GroupParametreDeBase.StateCommon.Back.Color1 = System.Drawing.Color.Silver;
+            GroupParametreDeBase.TabIndex = 0;
+            GroupParametreDeBase.Values.Heading = "  Paramètres de Base (ELO, Thread, MultiPV, Réflexion)";
             // 
             // baseReflexionNumerique
             // 
-            this.baseReflexionNumerique.Increment = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.baseReflexionNumerique.Location = new System.Drawing.Point(200, 110);
-            this.baseReflexionNumerique.Maximum = new decimal(new int[] {
-            9999,
-            0,
-            0,
-            0});
-            this.baseReflexionNumerique.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.baseReflexionNumerique.Name = "baseReflexionNumerique";
-            this.baseReflexionNumerique.Size = new System.Drawing.Size(120, 22);
-            this.baseReflexionNumerique.StateCommon.Border.Color1 = System.Drawing.Color.Black;
-            this.baseReflexionNumerique.StateCommon.Border.DrawBorders = ((Krypton.Toolkit.PaletteDrawBorders)((((Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom) 
-            | Krypton.Toolkit.PaletteDrawBorders.Left) 
-            | Krypton.Toolkit.PaletteDrawBorders.Right)));
-            this.baseReflexionNumerique.TabIndex = 7;
-            this.baseReflexionNumerique.Value = new decimal(new int[] {
-            5,
-            0,
-            0,
-            0});
+            baseReflexionNumerique.Increment = new decimal(new int[] { 1, 0, 0, 0 });
+            baseReflexionNumerique.Location = new System.Drawing.Point(233, 127);
+            baseReflexionNumerique.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            baseReflexionNumerique.Maximum = new decimal(new int[] { 600, 0, 0, 0 });
+            baseReflexionNumerique.Minimum = new decimal(new int[] { 0, 0, 0, 0 });
+            baseReflexionNumerique.Name = "baseReflexionNumerique";
+            baseReflexionNumerique.Size = new System.Drawing.Size(140, 22);
+            baseReflexionNumerique.StateCommon.Border.Color1 = System.Drawing.Color.Black;
+            baseReflexionNumerique.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
+            baseReflexionNumerique.TabIndex = 7;
+            baseReflexionNumerique.Value = new decimal(new int[] { 5, 0, 0, 0 });
             // 
             // baseMultipvNumerique
             // 
-            this.baseMultipvNumerique.Increment = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.baseMultipvNumerique.Location = new System.Drawing.Point(200, 80);
-            this.baseMultipvNumerique.Maximum = new decimal(new int[] {
-            256,
-            0,
-            0,
-            0});
-            this.baseMultipvNumerique.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.baseMultipvNumerique.Name = "baseMultipvNumerique";
-            this.baseMultipvNumerique.Size = new System.Drawing.Size(120, 22);
-            this.baseMultipvNumerique.StateCommon.Border.Color1 = System.Drawing.Color.Black;
-            this.baseMultipvNumerique.StateCommon.Border.DrawBorders = ((Krypton.Toolkit.PaletteDrawBorders)((((Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom) 
-            | Krypton.Toolkit.PaletteDrawBorders.Left) 
-            | Krypton.Toolkit.PaletteDrawBorders.Right)));
-            this.baseMultipvNumerique.TabIndex = 6;
-            this.baseMultipvNumerique.Value = new decimal(new int[] {
-            3,
-            0,
-            0,
-            0});
+            baseMultipvNumerique.Increment = new decimal(new int[] { 1, 0, 0, 0 });
+            baseMultipvNumerique.Location = new System.Drawing.Point(233, 92);
+            baseMultipvNumerique.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            baseMultipvNumerique.Maximum = new decimal(new int[] { 3, 0, 0, 0 });
+            baseMultipvNumerique.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            baseMultipvNumerique.Name = "baseMultipvNumerique";
+            baseMultipvNumerique.Size = new System.Drawing.Size(140, 22);
+            baseMultipvNumerique.StateCommon.Border.Color1 = System.Drawing.Color.Black;
+            baseMultipvNumerique.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
+            baseMultipvNumerique.TabIndex = 6;
+            baseMultipvNumerique.Value = new decimal(new int[] { 3, 0, 0, 0 });
             // 
             // baseThreadsNumerique
             // 
-            this.baseThreadsNumerique.Increment = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.baseThreadsNumerique.Location = new System.Drawing.Point(200, 50);
-            this.baseThreadsNumerique.Maximum = new decimal(new int[] {
-            1024,
-            0,
-            0,
-            0});
-            this.baseThreadsNumerique.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.baseThreadsNumerique.Name = "baseThreadsNumerique";
-            this.baseThreadsNumerique.Size = new System.Drawing.Size(120, 22);
-            this.baseThreadsNumerique.StateCommon.Border.Color1 = System.Drawing.Color.Black;
-            this.baseThreadsNumerique.StateCommon.Border.DrawBorders = ((Krypton.Toolkit.PaletteDrawBorders)((((Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom) 
-            | Krypton.Toolkit.PaletteDrawBorders.Left) 
-            | Krypton.Toolkit.PaletteDrawBorders.Right)));
-            this.baseThreadsNumerique.TabIndex = 5;
-            this.baseThreadsNumerique.Value = new decimal(new int[] {
-            4,
-            0,
-            0,
-            0});
+            baseThreadsNumerique.Increment = new decimal(new int[] { 1, 0, 0, 0 });
+            baseThreadsNumerique.Location = new System.Drawing.Point(233, 58);
+            baseThreadsNumerique.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            baseThreadsNumerique.Maximum = new decimal(new int[] { 64, 0, 0, 0 });
+            baseThreadsNumerique.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            baseThreadsNumerique.Name = "baseThreadsNumerique";
+            baseThreadsNumerique.Size = new System.Drawing.Size(140, 22);
+            baseThreadsNumerique.StateCommon.Border.Color1 = System.Drawing.Color.Black;
+            baseThreadsNumerique.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
+            baseThreadsNumerique.TabIndex = 5;
+            baseThreadsNumerique.Value = new decimal(new int[] { 4, 0, 0, 0 });
             // 
             // baseEloNumerique
             // 
-            this.baseEloNumerique.Increment = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.baseEloNumerique.Location = new System.Drawing.Point(200, 20);
-            this.baseEloNumerique.Maximum = new decimal(new int[] {
-            3190,
-            0,
-            0,
-            0});
-            this.baseEloNumerique.Minimum = new decimal(new int[] {
-            1320,
-            0,
-            0,
-            0});
-            this.baseEloNumerique.Name = "baseEloNumerique";
-            this.baseEloNumerique.Size = new System.Drawing.Size(120, 22);
-            this.baseEloNumerique.StateCommon.Border.Color1 = System.Drawing.Color.Black;
-            this.baseEloNumerique.StateCommon.Border.DrawBorders = ((Krypton.Toolkit.PaletteDrawBorders)((((Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom) 
-            | Krypton.Toolkit.PaletteDrawBorders.Left) 
-            | Krypton.Toolkit.PaletteDrawBorders.Right)));
-            this.baseEloNumerique.TabIndex = 4;
-            this.baseEloNumerique.Value = new decimal(new int[] {
-            1958,
-            0,
-            0,
-            0});
+            baseEloNumerique.Increment = new decimal(new int[] { 1, 0, 0, 0 });
+            baseEloNumerique.Location = new System.Drawing.Point(233, 23);
+            baseEloNumerique.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            baseEloNumerique.Maximum = new decimal(new int[] { 3190, 0, 0, 0 });
+            baseEloNumerique.Minimum = new decimal(new int[] { 1320, 0, 0, 0 });
+            baseEloNumerique.Name = "baseEloNumerique";
+            baseEloNumerique.Size = new System.Drawing.Size(140, 22);
+            baseEloNumerique.StateCommon.Border.Color1 = System.Drawing.Color.Black;
+            baseEloNumerique.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
+            baseEloNumerique.TabIndex = 4;
+            baseEloNumerique.Value = new decimal(new int[] { 1958, 0, 0, 0 });
             // 
             // LabelBaseReflexion
             // 
-            this.LabelBaseReflexion.AutoSize = false;
-            this.LabelBaseReflexion.Location = new System.Drawing.Point(20, 110);
-            this.LabelBaseReflexion.Name = "LabelBaseReflexion";
-            this.LabelBaseReflexion.Size = new System.Drawing.Size(170, 20);
-            this.LabelBaseReflexion.TabIndex = 3;
-            this.LabelBaseReflexion.Values.Text = "Réflexion (en secondes) : ";
+            LabelBaseReflexion.AutoSize = false;
+            LabelBaseReflexion.Location = new System.Drawing.Point(23, 127);
+            LabelBaseReflexion.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            LabelBaseReflexion.Name = "LabelBaseReflexion";
+            LabelBaseReflexion.Size = new System.Drawing.Size(198, 23);
+            LabelBaseReflexion.TabIndex = 3;
+            LabelBaseReflexion.Values.Text = "Réflexion (0 à 600 secondes) : ";
             // 
             // LabelBaseMultiPv
             // 
-            this.LabelBaseMultiPv.AutoSize = false;
-            this.LabelBaseMultiPv.Location = new System.Drawing.Point(20, 80);
-            this.LabelBaseMultiPv.Name = "LabelBaseMultiPv";
-            this.LabelBaseMultiPv.Size = new System.Drawing.Size(170, 20);
-            this.LabelBaseMultiPv.TabIndex = 2;
-            this.LabelBaseMultiPv.Values.Text = "Nombre variations (1 à 256) : ";
+            LabelBaseMultiPv.AutoSize = false;
+            LabelBaseMultiPv.Location = new System.Drawing.Point(23, 92);
+            LabelBaseMultiPv.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            LabelBaseMultiPv.Name = "LabelBaseMultiPv";
+            LabelBaseMultiPv.Size = new System.Drawing.Size(198, 23);
+            LabelBaseMultiPv.TabIndex = 2;
+            LabelBaseMultiPv.Values.Text = "Nombre variations (1 à 3) : ";
             // 
             // LabelBaseThreads
             // 
-            this.LabelBaseThreads.AutoSize = false;
-            this.LabelBaseThreads.Location = new System.Drawing.Point(20, 50);
-            this.LabelBaseThreads.Name = "LabelBaseThreads";
-            this.LabelBaseThreads.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365BlueDarkMode;
-            this.LabelBaseThreads.Size = new System.Drawing.Size(170, 20);
-            this.LabelBaseThreads.TabIndex = 1;
-            this.LabelBaseThreads.Values.Text = "Nombre Threads (1 à 1024) : ";
+            LabelBaseThreads.AutoSize = false;
+            LabelBaseThreads.Location = new System.Drawing.Point(23, 58);
+            LabelBaseThreads.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            LabelBaseThreads.Name = "LabelBaseThreads";
+            LabelBaseThreads.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365BlueDarkMode;
+            LabelBaseThreads.Size = new System.Drawing.Size(198, 23);
+            LabelBaseThreads.TabIndex = 1;
+            LabelBaseThreads.Values.Text = "Nombre Threads (1 à 64) : ";
             // 
             // LabelBaseELo
             // 
-            this.LabelBaseELo.AutoSize = false;
-            this.LabelBaseELo.Location = new System.Drawing.Point(20, 20);
-            this.LabelBaseELo.Name = "LabelBaseELo";
-            this.LabelBaseELo.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365BlueDarkMode;
-            this.LabelBaseELo.Size = new System.Drawing.Size(170, 20);
-            this.LabelBaseELo.TabIndex = 0;
-            this.LabelBaseELo.Values.Text = "Force ELO (1320 à 3190) : ";
+            LabelBaseELo.AutoSize = false;
+            LabelBaseELo.Location = new System.Drawing.Point(23, 23);
+            LabelBaseELo.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            LabelBaseELo.Name = "LabelBaseELo";
+            LabelBaseELo.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
+            LabelBaseELo.Size = new System.Drawing.Size(198, 23);
+            LabelBaseELo.StateCommon.LongText.Color1 = System.Drawing.Color.Gray;
+            LabelBaseELo.TabIndex = 0;
+            LabelBaseELo.Values.Text = "Force ELO (1320 à 3190) : ";
             // 
             // BaseBoutonOk
             // 
-            this.BaseBoutonOk.Location = new System.Drawing.Point(148, 189);
-            this.BaseBoutonOk.Name = "BaseBoutonOk";
-            this.BaseBoutonOk.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365BlueDarkMode;
-            this.BaseBoutonOk.Size = new System.Drawing.Size(90, 25);
-            this.BaseBoutonOk.StateCommon.Border.Color1 = System.Drawing.Color.Gray;
-            this.BaseBoutonOk.StateCommon.Border.DrawBorders = ((Krypton.Toolkit.PaletteDrawBorders)((((Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom) 
-            | Krypton.Toolkit.PaletteDrawBorders.Left) 
-            | Krypton.Toolkit.PaletteDrawBorders.Right)));
-            this.BaseBoutonOk.StateCommon.Border.Rounding = 20F;
-            this.BaseBoutonOk.StateCommon.Border.Width = 3;
-            this.BaseBoutonOk.TabIndex = 1;
-            this.BaseBoutonOk.Values.Text = "OK";
-            this.BaseBoutonOk.Click += new System.EventHandler(this.BaseBoutonOk_Click);
+            BaseBoutonOk.Location = new System.Drawing.Point(173, 218);
+            BaseBoutonOk.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            BaseBoutonOk.Name = "BaseBoutonOk";
+            BaseBoutonOk.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
+            BaseBoutonOk.Size = new System.Drawing.Size(105, 29);
+            BaseBoutonOk.StateCommon.Border.Color1 = System.Drawing.Color.Gray;
+            BaseBoutonOk.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
+            BaseBoutonOk.StateCommon.Border.Rounding = 20F;
+            BaseBoutonOk.StateCommon.Border.Width = 3;
+            BaseBoutonOk.TabIndex = 1;
+            BaseBoutonOk.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            BaseBoutonOk.Values.Text = "OK";
+            BaseBoutonOk.Click += BaseBoutonOk_Click;
             // 
             // BaseBoutonAnnuler
             // 
-            this.BaseBoutonAnnuler.Location = new System.Drawing.Point(245, 189);
-            this.BaseBoutonAnnuler.Name = "BaseBoutonAnnuler";
-            this.BaseBoutonAnnuler.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365BlueDarkMode;
-            this.BaseBoutonAnnuler.Size = new System.Drawing.Size(90, 25);
-            this.BaseBoutonAnnuler.StateCommon.Border.Color1 = System.Drawing.Color.Gray;
-            this.BaseBoutonAnnuler.StateCommon.Border.DrawBorders = ((Krypton.Toolkit.PaletteDrawBorders)((((Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom) 
-            | Krypton.Toolkit.PaletteDrawBorders.Left) 
-            | Krypton.Toolkit.PaletteDrawBorders.Right)));
-            this.BaseBoutonAnnuler.StateCommon.Border.Rounding = 20F;
-            this.BaseBoutonAnnuler.StateCommon.Border.Width = 3;
-            this.BaseBoutonAnnuler.TabIndex = 2;
-            this.BaseBoutonAnnuler.Values.Text = "Annuler";
-            this.BaseBoutonAnnuler.Click += new System.EventHandler(this.BaseBoutonAnnuler_Click);
+            BaseBoutonAnnuler.Location = new System.Drawing.Point(286, 218);
+            BaseBoutonAnnuler.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            BaseBoutonAnnuler.Name = "BaseBoutonAnnuler";
+            BaseBoutonAnnuler.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
+            BaseBoutonAnnuler.Size = new System.Drawing.Size(105, 29);
+            BaseBoutonAnnuler.StateCommon.Border.Color1 = System.Drawing.Color.Gray;
+            BaseBoutonAnnuler.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
+            BaseBoutonAnnuler.StateCommon.Border.Rounding = 20F;
+            BaseBoutonAnnuler.StateCommon.Border.Width = 3;
+            BaseBoutonAnnuler.TabIndex = 2;
+            BaseBoutonAnnuler.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            BaseBoutonAnnuler.Values.Text = "Annuler";
+            BaseBoutonAnnuler.Click += BaseBoutonAnnuler_Click;
             // 
             // ParametresDeBase
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.LightSteelBlue;
-            this.ClientSize = new System.Drawing.Size(370, 232);
-            this.Controls.Add(this.BaseBoutonAnnuler);
-            this.Controls.Add(this.BaseBoutonOk);
-            this.Controls.Add(this.GroupParametreDeBase);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Name = "ParametresDeBase";
-            this.Text = "Parametres de base du moteur UCI";
-            ((System.ComponentModel.ISupportInitialize)(this.GroupParametreDeBase.Panel)).EndInit();
-            this.GroupParametreDeBase.Panel.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.GroupParametreDeBase)).EndInit();
-            this.GroupParametreDeBase.ResumeLayout(false);
-            this.ResumeLayout(false);
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            BackColor = System.Drawing.Color.Silver;
+            ClientSize = new System.Drawing.Size(432, 268);
+            Controls.Add(BaseBoutonAnnuler);
+            Controls.Add(BaseBoutonOk);
+            Controls.Add(GroupParametreDeBase);
+            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
+            Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            Name = "ParametresDeBase";
+            Text = "Parametres de base du moteur UCI";
+            ((System.ComponentModel.ISupportInitialize)GroupParametreDeBase.Panel).EndInit();
+            GroupParametreDeBase.Panel.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)GroupParametreDeBase).EndInit();
+            ResumeLayout(false);
 
         }
 

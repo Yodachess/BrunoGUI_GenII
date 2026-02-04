@@ -1,0 +1,21 @@
+[Event "Entrainement"]
+[Site "Maison"]
+[Round ""]
+[Date "2025.11.19"]
+[White "Bruno"]
+[Black "Stockfish 17"]
+[Result "*"]
+[ECO ""]
+[WhiteElo ""]
+[BlackElo "2025"]
+[PlyCount "114"]
+
+1. e4 c5 2. a3 g6 3. b4 Bg7 4. Nc3 d6 5. Bc4 a6 6. Rb1 e6 7. Nf3 b5 8. Ba2  
+c4 9. Bb2 Nf6 10. d3 d5 11. dxc4 dxc4 12. O-O Qc7 13. e5 Ng4 14. Qe2 Nd7 15. Ne4  
+Ngxe5 16. Rfd1 Nxf3+ 17. Qxf3 Ne5 18. Nf6+ Ke7 19. Bxe5 Qxe5 20. Qxa8 Bxf6  
+21. Re1 Qc7 22. Qf3 Bb7 23. Qe3 h5 24. Rbd1 Kf8 25. c3 Bc6 26. Bb1 Qb7 27. f3  
+Kg7 28. Be4 h4 29. Rd6 Bxe4 30. fxe4 h3 31. g3 Ra8 32. Red1 Qa7 33. Qxa7 Rxa7  
+34. Rc1 g5 35. Kf2 Be5 36. Rc6 Kf6 37. Ke3 Kg6 38. Kd2 a5 39. Rc2 g4 40. Rb6  
+Rd7+ 41. Kc1 axb4 42. axb4 Bxg3 43. hxg3 Rd3 44. Rxb5 f5 45. Re5 Kf6 46. Rc5  
+Rxg3 47. b5 Rg2 48. Rc8 h2 49. Rh8 Rxc2+ 50. Kxc2 g3 51. b6 g2 52. b7 g1=Q  
+53. b8=Q Qg2+ 54. Kb1 h1=R+ 55. Rxh1 Qxh1+ 56. Ka2 Qxe4 57. Qd8+ Kg6 

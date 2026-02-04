@@ -1,223 +1,406 @@
-﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_Stockfish est développé par Bruno COURTOIS.  Copyright © 2024 █
-// █ BrunoGUI_Stockfish est gratuit, sauf s'il est utilisé commercialement  █
-// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
-// Module ajouté à la structure de base pour gérer les parties et balises PGN
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII est développé par Bruno COURTOIS.  Copyright © 2025 █
+// █ BrunoGUI_GenII est gratuit, sauf s'il est utilisé commercialement  █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 
+// Divers outils qui encombreraient les autres fichiers ...
+// ├─ Classe "PartieEchecsPGN" qui décrit les balises du format PGN
+// └─ Classe "GestionPartiePgn"  
+//              ├─ "RetourneContenuPgn"  
+//              ├─ "RetourneEntetePgn"
+//              └─ "DecodeCoupPartie"
+// └─ Classe "SaisieBalises" pour gestion des en-têtes PGN
+//              ├─ "SaisieBalises"  
+//              ├─ "InitializeComponents"  
+//              ├─ "CreationBalisesTextBox"  
+//              ├─ "SauveBalises_Click"
+//              └─ "AnnulerBalises_Click"
+
+using ComponentFactory.Krypton.Toolkit;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
-using static BrunoGUI_Stockfish.LogiqueMouvements;
+using static BrunoGUI_GenII.LogiqueMouvements;
 
-namespace BrunoGUI_Stockfish
+namespace BrunoGUI_GenII
 {
+    public class PartieEchecsPGN
+    {   // Format de chaque partie qui se trouve dans ListeParties
+        public string Tournoi { get; set; }
+        public string Lieu { get; set; }
+        public string Date { get; set; }
+        public string Ronde { get; set; }
+        public string White { get; set; }
+        public string Black { get; set; }
+        public string Result { get; set; }
+        public string ECO { get; set; }
+        public string WhiteElo { get; set; }
+        public string BlackElo { get; set; }
+        public string CompteDePLy { get; set; }
+        public string CoupsPartiePGN { get; set; }
+    }
+
     public class GestionPartiePgn       // Spécification détaillée du format PGN = https://fr.wikipedia.org/wiki/Portable_Game_Notation
     {
-        public class PartieEchecPGN
-        {   // Format de chaque partie qui se trouve dans ListeParties
-            public string Tournament { get; set; }
-            public string Lieu { get; set; }
-            public string Date { get; set; }
-            public string Round { get; set; }
-            public string White { get; set; }
-            public string Black { get; set; }
-            public string Result { get; set; }
-            public string ECO { get; set; }
-            public string WhiteElo { get; set; }
-            public string BlackElo { get; set; }
-            public string PlyCount { get; set; }
-            public string CoupsPartiePGN { get; set; }
-        }
-        public string RetourneContenuPgn(PartieEchecPGN PartieEnCours, string localisation)
-        {
+        public static string RetourneContenuPgn(PartieEchecsPGN partieEnCours, string localisation)
+        {   // Met au format Pgn la partieEnCours pour visualisation et sauvegarde ... 
             int comptepartiel = 0;
             string contenuPgn = "";
-            for (int i = 0; i < LogiqueMouvements.ListeCoupsPgn.Count; i++)     // Création du contenu du fichier en lignes de 80 caractères
+            for (int i = 0; i < ListeCoupsPgnIntl.Count; i++)     // Création du contenu du fichier en lignes de 80 caractères
             {       // Il faut des lignes <= 80 caractères, mais n'aller à la ligne que si c'est un espace
-                comptepartiel = comptepartiel + LogiqueMouvements.ListeCoupsPgn[i].Length;
+                comptepartiel = comptepartiel + ListeCoupsPgnIntl[i].Length;
                 if (localisation == "Fr")
-                    contenuPgn = contenuPgn + LogiqueMouvements.ListeCoupsPgnFr[i];
+                    contenuPgn = contenuPgn + ListeCoupsPgnFr[i];
                 else
-                    contenuPgn = contenuPgn + LogiqueMouvements.ListeCoupsPgn[i];
+                    contenuPgn = contenuPgn + ListeCoupsPgnIntl[i];
                 if (comptepartiel >= 74)
                 {   // Si plus de 80 caractères, il faut découper  (attention aux coups comme Cfxe6+)
                     contenuPgn += " \n";        // Rajout des sauts de ligne
                     comptepartiel = 0;          // Ligne suivante
                 }
             }
-            // Ajout de l'en-tête complet respectant le format PGN (mes Balises optionnelles préférées)
-            contenuPgn = "[PlyCount \"" + PartieEnCours.PlyCount + "\"]\n\n" + contenuPgn;  // Nombre de 1/2 coups
-            contenuPgn = "[BlackElo \"" + PartieEnCours.BlackElo + "\"]\n" + contenuPgn;    // Elo Noirs
-            contenuPgn = "[WhiteElo \"" + PartieEnCours.WhiteElo + "\"]\n" + contenuPgn;    // Elo Blancs
-            contenuPgn = "[ECO \"" + PartieEnCours.ECO + "\"]\n" + contenuPgn;              // Code ECO (ouverture) de la partie 
-
-            // Ajout de l'en-tête complet respectant le format PGN (Balises obligatoires)
-            contenuPgn = "[Result \"" + PartieEnCours.Result + "\"]\n" + contenuPgn;        // Résultat Partie
-            contenuPgn = "[Black \"" + PartieEnCours.Black + "\"]\n" + contenuPgn;            // Date
-            contenuPgn = "[White \"" + PartieEnCours.White + "\"]\n" + contenuPgn;            // Date
-            contenuPgn = "[Date \"" + PartieEnCours.Date + "\"]\n" + contenuPgn;            // Date
-            contenuPgn = "[Round \"" + PartieEnCours.Round + "\"]\n" + contenuPgn;          // Numéro de la Ronde
-            contenuPgn = "[Site \"" + PartieEnCours.Lieu + "\"]\n" + contenuPgn;            // Lieu de la Partie
-            contenuPgn = "[Event \"" + PartieEnCours.Tournament + "\"]\n" + contenuPgn;     // Nom du Tournoi
+            contenuPgn = RetourneEntetePgn(partieEnCours) + contenuPgn;
             return contenuPgn;
         }
-        public string AlgebriqueVersPgn(string varianteBrute, int numeroDemiCoup)     // Retourne les coups sous la forme x. Db6 (format PGN en fait)
+        public static string RetourneEntetePgn(PartieEchecsPGN partieEnCours)
         {
-            varianteBrute = varianteBrute.TrimStart();
-            string[] variantePgnDecoupe = varianteBrute.Split(' ');     // Découpage des coups de la variante
-            string stockeFen = LogiqueMouvements.RetourneChaineFenActuel();     // Récupérer le FEN actuel pour le remettre à la fin ? Obligé si on bouge les pièces !!
-            string coupExamine = "";
-            varianteBrute = "";
-            if (LogiqueMouvements.QuiJoue == ColorPiece.Noir)                               //la PV commence par le coup Noir
-                varianteBrute = ((numeroDemiCoup / 2) + 1).ToString() + " ...";     // On met le numéro du coup Noir
-            for (int i = 0; i < variantePgnDecoupe.Length; i++)
-            {
-                if (variantePgnDecoupe[i] != "")    // Pour blinder le code (Au cas ou la découpe donne un élément vide)
-                {
-                    if (variantePgnDecoupe[i].Length >= 4)   // Le coup doit comporter source et destination, sinon crash ci dessous ...
-                    {
-                        string source = variantePgnDecoupe[i].Substring(0, 2);
-                        string destination = variantePgnDecoupe[i].Substring(2, 2);
-                        coupExamine = LogiqueMouvements.CoupNotationAlgebriquePGN(source, destination);    // On récupère le coup sous la forme b8d7 au format PGN comme Cd7
-                        LogiqueMouvements.DeplacementPiece(RenvoieCaseIndex120(source), RenvoieCaseIndex120(destination), false);    // On fait le mouvement
-                        ColorPiece couleurCoup = LogiqueMouvements.CouleurCase(RenvoieCaseIndex120(destination));
-                        if (couleurCoup == ColorPiece.Noir)
-                        {   //la PV commence par le coup Noir
-                            varianteBrute = varianteBrute + " " + coupExamine;
-                        }
-                        if (couleurCoup == ColorPiece.Blanc)
-                        {   // la PV commence par le coup Blanc
-                            int numeroCoup = (numeroDemiCoup / 2) + 2;
-                            if (numeroDemiCoup == 0)
-                            {   // Si c'est le 1er coup Blanc, il faut mettre "1." et pas "2."
-                                numeroCoup = 1;
-                                numeroDemiCoup--;            // Et ajuster le numéro de 1/2 coup ... Sinon, il passe à 3 ??!!
-                            }
-                            varianteBrute = varianteBrute + " " + (numeroCoup) + ". " + coupExamine;
-                        }
-                        numeroDemiCoup++;
-                    }
-                }
-            }
-            LogiqueMouvements.MiseenplaceFen(stockeFen);        // et on réaffiche l'échiquier de départ
-            return varianteBrute;
+            string enTetePgn = "";
+            // Ajout de l'en-tête complet respectant le format PGN (mes Balises optionnelles préférées)
+            enTetePgn = "[PlyCount \"" + partieEnCours.CompteDePLy + "\"]\n\n" + enTetePgn;  // Nombre de 1/2 coups
+            enTetePgn = "[BlackElo \"" + partieEnCours.BlackElo + "\"]\n" + enTetePgn;    // Elo Noirs
+            enTetePgn = "[WhiteElo \"" + partieEnCours.WhiteElo + "\"]\n" + enTetePgn;    // Elo Blancs
+            enTetePgn = "[ECO \"" + partieEnCours.ECO + "\"]\n" + enTetePgn;              // Code ECO (ouverture) de la partie 
+
+            // Ajout de l'en-tête complet respectant le format PGN (Balises obligatoires)
+            enTetePgn = "[Result \"" + partieEnCours.Result + "\"]\n" + enTetePgn;        // Résultat Partie
+            enTetePgn = "[Black \"" + partieEnCours.Black + "\"]\n" + enTetePgn;          // Joueur noir
+            enTetePgn = "[White \"" + partieEnCours.White + "\"]\n" + enTetePgn;          // Joueur blanc
+            enTetePgn = "[Date \"" + partieEnCours.Date + "\"]\n" + enTetePgn;            // Date
+            enTetePgn = "[Round \"" + partieEnCours.Ronde + "\"]\n" + enTetePgn;          // Numéro de la Ronde
+            enTetePgn = "[Site \"" + partieEnCours.Lieu + "\"]\n" + enTetePgn;            // Lieu de la Partie
+            enTetePgn = "[Event \"" + partieEnCours.Tournoi + "\"]\n" + enTetePgn;     // Nom du Tournoi
+            return enTetePgn;
         }
 
-        public class SaisieBalises : Form
+        public static void DecodeCoupPartie(string coupPartie, bool couleurTraitBlanc)
+        {   // Décode UN coup au format Pgn en case source / destination et execute le coup
+            char dernierCaractereCoup, LeveeDeDoute;
+            bool PromotionExiste = false;
+            bool PriseExiste = false;
+            BloquerChoixPromo = false;
+            ColorPiece couleurQuiJoue;
+            string CaseDestination, CaseSource;
+            CaseSource = CaseDestination = "";
+            TypePiece pieceQuiJoue = TypePiece.Vide;
+            string CoupPGN = coupPartie;       // On récupère le coup pour pouvoir le traiter
+            if (CoupPGN.Length > 0)     // Il faut s'assurer qu'il y a au moins un coup, sinon erreur "L'index se trouve en dehors des limites du tableau."
+            {
+                couleurQuiJoue = couleurTraitBlanc ? ColorPiece.Blanc : ColorPiece.Noir;
+                dernierCaractereCoup = CoupPGN[CoupPGN.Length - 1];    // Nettoyage des signes "+" et "#" à la fin du coup qui signalent les echecs
+                if (dernierCaractereCoup == '+')
+                {
+                    CoupPGN = CoupPGN.TrimEnd('+');         // Enlève le + dans CoupPGN pour permettre d'avoir les 2 derniers caractères comme CaseDestination
+                    Echec = true;
+                }
+                if (dernierCaractereCoup == '#')
+                {
+                    CoupPGN = CoupPGN.TrimEnd('#');         // Enlève le # dans CoupPGN pour permettre d'avoir les 2 derniers caractères comme CaseDestination
+                    EchecetMat = true;
+                }
+                // Début du traitement du coup, il faut trouver la case de départ et de destination pour pouvoir executer le coup sur l'échiquier-
+                switch (CoupPGN[0])                         // Coup de PIECE, car la 1ère lettre est une majuscule
+                {                                           // On traite d'abord le Roi et le Roque, car plus simple
+                    case 'K':       // Roi
+                        CaseDestination = CoupPGN.Substring(CoupPGN.Length - 2, 2);     // La CaseDestination = 2 derniers caractères de CoupPGN
+                        pieceQuiJoue = (couleurQuiJoue == ColorPiece.Blanc) ? TypePiece.RoiBlanc : TypePiece.RoiNoir;
+                        for (int i = 21; i <= 98; i++)
+                            if (PiecesEchiquier[i] == pieceQuiJoue)
+                            {
+                                CaseSource = LogiqueMouvements.NomCaseAlgebrique(i);            // La CaseSource = Case où est le Roi qui joue
+                            }
+                        break;
+                    case 'O':       // Roque
+                        if (couleurQuiJoue == ColorPiece.Blanc)
+                        {           // Grand Roque Blanc
+                            if (coupPartie == "O-O-O")             // Utiliser CoupPGN plutôt ??   DEBUG 31/01
+                            {
+                                CaseSource = "e1"; CaseDestination = "c1";
+                            }
+                            else
+                            {       // Petit Roque Blanc
+                                CaseSource = "e1"; CaseDestination = "g1";
+                            }
+                        }
+                        if (couleurQuiJoue == ColorPiece.Noir)                  // Utiliser CoupPGN plutôt ??   DEBUG 31/01
+                        {           // Grand Roque Noir 
+                            if (coupPartie == "O-O-O")
+                            {
+                                CaseSource = "e8"; CaseDestination = "c8";
+                            }
+                            else
+                            {       // Petit Roque Noir
+                                CaseSource = "e8"; CaseDestination = "g8";
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+
+                if ("QBNR".Contains(CoupPGN[0]))            // Coup de PIECE, car la 1ère lettre est une majuscule
+                {                                           // On traite les autres pièces, Dame, tour, Cavaliet et Fou
+                    switch (CoupPGN[0])
+                    {
+                        case 'Q':       // Dame
+                            CaseDestination = CoupPGN.Substring(CoupPGN.Length - 2, 2);         // La CaseDestination = 2 derniers caractères de CoupPGN
+                            pieceQuiJoue = (couleurQuiJoue == ColorPiece.Blanc) ? TypePiece.ReineBlanche : TypePiece.ReineNoire;
+                            break;
+                        case 'R':       // Tour
+                            CaseDestination = CoupPGN.Substring(CoupPGN.Length - 2, 2);         // La CaseDestination = 2 derniers caractères de CoupPGN
+                            pieceQuiJoue = (couleurQuiJoue == ColorPiece.Blanc) ? TypePiece.TourBlanche : TypePiece.TourNoire;
+                            break;
+                        case 'N':       // Cavalier
+                            CaseDestination = CoupPGN.Substring(CoupPGN.Length - 2, 2);         // La CaseDestination = 2 derniers caractères de CoupPGN
+                            pieceQuiJoue = (couleurQuiJoue == ColorPiece.Blanc) ? TypePiece.CavalierBlanc : TypePiece.CavalierNoir;
+                            break;
+                        case 'B':       // Fou
+                            CaseDestination = CoupPGN.Substring(CoupPGN.Length - 2, 2);         // La CaseDestination = 2 derniers caractères de CoupPGN
+                            pieceQuiJoue = (couleurQuiJoue == ColorPiece.Blanc) ? TypePiece.FouBlanc : TypePiece.FouNoir;
+                            break;
+                    }
+                    //      Partie commune
+                    // CoupPGN a 5 caractères maximum, car on a enlevé les échecs au début de la méthode
+                    // On enlève le "x" de la prise si il existe, ainsi que les 2 derniers caractères qui sont la destination
+                    CoupPGN = CoupPGN.Replace("x", "");
+                    CoupPGN = CoupPGN.Remove(CoupPGN.Length - 2);
+                    // Si CoupPGN.Length == 2, CoupPGN[1] est le caractère de "LeveeDeDoute", peut être une lettre ou un chiffre. Sinon c'est vide
+                    if (CoupPGN.Length == 2)
+                        LeveeDeDoute = CoupPGN[1];      // C'est le caractère de levée de doute, une lettre pour la colonne ou un chiffre pour la ligne
+                    else
+                        LeveeDeDoute = '\0';            // Il n'y a pas d'ambiguité, 
+
+                    for (int i = 21; i <= 98; i++)
+                    {
+                        if (PiecesEchiquier[i] == pieceQuiJoue)     // Pour chaque Pièce trouvée, 
+                        {                                       // On génère les mouvements possibles
+                            List<string> Mouvements = RetourneMouvements(LogiqueMouvements.NomCaseAlgebrique(i));
+                            for (int j = 0; j < Mouvements.Count; j++)
+                            {                                                                               // Mouvements[x] est sous la forme c5 ou xc5 si prise
+                                if (Mouvements[j].Substring(Mouvements[j].Length - 2) == CaseDestination)   // Au cas ou il y a prise, on prend la fin de la chaine
+                                {   // Si un des mouvements est la case de destination, ce n'est pas forcément le bon Cavalier, Dame ou Tour ou Fou
+                                    // Si LogiqueMouvements.NomCaseAlgebrique(i) contient LeveeDeDoute, ou que LeveeDeDoute est vide (il n'y a plus de doute)
+                                    // c'est la bonne Pièce et CaseSource = LogiqueMouvements.NomCaseAlgebrique(i);
+                                    if (LeveeDeDoute == '\0' || LeveeDeDoute == LogiqueMouvements.NomCaseAlgebrique(i)[0] || LeveeDeDoute == LogiqueMouvements.NomCaseAlgebrique(i)[1])
+                                    {       //  Il n'y a pas d'ambiguité, 
+                                        CaseSource = LogiqueMouvements.NomCaseAlgebrique(i);
+                                        if (Mouvements[j].Contains('x'))
+                                            PriseExiste = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (char.IsLower(CoupPGN[0]))               // COUP DE PION, car la 1ère lettre est une minuscule
+                {
+                    if (CoupPGN.Contains('='))              // PROMOTION
+                    {   // PROMOTION  
+                        PromotionExiste = true;
+                        switch (CoupPGN[CoupPGN.Length - 1])
+                        {
+                            case 'Q':
+                                LogiqueMouvements.PromotionPiece = (couleurQuiJoue == ColorPiece.Blanc) ? TypePiece.ReineBlanche : TypePiece.ReineNoire;
+                                break;
+                            case 'R':
+                                LogiqueMouvements.PromotionPiece = (couleurQuiJoue == ColorPiece.Blanc) ? TypePiece.TourBlanche : TypePiece.TourNoire;
+                                break;
+                            case 'N':
+                                LogiqueMouvements.PromotionPiece = (couleurQuiJoue == ColorPiece.Blanc) ? TypePiece.CavalierBlanc : TypePiece.CavalierNoir;
+                                break;
+                            case 'B':
+                                LogiqueMouvements.PromotionPiece = (couleurQuiJoue == ColorPiece.Blanc) ? TypePiece.FouBlanc : TypePiece.FouNoir;
+                                break;
+                        }
+                        BloquerChoixPromo = true;   // Lors de l'execution du coup, il ne faudra pas proposer le choix de pièce promue
+                        CoupPGN = CoupPGN.Remove(CoupPGN.Length - 2, 2);     // On nettoie le coup de la promotion pour l'analyse qui suit
+                    }
+                    if (CoupPGN.Contains('x'))              // PRISE
+                    {   // PRISE
+                        PriseExiste = true;
+                        CaseDestination = CoupPGN.Substring(CoupPGN.Length - 2, 2);       // La CaseDestination = 2 derniers caractères de CoupPGN
+                        pieceQuiJoue = TypePiece.PionNoir;
+                        if (CoupPGN[2].CompareTo(CoupPGN[0]) > 0)
+                        {   // le caractère d'arrivée est après celui de départ dans l'ordre alphabétique
+                            CaseSource = (couleurQuiJoue == ColorPiece.Blanc) ?
+                                LogiqueMouvements.NomCaseAlgebrique(RenvoieCaseIndex120(CaseDestination) - 11) : // Le Pion est Blanc
+                                LogiqueMouvements.NomCaseAlgebrique(RenvoieCaseIndex120(CaseDestination) + 9);  // Le Pion est Noir
+                        }
+                        else
+                        {
+                            CaseSource = couleurQuiJoue == ColorPiece.Blanc ?
+                                LogiqueMouvements.NomCaseAlgebrique(RenvoieCaseIndex120(CaseDestination) - 9) :  // Le Pion est Blanc
+                                LogiqueMouvements.NomCaseAlgebrique(RenvoieCaseIndex120(CaseDestination) + 11); // Le Pion est Noir
+                        }
+                        pieceQuiJoue = couleurQuiJoue == ColorPiece.Blanc ? TypePiece.PionBlanc : TypePiece.PionNoir;
+                    }
+
+                    if (!CoupPGN.Contains('x'))             // NI PROMOTION, NI PRISE
+                    {   // NI PROMOTION, NI PRISE
+                        PriseExiste = false;
+                        CaseDestination = CoupPGN;
+                        if (couleurQuiJoue == ColorPiece.Blanc)
+                        {       // Le Pion est Blanc
+                            pieceQuiJoue = TypePiece.PionBlanc;
+                            CaseSource = PiecesEchiquier[RenvoieCaseIndex120(CaseDestination) - 10] == TypePiece.PionBlanc ?
+                                LogiqueMouvements.NomCaseAlgebrique(RenvoieCaseIndex120(CaseDestination) - 10) : // Déplacement d'une case
+                                LogiqueMouvements.NomCaseAlgebrique(RenvoieCaseIndex120(CaseDestination) - 20); // Déplacement de 2 cases
+                        }
+                        else
+                        {   // Le Pion est Noir
+                            pieceQuiJoue = TypePiece.PionNoir;
+                            CaseSource = PiecesEchiquier[RenvoieCaseIndex120(CaseDestination) + 10] == TypePiece.PionNoir ?
+                                LogiqueMouvements.NomCaseAlgebrique(RenvoieCaseIndex120(CaseDestination) + 10) : // Déplacement d'une case
+                                LogiqueMouvements.NomCaseAlgebrique(RenvoieCaseIndex120(CaseDestination) + 20); // Déplacement de 2 cases
+                        }
+                    }
+                }
+                if (dernierCaractereCoup != '.')
+                {       // On change de couleur si c'est pas le numéro du coup
+                    couleurQuiJoue = couleurQuiJoue == ColorPiece.Noir ? ColorPiece.Blanc : ColorPiece.Noir;
+                    string CoupNal = (CaseSource + "-" + CaseDestination);
+                    PriseExiste = false;
+                    PromotionExiste = false;
+                    CoupNal = pieceQuiJoue + "  " + CoupNal;
+                    LogiqueMouvements.ExecutionCoup(CaseSource, CaseDestination);
+                }
+            }
+        }
+
+    public class SaisieBalises : KryptonForm
         {
-            private PartieEchecPGN partieBalises;
-            private TextBox tournamentCase;
-            private TextBox lieuCase;
-            private TextBox dateCase;
-            private TextBox rondeCase;
-            private TextBox blancsCase;
-            private TextBox noirsCase;
-            private TextBox resultCase;
-            private TextBox ecoCase;
-            private TextBox whiteeloCase;
-            private TextBox blackeloCase;
-            private TextBox plycountCase;
+            private PartieEchecsPGN partieBalises;
+            private KryptonTextBox tournamentCase;
+            private KryptonTextBox lieuCase;
+            private KryptonTextBox dateCase;
+            private KryptonTextBox rondeCase;
+            private KryptonTextBox blancsCase;
+            private KryptonTextBox noirsCase;
+            private KryptonTextBox resultCase;
+            private KryptonTextBox ecoCase;
+            private KryptonTextBox whiteeloCase;
+            private KryptonTextBox blackeloCase;
+            private KryptonTextBox plycountCase;
+            private KryptonButton sauveEnTete;
+            private KryptonButton annulerEnTete;
 
-            private Button SauveEnTete;
-            private Button AnnulerEnTete;
-
-            public SaisieBalises(PartieEchecPGN partie)
+            public SaisieBalises(PartieEchecsPGN partie)
             {
                 partieBalises = partie;
                 InitializeComponents();
-                this.BackColor = Color.LightSteelBlue;
+                this.StartPosition = FormStartPosition.CenterScreen;
+                // Appliquer la palette globale Krypton
+                this.Palette = KryptonManager.CurrentGlobalPalette;
             }
             private void InitializeComponents()
             {
-                tournamentCase = CreationBalisesTextBox("Tournoi :", 20, 10, value => partieBalises.Tournament = value);
-                lieuCase = CreationBalisesTextBox("Lieu :", 20, 40, value => partieBalises.Lieu = value);
-                dateCase = CreationBalisesTextBox("Date :", 20, 70, value => partieBalises.Date = value);
-                rondeCase = CreationBalisesTextBox("Ronde :", 20, 100, value => partieBalises.Round = value);
-                blancsCase = CreationBalisesTextBox("Blancs :", 20, 130, value => partieBalises.White = value);
-                noirsCase = CreationBalisesTextBox("Noirs :", 20, 160, value => partieBalises.Black = value);
+                // Création des champs de saisie
+                tournamentCase = CreationBalisesTextBox("Tournoi :", 20, 10, value => partieBalises.Tournoi = value);
+                lieuCase = CreationBalisesTextBox("Lieu :     ", 20, 40, value => partieBalises.Lieu = value);
+                dateCase = CreationBalisesTextBox("Date :     ", 20, 70, value => partieBalises.Date = value);
+                rondeCase = CreationBalisesTextBox("Ronde :    ", 20, 100, value => partieBalises.Ronde = value);
+                blancsCase = CreationBalisesTextBox("Blancs :   ", 20, 130, value => partieBalises.White = value);
+                noirsCase = CreationBalisesTextBox("Noirs :    ", 20, 160, value => partieBalises.Black = value);
                 resultCase = CreationBalisesTextBox("Résultat :", 20, 190, value => partieBalises.Result = value);
-                ecoCase = CreationBalisesTextBox("ECO :", 20, 220, value => partieBalises.ECO = value);
-                whiteeloCase = CreationBalisesTextBox("ELO BLancs :", 20, 250, value => partieBalises.WhiteElo = value);
+                ecoCase = CreationBalisesTextBox("ECO :     ", 20, 220, value => partieBalises.ECO = value);
+                whiteeloCase = CreationBalisesTextBox("ELO Blancs :", 20, 250, value => partieBalises.WhiteElo = value);
                 blackeloCase = CreationBalisesTextBox("ELO Noirs :", 20, 280, value => partieBalises.BlackElo = value);
-                plycountCase = CreationBalisesTextBox("Demi coups :", 20, 310, value => partieBalises.PlyCount = value);
-
-                // Pré-remplir les champs avec les valeurs actuelles de la partie en cours
-                tournamentCase.Text = partieBalises.Tournament;
+                plycountCase = CreationBalisesTextBox("Demi coups :", 20, 310, value => partieBalises.CompteDePLy = value);
+                // Pré-remplir les champs
+                tournamentCase.Text = partieBalises.Tournoi;
                 lieuCase.Text = partieBalises.Lieu;
                 dateCase.Text = partieBalises.Date;
-                rondeCase.Text = partieBalises.Round;
+                rondeCase.Text = partieBalises.Ronde;
                 blancsCase.Text = partieBalises.White;
                 noirsCase.Text = partieBalises.Black;
                 resultCase.Text = partieBalises.Result;
                 ecoCase.Text = partieBalises.ECO;
                 whiteeloCase.Text = partieBalises.WhiteElo;
                 blackeloCase.Text = partieBalises.BlackElo;
-                plycountCase.Text = partieBalises.PlyCount;
-
-                SauveEnTete = new Button
+                plycountCase.Text = partieBalises.CompteDePLy;
+                // Boutons
+                sauveEnTete = new KryptonButton
                 {
-                    Text = "Enregistrer En-têtes",
-                    TextAlign = ContentAlignment.MiddleLeft,
+                    Text = "Enregistrer En-têtes", // ✅ Utilise simplement `Text`
                     Location = new Point(20, 350),
                     Width = 110
                 };
-                SauveEnTete.Click += SauveBalises_Click;
-                this.Controls.Add(SauveEnTete);
+                sauveEnTete.Click += SauveBalises_Click;
+                this.Controls.Add(sauveEnTete);
 
-                AnnulerEnTete = new Button
+                annulerEnTete = new KryptonButton
                 {
                     Text = "Quitter En-Têtes",
-                    Location = new Point(130, 350),
+                    Location = new Point(135, 350),
                     Width = 110
                 };
-                AnnulerEnTete.Click += SauveBalises_Click;
-                this.Controls.Add(AnnulerEnTete);
+                annulerEnTete.Click += AnnulerBalises_Click;
+                this.Controls.Add(annulerEnTete);
 
                 // Configuration de la fenêtre
                 this.Text = "Saisie des en-têtes de parties";
                 this.Size = new Size(280, 420);
             }
-            private TextBox CreationBalisesTextBox(string labelText, int x, int y, Action<string> updateProperty)
+            private KryptonTextBox CreationBalisesTextBox(string labelText, int x, int y, Action<string> updateProperty)
             {
-                Label label = new Label
+                KryptonLabel label = new KryptonLabel
                 {
                     Text = labelText,
                     Location = new Point(x, y),
-                    Font = new Font("Arial", 10) //, FontStyle.Bold);
                 };
+                label.StateNormal.ShortText.Font = new Font("Arial", 10); // ✅ Police du label
                 this.Controls.Add(label);
 
-                TextBox textBox = new TextBox
+                KryptonTextBox textBox = new()
                 {
                     Location = new Point(x + label.Width + 5, y),
                     Width = 120,
-                    BorderStyle = BorderStyle.Fixed3D,
-                    Font = new Font("Arial", 10, FontStyle.Bold | FontStyle.Italic)
                 };
-                // Utilisation de la gestionnaire d'événements TextChanged pour mettre à jour la propriété
+                textBox.StateCommon.Border.DrawBorders = PaletteDrawBorders.All; // ✅ Bordure
+                textBox.StateCommon.Content.Font = new Font("Arial", 10, FontStyle.Bold | FontStyle.Italic); // ✅ Police du texte
                 textBox.TextChanged += (sender, e) => updateProperty(textBox.Text);
                 this.Controls.Add(textBox);
+
                 return textBox;
             }
             private void SauveBalises_Click(object sender, EventArgs e)
-            {   // Le bouton "Enregistrer" a été cliqué, on met à jour les valeurs de la partie en cours
-                partieBalises.Tournament = tournamentCase.Text;
+            {   // Mettre à jour les valeurs de la partie
+                partieBalises.Tournoi = tournamentCase.Text;
                 partieBalises.Lieu = lieuCase.Text;
                 partieBalises.Date = dateCase.Text;
-                partieBalises.Round = rondeCase.Text;
+                partieBalises.Ronde = rondeCase.Text;
                 partieBalises.White = blancsCase.Text;
                 partieBalises.Black = noirsCase.Text;
                 partieBalises.Result = resultCase.Text;
                 partieBalises.ECO = ecoCase.Text;
                 partieBalises.WhiteElo = whiteeloCase.Text;
                 partieBalises.BlackElo = blackeloCase.Text;
-                partieBalises.PlyCount = plycountCase.Text;
-                // Fermer la fenêtre de saisie
+                partieBalises.CompteDePLy = plycountCase.Text;
+                // Fermer la fenêtre
+                this.Close();
+            }
+            private void AnnulerBalises_Click(object sender, EventArgs e)
+            {   // Fermer sans enregistrer
                 this.Close();
             }
         }
     }
 }
+
+
+
+
 
 
 

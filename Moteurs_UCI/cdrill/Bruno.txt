@@ -1,0 +1,2 @@
+Ferdinand Mosca a développé ce moteur spécifiquement pour imiter le jeu humain, sans chercher à en faire une bête à concours. CDrill est aussi  l'un de ces moteurs qui autorisent la modification de leur  "personnalité", en nous laissant jouer avec six critères très classiques : l'intérêt pour le matériel, la structure de pions, la mobilité, la détection de menaces, l'attention aux pions passés et l'agressivité vis-à-vis du roi adverse.	
+Rapide mais de force inférieur à 2000 Elo, il sera un excellent adversaire pour joueurs moyens. 

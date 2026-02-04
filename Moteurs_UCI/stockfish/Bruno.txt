@@ -1,0 +1,2 @@
+Stockfish est un moteur d'échecs libre open source.  Depuis les années 2010, Stockfish est régulièrement classé premier de la plupart des classements des moteurs d'échecs ; En Déc. 2023, Stockfish est évalué (N°1 liste CCRL) comme possédant un classement Elo équivalent à 3 542 points. 
+Multiple fois vainqueur de la ligue TCEC, il est considéré comme le meilleur moteur d'Echecs au monde !
