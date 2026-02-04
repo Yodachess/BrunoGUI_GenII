@@ -64,4 +64,4 @@ Moteurs fournis :
 
 ### 6. À propos
 Version du programme et nom de l’auteur…  
-**Votre serviteur** 😉
+**Votre serviteur Bruno Courtois** 😉
