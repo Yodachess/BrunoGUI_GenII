@@ -5,6 +5,8 @@
 Le programme s’adresse aussi bien aux joueurs amateurs qu’aux joueurs avancés, avec des niveaux de jeu allant de **1350 à plus de 3000 ELO**.
 
 ---
+Ce projet est une interface graphique sous Windows permettant de jouer aux Echecs. 
+C'est une application Winforms développé en langage C# 12.0 sous .NET 8.0 en 2025 avec Visual Studio
 
 ## Fonctionnalités principales
 
