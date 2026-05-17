@@ -1,4 +1,11 @@
-﻿namespace BrunoGUI_GenII
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
+// █ Copyright (C) 2026 Bruno COURTOIS                                      █
+// █ SPDX-License-Identifier: GPL-3.0-or-later                              █
+// █ See the LICENSE file in the project root for full license information. █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+
+namespace BrunoGUI_GenII
 {
     partial class EchiquierPrincipal
     {
@@ -35,6 +42,7 @@
             MenuInterfaceGraphique = new System.Windows.Forms.MenuStrip();
             FichierMenu = new System.Windows.Forms.ToolStripMenuItem();
             ChargePartiesPgn = new System.Windows.Forms.ToolStripMenuItem();
+            ChargePositionFen = new System.Windows.Forms.ToolStripMenuItem();
             EnregistrerPgn = new System.Windows.Forms.ToolStripMenuItem();
             EnregistrerFen = new System.Windows.Forms.ToolStripMenuItem();
             Quitter = new System.Windows.Forms.ToolStripMenuItem();
@@ -42,10 +50,12 @@
             NouvellePartieStockfish = new System.Windows.Forms.ToolStripMenuItem();
             ParametresDeBase = new System.Windows.Forms.ToolStripMenuItem();
             ParametresAvances = new System.Windows.Forms.ToolStripMenuItem();
+            BtnMiseAJour = new System.Windows.Forms.ToolStripMenuItem();
             nouvellePartieToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             HumainOrdinateur = new System.Windows.Forms.ToolStripMenuItem();
             OrdinateurHumain = new System.Windows.Forms.ToolStripMenuItem();
             HumainContreHumain = new System.Windows.Forms.ToolStripMenuItem();
+            StopMoteur = new System.Windows.Forms.ToolStripMenuItem();
             moteursBibliothèquesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             SelectionAutreMoteur = new System.Windows.Forms.ToolStripMenuItem();
             SelectionBibliothèque = new System.Windows.Forms.ToolStripMenuItem();
@@ -113,7 +123,7 @@
             KryptonApropos = new Krypton.Toolkit.KryptonButton();
             ActiveAléatoire = new System.Windows.Forms.CheckBox();
             SaisiePartieBouton = new Krypton.Toolkit.KryptonButton();
-            StopMoteur = new System.Windows.Forms.ToolStripMenuItem();
+            ChargerPositionFen = new System.Windows.Forms.OpenFileDialog();
             MenuInterfaceGraphique.SuspendLayout();
             GroupPromo.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)Promo3).BeginInit();
@@ -191,7 +201,7 @@
             // 
             // FichierMenu
             // 
-            FichierMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { ChargePartiesPgn, EnregistrerPgn, EnregistrerFen, Quitter });
+            FichierMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { ChargePartiesPgn, ChargePositionFen, EnregistrerPgn, EnregistrerFen, Quitter });
             FichierMenu.Name = "FichierMenu";
             FichierMenu.Size = new System.Drawing.Size(54, 20);
             FichierMenu.Text = "Fichier";
@@ -204,6 +214,15 @@
             ChargePartiesPgn.Size = new System.Drawing.Size(216, 22);
             ChargePartiesPgn.Text = "Ouvrir fichier PGN";
             ChargePartiesPgn.Click += ChargePartiesPgn_Click;
+            // 
+            // ChargePositionFen
+            // 
+            ChargePositionFen.Image = Properties.Resources.Fichier_FEN;
+            ChargePositionFen.Name = "ChargePositionFen";
+            ChargePositionFen.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.I;
+            ChargePositionFen.Size = new System.Drawing.Size(216, 22);
+            ChargePositionFen.Text = "Ouvrir fichier FEN";
+            ChargePositionFen.Click += ChargePositionFen_Click;
             // 
             // EnregistrerPgn
             // 
@@ -234,7 +253,7 @@
             // 
             // PartieMenu
             // 
-            PartieMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { NouvellePartieStockfish, ParametresDeBase, ParametresAvances });
+            PartieMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { NouvellePartieStockfish, ParametresDeBase, ParametresAvances, BtnMiseAJour });
             PartieMenu.Name = "PartieMenu";
             PartieMenu.Size = new System.Drawing.Size(67, 20);
             PartieMenu.Text = "Stockfish";
@@ -262,6 +281,13 @@
             ParametresAvances.Size = new System.Drawing.Size(242, 22);
             ParametresAvances.Text = "Paramêtres Avancés";
             ParametresAvances.Click += ParametresAvances_Click;
+            // 
+            // BtnMiseAJour
+            // 
+            BtnMiseAJour.Name = "BtnMiseAJour";
+            BtnMiseAJour.Size = new System.Drawing.Size(242, 22);
+            BtnMiseAJour.Text = "Verifier mise à jour StockFish";
+            BtnMiseAJour.Click += BtnMiseAJour_Click;
             // 
             // nouvellePartieToolStripMenuItem
             // 
@@ -293,6 +319,14 @@
             HumainContreHumain.Size = new System.Drawing.Size(238, 22);
             HumainContreHumain.Text = "Entre Humains (ou saise partie)";
             HumainContreHumain.Click += SaisiePartieBouton_Click;
+            // 
+            // StopMoteur
+            // 
+            StopMoteur.Image = (System.Drawing.Image)resources.GetObject("StopMoteur.Image");
+            StopMoteur.Name = "StopMoteur";
+            StopMoteur.Size = new System.Drawing.Size(238, 22);
+            StopMoteur.Text = "Stoppe le Moteur";
+            StopMoteur.Click += StopMoteur_Click;
             // 
             // moteursBibliothèquesToolStripMenuItem
             // 
@@ -553,7 +587,7 @@
             EvaluationUci.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left | System.Windows.Forms.ToolStripStatusLabelBorderSides.Top | System.Windows.Forms.ToolStripStatusLabelBorderSides.Right | System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom;
             EvaluationUci.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             EvaluationUci.Name = "EvaluationUci";
-            EvaluationUci.Size = new System.Drawing.Size(100, 21);
+            EvaluationUci.Size = new System.Drawing.Size(120, 21);
             EvaluationUci.Text = "Evaluation";
             // 
             // ScoreMoteur
@@ -562,7 +596,7 @@
             ScoreMoteur.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left | System.Windows.Forms.ToolStripStatusLabelBorderSides.Top | System.Windows.Forms.ToolStripStatusLabelBorderSides.Right | System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom;
             ScoreMoteur.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             ScoreMoteur.Name = "ScoreMoteur";
-            ScoreMoteur.Size = new System.Drawing.Size(110, 21);
+            ScoreMoteur.Size = new System.Drawing.Size(90, 21);
             ScoreMoteur.Text = "Score Moteur";
             // 
             // VarianteMoteurCourante
@@ -1084,12 +1118,10 @@
             SaisiePartieBouton.Values.Text = "Saisie partie";
             SaisiePartieBouton.Click += SaisiePartieBouton_Click;
             // 
-            // StopMoteur
+            // ChargerPositionFen
             // 
-            StopMoteur.Image = (System.Drawing.Image)resources.GetObject("StopMoteur.Image");
-            StopMoteur.Name = "StopMoteur";
-            StopMoteur.Size = new System.Drawing.Size(238, 22);
-            StopMoteur.Text = "Stoppe le Moteur";
+            ChargerPositionFen.FileName = "fichierFen";
+            ChargerPositionFen.Filter = "Fichier FEN (*.fen)|*.fen";
             // 
             // EchiquierPrincipal
             // 
@@ -1242,6 +1274,9 @@
         private System.Windows.Forms.ToolStripMenuItem AideDocumentation;
         public System.Windows.Forms.GroupBox groupParcoursPartie;
         private System.Windows.Forms.ToolStripMenuItem StopMoteur;
+        private System.Windows.Forms.ToolStripMenuItem BtnMiseAJour;
+        private System.Windows.Forms.OpenFileDialog ChargerPositionFen;
+        private System.Windows.Forms.ToolStripMenuItem ChargePositionFen;
     }
 }
 

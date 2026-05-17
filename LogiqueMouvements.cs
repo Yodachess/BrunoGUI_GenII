@@ -1,7 +1,10 @@
-﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_GenII est développé par Bruno COURTOIS.  Copyright © 2025 █
-// █ BrunoGUI_GenII est gratuit, sauf s'il est utilisé commercialement  █
-// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
+// █ Copyright (C) 2026 Bruno COURTOIS                                      █
+// █ SPDX-License-Identifier: GPL-3.0-or-later                              █
+// █ See the LICENSE file in the project root for full license information. █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+
 // Informations reflexion moteur - Temps de reflexion - Réglage force moteur
 // Gestion par menus - Sauvegarde PGN - Affichage Score - Personnalisation couleurs 
 
@@ -10,6 +13,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Forms;
+using ComponentFactory.Krypton.Toolkit;
 
 namespace BrunoGUI_GenII
 {
@@ -100,10 +104,13 @@ namespace BrunoGUI_GenII
         public static bool PetitRoqueNoirPossible { get; set; }
         public static bool GrandRoqueNoirPossible { get; set; }
         public static bool CoupValide { get; set; }
-        public static bool BloquerChoixPromo { get; set; }
+        public static bool BloquerChoixPromo { get; set;    }// Lors de l'execution du coup, il ne faudra pas proposer le choix de pièce promue
         public static bool StatutMoteurUci { get; set; } // true si MoteurUci a démarré
         public static bool Echec { get; set; }
         public static bool EchecetMat { get; set; }
+        public static bool Pat { get; set; }
+        public static bool PartieEnCoursMat { get; set; }
+        public static bool PartieEnCoursPat { get; set; }
         private static bool TestSecondPion { get; set; }
         private static bool FlagEnPassant { get; set; }
         public static string FenDepart { get; set; } = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -113,32 +120,32 @@ namespace BrunoGUI_GenII
         private static string MouvementCoup { get; set; }
         private static string MouvementCoupPgn { get; set; }
         private static string MouvementCoupNal { get; set; }
-        private static string? MouvementCoupUci { get; set; }
+        private static string MouvementCoupUci { get; set; }
         private static FlagMouvementRoque Roque { get; set; }
         public static TypePiece PromotionPiece { get; set; }
 
-        private static readonly Dictionary<FlagMouvementRoque, string> ListeCasesTraverseesRoi = new Dictionary<FlagMouvementRoque, string>// liste des cases traversées par le roi lors d'un roque
+        private static readonly Dictionary<FlagMouvementRoque, string> ListeCasesTraverseesRoi = new()
         {
             { FlagMouvementRoque.PetitRoqueBlanc, "f1" },   // petit roque blanc
             { FlagMouvementRoque.GrandRoqueBlanc, "d1" },   // grand roque blanc
             { FlagMouvementRoque.PetitRoqueNoir, "f8" },    // petit roque noir
             { FlagMouvementRoque.GrandRoqueNoir, "d8" }     // grand roque noir
         };
-        private static readonly Dictionary<int, TypePiece> ListeMouvementsPiece = new Dictionary<int, TypePiece>(); // liste des déplacements possibles pour une pièce
-        private static readonly Dictionary<int, TypePiece> ListeMenacesPiece = new Dictionary<int, TypePiece>();    // liste des menaces pour une pièce
-        public static List<TypePiece> PiecesEchiquier { get; set; } = new List<TypePiece>();
-        private static readonly List<string> ListePieces = new List<string> { "k", "K", "q", "Q", "b", "B", "r", "R", "n", "N", "p", "P" }; // minuscule = Noir et majuscule = Blanc
-        private static readonly List<int> ListDeplacementsCavalier = new List<int>() { +8, +12, +19, +21, -8, -12, -19, -21 };
-        private static readonly List<int> ListDeplacementsFou = new List<int>() { +9, -9, +11, -11 };
-        private static readonly List<int> ListDeplacementsTour = new List<int>() { +1, -1, +10, -10 };
-        private static readonly List<TypePiece> ListPiecesNoires = new List<TypePiece>() { TypePiece.TourNoire, TypePiece.CavalierNoir, TypePiece.FouNoir, TypePiece.ReineNoire, TypePiece.RoiNoir, TypePiece.FouNoir, TypePiece.CavalierNoir, TypePiece.TourNoire };
-        private static readonly List<TypePiece> ListPiecesBlanches = new List<TypePiece>() { TypePiece.TourBlanche, TypePiece.CavalierBlanc, TypePiece.FouBlanc, TypePiece.ReineBlanche, TypePiece.RoiBlanc, TypePiece.FouBlanc, TypePiece.CavalierBlanc, TypePiece.TourBlanche };
+        private static readonly Dictionary<int, TypePiece> ListeMouvementsPiece = []; // liste des déplacements possibles pour une pièce
+        private static readonly Dictionary<int, TypePiece> ListeMenacesPiece = [];    // liste des menaces pour une pièce
+        public static List<TypePiece> PiecesEchiquier { get; set; } = [];
+        private static readonly List<string> ListePieces = ["k", "K", "q", "Q", "b", "B", "r", "R", "n", "N", "p", "P"]; // minuscule = Noir et majuscule = Blanc
+        private static readonly List<int> ListDeplacementsCavalier = [+8, +12, +19, +21, -8, -12, -19, -21];
+        private static readonly List<int> ListDeplacementsFou = [+9, -9, +11, -11];
+        private static readonly List<int> ListDeplacementsTour = [+1, -1, +10, -10];
+        private static readonly List<TypePiece> ListPiecesNoires = [TypePiece.TourNoire, TypePiece.CavalierNoir, TypePiece.FouNoir, TypePiece.ReineNoire, TypePiece.RoiNoir, TypePiece.FouNoir, TypePiece.CavalierNoir, TypePiece.TourNoire];
+        private static readonly List<TypePiece> ListPiecesBlanches = [TypePiece.TourBlanche, TypePiece.CavalierBlanc, TypePiece.FouBlanc, TypePiece.ReineBlanche, TypePiece.RoiBlanc, TypePiece.FouBlanc, TypePiece.CavalierBlanc, TypePiece.TourBlanche];
 
         // Contient la liste de coups dans différents formats  
-        public static List<string> ListeCoupsFen = new List<string>(); // https://www.pousseurdebois.fr/cours/notation-fen/
-        public static List<string> ListeCoupsPgnIntl = new List<string>(); // https://fr.wikipedia.org/wiki/Portable_Game_Notation
-        public static List<string> ListeCoupsPgnFr = new List<string>(); // https://fr.wikipedia.org/wiki/Portable_Game_Notation
-        public static List<string> ListeCoupsNal = new List<string>(); // Notation Algébrique longue (NAL)  
+        public static List<string> ListeCoupsFen = []; // https://www.pousseurdebois.fr/cours/notation-fen/
+        public static List<string> ListeCoupsPgnIntl = []; // https://fr.wikipedia.org/wiki/Portable_Game_Notation
+        public static List<string> ListeCoupsPgnFr = []; // https://fr.wikipedia.org/wiki/Portable_Game_Notation
+        public static List<string> ListeCoupsNal = []; // Notation Algébrique longue (NAL)  
         public static List<string> ListeCoupsUci = [];      // Notation protocole UCI
 
         // Information Fen
@@ -153,7 +160,9 @@ namespace BrunoGUI_GenII
                                                                 // Compteur qui compte le nombre de demi-coups depuis la dernière capture ou le dernier mouvement de pions.
                                                                 // Ce compteur sert uniquement pour la règle des 50 coups.
         public static Single NombreCoupsJoues { get; set; }     //le champ 6  : on avance de 0.5 en 0.5 et on récupère la partie entière
-
+                // Ce champ correspond au nombre de coups complets.
+                // C’est le PROCHAIN numéro qui s’affichera dans votre notation de partie.
+                // Son incrémentation est de 1 et est actualisé après que Noir ait joué.
 
         public static void InitialisationEchiquier()
         {   // Remplit le Fen à partir d'une string FEN au départ de la partie et affiche l'échiquier de départ
@@ -273,27 +282,27 @@ namespace BrunoGUI_GenII
             /* Champ 3 : Présence d'une lettre indique que le roque est possible; on utilise  respectivement les lettres 
             K et Q pour petit et grand roque blanc, et les lettres k et q pour les noirs. Si aucun roque n'est possible, on utilise "-" */
             string ChampRoque = ChampsFen[2];
-            if (ChampRoque.Contains("-"))
+            if (ChampRoque.Contains('-'))
             {
                 StatutRoque = FlagEnableRoque.AucunRoque;       // Aucun roque possible
                 PetitRoqueNoirPossible = PetitRoqueBlancPossible = GrandRoqueNoirPossible = GrandRoqueBlancPossible = false;
             }
-            else if (ChampRoque.Contains("K"))
+            else if (ChampRoque.Contains('K'))
             {
                 PetitRoqueBlancPossible = true;     // Petit roque blanc possible
                 StatutRoque |= FlagEnableRoque.RoqueBlanc;
             }
-            else if (ChampRoque.Contains("Q"))
+            else if (ChampRoque.Contains('Q'))
             {
                 GrandRoqueBlancPossible = true;     // Grand roque blanc possible
                 StatutRoque |= FlagEnableRoque.RoqueBlanc;
             }
-            else if (ChampRoque.Contains("k"))
+            else if (ChampRoque.Contains('k'))
             {
                 PetitRoqueNoirPossible = true;     // Petit roque noir possible
                 StatutRoque |= FlagEnableRoque.RoqueNoir;
             }
-            else if (ChampRoque.Contains("q"))
+            else if (ChampRoque.Contains('q'))
             {
                 GrandRoqueNoirPossible = true;     // Grand roque noir possible
                 StatutRoque |= FlagEnableRoque.RoqueNoir;
@@ -388,7 +397,7 @@ namespace BrunoGUI_GenII
                             Symbole = TypeSymbole.SymboleMouvementInterdit;             // Mouvement interdit
                         else
                         {
-                            if (MouvementsPiece[i].StartsWith("x") == false)
+                            if (MouvementsPiece[i].StartsWith('x') == false)
                                 Symbole = TypeSymbole.SymboleMouvementSansPrise; // Mouvement possible sans prise
                             else
                                 // Symbole = TypeSymbole.SymboleMouvementAvecPrise; // Mouvement possible avec prise   
@@ -490,27 +499,31 @@ namespace BrunoGUI_GenII
             string CouleurEchec = string.Empty;
             CoupValide = false;
             EchecetMat = false;
-            MouvementCoup = string.Empty;
+            MouvementCoup = MouvementCoupPgn = MouvementCoupNal = MouvementCoupUci = string.Empty;
             if (caseSource != caseDestination)
             {
                 if (TestMouvementValide(caseSource, caseDestination))
                 {
                     AfficheInfoEchec(string.Empty);
                     MouvementCoup = CoupNotationAlgebriquePGN(caseSource, caseDestination);
-                    Debug.WriteLine($"Mouvement Coup Francais joué : {MouvementCoup}, Coup valide : {CoupValide}");     // 01/02  DEBUG
                     FaireMouvement(caseSource, caseDestination);
 
+                    if (LogiqueMouvements.PromotionPiece != TypePiece.Vide)
+                    {
+                        PiecesEchiquier[RenvoieCaseIndex120(caseDestination)] = LogiqueMouvements.PromotionPiece;
+                    }
+
                     // *******Traitement promotion *********
-                    string lettrePromo = PromotionPiece switch
+                    string lettrePromo = LogiqueMouvements.PromotionPiece switch
                     {   // On rajoute la pièce promue avant de stocker dans le PGN
-                        TypePiece.ReineBlanche or TypePiece.ReineNoire => "Q",
-                        TypePiece.TourBlanche or TypePiece.TourNoire => "R",
-                        TypePiece.FouBlanc or TypePiece.FouNoir => "B",
-                        TypePiece.CavalierBlanc or TypePiece.CavalierNoir => "N",
+                        TypePiece.ReineBlanche or TypePiece.ReineNoire => "D",
+                        TypePiece.TourBlanche or TypePiece.TourNoire => "T",
+                        TypePiece.FouBlanc or TypePiece.FouNoir => "F",
+                        TypePiece.CavalierBlanc or TypePiece.CavalierNoir => "C",
                         _ => ""
                     };
                     MouvementCoup += lettrePromo;
-                    PromotionPiece = TypePiece.Vide;
+                    LogiqueMouvements.PromotionPiece = TypePiece.Vide;        
                     // *******Traitement promotion *********
 
                     string ChaineFen = RetourneChaineFenActuel();       // Remplissage de liste de coups FEN
@@ -526,12 +539,13 @@ namespace BrunoGUI_GenII
                         if (decoupe[i] == 'C') decoupe[i] = 'N';
                     }
                     MouvementCoupPgn = new string(decoupe);
+
                     // Traitement de la notation algébrique longue
                     if (MouvementCoupPgn.Contains('x'))
                     {
                         if (char.IsLower(MouvementCoupPgn[0]))
                         {   // C'est un coup de Pion
-                            MouvementCoupNal = caseSource + 'x' + MouvementCoupPgn[2] + MouvementCoupPgn[3] + lettrePromo;
+                            MouvementCoupNal = caseSource + 'x' + MouvementCoupPgn[2] + MouvementCoupPgn[3] + LettrePromotionUci(lettrePromo).ToUpper(); ;
                         }
                         else
                         {   // C'est un coup de Pièce
@@ -552,56 +566,57 @@ namespace BrunoGUI_GenII
                             }
                             else
                             {   // Ce n'est pas un roque
-                                MouvementCoupNal = MouvementCoupPgn[0] + caseSource + '-' + MouvementCoupPgn[1] + MouvementCoupPgn[2];
+                                MouvementCoupNal = MouvementCoupPgn[0] + caseSource + '-' + caseDestination;
                             }
                         }
                     }
                     // Traitement de la prise en passant
                     if (FlagEnPassant)
                     {                                                           // Correction de bug par ajout de caseSource
-                        MouvementCoup = caseSource[0] + "x" + MouvementCoup;       // on enlève " e.p"; pas d'indication de la prise en passant en PGN
+                        MouvementCoup = caseSource[0] + "x" + MouvementCoup;    // on enlève " e.p"; pas d'indication de la prise en passant en PGN
                         MouvementCoupPgn = caseSource[0] + "x" + MouvementCoupPgn;
-                        MouvementCoupNal = caseSource + "x" + MouvementCoupPgn + "e.p";
+                        MouvementCoupNal = MouvementCoupPgn + " e.p";           // en Nal, on indique la prise en passant par "e.p" après le coup
                         if (TestSecondPion)
                         {       // on précise la colonne car deux pions peuvent faire la prise en passant
-                            MouvementCoup = caseSource.Substring(0, 1) + MouvementCoup;
-                            MouvementCoupPgn = caseSource.Substring(0, 1) + MouvementCoupPgn;
-                            MouvementCoupNal = caseSource.Substring(0, 1) + MouvementCoupPgn;
+                            MouvementCoup = caseSource[..1] + MouvementCoup;
+                            MouvementCoupPgn = caseSource[..1] + MouvementCoupPgn;
+                            MouvementCoupNal = caseSource[..1] + MouvementCoupPgn;
                         }
                     }
                     FlagEnPassant = false;
 
                     string[] FenTableau = ChaineFen.Split(' '); // On decoupe les champs du FEN
                     string NumeroCoup = FenTableau[5];  // Champ 6 = numéro du coup de la partie (incrémenté à chaque coup des blancs)
+
                     if (EchecetMat)
-                    {
+                    {   // Note : dans la notation UCI, il n'y a pas de symbole pour indiquer le mat
                         if (FenTableau[1] == "b")   // Champ 1 =  couleur au trait: w si c'est aux blancs de jouer, b pour les noirs
                         {
                             ListeCoupsPgnIntl.Add(NumeroCoup + ". " + MouvementCoupPgn + "# "); // C'est mat, il faut mettre le # pour l'indiquer
-                            ListeCoupsPgnFr.Add(NumeroCoup + ". " + MouvementCoup + "# ");  // dans les 2 listes de coups, internationale et francaise
-                            ListeCoupsNal.Add(NumeroCoup + ". " + MouvementCoupNal + "# ");
+                            ListeCoupsPgnFr.Add(NumeroCoup + ". " + MouvementCoup + "# ");      // dans 3 listes de coups,
+                            ListeCoupsNal.Add(NumeroCoup + ". " + MouvementCoupNal + "# ");     // internationale, francaise et NAL
                         }
                         if (FenTableau[1] == "w")   // Champ 1 =  couleur au trait: w si c'est aux blancs de jouer, b pour les noirs
                         {
-                            ListeCoupsPgnIntl.Add(MouvementCoupPgn + "# ");                     // C'est mat, il faut mettre le # pour l'indiquer
-                            ListeCoupsPgnFr.Add(MouvementCoup + "# ");                      // dans les 2 listes de coups, internationale et francaise
-                            ListeCoupsNal.Add(MouvementCoupNal + "# ");
+                            ListeCoupsPgnIntl.Add(MouvementCoupPgn + "# ");     // C'est mat, il faut mettre le # pour l'indiquer
+                            ListeCoupsPgnFr.Add(MouvementCoup + "# ");          // dans 3 listes de coups, 
+                            ListeCoupsNal.Add(MouvementCoupNal + "# ");         // internationale, francaise et NAL
                         }
                     }
                     else
                         if (Echec)
-                    {
+                    {   // Note : dans la notation UCI, il n'y a pas de symbole pour indiquer l'échec 
                         if (FenTableau[1] == "b")   // Champ 1 =  couleur au trait: w si c'est aux blancs de jouer, b pour les noirs
                         {
                             ListeCoupsPgnIntl.Add(NumeroCoup + ". " + MouvementCoupPgn + "+ "); // C'est Echec, il faut mettre le + pour l'indiquer
-                            ListeCoupsPgnFr.Add(NumeroCoup + ". " + MouvementCoup + "+ ");  // dans les 2 listes de coups, internationale et francaise
-                            ListeCoupsNal.Add(NumeroCoup + ". " + MouvementCoupNal + "+ ");
+                            ListeCoupsPgnFr.Add(NumeroCoup + ". " + MouvementCoup + "+ ");      // dans 3 listes de coups,
+                            ListeCoupsNal.Add(NumeroCoup + ". " + MouvementCoupNal + "+ ");     // internationale, francaise et NAL
                         }
                         if (FenTableau[1] == "w")   // Champ 1 =  couleur au trait: w si c'est aux blancs de jouer, b pour les noirs
                         {
-                            ListeCoupsPgnIntl.Add(MouvementCoupPgn + "+ ");                     // C'est Echec, il faut mettre le + pour l'indiquer
-                            ListeCoupsPgnFr.Add(MouvementCoup + "+ ");                      // dans les 2 listes de coups, internationale et francaise
-                            ListeCoupsNal.Add(MouvementCoupNal + "+ ");
+                            ListeCoupsPgnIntl.Add(MouvementCoupPgn + "+ ");     // C'est Echec, il faut mettre le + pour l'indiquer
+                            ListeCoupsPgnFr.Add(MouvementCoup + "+ ");          // dans 3 listes de coups
+                            ListeCoupsNal.Add(MouvementCoupNal + "+ ");         // internationale, francaise et NAL
                         }
                     }
                     else
@@ -609,19 +624,19 @@ namespace BrunoGUI_GenII
                         if (FenTableau[1] == "b")   // Champ 1 =  couleur au trait: w si c'est aux blancs de jouer, b pour les noirs
                         {
                             ListeCoupsPgnIntl.Add(NumeroCoup + ". " + MouvementCoupPgn + " ");  // Ni Echec, ni Mat, il faut mettre un espace
-                            ListeCoupsPgnFr.Add(NumeroCoup + ". " + MouvementCoup + " ");   // dans les 2 listes de coups, internationale et francaise
-                            ListeCoupsNal.Add(NumeroCoup + ". " + MouvementCoupNal + " ");
+                            ListeCoupsPgnFr.Add(NumeroCoup + ". " + MouvementCoup + " ");       // dans 3 listes de coups,
+                            ListeCoupsNal.Add(NumeroCoup + ". " + MouvementCoupNal + " ");      // internationale, francaise et NAL
                         }
                         if (FenTableau[1] == "w")   // Champ 1 =  couleur au trait: w si c'est aux blancs de jouer, b pour les noirs
                         {
-                            ListeCoupsPgnIntl.Add(MouvementCoupPgn + " ");                      // Ni Echec, ni Mat, il faut mettre un espace
-                            ListeCoupsPgnFr.Add(MouvementCoup + " ");                       // dans les 2 listes de coups, internationale et francaise
-                            ListeCoupsNal.Add(MouvementCoupNal + " ");
+                            ListeCoupsPgnIntl.Add(MouvementCoupPgn + " ");      // Ni Echec, ni Mat, il faut mettre un espace
+                            ListeCoupsPgnFr.Add(MouvementCoup + " ");           // dans 3 listes de coups
+                            ListeCoupsNal.Add(MouvementCoupNal + " ");          // internationale, francaise et NAL
                         }
+                        // Traitement des coups au format UCI (pas de numéro de coup, ni de notation pour la prise en passant)
+                        MouvementCoupUci = caseSource + caseDestination + LettrePromotionUci(lettrePromo);
+                        ListeCoupsUci.Add(MouvementCoupUci + " ");
                     }
-                    // Traitement des coups au format UCI
-                    MouvementCoupUci = caseSource + caseDestination + lettrePromo;
-                    ListeCoupsUci.Add(MouvementCoupUci + " ");
 
                     CouleurEchec = QuiJoue == ColorPiece.Noir ? "Noir" : "Blanc";
                     // Affiche si le roi est en échec
@@ -637,7 +652,6 @@ namespace BrunoGUI_GenII
                     {
                         AfficheCoupNoir(MouvementCoup);
                     }
-                    // Console.WriteLine($"Execution Coup Pgn International : {ListeCoupsPgnIntl[ListeCoupsPgnIntl.Count - 1]}, Source : {caseSource}, Destination : {caseDestination}");    // 01/02  DEBUG
                 }
             }
             if (MouvementCoup != string.Empty)
@@ -652,7 +666,8 @@ namespace BrunoGUI_GenII
                     }
                 }
                 else
-                {   // sinon on affiche si le joueur qui a la couleur est Pat ( plus de coups valides jouables + le joueur n'est pas échec )
+                {   // sinon on affiche si le joueur qui a la couleur est Pat
+                    // ( plus de coups valides jouables + le joueur n'est pas échec )
                     if (ResteCoupsValidesJouables() == false)
                         AfficheInfoEchec("Le joueur " + CouleurEchec + " est Pat - plus de coup possible ");
                 }
@@ -662,7 +677,7 @@ namespace BrunoGUI_GenII
         private static List<string> CasesPiecesMenacantes(string CaseEchiquierMenacee)
         {   // Retourne la liste des pièces pouvant prendre la pièce sur la case passée en paramètre
             ColorPiece CouleurMenace;
-            List<string> CaseMenaces = new List<string>();
+            List<string> CaseMenaces = [];
             int IndexCase = RenvoieCaseIndex120(CaseEchiquierMenacee);
             if (PiecesEchiquier[IndexCase] == TypePiece.Vide)
                 CouleurMenace = CouleurAdversaireJoueurCourant(); // on vérifie pour le roque
@@ -678,18 +693,174 @@ namespace BrunoGUI_GenII
 
         private static List<string> PrisesPossibles(string CaseEchiquier)
         {   // Renvoie la liste des prises possibles pour une case 
-            List<string> Prises = new List<string>();
+            List<string> Prises = [];
             List<string> Mouvements = RetourneMouvements(CaseEchiquier); // récupère l'ensemble des coups pour une case
             if (Mouvements.Count > 0)
             {
-                Prises = new List<string>();
+                Prises = [];
                 for (int i = 0; i <= Mouvements.Count - 1; i++)
-                    if (Mouvements[i].StartsWith("x")) // si c'est une prise
+                    if (Mouvements[i].StartsWith('x')) // si c'est une prise
                         Prises.Add(Mouvements[i].Substring(1, 2)); // on ajoute la case sans le x à la liste
             }
             return Prises;
         }
 
+        public static bool TripleRepetition()
+        {   // Détection de la triple répétition des coups qui donne partie nulle !
+            Dictionary<string, int> positionsVues = [];
+            // Parcourir la liste des FEN pour détecter la triple répétition
+            foreach (string fen in ListeCoupsFen)
+            {
+                // Récupérer la partie de la FEN qui représente l'état du plateau
+                string[] elements = fen.Split(' ');
+                string positionPlateau = elements[0];
+                // Vérifier si la position est déjà dans le dictionnaire
+                if (positionsVues.ContainsKey(positionPlateau))
+                {
+                    positionsVues[positionPlateau]++;
+                }
+                else
+                {
+                    positionsVues[positionPlateau] = 1;
+                }
+                // Vérifier si la position a été vue trois fois
+                if (positionsVues[positionPlateau] >= 3)
+                {
+                    return true; // Triple répétition détectée
+                }
+            }
+            return false; // Pas de triple répétition
+        }
+        public static void DeplacementPiece(int IndexSource, int IndexDestination, bool visu)
+        {   // Déplace une pièce dans le tableau des pièces avec les 2 index des cases
+            // Si visu = true le déplacement se fait aussi sur le plateau de jeu à l'écran
+            PiecesEchiquier[IndexDestination] = PiecesEchiquier[IndexSource];
+            PiecesEchiquier[IndexSource] = TypePiece.Vide;
+            // QuiJoue = (QuiJoue == ColorPiece.Blanc) ? ColorPiece.Noir : ColorPiece.Blanc;
+            if (visu)
+            {
+                DessinePiece(IndexDestination, PiecesEchiquier[IndexDestination]);
+                DessinePiece(IndexSource, TypePiece.Vide);
+            }
+        }
+        public static List<string> RetourneMouvements(string CaseEchiquier)
+        {   // Retourne tous les déplacements possibles pour une case selon la pièce sur cette case
+            int indexCase = RenvoieCaseIndex120(CaseEchiquier);
+            switch (PiecesEchiquier[indexCase])
+            {
+                case TypePiece.ReineBlanche:
+                case TypePiece.ReineNoire:
+                    return MouvementsReine(indexCase);
+                case TypePiece.RoiBlanc:
+                case TypePiece.RoiNoir:
+                    return MouvementsRoi(indexCase);
+                case TypePiece.FouBlanc:
+                case TypePiece.FouNoir:
+                    return MouvementsPiece(indexCase, ListDeplacementsFou);
+                case TypePiece.CavalierBlanc:
+                case TypePiece.CavalierNoir:
+                    return MouvementsCavalier(indexCase, ListDeplacementsCavalier);
+                case TypePiece.TourBlanche:
+                case TypePiece.TourNoire:
+                    return MouvementsPiece(indexCase, ListDeplacementsTour);
+                case TypePiece.PionBlanc:
+                case TypePiece.PionNoir:
+                    return MouvementsPion(indexCase);
+                default:
+                    return null;
+            }
+        }
+        private static List<string> MouvementsCavalier(int IndexCase, List<int> listDeplacementsCavalier)
+        {   // Déplacements du cavalier
+            List<string> Mouvements = [];
+            for (int i = 0; i <= listDeplacementsCavalier.Count - 1; i++) // les directions du déplacement
+                AjouteMouvements(IndexCase, IndexCase + listDeplacementsCavalier[i], Mouvements, true);
+            return Mouvements;
+        }
+        public static List<string> MouvementsReine(int IndexCase)
+        {   // Déplacements de la reine ( sert aussi pour le Roi mais d'une seule case )
+            // on combine les Mouvements du fou et de la tour
+            List<string> Mouvements = MouvementsPiece(IndexCase, ListDeplacementsFou);
+            Mouvements.AddRange(MouvementsPiece(IndexCase, ListDeplacementsTour));
+            return Mouvements;
+        }
+        private static List<string> MouvementsPiece(int IndexCase, List<int> ListDeplacements)
+        {   // Déplacements d'une tour ou d'un fou
+            List<string> Mouvements = [];
+            for (int i = 0; i <= ListDeplacements.Count - 1; i++) // les directions du déplacement
+                AjouteMouvements(IndexCase, ListDeplacements[i], Mouvements);
+            return Mouvements;
+        }
+        public static void AjouteMouvements(int IndexCaseSource, int Direction, List<string> Mouvements)
+        {   // Ajoute les coups possibles pour le roi, la reine, le fou et la tour 
+            int IndexCaseSuivante = IndexCaseSource + Direction;
+            while (PiecesEchiquier[IndexCaseSuivante] != TypePiece.Bordure && PiecesEchiquier[IndexCaseSuivante] == TypePiece.Vide)
+            {
+                Mouvements.Add(NomCaseAlgebrique(IndexCaseSuivante));
+                if (PiecesEchiquier[IndexCaseSource] == TypePiece.RoiBlanc || PiecesEchiquier[IndexCaseSource] == TypePiece.RoiNoir)
+                    return; // si c'est un roi on s'arrête 
+                IndexCaseSuivante += Direction;
+            }
+            if (CouleurCase(IndexCaseSuivante) == CouleurAdversaireCase(IndexCaseSource))
+                Mouvements.Add("x" + NomCaseAlgebrique(IndexCaseSuivante));
+        }
+        public static void AjouteMouvements(int IndexCaseSource, int IndexCaseDestination, List<string> Mouvements, bool AvecPrise)
+        {   // Ajoute les coups possibles pour le cavalier et les pions
+            if (PiecesEchiquier[IndexCaseDestination] != TypePiece.Bordure)
+            {
+                if (PiecesEchiquier[IndexCaseDestination] == TypePiece.Vide)
+                    Mouvements.Add(NomCaseAlgebrique(IndexCaseDestination));
+                if (AvecPrise && CouleurCase(IndexCaseDestination) == CouleurAdversaireCase(IndexCaseSource))
+                    Mouvements.Add("x" + NomCaseAlgebrique(IndexCaseDestination));
+            }
+        }
+        public static void CalculeEchecEtMat()
+        {   // Calcule si le roi du joueur au trait est en échec et mat
+            CalculeEchec();
+            ColorPiece joueurInitial = QuiJoue;
+            Outils.ChangerDeCoté();
+            // QuiJoue = (QuiJoue == ColorPiece.Blanc) ? ColorPiece.Noir : ColorPiece.Blanc;
+            if (Echec)
+                EchecetMat = !ResteCoupsValidesJouables();
+            else
+                EchecetMat = false;
+            QuiJoue = joueurInitial;
+        }
+        public static void CalculeEchec()
+        {   // Calcule si le roi du joueur au trait est en échec
+            string CaseRoi = QuiJoue == ColorPiece.Blanc ? PositionRoi(TypePiece.RoiNoir) : PositionRoi(TypePiece.RoiBlanc);
+            List<string> Menaces = CasesPiecesMenacantes(CaseRoi);
+            Echec = (Menaces.Count > 0);
+        }
+        // Teste si la couleur a encore des coups valides jouables (retourne True si c'est le cas)
+        // Utilisation de cette fonction dans 2 cas
+        // 1) le roi est en échec et le joueur n'a plus aucun coup valide : le joueur est échec et mat
+        // 2) le roi n'est pas en échec mais le joueur n'a plus aucun coup valide : le joueur est donc pat
+        public static bool ResteCoupsValidesJouables()
+        {   // On parcourt toutes les cases de l'échiquier, on ne teste que les pièces de la couleur du joueur au trait
+            // et on vérifie si il existe au moins un mouvement valide pour une de ces pièces
+            int NbMouvements = 0;
+            for (int i = 21; i <= 98; i++)
+            {
+                if (PiecesEchiquier[i] == TypePiece.Vide || PiecesEchiquier[i] == TypePiece.Bordure)
+                    continue;
+                // 🔥 FILTRE IMPORTANT : on ne teste que les mouvements des pièces de la couleur du joueur au trait
+                if (CouleurCase(i) != QuiJoue)
+                    continue;
+                NbMouvements += RetourneMouvementsValides(NomCaseAlgebrique(i)).Count;
+            }
+            return NbMouvements > 0;
+        }
+        private static List<string> RetourneMouvementsValides(string CaseEchiquier)
+        {   // Retourne les coups valides pour une case
+            List<string> MouvementsValides = [];
+            List<string> Mouvements = RetourneMouvements(CaseEchiquier);
+            if (Mouvements.Count > 0)
+                for (int i = 0; i <= Mouvements.Count - 1; i++)
+                    if (TestMouvementValide(CaseEchiquier, Mouvements[i].Substring(Mouvements[i].Length - 2, 2)))
+                        MouvementsValides.Add(Mouvements[i]);
+            return MouvementsValides;
+        }
         private static bool TestMouvementValide(string caseSource, string caseDestination)
         {   // Teste la validité d'un coup (reçoit un mouvement du type e2e4)
             int IndexSource = RenvoieCaseIndex120(caseSource);              // ex: e2
@@ -727,148 +898,18 @@ namespace BrunoGUI_GenII
             else
                 return false;
         }
-        public static bool TripleRepetition()
-        {   // Détection de la triple répétition des coups qui donne partie nulle !
-            Dictionary<string, int> positionsVues = new Dictionary<string, int>();
-            // Parcourir la liste des FEN pour détecter la triple répétition
-            foreach (string fen in ListeCoupsFen)
-            {
-                // Récupérer la partie de la FEN qui représente l'état du plateau
-                string[] elements = fen.Split(' ');
-                string positionPlateau = elements[0];
-                // Vérifier si la position est déjà dans le dictionnaire
-                if (positionsVues.ContainsKey(positionPlateau))
-                {
-                    positionsVues[positionPlateau]++;
-                }
-                else
-                {
-                    positionsVues[positionPlateau] = 1;
-                }
-                // Vérifier si la position a été vue trois fois
-                if (positionsVues[positionPlateau] >= 3)
-                {
-                    return true; // Triple répétition détectée
-                }
-            }
-            return false; // Pas de triple répétition
-        }
-        public static void DeplacementPiece(int IndexSource, int IndexDestination, bool visu)
-        {   // Déplace une pièce dans le tableau des pièces avec les 2 index des cases
-            // Si visu = true le déplacement se fait aussi sur le plateau de jeu à l'écran
-            PiecesEchiquier[IndexDestination] = PiecesEchiquier[IndexSource];
-            PiecesEchiquier[IndexSource] = TypePiece.Vide;
-            if (visu)
-            {
-                DessinePiece(IndexDestination, PiecesEchiquier[IndexDestination]);
-                DessinePiece(IndexSource, TypePiece.Vide);
-            }
-        }
-        public static List<string> RetourneMouvements(string CaseEchiquier)
-        {   // Retourne tous les déplacements possibles pour une case selon la pièce sur cette case
-            int indexCase = RenvoieCaseIndex120(CaseEchiquier);
-            switch (PiecesEchiquier[indexCase])
-            {
-                case TypePiece.ReineBlanche:
-                case TypePiece.ReineNoire:
-                    return MouvementsReine(indexCase);
-                case TypePiece.RoiBlanc:
-                case TypePiece.RoiNoir:
-                    return MouvementsRoi(indexCase);
-                case TypePiece.FouBlanc:
-                case TypePiece.FouNoir:
-                    return MouvementsPiece(indexCase, ListDeplacementsFou);
-                case TypePiece.CavalierBlanc:
-                case TypePiece.CavalierNoir:
-                    return MouvementsCavalier(indexCase, ListDeplacementsCavalier);
-                case TypePiece.TourBlanche:
-                case TypePiece.TourNoire:
-                    return MouvementsPiece(indexCase, ListDeplacementsTour);
-                case TypePiece.PionBlanc:
-                case TypePiece.PionNoir:
-                    return MouvementsPion(indexCase);
-                default:
-                    return null;
-            }
-        }
-        private static List<string> MouvementsCavalier(int IndexCase, List<int> listDeplacementsCavalier)
-        {   // Déplacements du cavalier
-            List<string> Mouvements = new List<string>();
-            for (int i = 0; i <= listDeplacementsCavalier.Count - 1; i++) // les directions du déplacement
-                AjouteMouvements(IndexCase, IndexCase + listDeplacementsCavalier[i], Mouvements, true);
-            return Mouvements;
-        }
-        public static List<string> MouvementsReine(int IndexCase)
-        {   // Déplacements de la reine ( sert aussi pour le Roi mais d'une seule case )
-            // on combine les Mouvements du fou et de la tour
-            List<string> Mouvements = MouvementsPiece(IndexCase, ListDeplacementsFou);
-            Mouvements.AddRange(MouvementsPiece(IndexCase, ListDeplacementsTour));
-            return Mouvements;
-        }
-        private static List<string> MouvementsPiece(int IndexCase, List<int> ListDeplacements)
-        {   // Déplacements d'une tour ou d'un fou
-            List<string> Mouvements = new List<string>();
-            for (int i = 0; i <= ListDeplacements.Count - 1; i++) // les directions du déplacement
-                AjouteMouvements(IndexCase, ListDeplacements[i], Mouvements);
-            return Mouvements;
-        }
-        public static void AjouteMouvements(int IndexCaseSource, int Direction, List<string> Mouvements)
-        {   // Ajoute les coups possibles pour le roi, la reine, le fou et la tour 
-            int IndexCaseSuivante = IndexCaseSource + Direction;
-            while (PiecesEchiquier[IndexCaseSuivante] != TypePiece.Bordure && PiecesEchiquier[IndexCaseSuivante] == TypePiece.Vide)
-            {
-                Mouvements.Add(NomCaseAlgebrique(IndexCaseSuivante));
-                if (PiecesEchiquier[IndexCaseSource] == TypePiece.RoiBlanc || PiecesEchiquier[IndexCaseSource] == TypePiece.RoiNoir)
-                    return; // si c'est un roi on s'arrête 
-                IndexCaseSuivante += Direction;
-            }
-            if (CouleurCase(IndexCaseSuivante) == CouleurAdversaireCase(IndexCaseSource))
-                Mouvements.Add("x" + NomCaseAlgebrique(IndexCaseSuivante));
-        }
-        public static void AjouteMouvements(int IndexCaseSource, int IndexCaseDestination, List<string> Mouvements, bool AvecPrise)
-        {   // Ajoute les coups possibles pour le cavalier et les pions
-            if (PiecesEchiquier[IndexCaseDestination] != TypePiece.Bordure)
-            {
-                if (PiecesEchiquier[IndexCaseDestination] == TypePiece.Vide)
-                    Mouvements.Add(NomCaseAlgebrique(IndexCaseDestination));
-                if (AvecPrise && CouleurCase(IndexCaseDestination) == CouleurAdversaireCase(IndexCaseSource))
-                    Mouvements.Add("x" + NomCaseAlgebrique(IndexCaseDestination));
-            }
-        }
-        // Teste si la couleur a encore des coups valides jouables (retourne True si c'est le cas)
-        // Utilisation de cette fonction dans 2 cas
-        // 1) le roi est en échec et le joueur n'a plus aucun coup valide : le joueur est échec et mat
-        // 2) le roi n'est pas en échec mais le joueur n'a plus aucun coup valide : le joueur est donc pat
-        private static bool ResteCoupsValidesJouables()
-        {
-            int NbMouvements = 0;
-            for (int i = 21; i <= 98; i++)
-                if (PiecesEchiquier[i] != TypePiece.Vide && PiecesEchiquier[i] != TypePiece.Bordure)
-                    NbMouvements += RetourneMouvementsValides(NomCaseAlgebrique(i)).Count;
-            return (NbMouvements > 0);
-        }
-        private static List<string> RetourneMouvementsValides(string CaseEchiquier)
-        {   // Retourne les coups valides pour une case
-            List<string> MouvementsValides = new List<string>();
-            List<string> Mouvements = RetourneMouvements(CaseEchiquier);
-            if (Mouvements.Count > 0)
-                for (int i = 0; i <= Mouvements.Count - 1; i++)
-                    if (TestMouvementValide(CaseEchiquier, Mouvements[i].Substring(Mouvements[i].Length - 2, 2)))
-                        MouvementsValides.Add(Mouvements[i]);
-            return MouvementsValides;
-        }
+
         private static void FaireMouvement(string caseSource, string caseDestination)
         {   // Effectue un mouvement de pièce sans vérifier la validité du mouvement (reçoit un mouvement du type e2e4)
             int IndexSource = RenvoieCaseIndex120(caseSource);  // convertit la case source en index
             int IndexDestination = RenvoieCaseIndex120(caseDestination); // convertit la case destination en index
-            Debug.WriteLine($"caseSource : {caseSource}, caseDestination : {caseDestination}, Pièce promue : {PromotionPiece} ");
             {
                 // On vérifie que le mouvement n'est pas le roque
                 Roque = TestSiRoque(IndexSource, IndexDestination);
                 if (Roque != FlagMouvementRoque.PasDeRoque)
                     MouvementsPourRoque(Roque);
                 else
-                {                       // Le mouvement n'est pas le roque
+                {   // Le mouvement n'est pas le roque
                     // En passant
                     if (TestEnPassant(IndexSource, IndexDestination))
                         MouvementsEnPassant(IndexSource);
@@ -919,79 +960,75 @@ namespace BrunoGUI_GenII
                             PetitRoqueNoirPossible = false;
                         }
                     }
-                    // test si promotion d'un pion
-                    string CouleurPromotion = string.Empty;
+ 
                     // *******Traitement promotion *********
-                    if ((PiecesEchiquier[IndexSource] == TypePiece.PionBlanc || PiecesEchiquier[IndexSource] == TypePiece.PionNoir) &&
-                        (
-                            MouvementCoup.EndsWith("=q") || MouvementCoup.EndsWith("=r") || MouvementCoup.EndsWith("=b") || MouvementCoup.EndsWith("=n") ||
-                            (IndexDestination >= 21 && IndexDestination <= 28) || (IndexDestination >= 91 && IndexDestination <= 98)
-                        ))
-                    // *******Traitement promotion *********
+
+                    DeplacementPiece(IndexSource, IndexDestination, true);  // Déplacement standard
+
+                    // -------- PROMOTION --------
+                    var piece = PiecesEchiquier[IndexDestination];
+
+                    bool estPion = piece == TypePiece.PionBlanc || piece == TypePiece.PionNoir;
+                    bool derniereRangee = (IndexDestination >= 21 && IndexDestination <= 28) ||
+                                          (IndexDestination >= 91 && IndexDestination <= 98);
+
+                    if (estPion && derniereRangee)
                     {
-                        Debug.WriteLine($"Pièce promue : {PromotionPiece}, IndexDestination : {IndexDestination}, Couleur Promotion : {CouleurPromotion} ");
-                        if (IndexDestination < 29)
-                            CouleurPromotion = "Noir";
-                        if (IndexDestination > 90)
-                            CouleurPromotion = "Blanc";
-                        if (CouleurPromotion != string.Empty)
-                        {
-                            if (BloquerChoixPromo == false)
-                            {
-                                AffichePromotionPion(CouleurPromotion);
-                            }
-                            // promotion d'un pion noir ou blanc
-                            DessinePiece(IndexDestination, PromotionPiece); // On affiche la pièce promue
-                            PiecesEchiquier[IndexDestination] = PromotionPiece;
-                            // test si la pièce promue met en échec le roi adverse
-                            Echec = TestEchecPromotionPion(IndexDestination, CouleurPromotion == "Noir" ? TypePiece.RoiBlanc : TypePiece.RoiNoir);
-                        }
-                        PiecesEchiquier[IndexSource] = TypePiece.Vide;
-                        DessinePiece(IndexSource, TypePiece.Vide);          // On efface la case d'origine
+                        string couleur = piece == TypePiece.PionBlanc ? "Blanc" : "Noir";
+
+                        if (!BloquerChoixPromo)
+                            AffichePromotionPion(couleur);
+
+                        // Remplace le pion par la pièce promue
+                        PiecesEchiquier[IndexDestination] = PromotionPiece;
+                        DessinePiece(IndexDestination, PromotionPiece);
+                        // Test échec
+                        Echec = TestEchecPromotionPion(
+                            IndexDestination,
+                            couleur == "Blanc" ? TypePiece.RoiNoir : TypePiece.RoiBlanc
+                        );
                     }
-                    else
-                        DeplacementPiece(IndexSource, IndexDestination, true);
+                    // *******Traitement promotion *********
                 }
-                // changement de joueur
-                QuiJoue = (QuiJoue == ColorPiece.Blanc) ? ColorPiece.Noir : ColorPiece.Blanc;
+                // Changement de joueur
+                Outils.ChangerDeCoté();
                 AfficheTour((QuiJoue == ColorPiece.Blanc) ? "Blancs" : "Noirs");
                 NombreCoupsJoues += Convert.ToSingle(0.5);      // On incrémente d'un demi-coup
-                Debug.WriteLine($"Nombre coups joues : {NombreCoupsJoues}, Couleur à jouer : {QuiJoue} ");
             }
         }
         private static string NomsPieceLocale(TypePiece lettreInitiale)
-        {   // Retourne le nom des pièces françaises ( RNBQR in anglais et TCFDR in français)
-            switch (lettreInitiale)
+        {   // Retourne le nom des pièces françaises ( TCFDR in français)
+            return lettreInitiale switch
             {
-                case TypePiece.TourBlanche:
-                case TypePiece.TourNoire:
-                    return "T"; // Tour
-                case TypePiece.CavalierBlanc:
-                case TypePiece.CavalierNoir:
-                    return "C"; // Cavalier
-                case TypePiece.FouBlanc:
-                case TypePiece.FouNoir:
-                    return "F"; // Fou
-                case TypePiece.ReineBlanche:
-                case TypePiece.ReineNoire:
-                    return "D"; // Reine
-                case TypePiece.RoiBlanc:
-                case TypePiece.RoiNoir:
-                    return "R"; // Roi
-                default:
-                    return string.Empty;
-            }
+                TypePiece.TourBlanche or TypePiece.TourNoire => "T",        // Tour
+                TypePiece.CavalierBlanc or TypePiece.CavalierNoir => "C",   // Cavalier
+                TypePiece.FouBlanc or TypePiece.FouNoir => "F",             // Fou
+                TypePiece.ReineBlanche or TypePiece.ReineNoire => "D",      // Reine
+                TypePiece.RoiBlanc or TypePiece.RoiNoir => "R",             // Roi
+                _ => string.Empty,
+            };
+        }
+        private static string LettrePromotionUci(string lettrePromo)
+        {   // Convertit la pièce promue (français ou anglais) en notation UCI
+            return lettrePromo.ToUpper() switch
+            {   // Retourne : q, r, b ou n
+                "D" or "Q" => "q",   // Dame / Queen
+                "T" or "R" => "r",   // Tour / Rook
+                "F" or "B" => "b",   // Fou / Bishop
+                "C" or "N" => "n",   // Cavalier / Knight
+                _ => ""
+            };
         }
         public static string CoupNotationAlgebriquePGN(string caseSource, string CaseDestination)
-        {   // Retourne le coup joué par l'humain ou le moteur UCI en notation algébrique
-            // reçoit un mouvement du type e2e4
+        {   // Reçoit un mouvement du type e2e4
+            // Retourne le coup joué par l'humain ou le moteur UCI en notation algébrique
             int IndexSource = RenvoieCaseIndex120(caseSource);  // convertit la case source en index
             int IndexDestination = RenvoieCaseIndex120(CaseDestination); // convertit la case destination en index
             TypePiece Piece = PiecesEchiquier[IndexSource];  // récupère la piece qui bouge
             string MouvementSpecifique = string.Empty;
             string MouvementParDefaut = NomsPieceLocale(Piece) + (PiecesEchiquier[IndexDestination] == TypePiece.Vide ? string.Empty : "x") + CaseDestination;
-            switch (Piece) // en fonction du type de pièce
-            {
+            switch (Piece)
+            {   // en fonction du type de pièce
                 case TypePiece.CavalierBlanc:
                 case TypePiece.CavalierNoir:
                 case TypePiece.TourBlanche:
@@ -1002,13 +1039,13 @@ namespace BrunoGUI_GenII
                         List<string> AutreCaseDestinations = RetourneMouvements(AutrePosition); // récupère les mouvements possibles de l'autre pièce
                         // on enlève le "x" qui signifie la prise
                         for (int i = 0; i <= AutreCaseDestinations.Count - 1; i++)
-                            if (AutreCaseDestinations[i].StartsWith("x"))
-                                AutreCaseDestinations[i] = AutreCaseDestinations[i].Substring(1);
+                            if (AutreCaseDestinations[i].StartsWith('x'))
+                                AutreCaseDestinations[i] = AutreCaseDestinations[i][1..];
                         if (AutreCaseDestinations.Contains(CaseDestination))
                         {
-                            if (caseSource.Substring(0, 1) != AutrePosition.Substring(0, 1))
+                            if (caseSource[..1] != AutrePosition[..1])
                                 // si les deux pièces ne sont pas sur les mêmes colonnes
-                                MouvementSpecifique = NomsPieceLocale(Piece) + caseSource.Substring(0, 1) + (PiecesEchiquier[IndexDestination] == TypePiece.Vide ? string.Empty : "x") + CaseDestination;
+                                MouvementSpecifique = NomsPieceLocale(Piece) + caseSource[..1] + (PiecesEchiquier[IndexDestination] == TypePiece.Vide ? string.Empty : "x") + CaseDestination;
                             else
                                 // sinon il faut rajouter la ligne pour spécifier la bonne pièce car les 2 pièces sont sur la même colonne 
                                 MouvementSpecifique = NomsPieceLocale(Piece) + caseSource.Substring(1, 1) + (PiecesEchiquier[IndexDestination] == TypePiece.Vide ? string.Empty : "x") + CaseDestination;
@@ -1022,16 +1059,15 @@ namespace BrunoGUI_GenII
                         MouvementSpecifique = CaseDestination;
                     else
                         // Ajouter la colonne de départ en cas de prise de pion
-                        MouvementSpecifique = caseSource.Substring(0, 1) + "x" + CaseDestination;
+                        MouvementSpecifique = caseSource[..1] + "x" + CaseDestination;
                     // voir si promotion pion 
                     if (IndexDestination < 29 || IndexDestination > 90)
                         MouvementSpecifique += "=";
                     break;
                 case TypePiece.RoiBlanc:
                 case TypePiece.RoiNoir: // Si c'est un roi
-                                        // Vérifier si le roi roque
                     switch (caseSource + CaseDestination)
-                    {
+                    {   // Vérifier si le roi roque
                         case "e8g8":
                         case "e1g1":
                             MouvementSpecifique = "O-O";  // petit roque
@@ -1041,17 +1077,24 @@ namespace BrunoGUI_GenII
                             MouvementSpecifique = "O-O-O"; // grand roque
                             break;
                     }
+                    if (!string.IsNullOrEmpty(MouvementSpecifique))
+                    {   // Si c'est un roque, on teste si il y a échec ou échec et mat après le roque
+                        if (EchecetMat)
+                            MouvementSpecifique += "#";
+                        else if (Echec)
+                            MouvementSpecifique += "+";
+                    }
                     break;
             }
+
             TypePiece BackupPiece = PiecesEchiquier[IndexDestination];  // sauvegarde de la pièce de destination
             // test si prise d'une pièce à l'adversaire
             DeplacementPiece(IndexSource, IndexDestination, false); // simulation déplacement pièce
             // Test si le roi est en échec
-            string CaseRoi = QuiJoue == ColorPiece.Blanc ? PositionRoi(TypePiece.RoiNoir) : PositionRoi(TypePiece.RoiBlanc);
-            List<string> Menaces = CasesPiecesMenacantes(CaseRoi);
-            Echec = (Menaces.Count > 0);
+            CalculeEchec();
             DeplacementPiece(IndexDestination, IndexSource, false); // on remet la pièce déplacée à sa place de départ
             PiecesEchiquier[IndexDestination] = BackupPiece; // on récupère la pièce d'origine
+
             return MouvementSpecifique == string.Empty ? MouvementParDefaut : MouvementSpecifique;
         }
         private static int PositionSecondePiece(int IndexCase)
@@ -1076,13 +1119,13 @@ namespace BrunoGUI_GenII
         {   // Renvoie l'index d'une case à partir de son nom (sous la forme "e2")
             try
             {
-                return (Convert.ToInt32(NomCase.Substring(1, 1)) * 10) + (Convert.ToInt32(Convert.ToChar(NomCase.Substring(0, 1))) - 96) + 10;
+                return (Convert.ToInt32(NomCase.Substring(1, 1)) * 10) + (Convert.ToInt32(Convert.ToChar(NomCase[..1])) - 96) + 10;
                 //            on multiplie le numéro de ligne par 10  :  on convertit le code ASCII en entier, puis -96   : on ajoute 10       
                 // Note : Code ASCII de a = 97, code ASCII de e  = 101, d’où le - 96 !! Pour avoir a = 1, b = 2, c= 3,… e = 5
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Une erreur s'est produite : {ex.Message}", "dans RenvoieCaseIndex120", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                KryptonMessageBox.Show($"Une erreur s'est produite : {ex.Message}", "dans RenvoieCaseIndex120", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 Debug.WriteLine($"StackTrace : {ex.StackTrace}");
                 return -1;
             }
@@ -1102,15 +1145,20 @@ namespace BrunoGUI_GenII
                 return CouleurPiece;
         }
         public static ColorPiece CouleurCase(int IndexCase)
-        {   // Renvoie la couleur de la pièce sur la case ( 0 : vide , 1 :blanc, 2 : noire , 3 : bord )²
+        {   // Renvoie la couleur de la pièce sur la case ( 0 : vide , 1 :blanc, 2 : noire , 3 : bord )
+            if (IndexCase < 0 || IndexCase >= PiecesEchiquier.Count)
+            {
+                Debug.WriteLine($"CouleurCase: Index hors bornes: {IndexCase}");
+                return ColorPiece.BordPlateau; // Défaut sûr pour traiter comme hors-plateau
+            }
+
             if (PiecesEchiquier[IndexCase] == TypePiece.Bordure)
                 // on est en dehors du plateau de jeu ( sur la bordure )
                 return ColorPiece.BordPlateau;
             else if (PiecesEchiquier[IndexCase] == TypePiece.Vide)
-                // on est sur une case vide
+                    // on est sur une case vide
                 return ColorPiece.Vide;
-            else
-                // on est sur une case avec une pièce noire ou blanche
+            else    // on est sur une case avec une pièce noire ou blanche
                 return (int)PiecesEchiquier[IndexCase] % 2 == 0 ? ColorPiece.Noir : ColorPiece.Blanc;
         }
         private static FlagMouvementRoque TestSiRoque(int IndexSource, int IndexDestination)
@@ -1183,8 +1231,8 @@ namespace BrunoGUI_GenII
                     return string.Empty;
             }
         }
-        private static bool TestEchecPromotionPion(int IndexCasePromotion, TypePiece Roi)
-        {   // Promotion d'un pion ( retourne si le roi adverse est en échec )
+        public static bool TestEchecPromotionPion(int IndexCasePromotion, TypePiece Roi)
+        {   // Promotion d'un pion ( retourne true si le roi adverse est en échec )
             List<string> MouvementsPiecePromue = RetourneMouvements(NomCaseAlgebrique(IndexCasePromotion));
             if (MouvementsPiecePromue.Count > 0)
                 // true si le roi est menacé
@@ -1194,7 +1242,7 @@ namespace BrunoGUI_GenII
         }
         private static List<string> MouvementsPion(int IndexCase)
         {   // Déplacement du pion
-            List<string> MouvementsDuPion = new List<string>();
+            List<string> MouvementsDuPion = [];
             switch (PiecesEchiquier[IndexCase])
             {
                 case TypePiece.PionBlanc:

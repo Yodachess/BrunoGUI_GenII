@@ -1,7 +1,9 @@
-﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_GenII est développé par Bruno COURTOIS.  Copyright © 2025 █
-// █ BrunoGUI_GenII est gratuit, sauf s'il est utilisé commercialement  █
-// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
+// █ Copyright (C) 2026 Bruno COURTOIS                                      █
+// █ SPDX-License-Identifier: GPL-3.0-or-later                              █
+// █ See the LICENSE file in the project root for full license information. █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 
 // Fenêtre d'"affichage du pgn (Intl, Fr, algébrique, UCI, FEN) de la partie courante ...
 //  └─ Classe "AffichePgn" qui affiche le pgn de la partie courante
@@ -18,6 +20,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace BrunoGUI_GenII
@@ -47,38 +51,43 @@ namespace BrunoGUI_GenII
         private void AffichePgnFr_Click(object sender, EventArgs e)
         {   // Affiche la partie au format PGN francais
             afficheZone.Show();
-            afficheZone.Show();
             afficheZone.ZoneAffichage.Text = partieFormatPgnFr;
         }
         private void ListeNalAfficheNal_Click(object sender, EventArgs e)
         {   // Affiche les coups au format Algébrique long + entête PGN
             afficheZone.Show();
-            afficheZone.Show();
-            string contenuNal = "";
+            string contenuNal;
             contenuNal = "Liste de coups au format Nal \nNombre de 1/2 coups = " + LogiqueMouvements.ListeCoupsNal.Count + "\n\n";
             contenuNal = contenuNal + ExtraireEntetePgn(partieFormatPgnIntl) + "\n\n";
             for (int i = 0; i < LogiqueMouvements.ListeCoupsNal.Count; i++)     // Parcours de la liste des Nal
             {
-                contenuNal = contenuNal + LogiqueMouvements.ListeCoupsNal[i];
+                contenuNal += LogiqueMouvements.ListeCoupsNal[i];
+            }
+            var matches = Regex.Matches(partieFormatPgnIntl, @"(1-0|0-1|1/2-1/2|\*)(?=\s|$|\)|\])");
+            if (matches.Count > 0)
+            {   // Récupére le résultat de la partie (1-0, 0-1, 1/2-1/2 ou *) s'il est présent dans le PGN
+                contenuNal += " " + matches[^1].Value; // dernier
             }
             afficheZone.ZoneAffichage.Text = contenuNal;
+            Debug.WriteLine(contenuNal);
         }
         private void AfficheCoupsUci_Click(object sender, EventArgs e)
         {   // Affiche les coups au format UCI + entête PGN
             afficheZone.Show();
-            string contenuUci = "";
+            string contenuUci;
             contenuUci = "Liste de coups au format UCI \nNombre de 1/2 coups = " + LogiqueMouvements.ListeCoupsFen.Count + "\n\n";
             contenuUci = contenuUci + ExtraireEntetePgn(partieFormatPgnIntl) + "\n\n";
             for (int i = 0; i < LogiqueMouvements.ListeCoupsUci.Count; i++)     // Parcours de la liste des Uci
             {
-                contenuUci = contenuUci + LogiqueMouvements.ListeCoupsUci[i];
+                contenuUci += LogiqueMouvements.ListeCoupsUci[i];
             }
             afficheZone.ZoneAffichage.Text = contenuUci;
+            Debug.WriteLine(contenuUci);
         }
         private void ListeFenAffichePgn_Click(object sender, EventArgs e)
         {   // Affiche la liste des FEN de la partie
             afficheZone.Show();
-            string contenuFen = "";
+            string contenuFen;
             contenuFen = "Nombre de 1/2 coups = " + LogiqueMouvements.ListeCoupsFen.Count + "\n";
             for (int i = 0; i < LogiqueMouvements.ListeCoupsFen.Count; i++)     // Parcours de la liste des FEN
             {
@@ -93,7 +102,7 @@ namespace BrunoGUI_GenII
             foreach (var line in lignes)
             {
                 var l = line.Trim();
-                if (l.StartsWith("["))
+                if (l.StartsWith('['))
                     entete.Add(line);
                 else
                     break;

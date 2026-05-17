@@ -1,7 +1,9 @@
-﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_GenII est développé par Bruno COURTOIS.  Copyright © 2025 █
-// █ BrunoGUI_GenII est gratuit, sauf s'il est utilisé commercialement  █
-// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
+// █ Copyright (C) 2026 Bruno COURTOIS                                      █
+// █ SPDX-License-Identifier: GPL-3.0-or-later                              █
+// █ See the LICENSE file in the project root for full license information. █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 
 // Gestion de fichier de partie au format PGN ...
 //      └─ Classe "FichierPartiePgn" qui gère le fichier de partie
@@ -28,20 +30,60 @@ using ComponentFactory.Krypton.Toolkit;
 
 namespace BrunoGUI_GenII
 {
+    public static class ParseurPgn
+    {   // Cette classe utilise une machine à états pour extraire proprement la section des coups
+        // d'une partie PGN, en ignorant les en-têtes, les commentaires et les variantes.
+        private enum Etat
+        {
+            EnTetes,
+            Coups,
+            Commentaire,
+            Variante
+        }
+        public static string ExtraireCoups(string pgn)
+        {   // Cette méthode parcourt le PGN caractère par caractère et utilise une machine à états
+            // pour déterminer si elle se trouve dans les en-têtes, les coups, les commentaires ou les variantes.
+            StringBuilder sb = new();
+            bool dansCommentaires = false;
+            bool dansVariante = false;
+            for (int i = 0; i < pgn.Length; i++)
+            {
+                char c = pgn[i];
+                // "enlève" les crochets des balises
+                if (c == '[')
+                {
+                    while (i < pgn.Length && pgn[i] != ']')
+                        i++;
+                    continue;
+                }
+                // commentaires
+                if (c == '{') { dansCommentaires = true; continue; }
+                if (c == '}') { dansCommentaires = false; continue; }
+                if (dansCommentaires) continue;
+                // variantes
+                if (c == '(') { dansVariante = true; continue; }
+                if (c == ')') { dansVariante = false; continue; }
+                if (dansVariante) continue;
+                sb.Append(c);
+            }
+            return sb.ToString();
+        }
+    }
+
     public partial class FichierPartiePgn : Form
     {
         public FichierPartiePgn()
         {
             InitializeComponent();
         }
-        public List<string> DecodeFichierPGN(string fichierPgn)
+        public static List<string> DecodeFichierPGN(string fichierPgn)
         {   // --- On découpe le fichier PGN pour obtenir la liste des parties contenues dans le fichier. ---
-            List<string> listeParties = new List<string>();
+            List<string> listeParties = [];
 
-            using (StreamReader lecteur = new StreamReader(fichierPgn, Encoding.UTF8))
+            using (StreamReader lecteur = new(fichierPgn, Encoding.UTF8))
             {   // Note : StreamReader attend le chemin d'accès au fichier, pas le contenu du fichier.
                 string ligne;
-                StringBuilder partieCourante = new StringBuilder();
+                StringBuilder partieCourante = new();
 
                 while ((ligne = lecteur.ReadLine()) != null)
                 {
@@ -50,8 +92,7 @@ namespace BrunoGUI_GenII
                     {
                         // Commencer une nouvelle partie
                         if (partieCourante.Length > 0)
-                        {
-                            // Ajouter la partie précédente à la liste si elle existe
+                        {   // Ajouter la partie précédente à la liste si elle existe
                             listeParties.Add(partieCourante.ToString().Trim()); // Enlever l'espace final éventuel
                         }
                         // Réinitialiser partieCourante pour une nouvelle partie
@@ -65,19 +106,22 @@ namespace BrunoGUI_GenII
                 {   // Ajouter la dernière partie à la liste des parties
                     listeParties.Add(partieCourante.ToString().Trim());
                 }
+                Debug.WriteLine($"Nb parties décodées = {listeParties.Count}");
+                /*
                 foreach (var partie in listeParties)
                 {   // Affichage des parties pour vérification
                     // Debug.WriteLine($"\nPartie décodée \n" + partie);
                 }
+                */
             }
             return listeParties;
         }
-        public PartieEchecsPGN DecodePartiePGN(string pgn)
+        public static PartieEchecsPGN DecodePartiePGN(string pgn)
         {   // --- On recoit UNE partie au format pgn avec balises et on remplit la structure PartieEchecsPgn ---
-            List<string> balises = new List<string>();
-            PartieEchecsPGN PartiePGN = new PartieEchecsPGN();
-
-            Regex regex = new Regex(@"\[(.*?)\]");                      // Utilisation d'une expression régulière pour extraire les balises [ et ]
+            List<string> balises = [];
+            PartieEchecsPGN PartiePGN = new();
+            // Debug.WriteLine($"pgn avant nettoyage : \n{pgn}");
+            Regex regex = new(@"\[(.*?)\]");                      // Utilisation d'une expression régulière pour extraire les balises [ et ]
             MatchCollection correspondances = regex.Matches(pgn);       // Recherche de toutes les correspondances
             foreach (Match correspondance in correspondances)           // Ajout des balises trouvées à la liste "balises"
             {
@@ -130,52 +174,77 @@ namespace BrunoGUI_GenII
                 }   // On se limite aux balises obligatoires + ECO + ELO + CompteDePLy, il en existe beaucoup d'autres
             }
 
-            // Purge des commentaires entre accolades :
-            pgn = SupprimeCommentaires(pgn, '{', '}');
-            // Debug.WriteLine($"PGN sans accolades :\n{pgn}");             // DEBUG 05/02
+            // --- EXTRACTION PROPRE VIA STATE MACHINE ---
+            string sectionCoups = ParseurPgn.ExtraireCoups(pgn);
 
-            // Recherche de l'index de la première ligne vide, GRAND FOUTOIR DANS LES FICHIERS AVEC LES ESPACES ET LES LIGNES VIDES
-            int indexLigneVide = pgn.IndexOf("\n1.");
-            // Debug.WriteLine($"Index ligne vide = {indexLigneVide}");
-            if (indexLigneVide == -1)
+            sectionCoups = Regex.Replace(sectionCoups, @"\s+", " ").Trim();
+            sectionCoups = sectionCoups.Replace("]", "");
+            string[] tokens = sectionCoups.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            List<string> coupsPropres = [];
+
+            foreach (var t in tokens)
             {
-                // Si la première recherche ne réussit pas, essayez avec une autre séquence de retour à la ligne
-                indexLigneVide = pgn.IndexOf("\r\n1.");
+                string c = t;
+                if (c == "1-0" || c == "0-1" || c == "1/2-1/2" || c == "*")
+                {
+                    PartiePGN.Result = c;   // On met à jour le résultat de la partie à partir de la section des coups,
+                    continue;               // au cas où il serait différent de celui indiqué dans les balises
+                }                           // (ce qui arrive parfois dans les fichiers PGN)
+                if (Regex.IsMatch(c, @"^\d+\.$"))
+                    continue;
+                if (c.Contains('$'))
+                    continue;
+                if (c.Length < 2)
+                    continue;
+                coupsPropres.Add(c);
             }
-            if (indexLigneVide != -1)
-            {   // Recherche de l'index où commence "1." après la première ligne vide
-                string SectionCoupsPGN = pgn.Substring(indexLigneVide);
-                indexLigneVide = SectionCoupsPGN.IndexOf("1.");
-                SectionCoupsPGN = SectionCoupsPGN.Substring(indexLigneVide);
-                PartiePGN.CoupsPartiePGN = SectionCoupsPGN;         // PartiePGN.CoupsPartiePGN contient les coups de la partie
-                // Purge des commentaires entre accolades :
-                PartiePGN.CoupsPartiePGN = SupprimeCommentaires(PartiePGN.CoupsPartiePGN, '(', ')');
-                // Debug.WriteLine($"PGN sans () : {PartiePGN.CoupsPartiePGN}");             // DEBUG 05/02
 
-                PartiePGN.CoupsPartiePGN = SupprimeCommentaires(PartiePGN.CoupsPartiePGN, '[', ']');
-                // Debug.WriteLine($"PGN sans [] : {PartiePGN.CoupsPartiePGN}");             // DEBUG 05/02
-
-                string[] coupsPartie = PartiePGN.CoupsPartiePGN.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);       // On decoupe la liste de coups recue
-                // Il faut éliminer les coups contenant $ ou ... ou ) ou (   !!!!!!!!
-                coupsPartie = coupsPartie.Where(c => !c.Contains("$") && !c.Contains("...") && !c.Contains("(") && !c.Contains(")")).ToArray();
-                PartiePGN.CoupsPartiePGN = string.Join(" ", coupsPartie);
-            }
-            else
-            {
-                Debug.WriteLine("La première ligne vide n'a pas été trouvée dans le fichier PGN.");
-            }
-            // Debug.WriteLine($"PGN nettoyé = {PartiePGN.CoupsPartiePGN}");
+            string final = string.Join(" ", coupsPropres);
+            PartiePGN.CoupsPartiePGN = AjouteNumerosCoups(final);
+            // Ajout du résultat à la fin de la liste de coups, car on l'aviat supprimé dans la boucle de nettoyage
+            PartiePGN.CoupsPartiePGN = PartiePGN.CoupsPartiePGN + " " + PartiePGN.Result;
+            
+            Debug.WriteLine($"PGN nettoyé = {PartiePGN.CoupsPartiePGN}");
             return PartiePGN;
         }
+
+        public static string AjouteNumerosCoups(string coupsSansNumeros)
+        {   // Cette méthode prend une liste de coups sans numéros et ajoute les numéros de coups appropriés.
+            var tokens = coupsSansNumeros.Split([' '], StringSplitOptions.RemoveEmptyEntries);
+            StringBuilder sb = new();
+            int numero = 1;
+            for (int i = 0; i < tokens.Length; i++)
+            {
+                string coup = tokens[i];
+                if (coup == "1-0" || coup == "0-1" || coup == "1/2-1/2" || coup == "*")
+                {
+                    sb.Append(" " + coup);
+                    break;
+                }
+                if (i % 2 == 0)
+                {   // Coup blanc → on ajoute le numéro de coup
+                    sb.Append($"{numero}. {coup}");
+                }
+                else
+                {   // Coup noir → on ajoute juste le coup
+                    sb.Append($" {coup}");
+                    numero++;
+                }
+                if (i % 2 == 1)
+                    sb.Append(' ');
+            }
+            return sb.ToString().Trim();
+        }
+
         public static string SupprimeCommentaires(string chaine, char accoladeOuvrante, char accoladeFermante)
         {   /* Lorsqu'une accolade ouvrante est rencontrée, le niveau d'imbrication est augmenté de 1.
-            Lorsqu'une accolade fermante est rencontrée et que le niveau d'imbrication est supérieur à 0, 
-            cela signifie qu'elle correspond à une paire d'accolades imbriquées, donc le niveau d'imbrication est décrémenté de 1.
-            Si une accolade fermante est rencontrée et que le niveau d'imbrication est déjà à 0, 
-            cela signifie qu'elle est en dehors de toute paire d'accolades imbriquées, donc elle est conservée dans le résultat final.
-            Les caractères qui ne sont pas situés entre des accolades imbriquées sont ajoutés au résultat final. */
-
-            StringBuilder resultat = new StringBuilder();
+        Lorsqu'une accolade fermante est rencontrée et que le niveau d'imbrication est supérieur à 0, 
+        cela signifie qu'elle correspond à une paire d'accolades imbriquées, donc le niveau d'imbrication est décrémenté de 1.
+        Si une accolade fermante est rencontrée et que le niveau d'imbrication est déjà à 0, 
+        cela signifie qu'elle est en dehors de toute paire d'accolades imbriquées, donc elle est conservée dans le résultat final.
+        Les caractères qui ne sont pas situés entre des accolades imbriquées sont ajoutés au résultat final. */
+            StringBuilder resultat = new();
             int niveauAccolade = 0;
             foreach (char caractere in chaine)
             {
@@ -183,19 +252,33 @@ namespace BrunoGUI_GenII
                 {
                     niveauAccolade++;
                 }
-                else if (caractere == accoladeFermante && niveauAccolade > 0)
+                else if (caractere == accoladeFermante)
                 {
-                    niveauAccolade--;
+                    if (niveauAccolade > 0)
+                    {
+                        niveauAccolade--;
+                        // Ajout d'un espace pour éviter de coller deux coups après suppression
+                        if (niveauAccolade == 0)
+                            resultat.Append(' ');
+                    }
+                    else
+                    {   // Cas anormal : accolade fermante sans ouvrante → on conserve
+                        resultat.Append(caractere);
+                    }
                 }
                 else if (niveauAccolade == 0)
                 {
                     resultat.Append(caractere);
                 }
             }
+            // Sécurité : si un commentaire n'est pas refermé, on ne fait rien de plus
+            // (le texte après aura été ignoré, comportement acceptable pour PGN corrompu)
             return resultat.ToString();
         }
+
         public void AfficherListeParties(List<PartieEchecsPGN> listeParties)
-        {
+        {   // Affiche la liste des parties dans le DataGridView,
+            // en utilisant les propriétés de chaque partie pour remplir les colonnes du tableau.
             Debug.WriteLine($"Chargement de {listeParties.Count} parties");     // Vérification du nombre de parties ajoutées
             if (listeParties == null || listeParties.Count == 0)                // Vérifier si la liste est vide
             {
@@ -236,7 +319,7 @@ namespace BrunoGUI_GenII
                 }
                 else
                 {
-                    KryptonMessageBox.Show("La partie sélectionée ne contient pas de coups", "Pas de coups dans la partie", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    KryptonMessageBox.Show("La partie sélectionnée ne contient pas de coups", "Pas de coups dans la partie", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     Debug.WriteLine("Erreur : La partie = null !? (sans doute vide ...)");
                 }
             }
@@ -286,7 +369,7 @@ namespace BrunoGUI_GenII
             // 
             TableauPartiesPgn.BackgroundColor = Color.Silver;
             TableauPartiesPgn.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            TableauPartiesPgn.Columns.AddRange(new DataGridViewColumn[] { gridJoueurBlanc, gridEloBlanc, gridJoueurNoir, gridEloNoir, gridResultat, gridNombreCoups, gridCodeEco, gridTournoi, gridRonde, gridSite, gridDate });
+            TableauPartiesPgn.Columns.AddRange([gridJoueurBlanc, gridEloBlanc, gridJoueurNoir, gridEloNoir, gridResultat, gridNombreCoups, gridCodeEco, gridTournoi, gridRonde, gridSite, gridDate]);
             TableauPartiesPgn.Location = new Point(0, 33);
             TableauPartiesPgn.Name = "TableauPartiesPgn";
             TableauPartiesPgn.Size = new Size(933, 529);

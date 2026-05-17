@@ -1,7 +1,9 @@
-﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_GenII est développé par Bruno COURTOIS.  Copyright © 2025 █
-// █ BrunoGUI_GenII est gratuit, sauf s'il est utilisé commercialement  █
-// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
+// █ Copyright (C) 2026 Bruno COURTOIS                                      █
+// █ SPDX-License-Identifier: GPL-3.0-or-later                              █
+// █ See the LICENSE file in the project root for full license information. █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 
 // Gestion du moteur UCI ...
 //      └─ Classe "MoteurUci" qui gère le moteur UCI
@@ -41,9 +43,8 @@ namespace BrunoGUI_GenII
         public static bool UciVersGui { get; set; }
         private static Process Proc;
 
-        // Démarrage du moteur Uci dont le chemin est passé en paramêtre
         public void Start(string fichierMoteurUci)
-        {
+        {   // Démarrage du moteur Uci dont le chemin est passé en paramêtre
             var CurrentDirectory = Directory.GetCurrentDirectory();
             Proc = new Process();
             //  paramétrage de Proc.StartInfo
@@ -64,23 +65,19 @@ namespace BrunoGUI_GenII
             StandardInputDataToUci("uci");  // On demande les infos au moteur
         }
 
-        // Evènement de sortie de données du processus UCI vers l'interface pour jouer le coup du moteur UCI
         private void ProcOutputDataReceived(object sender, DataReceivedEventArgs e)
-        {
+        {   // Evènement de sortie de données du processus UCI vers l'interface pour jouer le coup du moteur UCI
             UciVersGui = true; 
             if (string.IsNullOrWhiteSpace(e.Data) == false)   // true si la chaine est " ", "\n", null, ""
-            {
-                // extraire les mots de l'instruction
+            {   // extraire les mots de l'instruction
                 DataUci = e.Data;
-                // Debug.WriteLine($"Données pures moteur : {DataUci}");
                 AfficheUci();
 
                 string[] DataTableau = DataUci.Split(' ');
                 AfficheDonneesBrutes();
 
                 switch (DataTableau[0])         // Analyse réponse moteur UCI 
-                {
-                    // identifier le premier mot 
+                {   // identifier le premier mot 
                     case "\n":
                     case " ":
                         break;
@@ -90,15 +87,21 @@ namespace BrunoGUI_GenII
                         break;
                     case "bestmove": // le moteur UCI propose le meilleur coup
                                      //  CRASH : tester si DataTableau[1] = (none), alors il y a MAT, il ne faut pas AfficherCoupMoteur
-                        // Debug.WriteLine("Passage dans [ProcOutputDataReceived] pour bestmove");
-                        if (DataTableau[1] != "(none)" && DataTableau[1] != "0000")     // Si le moteur répond "bestmove (none)", c'est MAT
-                        {                               // Et il ne faut pas AfficherCoupMoteur
+                        if (DataTableau[1] != "(none)" && DataTableau[1] != "0000") // Un moteur au - retourne 0000 en cas de Mat ou Pat
+                        {                               
                             CoupAuFormatUci = DataTableau[1];
                             AfficheCoupMoteur();
                         }
                         else
-                        {
-                            LogiqueMouvements.EchecetMat = true;
+                        {   // Si le moteur répond "bestmove (none)", c'est MAT ou PAT , alors il ne faut pas AfficherCoupMoteur
+                            if (LogiqueMouvements.Echec)
+                            {   // Roi en échec => MAT
+                                LogiqueMouvements.EchecetMat = true;
+                            }
+                            else
+                            {   // Roi pas en échec => PAT
+                                LogiqueMouvements.Pat = true;
+                            }
                         }
                         break;
                     case "option":
@@ -113,7 +116,7 @@ namespace BrunoGUI_GenII
             UciVersGui = false;
         }
         public static void StandardInputDataToUci(string Data)
-        {           // Envoi de données de l'interface vers moteur UCI
+        {   // Envoi de données de l'interface vers moteur UCI
             Debug.WriteLine($"[App] {Data}");
             UciVersGui = false;
             DataVersUci = Data;
@@ -121,11 +124,11 @@ namespace BrunoGUI_GenII
             Proc.StandardInput.Write(Data + Environment.NewLine);
         }
         private static void PositionFenUci(string PositionFenActuel)
-        {           // Position Fen courante envoyée au Moteur UCI
+        {   // Position Fen courante envoyée au Moteur UCI
             StandardInputDataToUci("position fen " + PositionFenActuel);
         }
         public static void JeuMoteurUci(string FenActuel, int Duree)
-        {           // Envoie au moteur UCI le Fen actuel et invitation à jouer pour le moteur UCI
+        {   // Envoie au moteur UCI le Fen actuel et invitation à jouer pour le moteur UCI
             MoteurUci.StandardInputDataToUci("setoption name MultiPV value 3");     // On demande 3 variations au moteur
             if (Duree == 9999)
                 StandardInputDataToUci("go movetime infinite");
@@ -133,11 +136,10 @@ namespace BrunoGUI_GenII
             {
                 PositionFenUci(FenActuel);
                 StandardInputDataToUci("go movetime " + Duree.ToString());
-                // Debug.WriteLine($"Durée de reflexion en millisecondes {Duree}");
             }
         }
         public static void OptionsCourantes()
-        {
+        {   // Envoi au moteur UCI les options courantes
             StandardInputDataToUci("setoption name Ponder value true");     // Réfléchit sur le temps de l'adversaire
             StandardInputDataToUci("setoption name Verbose value true");
             StandardInputDataToUci("setoption name Ownbook value true");
@@ -145,19 +147,19 @@ namespace BrunoGUI_GenII
             StandardInputDataToUci("setoption name MultiPV value 3");
         }
         public static void ActiveLimiteElo()
-        {           // Activation de la limitation du ELO
+        {   // Activation de la limitation du ELO
             StandardInputDataToUci("setoption name UCI_LimitStrength value true");
         }
         public static void DefinitLimiteElo(string ValeurElo)
-        {           // Définition de la force ELO du moteur (default 1320 min 1320 max 3190 pour Stockfish)
+        {   // Définition de la force ELO du moteur (default 1320 min 1320 max 3190 pour Stockfish)
             StandardInputDataToUci("setoption name UCI_Elo value " + ValeurElo);
         }
         public static void SpecialeSargon()
-        {           // Sinon Sargon  mouline sans fin !!
+        {   // Sinon Sargon  mouline sans fin !!
             StandardInputDataToUci("setoption name FixedDepth value 6");       
         }
         public static void Quitte()
-        {           // On ferme le moteur UCI
+        {   // On ferme le moteur UCI
             StandardInputDataToUci("quit");
             LogiqueMouvements.StatutMoteurUci = false;
             LimiteElo = false;
