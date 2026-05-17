@@ -1,4 +1,11 @@
-﻿namespace BrunoGUI_GenII
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
+// █ Copyright (C) 2026 Bruno COURTOIS                                      █
+// █ SPDX-License-Identifier: GPL-3.0-or-later                              █
+// █ See the LICENSE file in the project root for full license information. █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+
+namespace BrunoGUI_GenII
 {
     partial class ParametresUciStockfish
     {

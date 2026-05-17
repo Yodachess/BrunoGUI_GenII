@@ -1,7 +1,10 @@
-﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_GenII est développé par Bruno COURTOIS.  Copyright © 2025 █
-// █ BrunoGUI_GenII est gratuit, sauf s'il est utilisé commercialement  █
-// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
+// █ Copyright (C) 2026 Bruno COURTOIS                                      █
+// █ SPDX-License-Identifier: GPL-3.0-or-later                              █
+// █ See the LICENSE file in the project root for full license information. █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+
 // Informations reflexion moteur - Temps de reflexion - Réglage force moteur Stockfish
 // Gestion par menus - Sauvegarde PGN - Affichage Score - Personnalisation couleurs
 
@@ -62,27 +65,26 @@ namespace BrunoGUI_GenII
         // les variables
         public static int NumeroDemiCoup { get; set; } = 0;
         public bool OrdinateurJoueNoir, OrdinateurJoueBlanc;
-        public string _dossierRacine;
+        public string _dossierRacine, _dossierStockfish;
         private int _indexSource120, _forceMoteurElo, _nombreLignesPV, _tempsRestant;
         private int _dernierCoupMoteurUci;   // dernière case jouée par le moteur UCI
         private int _numeroLigne;    // Indices dans la DataGrid FeuillePartie
         private int _indexCaseSourceDernierMouvement, _indexCaseDestinationDernierMouvement;
         private string _caseSource, _caseDestination, _couleurHumain;
-        private string? _nomHumain, _joueurElo, _moteurElo, _joueurBlanc, _joueurNoir;
-        private string? _cheminMoteur, _moteurChoisi, _variationMoteur, _meilleureSuite, _scoreCourant, _evaluationCourante;
+        private string _nomHumain, _joueurElo, _nomMoteur, _moteurElo, _joueurBlanc, _joueurNoir;
+        private string _cheminMoteur, _moteurChoisi, _variationMoteur, _meilleureSuite, _scoreCourant, _evaluationCourante;
         private string[] _donneesUci;        // Données en provenance du Moteur UCI
-        private string? _bibliotheque = "rodent.bin";
+        private string _bibliotheque = "rodent.bin";
         private bool _clickCaseSource, _visuSymbole, _montreDonneesBrutesUci, _montre3VariantesUci, _analyseEnCours, _montreListeParties, _partieTerminee;
         private bool _humain;   // True pour simuler 2 joueurs humains et False pour jouer contre le moteur UCI
         private bool _visuCoteNoir;          // True quand les Noirs sont en bas de l'écran
-        private bool _clavierActif, _emetUnSon, _bibliothèqueAléatoire = false;
+        private bool _clavierActif, _emetUnSon, _bibliothèqueAléatoire, _positionChargeeDepuisFen = false;
         private bool _bibliothèqueActive = true;
         private int _indexFenCoupActuel = 0; // Indice du coup affiché
         private int _dureeReflexionMilliSeconde = 5000;
         private Color _couleurCaseSombre, _couleurCaseClaire, _couleurCaseSource, _couleurCaseDestination;
         private LogiqueMouvements.TypePiece _selectionPromotion, _pieceSource;
-        private Color _violetCustom = Color.FromArgb(128, 128, 255);  // Rouge = 128, Vert = 128, Bleu = 255
-        public static PartieEchecsPGN PartieCourante = new();
+        private readonly Color _violetCustom = Color.FromArgb(128, 128, 255);  // Rouge = 128, Vert = 128, Bleu = 255
 
         // les classes
         public LogiqueMouvements LogiqueMouvements = new();
@@ -97,8 +99,8 @@ namespace BrunoGUI_GenII
         private FichierPartiePgn fichierPartiePgn = new();     // idem pour fichierPartiePgn
         private readonly DonneesBrutesUci donneesBrutesUci = new();
         private readonly Parametres parametres;
-
-        System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
+        private static readonly System.Windows.Forms.Timer timer1 = new();
+        private System.Windows.Forms.Timer timer = timer1;
 
         public EchiquierPrincipal()
         {
@@ -112,13 +114,16 @@ namespace BrunoGUI_GenII
             _couleurCaseSource = Color.FromName(parametres.CouleurCaseSource);
             _couleurCaseDestination = Color.FromName(parametres.CouleurCaseDestination);
             _nomHumain = parametres.NomHumain;
+            _joueurElo = parametres.EloHumain;
             _dureeReflexionMilliSeconde = parametres.DureeReflexionSeconde * 1000;
-            // Debug.WriteLine($" 1. _dureeReflexionMilliSeconde = {_dureeReflexionMilliSeconde}");
+            _nomMoteur = parametres.Moteur;
             _forceMoteurElo = parametres.ForceMoteur;
             _nombreLignesPV = parametres.NombreLignesPV;
             _bibliotheque = parametres.Bibliotheque;
             LabelJoueurNoir.Text = _cheminMoteur = parametres.Moteur;
             EloNoir.Text = _moteurElo = _forceMoteurElo.ToString();
+            LabelJoueurBlanc.Text = _nomHumain;
+            EloBlanc.Text = _joueurElo;
             // Debug pour vérifier
             Debug.WriteLine($"Paramètres chargés : Moteur = {_cheminMoteur}, Case sombre = {_couleurCaseSombre.Name}, Case claire = {_couleurCaseClaire.Name}");
             Debug.WriteLine($"Paramètres chargés : Case source = {_couleurCaseSource.Name}, Case destination = {_couleurCaseDestination.Name}");
@@ -129,7 +134,7 @@ namespace BrunoGUI_GenII
             DateTime Aujourdhui = DateTime.Today;
             _visuCoteNoir = OrdinateurJoueBlanc = false; // On commence avec la vue côté Blanc, l'odinateur a les Noirs
             _montreDonneesBrutesUci = _analyseEnCours = _partieTerminee = _clavierActif = false;
-            groupParcoursPartie.Enabled = RetourArriere.Enabled = AnalysePosition.Enabled = false;
+            groupParcoursPartie.Enabled = RetourArriere.Enabled = AnalysePosition.Enabled = _positionChargeeDepuisFen = false;
             BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = ListeCoupsBouton.Enabled = false;
             PartieEnCours.Date = Aujourdhui.ToString("yyyy.MM.dd");
             PartieEnCours.Lieu = "Maison"; PartieEnCours.Tournoi = "Entrainement";
@@ -137,8 +142,8 @@ namespace BrunoGUI_GenII
             mesparametresDeBase = new ParametresDeBase(this);
         }
 
-        private void BrunoInterfaceGraphique_Load(object sender, EventArgs e)   // Forme Interface graphique
-        {
+        private void BrunoInterfaceGraphique_Load(object sender, EventArgs e)
+        {   // Forme Interface graphique
             // les évènements dans les classes
             LogiqueMouvements.AfficheCoupNoir += AfficheCoupNoir;
             LogiqueMouvements.AfficheCoupBlanc += AfficheCoupBlanc;
@@ -174,24 +179,27 @@ namespace BrunoGUI_GenII
 
             // _couleurCaseSombre = Color.CornflowerBlue;   // Couleurs cases noires par défaut
             // _couleurCaseClaire = Color.AliceBlue;        // Couleurs cases blanches par défaut
-            
+
             _couleurCaseSombre = Color.FromArgb(181, 136, 99);  // Couleur style Lichess
             _couleurCaseClaire = Color.FromArgb(240, 217, 181); // Couleur style Lichess
             _couleurCaseSource = Color.FromArgb(134, 166, 108);
             _couleurCaseDestination = Color.FromArgb(196, 200, 127);
-            
+
 
             _dossierRacine = Chemins.RepertoireRacine;
             string cheminMoteurs = Chemins.MoteursUCI;
             string cheminPolyglot = Chemins.BibliothèquesPolyglot;
 
+            _moteurChoisi = Path.Combine(_dossierRacine, "stockfish", "stockfish.exe");
+            _dossierStockfish = Path.Combine(_dossierRacine, "stockfish");
+
             Debug.WriteLine("Dossier Racine = " + _dossierRacine);
+            Debug.WriteLine("Dossier Stockfish = " + _dossierStockfish);
             Debug.WriteLine("Chemin moteurs = " + cheminMoteurs);
             Debug.WriteLine("Chemin Polyglot = " + cheminPolyglot);
 
             InformationPourJoueur.Text = _dossierRacine;
 
-            _moteurChoisi = Path.Combine(_dossierRacine, "stockfish", "stockfish17-windows-x86-64-avx2.exe");
             DessineEchiquier();
             for (int i = 0; i <= 119; i++)
             {   // On place des bords sur tout l'échiquier
@@ -204,15 +212,38 @@ namespace BrunoGUI_GenII
             MiseaZeroAffichages();
             QuiJoue = ColorPiece.Blanc;
             this.ActiveControl = Plateau;       // Met le focus sur le plateau pour éviter le Bug des radiobutton "Résultat"
-            _humain = false;                     // L'opposant est l'ordinateur, à mettre à true pour simuler 2 joueurs humains
-            Debug.WriteLine("chemin Load = " + _moteurChoisi);
-            Task.Run(() => MoteurUci.Start(_moteurChoisi)); // Démarre le moteur "de façon asynchrone" pour ne pas bloquer l'UI
+            _humain = false;                    // L'opposant est l'ordinateur, à mettre à true pour simuler 2 joueurs humains
+
+
+            _ = Task.Run(async () =>            // MISE A JOUR STOCKFISH SI ELLE EXISTE
+           {   // Vérification de la mise à jour de Stockfish, puis lancement du moteur
+                
+               try
+               {   // A. On lance la MAJ et on ATTEND qu'elle finisse
+                   Debug.WriteLine("[INFO] Vérification initiale de mise à jour...");
+                   // VarianteMoteurUci1.Text = "[INFO] Vérification initiale de mise à jour de Stockfish...";
+                   await LancerMiseAJourAsync();
+               }
+               catch (Exception ex)
+               {   // On log juste, on ne bloque pas le démarrage si la MAJ échoue (ex: hors ligne)
+                   Debug.WriteLine("[INFO] Pas de mise à jour effectuée : " + ex.Message);
+                   // VarianteMoteurUci1.Text = "[INFO] Pas de mise à jour effectuée : ";
+               }
+               // B. MAINTENANT, on démarre le moteur. 
+               // Le fichier est libre, remplacé et prêt.
+               Debug.WriteLine("chemin Load = " + _moteurChoisi);
+                
+               MoteurUci.Start(_moteurChoisi);
+           });
+            Debug.WriteLine("Moteur = " + _nomMoteur);
+            PartieEnCours.Black = LabelJoueurNoir.Text = _nomMoteur;
         }
 
         private void NouvellePartieStockfish_Click(object sender, EventArgs e)
-        {
-            _humain = _analyseEnCours = _partieTerminee = _clavierActif = false;
-            groupParcoursPartie.Enabled = RetourArriere.Enabled = AnalysePosition.Enabled = false;
+        {   // Nouvelle partie contre Stockfish, avec la possibilité de régler la force du moteur et le temps de réflexion
+            _humain = _analyseEnCours = _partieTerminee = _clavierActif = _positionChargeeDepuisFen = false;
+            groupParcoursPartie.Enabled = RetourArriere.Enabled = false;
+            LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = false;
             QuiJoue = ColorPiece.Blanc;
             _indexFenCoupActuel = 0;     // On est au début
             NumeroDemiCoup = 0;
@@ -226,7 +257,6 @@ namespace BrunoGUI_GenII
                 TrackBarTempsReflexion.Value = maNouvellePartieForceModule.DureeReflexionSeconde;   // On met à jour la trackbar ...
                 labelTempsReflexion.Text = "[" + TrackBarTempsReflexion.Value.ToString() + "]";
 
-                Debug.WriteLine($" 2. _dureeReflexionMilliSeconde = {_dureeReflexionMilliSeconde} / DureeReflexionSeconde = {maNouvellePartieForceModule.DureeReflexionSeconde}");
                 MiseaZeroAffichages();
                 if (forceMaximale)
                 {   // Moteur à sa force Elo maximale
@@ -239,7 +269,7 @@ namespace BrunoGUI_GenII
                 {   // Le moteur joue les blancs
                     OrdinateurJoueNoir = false;
                     _couleurHumain = "Blancs";
-                    PartieEnCours.White = LabelJoueurBlanc.Text = _moteurChoisi;
+                    PartieEnCours.White = LabelJoueurBlanc.Text = _nomMoteur;
                     PartieEnCours.WhiteElo = EloBlanc.Text = _forceMoteurElo.ToString();
                     PartieEnCours.Black = LabelJoueurNoir.Text = maNouvellePartieForceModule.NomAdversaire;
                     PartieEnCours.BlackElo = EloNoir.Text = _joueurElo;
@@ -255,7 +285,7 @@ namespace BrunoGUI_GenII
                     _couleurHumain = "Noirs";
                     PartieEnCours.White = LabelJoueurBlanc.Text = maNouvellePartieForceModule.NomAdversaire;
                     PartieEnCours.WhiteElo = EloBlanc.Text = _joueurElo;
-                    PartieEnCours.Black = LabelJoueurNoir.Text = _moteurChoisi;
+                    PartieEnCours.Black = LabelJoueurNoir.Text = _nomMoteur;
                     PartieEnCours.BlackElo = EloNoir.Text = _forceMoteurElo.ToString();
                     if (_visuCoteNoir)
                         TourneEchiquier();
@@ -265,17 +295,18 @@ namespace BrunoGUI_GenII
                 }
             }
         }
-        private void CommencerPartie()              // Début d'une nouvelle partie
-        {
-            _analyseEnCours = _partieTerminee = _clavierActif = false;
-            groupParcoursPartie.Enabled = RetourArriere.Enabled = AnalysePosition.Enabled = false;
+        private void CommencerPartie()      // POINT D'ENTREE POUR TOUTES LES NOUVELLES PARTIES
+        {   // Début d'une nouvelle partie
+            _analyseEnCours = _partieTerminee = _clavierActif = _positionChargeeDepuisFen = false;
+            groupParcoursPartie.Enabled = RetourArriere.Enabled = false;
             _dernierCoupMoteurUci = -1;
             _clickCaseSource = _visuSymbole = true;
-            PartieEnCours.CoupsPartiePGN = "";
+            PartieEnCours.CoupsPartiePGN = PartieEnCours.Result = PartieEnCours.CompteDePLy = PartieEnCours.Ronde = "";
+            PartieEnCours.Tournoi = "Entrainement";
+            PartieEnCours.Lieu = "Maison";
             NumeroDemiCoup = 0;
             MiseaZeroAffichages();
             MiseaZéroTimer();
-            // DémarrageMoteur();
             _couleurHumain = VarianteMoteurUci1.Text = string.Empty;
             if (_humain == false)
             {
@@ -332,10 +363,9 @@ namespace BrunoGUI_GenII
                             LogiqueMouvements.EffaceSymboles(true);
                             _caseDestination = LogiqueMouvements.NomCaseAlgebrique(IndexCase120);
                             LogiqueMouvements.ExecutionCoup(_caseSource, _caseDestination);
-                            string chaineFen = LogiqueMouvements.RetourneChaineFenActuel();     // UCI : remplacer le FEN par liste de coups ?!
-
+                            string chaineFen = LogiqueMouvements.RetourneChaineFenActuel(); // UCI : remplacer le FEN par liste de coups ?!
                             if (LogiqueMouvements.CoupValide)
-                            {       // envoi de la Position Fen au moteur UCI
+                            {   // envoi de la Position Fen au moteur UCI
                                 _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(chaineFen));
                                 if (_humain == false)
                                 {
@@ -343,8 +373,8 @@ namespace BrunoGUI_GenII
                                 }
                             }
                             else
-                            {
-                                DessinePiece(_indexSource120, _pieceSource);  // Si le coup n'est pas valide, on remet la pièce sur sa case d'origine !
+                            {   // Si le coup n'est pas valide, on remet la pièce sur sa case d'origine !
+                                DessinePiece(_indexSource120, _pieceSource);
                             }
                             _clickCaseSource = true;
                             EffaceDernierCoup();
@@ -366,7 +396,7 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         // Procédures d'affichage diverses
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-        private void AfficheUci()               // Analyse et affiche les informations du moteur UCI
+        private void AfficheUci()   // Analyse et affiche les informations du moteur UCI
         {   // ATTENTION : MALGRE LA PRESENCE DU PROTOCOLE UCI, LES MOTEURS ONT DES REPONSES DIFFERENTES !!?? (voir case "info", par ex)
             string numeroVarianteNomBox = "";
             string varianteExaminee = "";
@@ -386,25 +416,30 @@ namespace BrunoGUI_GenII
                     case " ":
                         break;
                     case "bestmove":        // **** le moteur UCI propose le meilleur coup ! ****
-                        VarianteMoteurCourante.Text = "Coup joué : " + _donneesUci[1] +
-                            (_donneesUci.Length > 3 ? "   (Conseil : " + _donneesUci[3] + ")" : "");
+                        if (_donneesUci.Length < 2 || _donneesUci[1] == "(none)" || _donneesUci[1] == "0000")
+                        {   // Cas particulier : le moteur retourne "bestmove (none)" ou "bestmove 0000" => partie terminée (mat ou pat)
+                            VarianteMoteurCourante.Text = "Aucun coup légal (mat ou pat)";
+                            break;
+                        }
+                        VarianteMoteurCourante.Text = "Coup joué : " + Outils.VarianteUciVersPgn(_donneesUci[1], NumeroDemiCoup, false) +
+                            (_donneesUci.Length > 3 ? "   (Conseil : " + Outils.VarianteUciVersPgn(_donneesUci[3], NumeroDemiCoup, true) + ")" : "");
                         break;
                     case "id":
                         {
                             switch (_donneesUci[1])
                             {
                                 case "name":    // Récupération du nom du moteur
-                                    _moteurChoisi = MoteurUci.DataUci.Substring(8);
-                                    _moteurChoisi = _moteurChoisi.Substring(0, Math.Min(20, _moteurChoisi.Length));
+                                    _nomMoteur = MoteurUci.DataUci[8..];
+                                    _nomMoteur = _nomMoteur[..Math.Min(20, _nomMoteur.Length)];
+                                    LabelJoueurNoir.Text = _nomMoteur;
                                     break;
-
                                 case "author":  // Récupération de l'auteur
-                                    VarianteMoteurUci3.Text = "     Auteur(s) du moteur " + _moteurChoisi + " = " + MoteurUci.DataUci.Substring(10);
+                                    VarianteMoteurUci3.Text = "     Auteur(s) du moteur " + _nomMoteur + " = " + MoteurUci.DataUci[10..];
                                     break;
                             }
                         }
                         break;
-                    case "info":                // **** Infos de réflexion moteur ****
+                    case "info":            // **** Infos de réflexion moteur ****
                         {   // Parcours des données Uci
                             for (int ucindex = 1; (ucindex < _donneesUci.Length); ucindex++) // Recherche des informations sur la chaine _donneesUci
                                 switch (_donneesUci[ucindex])
@@ -440,27 +475,27 @@ namespace BrunoGUI_GenII
 
                                     case "pv":          // Affichage de la variation principlale
                                         int position = MoteurUci.DataUci.IndexOf(" pv ");
-                                        _variationMoteur = MoteurUci.DataUci.Substring(position + 3);
+                                        _variationMoteur = MoteurUci.DataUci[(position + 3)..];
                                         if (_variationMoteur.Length > 60)
-                                            _variationMoteur = _variationMoteur.Substring(0, 60);     // On limite la longueur de la variation, pour rester dans le label
-                                        _variationMoteur = Outils.AlgebriqueVersPgn(_variationMoteur, NumeroDemiCoup);  // Elle est en algébrique long, il la faut en PGN Fr ...
+                                            _variationMoteur = _variationMoteur[..60];     // On limite la longueur de la variation, pour rester dans le label
+                                        _variationMoteur = Outils.VarianteUciVersPgn(_variationMoteur, NumeroDemiCoup, false);  // Elle est en Uci, il la faut en PGN Fr ...
                                         varianteExaminee = string.Join(" ", _variationMoteur.Split(' ').Take(3));
                                         if (numeroVarianteNomBox != "")     // Par exemple Sargon n'a pas de multipv ?
                                         {
                                             RichTextBox numeroVarianteBox = Controls.Find(numeroVarianteNomBox, true).FirstOrDefault() as RichTextBox;
                                             numeroVarianteBox?.Invoke(new Action(() =>    // Si numeroVarianteBox n'est pas nul
                                             {
-                                                numeroVarianteBox.Text = " " + numeroVarianteNomBox[^1] + ". (" + varianteExaminee + ") █[ " +
+                                                numeroVarianteBox.Text = " " + AfficheEvalSymbole(_scoreCourant) + " (" + varianteExaminee + ") █[ " +
                                                 _scoreCourant + " ]█  " + "[ " + _variationMoteur + " ]";
-                                                Debug.WriteLine($"Variation : {numeroVarianteBox.Name}, / {_variationMoteur}");
                                             }));
                                         }
                                         else
-                                        {                                       // Pour ceux qui n'ont qu'une variante principale (Sargon, ...) ?!
+                                        {   // Pour ceux qui n'ont qu'une variante principale (Sargon, ...) ?!
                                             VarianteMoteurUci1.Invoke(new Action(() =>
                                             {  // On n'utilise que la Box VarianteMoteurUci1 ...
-                                                VarianteMoteurUci1.Text = " 1. (" + varianteExaminee + ") █[ " + _scoreCourant + " ]█  " + "[ " + _variationMoteur + " ]";
-                                                VarianteMoteurUci2.Text = "... " +  _moteurChoisi + " n'affiche qu'une variante ..."; VarianteMoteurUci3.Text = "...";
+                                                VarianteMoteurUci1.Text = AfficheEvalSymbole(_scoreCourant) + " (" + varianteExaminee + ") █[ "
+                                                                                        + _scoreCourant + " ]█  " + "[ " + _variationMoteur + " ]";
+                                                VarianteMoteurUci2.Text = "... " + _moteurChoisi + " n'affiche qu'une variante ..."; VarianteMoteurUci3.Text = "...";
                                                 Debug.WriteLine($"Seulement une variante !!! : {VarianteMoteurUci1.Text}");
                                             }));
                                         }
@@ -473,49 +508,84 @@ namespace BrunoGUI_GenII
         }
 
         private string AfficheEvaluation(string _scoreCourant)
-        {
-            // if (_analyseEnCours) return "";
-            Debug.WriteLine($"_scoreCourant : {_scoreCourant}");
-            string resultat = "";
+        {   /*
+            La règle d'or de l'UCI : Le point de vue du moteur
+            Le signe du score dans le protocole UCI est toujours du point de vue du camp qui a le trait (celui qui doit jouer).
+            Score positif (+) : Le moteur estime qu'il est en avantage.
+            Score négatif (-) : Le moteur estime qu'il est en désavantage.
+            C'est une convention relative au camp au trait, et non absolue (ce n'est pas "toujours positif pour les blancs").
+            */
+            string resultat;
             _scoreCourant = _scoreCourant?.Trim();
-            // Cas mat : "Mx"
-            if (!string.IsNullOrEmpty(_scoreCourant) &&
-                _scoreCourant.StartsWith("M", StringComparison.OrdinalIgnoreCase))
+            // 1. Déterminer si le moteur parle au nom des blancs
+            bool estTourBlanc = (QuiJoue == ColorPiece.Blanc);
+            if (string.IsNullOrEmpty(_scoreCourant))
             {
-                string number = _scoreCourant.Substring(1);
-
-                int.TryParse(number, out int mateIn); // si ça rate, mateIn = 0, pas grave
-
-                resultat = QuiJoue switch
-                {
-                    ColorPiece.Blanc => "Gain Blanc",
-                    ColorPiece.Noir => "Gain Noir",
-                    _ => "Gain (mat)" // fallback théorique
-                };
-
-                EvaluationUci.Text = _evaluationCourante = resultat;
-                return resultat;
-            }
-            if (!decimal.TryParse(_scoreCourant, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal score))
-            {   // Valeur invalide → on affiche quelque chose de neutre
                 EvaluationUci.Text = _evaluationCourante = "Éval indisponible";
                 return _evaluationCourante;
             }
-            if (OrdinateurJoueNoir) score = -score;
-            resultat = score switch
-            {   // Entre -0.5 +0.5, c'est égal / de 0.5 à 2.5 c'est Avantage / supérieur à 2.5 c'est Gain
-                >= 2.5m => "Gain Blanc",
-                > 0.5m => "Avantage Blanc",
-                <= -2.5m => "Gain Noir",
-                < -0.5m => "Avantage Noir",
-                _ => "Égal"
-            };
+            // 2. CAS DU MAT (ex: "M3", "-M2", "mate 5", "mate -5")
+            if (_scoreCourant.Contains('M', StringComparison.OrdinalIgnoreCase))
+            {   // On regarde si le signe '-' est présent dans la chaîne
+                bool estNegatif = _scoreCourant.Contains('-');
+                // Logique : 
+                // Si c'est positif (+), le camp qui joue (QuiJoue) gagne.
+                // Si c'est négatif (-), le camp qui joue (QuiJoue) perd.
+                bool gainBlanc = (estTourBlanc && !estNegatif) || (!estTourBlanc && estNegatif);
+                resultat = gainBlanc ? "Gain Blanc" : "Gain Noir";
+                EvaluationUci.Text = _evaluationCourante = resultat;
+            }
+            else
+            {   // 3. CAS DU SCORE CP
+                if (!decimal.TryParse(_scoreCourant, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal score))
+                {
+                    EvaluationUci.Text = _evaluationCourante = "Éval indisponible";
+                    return _evaluationCourante;
+                }
+                // Conversion en score absolu (du point de vue des Blancs)
+                // Si c'est aux noirs, on inverse pour que '+' = Blanc et '-' = Noir
+                decimal scoreAbsolu = estTourBlanc ? score : -score;
+                resultat = scoreAbsolu switch
+                {
+                    >= 2.5m => "Gain Blanc (+-)",
+                    > 0.5m => "Avantage Blanc (±)",
+                    <= -2.5m => "Gain Noir (-+)",
+                    < -0.5m => "Avantage Noir (∓)",
+                    _ => "Égal (=)"
+                };
+            }
             EvaluationUci.Text = _evaluationCourante = resultat;
             return resultat;
         }
+        private static string AfficheEvalSymbole(string scoreCourant)
+        {
+            scoreCourant = scoreCourant?.Trim();
+            bool estTourBlanc = (QuiJoue == ColorPiece.Blanc);
+            if (string.IsNullOrEmpty(scoreCourant))
+                return "?";
+            if (scoreCourant.Contains('M', StringComparison.OrdinalIgnoreCase))
+            {   // CAS MAT
+                bool estNegatif = scoreCourant.Contains('-');
+                bool gainBlanc = (estTourBlanc && !estNegatif) || (!estTourBlanc && estNegatif);
+                return gainBlanc ? "#+" : "#-"; // ou ce que l'on veut afficher
+            }
+            // CAS CP
+            if (!decimal.TryParse(scoreCourant, NumberStyles.Any,
+                CultureInfo.InvariantCulture, out decimal score))
+                return "?";
+            decimal scoreAbsolu = estTourBlanc ? score : -score;
+            return scoreAbsolu switch
+            {
+                >= 2.5m => "+-",
+                > 0.5m => "±",
+                <= -2.5m => "-+",
+                < -0.5m => "∓",
+                _ => "="
+            };
+        }
 
         private void AfficheDonneesBrutes()
-        {
+        {   // Affiche les données brutes du moteur UCI, pour les curieux qui veulent voir ce qui se passe "sous le capot" :-)
             if (InvokeRequired)
             {
                 Invoke(new MethodInvoker(AfficheDonneesBrutes));
@@ -526,7 +596,7 @@ namespace BrunoGUI_GenII
                 if (MoteurUci.UciVersGui)
                 {
                     if (!MoteurUci.DataUci.Contains("currmove"))    // Inutile d'afficher les currmove, il n'y rien d'intéressant ...
-                        donneesBrutesUci.DonneesBrutesVue.AppendText(Environment.NewLine + "[" + _moteurChoisi + "]    " + MoteurUci.DataUci);
+                        donneesBrutesUci.DonneesBrutesVue.AppendText(Environment.NewLine + "[" + _nomMoteur + "]    " + MoteurUci.DataUci);
                 }
                 else
                     donneesBrutesUci.DonneesBrutesVue.AppendText(Environment.NewLine + " [BrunoGUI_GenII]    " + MoteurUci.DataVersUci);
@@ -534,8 +604,8 @@ namespace BrunoGUI_GenII
             }
         }
 
-        private void AfficheCoupMoteur()        // Le moteur UCI joue son meilleur coup
-        {
+        private void AfficheCoupMoteur()
+        {   // Le moteur UCI joue son meilleur coup
             if (InvokeRequired)
             {
                 Invoke(new MethodInvoker(AfficheCoupMoteur));
@@ -552,30 +622,29 @@ namespace BrunoGUI_GenII
                 if (!_analyseEnCours)
                 {   // Si ce n'est pas une analyse ...
                     StatusProgramme.Text = InformationPourJoueur.Text = "A vous de jouer";
-                    _caseSource = MoteurUci.CoupAuFormatUci.Substring(0, 2);    // CoupAuFormatUci contient le "best move" sous la forme e2e4
+                    _caseSource = MoteurUci.CoupAuFormatUci[..2];    // CoupAuFormatUci contient le "best move" sous la forme e2e4
                     _caseDestination = MoteurUci.CoupAuFormatUci.Substring(2, 2);
 
                     // *******Traitement promotion *********
                     if (MoteurUci.CoupAuFormatUci.Length >= 5)
                     {   // Gestion de la promotion : 5ème caractère de l'UCI (index 4)
                         char promo = char.ToLower(MoteurUci.CoupAuFormatUci[4]);
-                        char destRank = _caseDestination[1];        // '1'..'8'
-                        bool isWhitePromotion = destRank == '8';    // promotion en 8 => blanc
-                        switch (promo)
+                        char rangéeDestination = _caseDestination[1];           // '1'..'8'
+                        bool estPromotionBlanche = rangéeDestination == '8';    // promotion en 8 => blanc
+                        LogiqueMouvements.PromotionPiece = promo switch
                         {
-                            case 'q': PromotionPiece = isWhitePromotion ? TypePiece.ReineBlanche : TypePiece.ReineNoire; break;
-                            case 'r': PromotionPiece = isWhitePromotion ? TypePiece.TourBlanche : TypePiece.TourNoire; break;
-                            case 'b': PromotionPiece = isWhitePromotion ? TypePiece.FouBlanc : TypePiece.FouNoir; break;
-                            case 'n': PromotionPiece = isWhitePromotion ? TypePiece.CavalierBlanc : TypePiece.CavalierNoir; break;
-                            default: PromotionPiece = TypePiece.Vide; break;
-                        }
+                            'q' => estPromotionBlanche ? TypePiece.ReineBlanche : TypePiece.ReineNoire,
+                            'r' => estPromotionBlanche ? TypePiece.TourBlanche : TypePiece.TourNoire,
+                            'b' => estPromotionBlanche ? TypePiece.FouBlanc : TypePiece.FouNoir,
+                            'n' => estPromotionBlanche ? TypePiece.CavalierBlanc : TypePiece.CavalierNoir,
+                            _ => TypePiece.Vide,
+                        };
                         LogiqueMouvements.BloquerChoixPromo = true;
                     }
                     else
                     {   // Pas de promotion dans le UCI : assurer une valeur neutre
-                        PromotionPiece = TypePiece.Vide;
+                        LogiqueMouvements.PromotionPiece = TypePiece.Vide;    //  ???
                     }
-                    // *******Traitement promotion *********
 
                     if (LogiqueMouvements.EchecetMat == false)  // Note : Si c'est Mat, on n"execute pas de coup
                     {
@@ -587,9 +656,9 @@ namespace BrunoGUI_GenII
                         DessinePiece(_dernierCoupMoteurUci, LogiqueMouvements.PiecesEchiquier[_dernierCoupMoteurUci]);
                     }
                     _dernierCoupMoteurUci = LogiqueMouvements.RenvoieCaseIndex120(_caseDestination);
-                    // *******Traitement promotion *********
                     LogiqueMouvements.BloquerChoixPromo = false;
                     // *******Traitement promotion *********
+
                     _indexCaseSourceDernierMouvement = RenvoieCaseIndex120(_caseSource);              // convertit la case source en index
                     _indexCaseDestinationDernierMouvement = RenvoieCaseIndex120(_caseDestination);    // convertit la case destination en index
                     PictJeux[_indexCaseSourceDernierMouvement].BackColor = _couleurCaseSource;            // montre la case source du dernier coup
@@ -611,7 +680,7 @@ namespace BrunoGUI_GenII
                         _ = KryptonMessageBox.Show("La meilleure suite est : " + debutVariante +
                                             "\n Evaluation --- " + meilleureVariante[1] + " --- " + "(" + AfficheEvaluation(meilleureVariante[1]) + ")" +
                                             "\n" + meilleureVariante[3], "Analyse Moteur " + " (" + _dureeReflexionMilliSeconde / 1000 + " sec.)"
-                                            + " par " + _moteurChoisi, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                            + " par " + _nomMoteur, MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     RetourArriere.Enabled = AnalysePosition.Enabled = groupParcoursPartie.Enabled = true;      // On réautorise si le moteur a fini de réfléchir
                     _analyseEnCours = false;
@@ -619,13 +688,24 @@ namespace BrunoGUI_GenII
             }
         }
 
-        private void AfficheCoupBlanc(string coupBlanc) // Affiche le coup joué par les blancs
-        {                                               // Comme c'est le coup Blanc, il faut afficher le numéro du coup
+        private void AfficheCoupBlanc(string coupBlanc)
+        {   // Affiche le coup joué par les blancs
+            // Comme c'est le coup Blanc, il faut afficher le numéro du coup
             if (LogiqueMouvements.EchecetMat == false)
-            {
-                if (LogiqueMouvements.Echec)
-                    coupBlanc += "+";                   // S'il y a echec, on le signale en ajoutant un "+" après le coup
-                NumeroDemiCoup = LogiqueMouvements.ListeCoupsFen.Count - 1;     // DEBUG 28/5/24
+            {   // ******      Traitement du numéro de demi-coup :     ******
+                if (_positionChargeeDepuisFen)
+                {   // Si on a chargé une position depuis une FEN,
+                    // il faut calculer le numéro de demi-coup en fonction du nombre de coups joués
+                    int demiCoupsFen = ((int)NombreCoupsJoues - 1) * 2;
+                    if (QuiJoue == ColorPiece.Noir)
+                        demiCoupsFen++;
+                    NumeroDemiCoup = demiCoupsFen;
+                }
+                else
+                {
+                    NumeroDemiCoup = LogiqueMouvements.ListeCoupsFen.Count - 1;
+                }
+                // ******      Traitement du numéro de demi-coup :     ******
                 PartieEnCours.CompteDePLy = (LogiqueMouvements.ListeCoupsFen.Count).ToString();
                 _numeroLigne++;
                 if (LogiqueMouvements.TripleRepetition())
@@ -640,13 +720,24 @@ namespace BrunoGUI_GenII
             }
         }
 
-        private void AfficheCoupNoir(string coupNoir)       //  Affiche le coup joué par les noirs
-        {                                                   // Comme c'est le coup Noir, on n'a pas besoin d'afficher le numéro du coup
+        private void AfficheCoupNoir(string coupNoir)
+        {   //  Affiche le coup joué par les noirs
+            // Comme c'est le coup Noir, on n'a pas besoin d'afficher le numéro du coup
             if (LogiqueMouvements.EchecetMat == false)
-            {
-                if (LogiqueMouvements.Echec)
-                    coupNoir += "+";                    // S'il y a echec, signalé en ajoutant un "+" après le coup
-                NumeroDemiCoup = LogiqueMouvements.ListeCoupsFen.Count - 1;     // DEBUG 28/5/24
+            {   // ******      Traitement du numéro de demi-coup :     ******
+                if (_positionChargeeDepuisFen)
+                {   // Si on a chargé une position depuis une FEN,
+                    // il faut calculer le numéro de demi-coup en fonction du nombre de coups joués
+                    int demiCoupsFen = ((int)NombreCoupsJoues - 1) * 2;
+                    if (QuiJoue == ColorPiece.Noir)
+                        demiCoupsFen++;
+                    NumeroDemiCoup = demiCoupsFen;
+                }
+                else
+                {   // Sinon, on peut simplement utiliser la taille de la liste des coups FEN pour déterminer le numéro de demi-coup
+                    NumeroDemiCoup = LogiqueMouvements.ListeCoupsFen.Count - 1;
+                }
+                // ******      Traitement du numéro de demi-coup :     ******
                 PartieEnCours.CompteDePLy = (LogiqueMouvements.ListeCoupsFen.Count).ToString();
                 if (LogiqueMouvements.TripleRepetition())
                 {
@@ -661,7 +752,7 @@ namespace BrunoGUI_GenII
         }
 
         private void AfficheTour(string Couleur)        // Affiche la couleur du joueur humain courant
-        {
+        {   // Affiche la couleur du joueur humain courant, et active les PictureBox si c'est au tour du joueur humain
             if (_humain)
                 InformationPourJoueur.Text = StatusProgramme.Text = "Aux " + Couleur + " de jouer";
             else
@@ -669,16 +760,17 @@ namespace BrunoGUI_GenII
         }
 
         private void AfficheEchecEtMat(string couleurRoiMat)   // Affiche l'échec et mat du roi de la couleur en paramètre
-        {
+        {   // Affiche l'échec et mat du roi de la couleur en paramètre, et gère la fin de partie
             int indexCouleur = couleurRoiMat == "Blanc" ? 2 : 1;
             LogiqueMouvements.ListeCoupsPgnIntl[^1] = (LogiqueMouvements.ListeCoupsPgnIntl[^1].ToString()).Replace("+", "#");
             LogiqueMouvements.ListeCoupsPgnFr[^1] = (LogiqueMouvements.ListeCoupsPgnFr[^1].ToString()).Replace("+", "#");
             LogiqueMouvements.ListeCoupsNal[^1] = (LogiqueMouvements.ListeCoupsNal[^1].ToString()).Replace("+", "#");
+            LogiqueMouvements.PartieEnCoursMat = true;
             string coupMat = (LogiqueMouvements.ListeCoupsPgnFr[LogiqueMouvements.ListeCoupsPgnIntl.Count - 1].ToString()).Replace("+", "#");
             int indexPoint = coupMat.IndexOf('.');  // On enlève le numéro de coup s'il existe
             if (indexPoint != -1)
             {   // Ce if n'est jamais éxecuté, mais pourrait être utile ?
-                coupMat = coupMat.Substring(indexPoint).Replace(".", "");
+                coupMat = coupMat[indexPoint..].Replace(".", "");
             }
             if (indexCouleur == 2)
             {   // Couleur du Roi mat = Blanc
@@ -692,24 +784,29 @@ namespace BrunoGUI_GenII
             RetourArriere.Visible = false;
             InformationPourJoueur.Text = VarianteMoteurCourante.Text = "Le Roi " + couleurRoiMat + " est échec et mat";
             StatusProgramme.Text = "Partie terminée";
+            // AnalysePosition.Enabled = false;
             Application.DoEvents();
             PlateauEnable(false);
         }
 
-        private void AfficheInfoEchec(string infoechec)    // Affiche le texte dans l'étiquette
-        {
+        private void AfficheInfoEchec(string infoechec)
+        {   // Affiche les informations d'échec ou de pat dans l'étiquette, et si c'est un pat, on gère la fin de partie
             InformationsPartie.Text = infoechec;
             InformationsPartie.ForeColor = Color.DarkGreen;
             if (infoechec.Contains("échec") || infoechec.Contains("Pat"))
                 InformationsPartie.ForeColor = Color.DarkGreen;
             if (infoechec.Contains("Pat"))
             {
+                LogiqueMouvements.PartieEnCoursPat = true;
+                // AnalysePosition.Enabled = false;
                 GestionResultat("1/2-1/2", "Pat (Nulle)");
+                InformationPourJoueur.Text = "Pat (Nulle)";
                 PlateauEnable(false); // un des joueurs est pat : fin de la partie
             }
         }
-        private void AffichePromotionPion(string Couleur)        // Promotion d'un pion
-        {
+        private void AffichePromotionPion(string Couleur)
+        {   // Affiche la promotion d'un pion : on affiche les pièces disponibles pour la promotion,
+            // et on attend que le joueur clique sur une pièce pour faire son choix
             _selectionPromotion = LogiqueMouvements.TypePiece.Vide;
             Promo0.Image = Couleur == "Noir" ? ReineNoire : ReineBlanche;
             Promo1.Image = Couleur == "Noir" ? TourNoire : TourBlanche;
@@ -721,37 +818,31 @@ namespace BrunoGUI_GenII
             GroupPromo.Visible = false;
         }
         private void EffaceDernierCoup()
-        {
+        {   // Efface les couleurs de la case source et destination du dernier coup joué
             PictJeux[_indexCaseSourceDernierMouvement].BackColor = Outils.EstCaseClaire(_indexCaseSourceDernierMouvement) ? _couleurCaseClaire : _couleurCaseSombre;
             PictJeux[_indexCaseDestinationDernierMouvement].BackColor = Outils.EstCaseClaire(_indexCaseDestinationDernierMouvement) ? _couleurCaseClaire : _couleurCaseSombre;
         }
 
         private void BoutonGainBlanc_Click(object sender, EventArgs e)
-        {
+        {   // Si un des joueurs abandonne, c'est la règle de l'abandon
             GestionResultat("1-0", " Gain Blanc");
         }
-
         private void BoutonGainNoir_Click(object sender, EventArgs e)
-        {
+        {   // Si un des joueurs abandonne, c'est la règle de l'abandon
             GestionResultat("0-1", " Gain Noir");
         }
-
         private void BoutonNulle_Click(object sender, EventArgs e)
-        {
+        {   // Si un des joueurs propose la nulle et que l'autre accepte, c'est la règle de la nulle par accord mutuel
             GestionResultat("1/2-1/2", " Nulle");
         }
-
         private void PartieNulle_Repetition()
-        {
+        {   // Si la position courante a déjà été atteinte 3 fois, c'est la règle de la triple répétition : partie nulle
             GestionResultat("1/2-1/2", "Nulle par répétition");
         }
-
         private void GestionResultat(string resultat, string vainqueur)
-        {
+        {   // Fin de partie : on affiche le résultat et le vainqueur, on désactive les boutons de gain/nulle,
+            // on empêche de bouger les pièces, on affiche le résultat dans les données de la partie
             StopMoteur_Click(null, EventArgs.Empty);    // Au cas où le moteur tourne encore ?!
-            LogiqueMouvements.ListeCoupsPgnIntl.Add(resultat);
-            LogiqueMouvements.ListeCoupsPgnFr.Add(resultat);
-            LogiqueMouvements.ListeCoupsNal.Add(resultat);
             PartieEnCours.Result = EvaluationUci.Text = resultat;
             ScoreMoteur.Text = vainqueur;
             InformationsPartie.Text = resultat + "  (" + vainqueur + ")";
@@ -764,39 +855,43 @@ namespace BrunoGUI_GenII
         // Gestion des menus
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void HumainOrdinateur_Click(object sender, EventArgs e)
-        {
+        {   // L'humain joue les blancs, l'ordinateur les noirs
             _couleurHumain = "Blancs";
             QuiJoue = ColorPiece.Blanc;
             PartieEnCours.White = LabelJoueurBlanc.Text = _nomHumain;
-            PartieEnCours.Black = LabelJoueurNoir.Text = _moteurChoisi;
-            PartieEnCours.BlackElo = _moteurElo;
+            PartieEnCours.Black = LabelJoueurNoir.Text = _nomMoteur;
+            PartieEnCours.WhiteElo = EloBlanc.Text = _joueurElo;
+            PartieEnCours.BlackElo = EloNoir.Text = _moteurElo;
             OrdinateurJoueNoir = true;
             _humain = OrdinateurJoueBlanc = _analyseEnCours = _partieTerminee = AnalysePosition.Enabled = groupParcoursPartie.Enabled = false;
+            LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = _positionChargeeDepuisFen = false;
             // On demande confirmation car la partie est remise à zéro
-            string confirmation = "Vous aurez les Blancs contre " + _moteurChoisi + ". " + "\nToute position précédente sera effacée,\n confirmez avec Oui, sinon Annuler";
+            string confirmation = "Vous aurez les Blancs contre " + _nomMoteur + ". " + "\nToute position précédente sera effacée,\n confirmez avec Oui, sinon Annuler";
             DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Le joueur a les Blancs, l'ordinateur les Noirs ", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
             if (Resultat == DialogResult.OK)
             {
+                StatusProgramme.Text = ScoreMoteur.Text = EvaluationUci.Text = VarianteMoteurCourante.Text = "";    // On efface les données de la partie précédente
+                CommencerPartie();
                 if (_visuCoteNoir)
                     TourneEchiquier();
                 _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(FenDepart));
-                StatusProgramme.Text = ScoreMoteur.Text = EvaluationUci.Text = VarianteMoteurCourante.Text = "";    // On efface les données de la partie précédente
-                CommencerPartie();
                 ParametresJoueurHumain("Blancs", "A vous de jouer");            // On demande à l'humain de jouer
                 PlateauEnable(true);                                            // On lui permet de bouger les pièces
             }
         }
         private void OrdinateurHumain_Click(object sender, EventArgs e)
-        {
+        {   // L'ordinateur joue les blancs, l'humain les noirs
             _couleurHumain = "Noirs";
             QuiJoue = ColorPiece.Blanc;
-            PartieEnCours.White = LabelJoueurBlanc.Text = _moteurChoisi;
+            PartieEnCours.White = LabelJoueurBlanc.Text = _nomMoteur;
             PartieEnCours.Black = LabelJoueurNoir.Text = _nomHumain;
-            PartieEnCours.WhiteElo = _moteurElo;
+            PartieEnCours.WhiteElo = EloBlanc.Text = _moteurElo;
+            PartieEnCours.BlackElo = EloNoir.Text = _joueurElo;
             OrdinateurJoueBlanc = true;
-            _humain = OrdinateurJoueBlanc = _analyseEnCours = _partieTerminee = AnalysePosition.Enabled = groupParcoursPartie.Enabled = false;
+            _humain = OrdinateurJoueNoir = _analyseEnCours = _partieTerminee = AnalysePosition.Enabled = groupParcoursPartie.Enabled = false;
+            LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = _positionChargeeDepuisFen = false;
             // On demande confirmation car la partie est remise à zéro
-            string confirmation = "Vous aurez les Noirs contre " + _moteurChoisi + ". " + "\nToute position précédente sera effacée,\n confirmez avec Oui, sinon Annuler";
+            string confirmation = "Vous aurez les Noirs contre " + _nomMoteur + ". " + "\nToute position précédente sera effacée,\n confirmez avec Oui, sinon Annuler";
             DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Le joueur a les Noirs, l'ordinateur les Blancs ", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
             if (Resultat == DialogResult.OK)
             {
@@ -810,9 +905,10 @@ namespace BrunoGUI_GenII
             }
         }
         private void HumainContreHumain_Click(object sender, EventArgs e)
-        {
+        {   // 2 joueurs humains s'affrontent, pas de moteur UCI
             PartieEnCours.White = LabelJoueurBlanc.Text = _nomHumain;
             PartieEnCours.Black = "Adversaire";
+            LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = _positionChargeeDepuisFen = false;
             // On demande confirmation car la partie est remise à zéro
             string confirmation = "Vous jouez contre votre ami/partenaire,\n" + "ou vous saisissez une partie ...\n" +
                 "Toute position précédente sera effacée,\n confirmez avec Oui, sinon Annuler";
@@ -852,7 +948,7 @@ namespace BrunoGUI_GenII
         private void RodentIV_Click(object sender, EventArgs e)
         {   //  https://echecs-et-informatique.franceserv.com/rodent-iv.html
             _moteurChoisi = "Rodent IV ";
-            EloNoir.Text = "+- 3000";
+            EloNoir.Text = _moteurElo = "+- 3000";
             Directory.SetCurrentDirectory(Chemins.MoteursUCI + @"\Rodent_IV");
             _cheminMoteur = Path.Combine(Chemins.MoteursUCI + @"\Rodent_IV", "rodent-iv-x64.exe");
             Debug.WriteLine("Chemin Rodent IV = " + _cheminMoteur);
@@ -861,7 +957,7 @@ namespace BrunoGUI_GenII
         private void Sargon1_1978_Click(object sender, EventArgs e)
         {   // https://echecs-et-informatique.franceserv.com/sargon-1978.html
             _moteurChoisi = "Sargon I 1978";
-            EloNoir.Text = "1678";
+            EloNoir.Text = _moteurElo = "1678";
             Directory.SetCurrentDirectory(Chemins.MoteursUCI + @"\sargon1978");
             _cheminMoteur = Path.Combine(Chemins.MoteursUCI + @"\sargon1978", "sargon1978_1_01b.exe");
             Debug.WriteLine("Chemin sargon I 1978 = " + _cheminMoteur);
@@ -870,18 +966,16 @@ namespace BrunoGUI_GenII
         }
         public void DémarreStockfish()
         {   //  https://stockfishchess.org/
-            _moteurChoisi = "Stockfish 17 ";
-            // EloNoir.Text = "+- 3000";
+            // _moteurChoisi = "Stockfish 17 ";
+            EloNoir.Text = _moteurElo = "+- 3000";
             Directory.SetCurrentDirectory(Application.StartupPath);
-            _cheminMoteur = Path.Combine(_dossierRacine, "stockfish", "stockfish17-windows-x86-64-avx2.exe");
+            _cheminMoteur = Path.Combine(_dossierRacine, "stockfish", "stockfish.exe");
             Debug.WriteLine("Chemin Stockfish = " + _cheminMoteur);
             DémarrageMoteur();
         }
         private void DémarrageMoteur()
-        {
-            StopMoteur_Click(null, EventArgs.Empty);    // On arrête le précédent moteur
+        {   // Arrête le moteur UCI s'il est déjà en cours d'exécution, pour éviter les conflits
             MoteurUci.Quitte();
-            Debug.WriteLine("Chemin DémarrageMoteur = " + _cheminMoteur);
             MoteurUci.Start(_cheminMoteur); // on démarre le nouveau moteur Uci
             _moteurChoisi = Path.GetFileNameWithoutExtension(_cheminMoteur);
             Debug.WriteLine("Moteur = " + _moteurChoisi);
@@ -891,11 +985,11 @@ namespace BrunoGUI_GenII
                 LabelJoueurNoir.Text = _moteurChoisi;
         }
         private void ParametresDeBase_Click(object sender, EventArgs e)
-        {
+        {   // Affiche les paramètres de base du moteur UCI
             mesparametresDeBase.Show();
         }
         private void ParametresAvances_Click(object sender, EventArgs e)
-        {
+        {   // Affiche les paramètres avancés du moteur UCI
             mesParametresUciStockfish.Show();
         }
         private void StopMoteur_Click(object sender, EventArgs e)
@@ -906,10 +1000,10 @@ namespace BrunoGUI_GenII
         }
 
         private void CaseSombre_Click(object sender, EventArgs e)
-        {
+        {   // Permet de choisir la couleur des cases sombres de l'échiquier
             if (CouleurDialogue.ShowDialog() == DialogResult.OK)
-            {
-                _couleurCaseSombre = CouleurDialogue.Color;          // On récupère la couleur choisie par l'utilisateur
+            {   // On récupère la couleur choisie par l'utilisateur
+                _couleurCaseSombre = CouleurDialogue.Color;
                 Color Couleur;
                 int index = 0;
                 CouleurCaseOrigines.Clear();                        // On nettoie la liste des couleurs d'origine
@@ -928,10 +1022,10 @@ namespace BrunoGUI_GenII
             }
         }
         private void CaseClaire_Click(object sender, EventArgs e)
-        {
+        {   // Permet à l'utilisateur de choisir la couleur des cases claires de l'échiquier
             if (CouleurDialogue.ShowDialog() == DialogResult.OK)
-            {
-                _couleurCaseClaire = CouleurDialogue.Color;          // On récupère la couleur choisie par l'utilisateur
+            {   // On récupère la couleur choisie par l'utilisateur
+                _couleurCaseClaire = CouleurDialogue.Color;
                 Color Couleur;
                 int index = 0;
                 CouleurCaseOrigines.Clear();                        // On nettoie la liste des couleurs d'origine
@@ -954,30 +1048,41 @@ namespace BrunoGUI_GenII
         // Gestion des boutons
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void SaisiePartieBouton_Click(object sender, EventArgs e)
-        {
+        {   // Permet de saisir une partie en cours, ou terminée, pour l'analyser ou la faire rejouer
             HumainContreHumain_Click(sender, e);
         }
         private void AnalysePosition_Click(object sender, EventArgs e)
-        {
+        {   // Permet d'analyser la position courante, même si la partie n'est pas terminée
             InformationPourJoueur.Text = StatusProgramme.Text = "Analyse de la position ...";
             _analyseEnCours = true;
-            if (NumeroDemiCoup <= LogiqueMouvements.ListeCoupsFen.Count - 1)            // on empêche d'analyser sur une case au-delà de la partie ...
-            {
+            if (NumeroDemiCoup <= LogiqueMouvements.ListeCoupsFen.Count - 1)    // on empêche d'analyser au-delà de la partie ...
+            {   // Si la partie se termine par MAT ou PAT, inutile de lancer l'analyse sur le dernier coup
+                bool dernierCoup = NumeroDemiCoup == LogiqueMouvements.ListeCoupsFen.Count - 1;
+                if (dernierCoup && (LogiqueMouvements.PartieEnCoursMat || LogiqueMouvements.PartieEnCoursPat))
+                {
+                    MiseaZeroVariantes();
+                    InformationPourJoueur.Text = "Analyse inutile ...";
+                    InformationsPartie.Text = "La partie est déjà terminée ...";
+                    if (LogiqueMouvements.PartieEnCoursMat)
+                        KryptonMessageBox.Show("La partie est terminée par un mat.", "Analyse inutile");
+                    else
+                        KryptonMessageBox.Show("La partie est terminée par un pat.", "Analyse inutile");
+                    return;
+                }
                 string Fenaenvoyer = LogiqueMouvements.ListeCoupsFen[NumeroDemiCoup];   // Récupère le FEN (position)
                 RetourArriere.Enabled = AnalysePosition.Enabled = ListeCoupsBouton.Enabled = false; // Il faut empêcher le retour si le moteur réfléchit
                 BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = groupParcoursPartie.Enabled = false;
                 LancerReflexion();  // Décompte le temps de réflexion
                 MoteurUci.JeuMoteurUci(Fenaenvoyer, _dureeReflexionMilliSeconde);     // On fait jouer le moteur, avec le temps de réflexion choisi
-                Debug.WriteLine($"Durée Réflexion (analyse postion) =  {_dureeReflexionMilliSeconde}");
             }
         }
         private void InverseEchiquier_Click(object sender, EventArgs e)
-        {
+        {   // Permet d'inverser la vue de l'échiquier (côté Blanc ou côté Noir)
             PlateauEnable(true);
             TourneEchiquier();
         }
         private void OrdinateurJoue_Click(object sender, EventArgs e)
-        {
+        {   // Permet de faire jouer l'ordinateur UCI, sans que ce soit son tour (pour tester une position par exemple)
             if (QuiJoue == ColorPiece.Blanc)
             {
                 _couleurHumain = "Noirs";
@@ -997,13 +1102,12 @@ namespace BrunoGUI_GenII
                 NumeroDemiCoup = 0;
                 Fenaenvoyer = FenDepart; // position initiale
             }
-            Debug.WriteLine($"Dernier coup PGN : {(ListeCoupsPgnIntl.Count > 0 ? ListeCoupsPgnIntl[^1] : "aucun")}, Demi coup : {NumeroDemiCoup}");
             JeuMoteurAvecBibliothèque(Fenaenvoyer);
             PlateauEnable(true);
             _clickCaseSource = _visuSymbole = true;    // L'ordinateur ayant joué, c'est indispensable !
         }
         private void RetourArriere_Click(object sender, EventArgs e)
-        {
+        {   // Permet de revenir en arrière d'un demi-coup (coup des blancs ou des noirs)
             EffaceDernierCoup();
             if (LogiqueMouvements.ListeCoupsFen.Count == 0)
                 _ = KryptonMessageBox.Show("Pas assez de coups joués \nPas de retour arrière possible", "Retour impossible", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -1061,14 +1165,14 @@ namespace BrunoGUI_GenII
                 InformationsPartie.Text = OrdinateurJoueBlanc ? "L'ordinateur joue les Blancs" :
                           OrdinateurJoueNoir ? "L'ordinateur joue les Noirs" :
                           "L'ordinateur ne joue pas cette partie";
-                OrdinateurJoue.Enabled = true;
+                OrdinateurJoue.Enabled = AnalysePosition.Enabled = true;
             }
         }
         private void ListeCoupsBouton_Click(object sender, EventArgs e)
-        {
+        {   // Affiche la liste des coups joués dans une fenêtre dédiée
             string numeroCoup = "";
             string blancs = "";
-            string noirs = "";
+            string noirs;
             PlateauEnable(false);   // Blocage du plateau car je ne veux pas autoriser de jouer pendant le parcours de la partie ....
             RetourArriere.Enabled = groupParcoursPartie.Enabled = false;
             // Si la fenêtre n'existe pas ou est déjà fermée, la créer
@@ -1132,7 +1236,6 @@ namespace BrunoGUI_GenII
                     mafenetrePartie.FeuillePartie.Focus(); // Met le focus sur la DataGridView
                 }
             }
-            Debug.WriteLine($"Nombre coups de la liste Pgn : {nombreCoups}, Coup valide : {CoupValide}");                           // 01/02  DEBUG
         }
         public void MontrePartiesPGN_Click(object sender, EventArgs e)
         {   // Affiche ou masque la liste des parties
@@ -1170,39 +1273,69 @@ namespace BrunoGUI_GenII
             EloNoir.Text = PartieEnCours.BlackElo;
         }
         private void MontreVariantesUci_Click(object sender, EventArgs e)
-        {
-            _montre3VariantesUci = !_montre3VariantesUci;       // Affiche ou masque les 3 variantes UCI à chaque clic
+        {   // Affiche ou masque les 3 variantes UCI (info multiPV) à chaque clic
+            _montre3VariantesUci = !_montre3VariantesUci;
             MontreVariantesUci.Text = _montre3VariantesUci ? "Affiche variantes UCI" : "Masque variantes UCI";
             VarianteMoteurUci1.Visible = VarianteMoteurUci2.Visible = VarianteMoteurUci3.Visible = !_montre3VariantesUci;
         }
         private void MontreDonneesUci_Click(object sender, EventArgs e)
-        {
-            _montreDonneesBrutesUci = !_montreDonneesBrutesUci;       // Affiche ou masque les données UCI à chaque clic
+        {   // Affiche ou masque les données brutes UCI (info, bestmove, etc.) à chaque clic
+            _montreDonneesBrutesUci = !_montreDonneesBrutesUci;
             MontreDonneesUci.Text = _montreDonneesBrutesUci ? "Masque protocole UCI" : "Affiche protocole UCI";
-            if (_montreDonneesBrutesUci) donneesBrutesUci.Show();    // On affiche les données brutes UCI
-            else donneesBrutesUci.Hide();                       // On masque les données brutes UCI
+            if (_montreDonneesBrutesUci) donneesBrutesUci.Show();   // On affiche les données brutes UCI
+            else donneesBrutesUci.Hide();                           // On masque les données brutes UCI
             donneesBrutesUci.DonneesBrutesVue.ScrollToCaret();      // Pour garder l'affichage dans toute la fenêtre
         }
         private void AideDocumentation_Click(object sender, EventArgs e)
-        {
+        {   // Ouvre la fenêtre d'aide et documentation
             var fenetreAide = new FenetreAide();
             fenetreAide.ShowDialog();
         }
         private void Apropos_Click(object sender, EventArgs e)
         {   // Option de menu "A propos"
-            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 0.76\n--  Bruno COURTOIS  -- \n Copyright © 2025", "A propos de",
+            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.00\n--  Bruno COURTOIS  -- " +
+                                                                    "\n Copyright © 2026", "A propos de",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         private void KryptonApropos_Click(object sender, EventArgs e)
         {   // Bouton "A propos"
             Apropos_Click(sender, e);
         }
+        public async Task LancerMiseAJourAsync()
+        {   // Appelle la classe de mise à jour de Stockfish, qui vérifie la version actuelle
+            // et télécharge la nouvelle version si besoin
+            MiseAJourStockfish maj = new(_moteurChoisi);
+            await maj.ExecuterMiseAJour();
+            Debug.WriteLine("Moteur mis à jour = " + _nomMoteur);
+        }
+        private async void BtnMiseAJour_Click(object sender, EventArgs e)
+        {   // 1. On prépare l'UI
+            BtnMiseAJour.Enabled = false;
+            Cursor = Cursors.WaitCursor;
+            VarianteMoteurUci2.Text = "Vérification de la version courante de Stockfish...";
+            try
+            {   // 2. On appelle la méthode de mise à jour
+                await LancerMiseAJourAsync();
+                VarianteMoteurUci2.Text = "Stockfish est à jour !";
+                KryptonMessageBox.Show("Mise à jour réussie.", "Stockfish", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {   // On gère les messages (ex: "Déjà à jour" ou "Pas de connexion")
+                VarianteMoteurUci2.Text = "Prêt";
+                KryptonMessageBox.Show(ex.Message, "Mise à jour", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            finally
+            {
+                BtnMiseAJour.Enabled = true;
+                Cursor = Cursors.Default;
+            }
+        }
 
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         //  Fermeture Programme
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void EchiquierPrincipal_FormClosing(object sender, FormClosingEventArgs e)
-        {
+        {   // Demande de confirmation avant de quitter l'application
             if (KryptonMessageBox.Show("Quitter l'application ?", "Confirmer",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
             {
@@ -1221,38 +1354,60 @@ namespace BrunoGUI_GenII
         // Gestion des boutons et flèches pour parcours de partie
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void BoutonPrecedent_Click(object sender, EventArgs e)
-        {
+        {   // On recule d'un demi-coup (si possible), en affichant le FEN correspondant
             if (ListeCoupsFen == null || ListeCoupsFen.Count == 0)
             {
-                MessageBox.Show("Aucun coup à afficher.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                KryptonMessageBox.Show("Aucun coup à afficher.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             if (_indexFenCoupActuel > 0)
             {   // On recule seulement si on n'est pas déjà au tout début
                 NumeroDemiCoup--;
-                _indexFenCoupActuel--;
+                _indexFenCoupActuel--;  // On recule les index
                 string fen = ListeCoupsFen[_indexFenCoupActuel];
                 LogiqueMouvements.MiseenplaceFen(fen);
                 _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(fen));
                 if (_indexFenCoupActuel > 0)
-                {
-                    string couleurQuiJoue = fen.Split(' ')[1];
-                    string texteCouleur = couleurQuiJoue == "w" ? "Coup noir" : "Coup blanc";
-                    VarianteMoteurUci1.Text = ($"   [ {texteCouleur} : {LogiqueMouvements.ListeCoupsNal[_indexFenCoupActuel]} ]");
+                {   // 1. Analyse du FEN
+                    string[] partiesFen = fen.Split(' ');
+                    string couleurQuiJoue = partiesFen[1];
+                    string numCoupFen = partiesFen[5];
+                    // 2. Nettoyage du coup (pour enlever le "x." si présent)
+                    string coupBrut = LogiqueMouvements.ListeCoupsNal[_indexFenCoupActuel];
+                    string coupNettoye = coupBrut.Contains('.')
+                                         ? coupBrut.Split('.').Last().Trim()
+                                         : coupBrut;
+                    // 3. Formatage selon le trait
+                    string texteAffiche;
+                    if (couleurQuiJoue == "w")
+                    {   // Au tour des blancs, donc on affiche le dernier coup NOIR
+                        texteAffiche = $"Coup noir : {numCoupFen}... {coupNettoye}";
+                        InformationPourJoueur.Text = "Trait aux Blancs";
+                    }
+                    else
+                    {   // Au tour des noirs, donc on affiche le dernier coup BLANC
+                        texteAffiche = $"Coup blanc : {numCoupFen}. {coupNettoye}";
+                        InformationPourJoueur.Text = "Trait aux Noirs";
+                    }
+                    VarianteMoteurUci1.Text = $"   [ {texteAffiche} ]";
                 }
                 else
-                    VarianteMoteurUci1.Text = "Position initiale";
+                {
+                    VarianteMoteurUci1.Text = "   [ Position initiale ]";
+                }
+                MiseaZeroParcours();
             }
             else
             {
                 KryptonMessageBox.Show("Vous êtes au début de la partie.", "Début de partie", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
+            AnalysePosition.Enabled = true;    // On réactive le bouton d'analyse de la position    
         }
         private void BoutonSuivant_Click(object sender, EventArgs e)
-        {
+        {   // On avance d'un coup dans la partie
             if (ListeCoupsFen == null || ListeCoupsFen.Count == 0)
             {
-                MessageBox.Show("Aucun coup à afficher.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                KryptonMessageBox.Show("Aucun coup à afficher.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             if (_indexFenCoupActuel < ListeCoupsFen.Count - 1)
@@ -1261,34 +1416,53 @@ namespace BrunoGUI_GenII
                 _indexFenCoupActuel++;
                 string fen = ListeCoupsFen[_indexFenCoupActuel];
                 LogiqueMouvements.MiseenplaceFen(fen);
-                _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(fen));
-                string couleurQuiJoue = fen.Split(' ')[1];
-                string texteCouleur = couleurQuiJoue == "w" ? "Coup noir" : "Coup blanc";
-                VarianteMoteurUci1.Text = ($"   [ {texteCouleur} : {LogiqueMouvements.ListeCoupsNal[_indexFenCoupActuel]} ]");
+                string[] partiesFen = fen.Split(' ');
+                string couleurQuiJoue = partiesFen[1];
+                string numCoupFen = partiesFen[5];
+                // --- NETTOYAGE DU COUP ---
+                // On récupère "x. Bc1xf4"
+                string coupBrut = LogiqueMouvements.ListeCoupsNal[_indexFenCoupActuel];
+                // On ne garde que ce qui est APRÈS le point. Si pas de point, on garde tout.
+                string coupNettoye = coupBrut.Contains('.')
+                                     ? coupBrut.Split('.').Last().Trim()
+                                     : coupBrut;
+                string texteFinal;
+                if (couleurQuiJoue == "w")
+                {   // On vient de jouer NOIR -> format "1... e5"
+                    texteFinal = $"Coup noir : {numCoupFen}... {coupNettoye}";
+                    InformationPourJoueur.Text = "Trait aux Blancs";
+                }
+                else
+                {   // On vient de jouer BLANC -> format "1. e4"
+                    texteFinal = $"Coup blanc : {numCoupFen}. {coupNettoye}";
+                    InformationPourJoueur.Text = "Trait aux Noirs";
+                }
+                VarianteMoteurUci1.Text = $"   [ {texteFinal} ]";
+                MiseaZeroParcours();
             }
             else
             {
                 if (LogiqueMouvements.EchecetMat)
                 {
-                    KryptonMessageBox.Show("Il y a échec et mat.", "Terminé : échec et mat",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    KryptonMessageBox.Show("Il y a échec et mat.", "Terminé : échec et mat", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
                     KryptonMessageBox.Show("Vous êtes à la fin de la partie.", "Fin de partie", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
         private void BoutonDebut_Click(object sender, EventArgs e)
-        {
+        {   // On va au premier coup joué (premier FEN de la liste)
             if (ListeCoupsFen == null || ListeCoupsFen.Count == 0)
                 return;
-            LogiqueMouvements.MiseenplaceFen(FenDepart);
+            LogiqueMouvements.MiseenplaceFen(LogiqueMouvements.ListeCoupsFen[0]);
             _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(FenDepart));
             NumeroDemiCoup = 0;
             _indexFenCoupActuel = 0;
             VarianteMoteurUci1.Text = "Début de partie";
+            MiseaZeroParcours();
         }
         private void BoutonFin_Click(object sender, EventArgs e)
-        {
+        {   // On va au dernier coup joué (dernier FEN de la liste)
             if (ListeCoupsFen == null || ListeCoupsFen.Count == 0)
                 return;
             NumeroDemiCoup = ListeCoupsFen.Count - 1;
@@ -1298,7 +1472,9 @@ namespace BrunoGUI_GenII
             _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(fen));
             string couleurQuiJoue = fen.Split(' ')[1];
             string texteCouleur = couleurQuiJoue == "w" ? "Coup noir" : "Coup blanc";
+            InformationPourJoueur.Text = couleurQuiJoue == "w" ? "Trait aux Blancs" : "Trait aux Noirs";
             VarianteMoteurUci1.Text = ($"   [ {texteCouleur} : {LogiqueMouvements.ListeCoupsNal[_indexFenCoupActuel]} ]");
+            MiseaZeroParcours();
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -1338,6 +1514,7 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         // Gestion de fichiers (ouverture/sauvegarde)
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+
         /* Séquence : L'utilisateur clique sur 
         "mainform.ChargePartiesPgn_Click"
                 ├─ On décode le fichier choisi "ListeParties = fichierPartiePgn.DecodeFichierPGN"
@@ -1350,6 +1527,7 @@ namespace BrunoGUI_GenII
         */
         private void ChargePartiesPgn_Click(object sender, EventArgs e)
         {   // --- Affiche la boîte de dialogue et traite le fichier PGN sélectionné  ---
+            _positionChargeeDepuisFen = false;
             EffaceDernierCoup();
             ListeParties.Clear();    // On vide la liste des parties 
             ListePartiesPGN.Clear(); // On vide la liste des parties PGN
@@ -1372,13 +1550,13 @@ namespace BrunoGUI_GenII
                             fichierPartiePgn = null;
                         };
                     }
-                    ListeParties = fichierPartiePgn.DecodeFichierPGN(fullPath); // Récupère les parties PGN
+                    ListeParties = FichierPartiePgn.DecodeFichierPGN(fullPath); // Récupère les parties PGN
                     foreach (string partie in ListeParties)                     // On parcourt la liste de parties, et
                     {                                                           // On met chaque partie au format PartieEchecsPGN dans ListePartiePGN
-                        ListePartiesPGN.Add(fichierPartiePgn.DecodePartiePGN(partie));
+                        ListePartiesPGN.Add(FichierPartiePgn.DecodePartiePGN(partie));
                     }
                     fichierPartiePgn.NombrePartiesFichier.Text = ListePartiesPGN.Count.ToString()
-                        + " partie(s) dans le fichier  " + cheminFichier.Substring(cheminFichier.LastIndexOf('\\') + 1); ;
+                        + " partie(s) dans le fichier  " + cheminFichier[(cheminFichier.LastIndexOf('\\') + 1)..];
                     fichierPartiePgn.AfficherListeParties(ListePartiesPGN);
                     fichierPartiePgn.Show();
                     MontrePartiesPGN.Enabled = true; // Active le bouton pour masquer/afficher la liste
@@ -1389,94 +1567,118 @@ namespace BrunoGUI_GenII
                     Debug.WriteLine("Chargement Pgn : Erreur lors de la lecture du fichier : " + ex.Message);
                 }
             }
+            VarianteMoteurUci1.Text = VarianteMoteurUci2.Text = VarianteMoteurUci3.Text = InformationPourJoueur.Text = "...";
+            VarianteMoteurCourante.Text = ScoreMoteur.Text = EvaluationUci.Text = "...";
         }
-        // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-        // Gestion des parties PGN (sélection/lecture)
-        // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-        public void ChargerPartieDepuisPgn(PartieEchecsPGN partie)
-        {   // --- Charge UNE partie depuis un fichier PGN lorsque'on double-clique ---
-            // Note: Méli-mélo entre "PartieCourante" et "PartieEnCours"  !!  A clarifier / résoudre ?!
-            PartieCourante.CoupsPartiePGN = "";
-            Outils.MiseaZeroListes();
-            Debug.WriteLine("ChargerPartieDepuisPgn / :  " + partie.White + " vs " + partie.Black + "   Résultat : " + partie.Result);
-            PartieEnCours.Tournoi = partie.Tournoi;
-            PartieEnCours.Lieu = partie.Lieu;
-            PartieEnCours.Date = partie.Date;
-            PartieEnCours.Ronde = partie.Ronde;
-            PartieEnCours.White = LabelJoueurBlanc.Text = _joueurBlanc = partie.White;
-            PartieEnCours.WhiteElo = EloBlanc.Text = partie.WhiteElo;
-            PartieEnCours.Black = LabelJoueurNoir.Text = _joueurNoir = partie.Black;
-            PartieEnCours.BlackElo = EloNoir.Text = partie.BlackElo;
-            PartieEnCours.Result = InformationsPartie.Text = partie.Result;
-            PartieEnCours.ECO = partie.ECO;
-            PartieEnCours.CompteDePLy = partie.CompteDePLy;
-            PartieCourante.CoupsPartiePGN = partie.CoupsPartiePGN;
-            InformationPourJoueur.Text = partie.Tournoi + " / ronde " + partie.Ronde;
-            StatusProgramme.Text = $"{partie.White} vs {partie.Black}";
-            ScoreMoteur.Text = InformationsPartie.Text = "Résultat : " + partie.Result;
-            Debug.WriteLine($"Résultat : {partie.Result}");
-            PartieCourante.CoupsPartiePGN = PartieCourante.CoupsPartiePGN.Replace(".", ". "); // Certains fichiers PGN n'ont pas d'espace entre le numéro et le coup, il faut l'ajouter
-            string[] coupsPartie = PartieCourante.CoupsPartiePGN.Split([' ', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries);  // On decoupe la liste de coups recue
-
-            if (coupsPartie[0] != "1.")     // Tester si CoupsPartie[0] = "1." pour vérifier que c'est bien le début d'une partie ?
-                _ = KryptonMessageBox.Show("Problème avec la partie \n Elle ne débute pas avec 1. ", "Problème de partie", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            ParcoursPartie(coupsPartie);
-        }
-        private void ParcoursPartie(string[] suiteCoups)
+        private void ChargePositionFen_Click(object sender, EventArgs e)
         {
-            bool _couleurTraitBlanc = true;        // Pour commencer avec les Blancs
-            groupParcoursPartie.Enabled = _clavierActif = true;
-            RetourArriere.Enabled = OrdinateurJoue.Enabled = BoutonBalises.Enabled = SaisiePartieBouton.Enabled = RetourArriere.Enabled = false;
-            VarianteMoteurCourante.Text = "";
-
-            for (int indicecoup = 0; indicecoup < suiteCoups.Length - 1; indicecoup++)         // Parcourir tous les coups de la partie
+            string contenuFen = "";
+            _positionChargeeDepuisFen = true;
+            ListeParties.Clear();    // On vide la liste des parties 
+            ListePartiesPGN.Clear(); // On vide la liste des parties PGN
+            ListeCoupsFen.Clear();     // On vide la liste des coups FEN
+            ListeCoupsNal.Clear();     // On vide la liste des coups NAL
+            ListeCoupsPgnFr.Clear();   // On vide la liste des coups PGN français
+            ListeCoupsPgnIntl.Clear();  // On vide la liste des coups PGN international
+            ListeCoupsUci.Clear();     // On vide la liste des coups UCI
+            InitialisationEchiquier();    // On réinitialise l'échiquier
+            AnalysePosition.Enabled = true;    // On veut anlyser la position chargée ...
+            if (ChargerPositionFen.ShowDialog() == DialogResult.OK)
             {
-                GestionPartiePgn.DecodeCoupPartie(suiteCoups[indicecoup], _couleurTraitBlanc);
-                if (!suiteCoups[indicecoup].Contains('.'))
+                string cheminFichier = ChargerPositionFen.FileName;
+                try
+                {   // Vérifie et obtient le chemin complet
+                    string fullPath = Path.GetFullPath(cheminFichier);
+                    Debug.WriteLine("Chemin complet du fichier FEN : " + fullPath);
+
+                    // Lire le contenu du fichier et l'afficher dans la console
+                    contenuFen = File.ReadAllText(fullPath);
+                    Debug.WriteLine("Contenu du fichier FEN : " + contenuFen);
+                    VarianteMoteurUci1.Text = "Fen chargé : " + contenuFen;
+                    LogiqueMouvements.MiseenplaceFen(contenuFen);  // Affiche la position FEN sur l'échiquier
+                    ListeCoupsFen.Add(contenuFen);  // On ajoute le FEN à la liste des coups FEN 
+                    RetourArriere.Enabled = false;    // On ne peut PAS faire un retour arrière sur la position chargée
+                }
+                catch (Exception ex)
                 {
-                    _couleurTraitBlanc = !_couleurTraitBlanc;
+                    Debug.WriteLine("Chargement FEN : Erreur lors de la lecture du fichier : " + ex.Message);
                 }
             }
-            switch (PartieEnCours.Result)       // Et on ajoute le résultat
-            {
-                case "1-0":
-                    InformationsPartie.Text = "Résultat : 1-0 Gain Blanc";
-                    break;
-                case "0-1":
-                    InformationsPartie.Text = "Résultat : 0-1 Gain Noir";
-                    break;
-                case "1/2-1/2":
-                    InformationsPartie.Text = "Résultat : 1/2-1/2 Nulle";
-                    break;
-                case "*":
-                    InformationsPartie.Text = "Résultat : * Indéterminé";
-                    break;
-                default:
-                    Console.WriteLine($"Pas de résultat défini : {PartieEnCours.Result}");
-                    break;
+            string[] ChampsFen = contenuFen.Split(' ');           // On récupère les 6 champs du FEN dans un tableau
+                                                                  // Sécurité
+            if (ChampsFen.Length >= 6)
+            {   // Couleur au trait
+                QuiJoue = (ChampsFen[1] == "w") ? ColorPiece.Blanc : ColorPiece.Noir;
+                _couleurHumain = QuiJoue.ToString();    // Par défaut : c'est l'humain qui joue
+
+                _dernierCoupMoteurUci = -1;
+                _clickCaseSource = _visuSymbole = true;
+                PartieEnCours.CoupsPartiePGN = PartieEnCours.Result = PartieEnCours.CompteDePLy = PartieEnCours.Ronde = "";
+                PartieEnCours.Tournoi = "Entrainement";
+                PartieEnCours.Lieu = "Maison";
+                // NumeroDemiCoup = 0;
+                // MiseaZeroAffichages();
+                _couleurHumain = "Blancs";      // Douteux, car on ne sait pas encore qui est humain ou ordinateur,
+                                                // mais on met une valeur par défaut pour éviter les bugs d'affichage (ex: "Trait aux Blancs" au lieu de "Trait aux ...")
+                // QuiJoue = ColorPiece.Blanc;     // Douteux, caar défini plus haut à partir du FEN, donc potentiellemnt incorrect ici !
+                PartieEnCours.White = LabelJoueurBlanc.Text = "";
+                PartieEnCours.Black = LabelJoueurNoir.Text = "";
+                PartieEnCours.WhiteElo = EloBlanc.Text = "";
+                PartieEnCours.BlackElo = EloNoir.Text = "";
+                OrdinateurJoueNoir = true;
+                _humain = OrdinateurJoueBlanc = _analyseEnCours = _partieTerminee = AnalysePosition.Enabled = groupParcoursPartie.Enabled = false;
+
+                LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = false;
+                InformationPourJoueur.Text = "Trait aux " + (QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
+                // Droits de roque
+                PetitRoqueBlancPossible = ChampsFen[2].Contains('K');
+                GrandRoqueBlancPossible = ChampsFen[2].Contains('Q');
+                PetitRoqueNoirPossible = ChampsFen[2].Contains('k');
+                GrandRoqueNoirPossible = ChampsFen[2].Contains('q');
+                // Mise à jour de StatutRoque (conserve ton enum existant)
+                if (PetitRoqueBlancPossible || GrandRoqueBlancPossible)
+                    StatutRoque = FlagEnableRoque.RoqueBlanc;
+                else if (PetitRoqueNoirPossible || GrandRoqueNoirPossible)
+                    StatutRoque = FlagEnableRoque.RoqueNoir;
+                else
+                    StatutRoque = FlagEnableRoque.AucunRoque;
+                // Case en passant
+                if (ChampsFen[3] == "-")
+                    IndexCaseEnPassant = 0;      // ou -1 selon ta convention
+                else
+                    IndexCaseEnPassant = RenvoieCaseIndex120(ChampsFen[3]);
+                // Compteur des demi-coups (règle des 50 coups)
+                SansPrise = int.Parse(ChampsFen[4]);
+                // Numéro du coup complet                // Exemple : "1", "23", etc.
+                NombreCoupsJoues = float.Parse(ChampsFen[5], System.Globalization.CultureInfo.InvariantCulture);
+                // Calcul du numéro de demi-coup (index interne à partir de 0)
+                NumeroDemiCoup = ((int)NombreCoupsJoues - 1) * 2;
+                // Si ce sont les Noirs au trait, on ajoute 1 demi-coup
+                if (QuiJoue == ColorPiece.Noir)
+                    NumeroDemiCoup++;
+                
+                PromotionPiece = TypePiece.Vide;
+                PlateauEnable(true);   // On active le plateau pour pouvoir jouer à partir de la position chargée
             }
-            Thread.Sleep(500);  // pause 0,5 seconde
-            LogiqueMouvements.MiseenplaceFen(ListeCoupsFen[0]);
-            NumeroDemiCoup = _indexFenCoupActuel = 0;       // Remise à zéro des indices de parcours
-            BoutonBalises.Enabled = OrdinateurJoue.Enabled = false;
+            _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(contenuFen));
         }
         private void EnregistrerPgn_Click(object sender, EventArgs e)
-        {
+        {   // Enregistre la partie au format PGN
             try
             {
-                string contenuPgn = GestionPartiePgn.RetourneContenuPgn(PartieEnCours, "Intl");       // On récupère la partie au format PGN
+                string contenuPgn = GestionPartiePgn.RetourneContenuPgn(PartieEnCours, "Intl"); // On récupère la partie au format PGN
                 // Ecriture du fichier PGN (Partie complète + en-tête)
                 {
                     SauvegardeFichier.OverwritePrompt = false;      // Permet d'éviter l'affichage de 2 boites de dialogue si le fichier choisi existe...
-                    DialogResult Reponse = SauvegardeFichier.ShowDialog();      // l'utilisateur doit rentrer le nom du fichier PGN
-                    if (Reponse == DialogResult.OK)                             // On ne sauvegarde que si l'utilisateur est d'accord
+                    DialogResult Reponse = SauvegardeFichier.ShowDialog();  // l'utilisateur doit rentrer le nom du fichier PGN
+                    if (Reponse == DialogResult.OK)                         // On ne sauvegarde que si l'utilisateur est d'accord
                     {
                         string cheminPgn = SauvegardeFichier.FileName;
                         if (File.Exists(cheminPgn))                         // Si le fichier existe déjà
                         {   // On demande à l'utilisateur s'il veut écraser le fichier ou ajouter la partie
                             DialogResult resultat = KryptonMessageBox.Show("ATTENTION, le fichier " + Path.GetFileName(cheminPgn) + " existe déjà. \nCliquer Oui pour ajouter la partie à la fin." +
-                               "\nCliquer Non pour écraser le fichier existant.\nCancel pour afficher le fichier PGN.", "Fichier existant", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
+                               "\nCliquer Non pour écraser le fichier existant.\nCancel pour afficher le fichier PGN.",
+                               "Fichier existant", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
                             if (resultat == DialogResult.No)
                             {   // Écrase le fichier existant avec la nouvelle partie
                                 File.WriteAllText(cheminPgn, contenuPgn);
@@ -1508,15 +1710,89 @@ namespace BrunoGUI_GenII
             }
         }
         private void EnregistrerFen_Click(object sender, EventArgs e)
-        {
-            {               // Ecriture du fichier FEN (position courante)
+        {   // Ecriture du fichier FEN (position courante)
+            {
                 DialogResult Reponse = SauvegardeFen.ShowDialog();      // l'utilisateur doit rentrer le nom du fichier FEN
                 if (Reponse == DialogResult.OK)                         // On ne sauvegarde que si l'utilisateur est d'accord
                 {
                     string CheminFen = SauvegardeFen.FileName;
-                    File.WriteAllText(CheminFen, LogiqueMouvements.RetourneChaineFenActuel());      // Ecriture du fichier au format FEN
+                    File.WriteAllText(CheminFen, LogiqueMouvements.RetourneChaineFenActuel());  // Ecriture du fichier au format FEN
                 }
             }
+        }
+
+        // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+        // Gestion des parties PGN (sélection/lecture)
+        // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+        public void ChargerPartieDepuisPgn(PartieEchecsPGN partie)
+        {   // --- Charge UNE partie depuis un fichier PGN lorsque'on double-clique ---
+            Outils.MiseaZeroListes();
+            Debug.WriteLine("ChargerPartieDepuisPgn / :  " + partie.White + " vs " + partie.Black + "   Résultat : " + partie.Result);
+            PartieEnCours.Tournoi = partie.Tournoi;
+            PartieEnCours.Lieu = partie.Lieu;
+            PartieEnCours.Date = partie.Date;
+            PartieEnCours.Ronde = partie.Ronde;
+            PartieEnCours.White = LabelJoueurBlanc.Text = _joueurBlanc = partie.White;
+            PartieEnCours.WhiteElo = EloBlanc.Text = partie.WhiteElo;
+            PartieEnCours.Black = LabelJoueurNoir.Text = _joueurNoir = partie.Black;
+            PartieEnCours.BlackElo = EloNoir.Text = partie.BlackElo;
+            PartieEnCours.Result = InformationsPartie.Text = partie.Result;
+            PartieEnCours.ECO = partie.ECO;
+            PartieEnCours.CompteDePLy = partie.CompteDePLy;
+            PartieEnCours.CoupsPartiePGN = partie.CoupsPartiePGN;
+            InformationPourJoueur.Text = partie.Tournoi + " / ronde " + partie.Ronde;
+            StatusProgramme.Text = $"{partie.White} vs {partie.Black}";
+            ScoreMoteur.Text = InformationsPartie.Text = "Résultat : " + partie.Result;
+            // Certains fichiers PGN n'ont pas d'espace entre le numéro et le coup, il faut l'ajouter :
+            PartieEnCours.CoupsPartiePGN = PartieEnCours.CoupsPartiePGN.Replace(".", ". ");
+            // On decoupe la liste de coups recue :
+            string[] coupsPartie = PartieEnCours.CoupsPartiePGN.Split([' ', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
+            Debug.WriteLine($"Partie en PGN : {PartieEnCours.CoupsPartiePGN}");
+            if (coupsPartie[0] != "1.")     // Tester si CoupsPartie[0] = "1." pour vérifier que c'est bien le début d'une partie ?
+                _ = KryptonMessageBox.Show("Problème avec la partie \n Elle ne débute pas avec 1. ", "Problème de partie",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            ParcoursPartie(coupsPartie);
+        }
+        private void ParcoursPartie(string[] suiteCoups)
+        {   // Parcourt la partie coup par coup pour l'afficher sur l'échiquier et afficher le résultat à la fin
+            bool _couleurTraitBlanc = true;        // Pour commencer avec les Blancs
+            groupParcoursPartie.Enabled = _clavierActif = true;
+            RetourArriere.Enabled = OrdinateurJoue.Enabled = BoutonBalises.Enabled = SaisiePartieBouton.Enabled = RetourArriere.Enabled = false;
+            VarianteMoteurCourante.Text = "";
+            PartieEnCoursMat = PartieEnCoursPat = false;     // On réinitialise les indicateurs de fin de partie
+            for (int indicecoup = 0; indicecoup < suiteCoups.Length - 1; indicecoup++)  // Parcourir tous les coups de la partie
+            {
+                GestionPartiePgn.DecodeCoupPartie(suiteCoups[indicecoup], _couleurTraitBlanc);
+                if (!suiteCoups[indicecoup].Contains('.'))
+                {
+                    _couleurTraitBlanc = !_couleurTraitBlanc;
+                }
+            }
+            switch (PartieEnCours.Result)       // Et on ajoute le résultat
+            {
+                case "1-0":
+                    InformationsPartie.Text = "Résultat : 1-0 Gain Blanc";
+                    break;
+                case "0-1":
+                    InformationsPartie.Text = "Résultat : 0-1 Gain Noir";
+                    break;
+                case "1/2-1/2":
+                    InformationsPartie.Text = "Résultat : 1/2-1/2 Nulle";
+                    break;
+                case "*":
+                    InformationsPartie.Text = "Résultat : * Indéterminé";
+                    break;
+                default:
+                    Console.WriteLine($"Pas de résultat défini : {PartieEnCours.Result}");
+                    break;
+            }
+            Thread.Sleep(200);  // pause 0,2 seconde
+            LogiqueMouvements.MiseenplaceFen(FenDepart);
+            NumeroDemiCoup = _indexFenCoupActuel = 0;       // Remise à zéro des indices de parcours
+            BoutonBalises.Enabled = OrdinateurJoue.Enabled = false;
+            AnalysePosition.Enabled = true;
+            InformationPourJoueur.Text = "Trait aux " + QuiJoue + "s";
+            MiseaZeroParcours();
         }
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         //  Bibliothèque d'ouvertures
@@ -1547,7 +1823,7 @@ namespace BrunoGUI_GenII
             MoteurUci.JeuMoteurUci(chaineFen, _dureeReflexionMilliSeconde);
             if (!LogiqueMouvements.EchecetMat)
             {
-                InformationPourJoueur.Text = StatusProgramme.Text = _moteurChoisi + " réfléchit ...";
+                InformationPourJoueur.Text = StatusProgramme.Text = _nomMoteur + " réfléchit ...";
                 AnalysePosition.Enabled = OrdinateurJoue.Enabled = RetourArriere.Enabled = false;
                 groupParcoursPartie.Enabled = TrackBarTempsReflexion.Enabled = false;
             }
@@ -1556,7 +1832,7 @@ namespace BrunoGUI_GenII
         }
 
         private string AfficherCoupsBibliotheque(ulong clePosition)
-        {
+        {   // Affiche les coups disponibles dans la bibliothèque pour une position donnée
             var entrees = PolyglotBibliothèque.TrouverLesEntrées(clePosition).ToList();
             CoupsBibliothèqueBox.Clear();
             // --- Titre ---
@@ -1604,7 +1880,7 @@ namespace BrunoGUI_GenII
         // Routines de Dessin
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void DessineEchiquier()
-        {
+        {   // Dessine les cases de l'échiquier (120 cases au total, mais seules 64 sont visibles)
             Color Couleur;
             int Index = 0;
             // les 120 cases du jeu (seules 64 cases sont visibles : voir la classe LogiqueMouvements pour les détails )
@@ -1673,7 +1949,7 @@ namespace BrunoGUI_GenII
         //  Diverses méthodes
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void TrackBarTempsReflexion_ValueChanged(object sender, EventArgs e)
-        {
+        {   // Méthode appelée lorsque la valeur du TrackBar de temps de réflexion change
             _dureeReflexionMilliSeconde = TrackBarTempsReflexion.Value * 1000;
             InformationsPartie.Text = "Temps de réflexion = " + (_dureeReflexionMilliSeconde / 1000).ToString() + " secondes";
             labelTempsReflexion.Text = "(" + TrackBarTempsReflexion.Value + ")";
@@ -1684,7 +1960,7 @@ namespace BrunoGUI_GenII
             _bibliothèqueActive = !_bibliothèqueActive;
         }
         private void ActiveAléatoire_CheckedChanged(object sender, EventArgs e)
-        {
+        {   // Choisir un coup aléatoire ou le meilleur coup dans la bibliothèque
             _bibliothèqueAléatoire = !_bibliothèqueAléatoire;
         }
         private void ActiveSon_CheckedChanged(object sender, EventArgs e)
@@ -1694,12 +1970,13 @@ namespace BrunoGUI_GenII
         private void Promo0_Click(object sender, EventArgs e)
         {   //  Gestion de la promotion de Pion
             PictureBox Promotion = (PictureBox)sender;
-            int indexSelect = Convert.ToInt32(Promotion.Name.Substring(5));
+            int indexSelect = Convert.ToInt32(Promotion.Name[5..]);
             _selectionPromotion = LogiqueMouvements.QuiJoue == LogiqueMouvements.ColorPiece.Blanc ? ListeBlanche[indexSelect] : ListeNoire[indexSelect];
             LogiqueMouvements.PromotionPiece = _selectionPromotion;
+            Debug.WriteLine($"[Promo0_Click] Promotion choisie : {_selectionPromotion} (PromotionPiece =  {LogiqueMouvements.PromotionPiece})");
         }
-        public void PlateauEnable(bool statut)                 // Active ou désactive les cases du plateau de jeu
-        {
+        public void PlateauEnable(bool statut)
+        {   // Active ou désactive les cases du plateau de jeu
             if (!(statut && _partieTerminee))
             {
                 for (int i = 0; i <= 119; i++)
@@ -1708,7 +1985,7 @@ namespace BrunoGUI_GenII
             }
         }
         private void TourneEchiquier()
-        {
+        {   // Tourne l'échiquier de 180° pour changer le côté de visualisation
             EffaceDernierCoup();
             PictJeux.Reverse();             // On inverse les liste des PictureBox ce qui revient à faire une rotation à 180°
             Plateau.Image.RotateFlip(RotateFlipType.Rotate180FlipNone);
@@ -1730,7 +2007,7 @@ namespace BrunoGUI_GenII
             InformationPourJoueur.Text = StatusProgramme.Text = Affichage;
         }
         private void RécupèreBibliothèque()
-        {
+        {   // Récupère les informations de la bibliothèque
             var polyglot = new PolyglotBibliothèque();
             polyglot.MessageLog += msg => CoupsBibliothèque.Text = msg;
             polyglot.PolyglotBibliothèqueLecture(_bibliotheque);
@@ -1742,27 +2019,36 @@ namespace BrunoGUI_GenII
             string coupChoisiTxt = AfficherCoupsBibliotheque(clePosition);
         }
         private void MiseaZeroAffichages()
-        {
+        {   // Réinitialise les affichages de la partie et du moteur
             Outils.MiseaZeroListes();
             _numeroLigne = 0;
             NumeroDemiCoup = 0;
-            VarianteMoteurUci1.Text = VarianteMoteurUci2.Text = VarianteMoteurUci3.Text = InformationPourJoueur.Text = "...";
-            VarianteMoteurCourante.Text = ScoreMoteur.Text = EvaluationUci.Text = "...";
             BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = true;
+            MiseaZeroVariantes();
+        }
+        private void MiseaZeroVariantes()
+        {   // Réinitialise les affichages de variantes et d'évaluation
+            VarianteMoteurUci1.Text = VarianteMoteurUci2.Text = VarianteMoteurUci3.Text = "...";
+            VarianteMoteurCourante.Text = ScoreMoteur.Text = EvaluationUci.Text = "...";
+        }
+        private void MiseaZeroParcours()
+        {
+            VarianteMoteurUci2.Text = VarianteMoteurUci3.Text = "...";
+            StatusProgramme.Text = InformationsPartie.Text = "Parcours partie";
         }
         private void NePasDérangerMoteur()
-        {
+        {   // Avant de lancer le moteur, on désactive les boutons pour éviter de perturber sa réflexion
             BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = false;
             SaisiePartieBouton.Enabled = AnalysePosition.Enabled = OrdinateurJoue.Enabled = RetourArriere.Enabled = ListeCoupsBouton.Enabled = false;
         }
         private void LeMoteurARépondu()
-        {
+        {   // Après que le moteur a répondu pour réactiver les boutons
             BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = true;
             AnalysePosition.Enabled = OrdinateurJoue.Enabled = RetourArriere.Enabled = ListeCoupsBouton.Enabled = true;
         }
 
         private void LancerReflexion()
-        {
+        {   // Lance le timer de réflexion et affiche le message de temps restant
             NePasDérangerMoteur();
             // Durée en secondes
             _tempsRestant = _dureeReflexionMilliSeconde / 1000;
@@ -1774,7 +2060,7 @@ namespace BrunoGUI_GenII
             timer.Start();
         }
         private void Timer_Tick(object sender, EventArgs e)
-        {
+        {   // Méthode appelée à chaque tick du timer (toutes les secondes)
             _tempsRestant--;
             labelTempsReflexion.Text = "[" + _tempsRestant.ToString() + "]";
             InformationsPartie.Text = "merci de patienter " + _tempsRestant.ToString() + " seconde(s)";
@@ -1791,11 +2077,13 @@ namespace BrunoGUI_GenII
             }
         }
         private void MiseaZéroTimer()
-        {
+        {   // Appelée après que le moteur a répondu pour remettre le timer à zéro
             timer.Stop(); // stoppe le timer
             _tempsRestant = _dureeReflexionMilliSeconde / 1000; // reset
             labelTempsReflexion.Text = "[" + _tempsRestant.ToString() + "]";
             InformationsPartie.Text = ""; // si tu veux nettoyer le message
         }
+
+
     }
 }

@@ -1,7 +1,9 @@
-﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_GenII est développé par Bruno COURTOIS.  Copyright © 2025 █
-// █ BrunoGUI_GenII est gratuit, sauf s'il est utilisé commercialement  █
-// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
+// █ Copyright (C) 2026 Bruno COURTOIS                                      █
+// █ SPDX-License-Identifier: GPL-3.0-or-later                              █
+// █ See the LICENSE file in the project root for full license information. █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 
 // Divers outils qui encombreraient les autres fichiers ...
 // ├─ Classe "PartieEchecsPGN" qui décrit les balises du format PGN
@@ -19,6 +21,7 @@
 using ComponentFactory.Krypton.Toolkit;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 using static BrunoGUI_GenII.LogiqueMouvements;
@@ -41,30 +44,31 @@ namespace BrunoGUI_GenII
         public string CoupsPartiePGN { get; set; }
     }
 
-    public class GestionPartiePgn       // Spécification détaillée du format PGN = https://fr.wikipedia.org/wiki/Portable_Game_Notation
-    {
+    public class GestionPartiePgn
+    {   // Spécification détaillée du format PGN = https://fr.wikipedia.org/wiki/Portable_Game_Notation
         public static string RetourneContenuPgn(PartieEchecsPGN partieEnCours, string localisation)
         {   // Met au format Pgn la partieEnCours pour visualisation et sauvegarde ... 
             int comptepartiel = 0;
             string contenuPgn = "";
-            for (int i = 0; i < ListeCoupsPgnIntl.Count; i++)     // Création du contenu du fichier en lignes de 80 caractères
-            {       // Il faut des lignes <= 80 caractères, mais n'aller à la ligne que si c'est un espace
-                comptepartiel = comptepartiel + ListeCoupsPgnIntl[i].Length;
+            for (int i = 0; i < ListeCoupsPgnIntl.Count; i++)   // Création du contenu du fichier en lignes de 80 caractères
+            {   // Il faut des lignes <= 80 caractères, mais n'aller à la ligne que si c'est un espace
+                comptepartiel += ListeCoupsPgnIntl[i].Length;
                 if (localisation == "Fr")
-                    contenuPgn = contenuPgn + ListeCoupsPgnFr[i];
+                    contenuPgn += ListeCoupsPgnFr[i];
                 else
-                    contenuPgn = contenuPgn + ListeCoupsPgnIntl[i];
+                    contenuPgn += ListeCoupsPgnIntl[i];
                 if (comptepartiel >= 74)
                 {   // Si plus de 80 caractères, il faut découper  (attention aux coups comme Cfxe6+)
                     contenuPgn += " \n";        // Rajout des sauts de ligne
                     comptepartiel = 0;          // Ligne suivante
                 }
             }
+            contenuPgn = contenuPgn + " " + partieEnCours.Result;   // Rajout du résultat à la fin de la partie
             contenuPgn = RetourneEntetePgn(partieEnCours) + contenuPgn;
             return contenuPgn;
         }
         public static string RetourneEntetePgn(PartieEchecsPGN partieEnCours)
-        {
+        {   // Retourne l'en-tête de la partie au format PGN, avec les balises obligatoires et optionnelles
             string enTetePgn = "";
             // Ajout de l'en-tête complet respectant le format PGN (mes Balises optionnelles préférées)
             enTetePgn = "[PlyCount \"" + partieEnCours.CompteDePLy + "\"]\n\n" + enTetePgn;  // Nombre de 1/2 coups
@@ -100,12 +104,12 @@ namespace BrunoGUI_GenII
                 dernierCaractereCoup = CoupPGN[CoupPGN.Length - 1];    // Nettoyage des signes "+" et "#" à la fin du coup qui signalent les echecs
                 if (dernierCaractereCoup == '+')
                 {
-                    CoupPGN = CoupPGN.TrimEnd('+');         // Enlève le + dans CoupPGN pour permettre d'avoir les 2 derniers caractères comme CaseDestination
+                    CoupPGN = CoupPGN.TrimEnd('+');     // Enlève le + dans CoupPGN pour permettre d'avoir les 2 derniers caractères comme CaseDestination
                     Echec = true;
                 }
                 if (dernierCaractereCoup == '#')
                 {
-                    CoupPGN = CoupPGN.TrimEnd('#');         // Enlève le # dans CoupPGN pour permettre d'avoir les 2 derniers caractères comme CaseDestination
+                    CoupPGN = CoupPGN.TrimEnd('#');     // Enlève le # dans CoupPGN pour permettre d'avoir les 2 derniers caractères comme CaseDestination
                     EchecetMat = true;
                 }
                 // Début du traitement du coup, il faut trouver la case de départ et de destination pour pouvoir executer le coup sur l'échiquier-
@@ -117,13 +121,13 @@ namespace BrunoGUI_GenII
                         for (int i = 21; i <= 98; i++)
                             if (PiecesEchiquier[i] == pieceQuiJoue)
                             {
-                                CaseSource = LogiqueMouvements.NomCaseAlgebrique(i);            // La CaseSource = Case où est le Roi qui joue
+                                CaseSource = LogiqueMouvements.NomCaseAlgebrique(i);    // La CaseSource = Case où est le Roi qui joue
                             }
                         break;
                     case 'O':       // Roque
                         if (couleurQuiJoue == ColorPiece.Blanc)
                         {           // Grand Roque Blanc
-                            if (coupPartie == "O-O-O")             // Utiliser CoupPGN plutôt ??   DEBUG 31/01
+                            if (CoupPGN == "O-O-O")             // Utiliser CoupPGN plutôt ??   DEBUG 31/01
                             {
                                 CaseSource = "e1"; CaseDestination = "c1";
                             }
@@ -132,9 +136,9 @@ namespace BrunoGUI_GenII
                                 CaseSource = "e1"; CaseDestination = "g1";
                             }
                         }
-                        if (couleurQuiJoue == ColorPiece.Noir)                  // Utiliser CoupPGN plutôt ??   DEBUG 31/01
+                        if (couleurQuiJoue == ColorPiece.Noir)  // Utiliser CoupPGN plutôt ??   DEBUG 31/01
                         {           // Grand Roque Noir 
-                            if (coupPartie == "O-O-O")
+                            if (CoupPGN == "O-O-O")
                             {
                                 CaseSource = "e8"; CaseDestination = "c8";
                             }
@@ -153,19 +157,19 @@ namespace BrunoGUI_GenII
                     switch (CoupPGN[0])
                     {
                         case 'Q':       // Dame
-                            CaseDestination = CoupPGN.Substring(CoupPGN.Length - 2, 2);         // La CaseDestination = 2 derniers caractères de CoupPGN
+                            CaseDestination = CoupPGN.Substring(CoupPGN.Length - 2, 2); // La CaseDestination = 2 derniers caractères de CoupPGN
                             pieceQuiJoue = (couleurQuiJoue == ColorPiece.Blanc) ? TypePiece.ReineBlanche : TypePiece.ReineNoire;
                             break;
                         case 'R':       // Tour
-                            CaseDestination = CoupPGN.Substring(CoupPGN.Length - 2, 2);         // La CaseDestination = 2 derniers caractères de CoupPGN
+                            CaseDestination = CoupPGN.Substring(CoupPGN.Length - 2, 2); // La CaseDestination = 2 derniers caractères de CoupPGN
                             pieceQuiJoue = (couleurQuiJoue == ColorPiece.Blanc) ? TypePiece.TourBlanche : TypePiece.TourNoire;
                             break;
                         case 'N':       // Cavalier
-                            CaseDestination = CoupPGN.Substring(CoupPGN.Length - 2, 2);         // La CaseDestination = 2 derniers caractères de CoupPGN
+                            CaseDestination = CoupPGN.Substring(CoupPGN.Length - 2, 2); // La CaseDestination = 2 derniers caractères de CoupPGN
                             pieceQuiJoue = (couleurQuiJoue == ColorPiece.Blanc) ? TypePiece.CavalierBlanc : TypePiece.CavalierNoir;
                             break;
                         case 'B':       // Fou
-                            CaseDestination = CoupPGN.Substring(CoupPGN.Length - 2, 2);         // La CaseDestination = 2 derniers caractères de CoupPGN
+                            CaseDestination = CoupPGN.Substring(CoupPGN.Length - 2, 2); // La CaseDestination = 2 derniers caractères de CoupPGN
                             pieceQuiJoue = (couleurQuiJoue == ColorPiece.Blanc) ? TypePiece.FouBlanc : TypePiece.FouNoir;
                             break;
                     }
@@ -173,7 +177,7 @@ namespace BrunoGUI_GenII
                     // CoupPGN a 5 caractères maximum, car on a enlevé les échecs au début de la méthode
                     // On enlève le "x" de la prise si il existe, ainsi que les 2 derniers caractères qui sont la destination
                     CoupPGN = CoupPGN.Replace("x", "");
-                    CoupPGN = CoupPGN.Remove(CoupPGN.Length - 2);
+                    CoupPGN = CoupPGN[..^2];
                     // Si CoupPGN.Length == 2, CoupPGN[1] est le caractère de "LeveeDeDoute", peut être une lettre ou un chiffre. Sinon c'est vide
                     if (CoupPGN.Length == 2)
                         LeveeDeDoute = CoupPGN[1];      // C'est le caractère de levée de doute, une lettre pour la colonne ou un chiffre pour la ligne
@@ -187,7 +191,7 @@ namespace BrunoGUI_GenII
                             List<string> Mouvements = RetourneMouvements(LogiqueMouvements.NomCaseAlgebrique(i));
                             for (int j = 0; j < Mouvements.Count; j++)
                             {                                                                               // Mouvements[x] est sous la forme c5 ou xc5 si prise
-                                if (Mouvements[j].Substring(Mouvements[j].Length - 2) == CaseDestination)   // Au cas ou il y a prise, on prend la fin de la chaine
+                                if (Mouvements[j][^2..] == CaseDestination)   // Au cas ou il y a prise, on prend la fin de la chaine
                                 {   // Si un des mouvements est la case de destination, ce n'est pas forcément le bon Cavalier, Dame ou Tour ou Fou
                                     // Si LogiqueMouvements.NomCaseAlgebrique(i) contient LeveeDeDoute, ou que LeveeDeDoute est vide (il n'y a plus de doute)
                                     // c'est la bonne Pièce et CaseSource = LogiqueMouvements.NomCaseAlgebrique(i);
@@ -224,7 +228,7 @@ namespace BrunoGUI_GenII
                                 break;
                         }
                         BloquerChoixPromo = true;   // Lors de l'execution du coup, il ne faudra pas proposer le choix de pièce promue
-                        CoupPGN = CoupPGN.Remove(CoupPGN.Length - 2, 2);     // On nettoie le coup de la promotion pour l'analyse qui suit
+                        CoupPGN = CoupPGN[..^2];    // On nettoie le coup de la promotion pour l'analyse qui suit
                     }
                     if (CoupPGN.Contains('x'))              // PRISE
                     {   // PRISE
@@ -267,12 +271,18 @@ namespace BrunoGUI_GenII
                     }
                 }
                 if (dernierCaractereCoup != '.')
-                {       // On change de couleur si c'est pas le numéro du coup
-                    couleurQuiJoue = couleurQuiJoue == ColorPiece.Noir ? ColorPiece.Blanc : ColorPiece.Noir;
+                {   // On change de couleur si c'est pas le numéro du coup
+                    _ = couleurQuiJoue == ColorPiece.Noir ? ColorPiece.Blanc : ColorPiece.Noir;
                     string CoupNal = (CaseSource + "-" + CaseDestination);
                     PriseExiste = false;
                     PromotionExiste = false;
                     CoupNal = pieceQuiJoue + "  " + CoupNal;
+
+                    if (string.IsNullOrWhiteSpace(CaseSource) || string.IsNullOrWhiteSpace(CaseDestination))
+                    {   // Garde : s'assurer que les cases ont été déterminées correctement avant d'exécuter le coup
+                        return; // interrompre l'exécution du coup, éviter index hors bornes
+                    }
+
                     LogiqueMouvements.ExecutionCoup(CaseSource, CaseDestination);
                 }
             }
@@ -354,7 +364,7 @@ namespace BrunoGUI_GenII
             }
             private KryptonTextBox CreationBalisesTextBox(string labelText, int x, int y, Action<string> updateProperty)
             {
-                KryptonLabel label = new KryptonLabel
+                KryptonLabel label = new()
                 {
                     Text = labelText,
                     Location = new Point(x, y),

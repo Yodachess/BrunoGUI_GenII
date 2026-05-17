@@ -1,7 +1,9 @@
-// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_Echecs est développé par Bruno COURTOIS.  Copyright © 2025 █
-// █ BrunoGUI_Echecs est gratuit, sauf s'il est utilisé commercialement  █
-// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
+// █ Copyright (C) 2026 Bruno COURTOIS                                      █
+// █ SPDX-License-Identifier: GPL-3.0-or-later                              █
+// █ See the LICENSE file in the project root for full license information. █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 
 // Contient les fonctions pour la gestion de bibliothèque d'ouvertures
 // ├─ Classe "EntréePolyglot" contient la structure d'une entrée Polyglot
@@ -71,7 +73,7 @@ namespace BrunoGUI_GenII
     }
     public class PolyglotBibliothèque
     {   // Classe pour gérer la bibliothèque d'ouvertures Polyglot
-        private static string? _cheminBibliothèque;
+        private static string _cheminBibliothèque;
         public event Action<string> MessageLog;
         public void PolyglotBibliothèqueLecture(string fichier)
         {
@@ -126,7 +128,7 @@ namespace BrunoGUI_GenII
             }
 
             byte[] buffer = new byte[16];
-            Debug.WriteLine($"[TrouverLesEntrées] Le chemin est : {_cheminBibliothèque}");
+            // Debug.WriteLine($"[TrouverLesEntrées] Le chemin est : {_cheminBibliothèque}");
             using var fs = new FileStream(_cheminBibliothèque!, FileMode.Open, FileAccess.Read, FileShare.Read);
 
             long nombreEntrées = fs.Length / 16;
@@ -268,9 +270,9 @@ namespace BrunoGUI_GenII
         public static ulong CalculeClefPolyglot(string fen)
         {   // Calcule la clé Zobrist 64 bits pour une position donnée en FEN
             ulong[] RandomPiece = Random64;
-            ulong[] RandomRoque = Random64.Skip(768).ToArray();
-            ulong[] RandomEnPassant = Random64.Skip(772).ToArray();
-            ulong[] RandomTrait = Random64.Skip(780).ToArray();
+            ulong[] RandomRoque = [.. Random64.Skip(768)];
+            ulong[] RandomEnPassant = [.. Random64.Skip(772)];
+            ulong[] RandomTrait = [.. Random64.Skip(780)];
 
             string[] jetons = fen.Split(' ');   // Sépare les différents champs de la FEN
             if (jetons.Length < 4)

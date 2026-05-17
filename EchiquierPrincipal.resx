@@ -2759,7 +2759,7 @@
   <data name="AideDocumentation.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAO
-        wAAADsABataJCQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAACU2SURBVHhe5V0H
+        vAAADrwBlbxySQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAACU2SURBVHhe5V0H
         VBRX22Z3kSaiiBAEFVRUUCIqKlGjEiwxaMSC3agUEYmgAoIoEMXeaxI1Soy9xpbYExOjfrHG3gtYErEb
         VMruzvOf987cYdldFLFh/j3nObN7t8zM+9y335k1GTVqlMnrxFdffcW2SUlJytGjRysmTZpkMnnyZIbx
         48ebpKSkmNB4cnKyKjk5uURiYqJZUlKSWWJiYomkpCTTpKQkGlcmJycr6Lf47/Htfw0GA68CLqTk5GQm
@@ -3355,10 +3355,13 @@
     <value>961, 22</value>
   </metadata>
   <metadata name="ChargerPartiesPgn.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>1137, 22</value>
+    <value>253, 60</value>
+  </metadata>
+  <metadata name="ChargerPositionFen.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>86, 59</value>
   </metadata>
   <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>54</value>
+    <value>77</value>
   </metadata>
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>

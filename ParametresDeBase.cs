@@ -1,7 +1,9 @@
-﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_GenII est développé par Bruno COURTOIS.  Copyright © 2025 █
-// █ BrunoGUI_GenII est gratuit, sauf s'il est utilisé commercialement  █
-// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
+// █ Copyright (C) 2026 Bruno COURTOIS                                      █
+// █ SPDX-License-Identifier: GPL-3.0-or-later                              █
+// █ See the LICENSE file in the project root for full license information. █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 
 // Fenêtre d'édition des paramètres base de Stockfish ...
 // └─ Classe "ParametresDeBase" 
@@ -26,7 +28,7 @@ namespace BrunoGUI_GenII
         }
         private void BaseBoutonOk_Click(object sender, EventArgs e)
         {
-            PartieForceModule maNouvellePartieForceModule = new PartieForceModule();
+            PartieForceModule maNouvellePartieForceModule = new();
             MoteurUci.DefinitLimiteElo(baseEloNumerique.Value.ToString());
             MoteurUci.StandardInputDataToUci("setoption name Threads value " + (int)baseThreadsNumerique.Value);
             MoteurUci.StandardInputDataToUci("setoption name MultiPV value " + (int)baseMultipvNumerique.Value);

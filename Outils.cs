@@ -1,7 +1,9 @@
-// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_GenII est développé par Bruno COURTOIS.  Copyright © 2025 █
-// █ BrunoGUI_GenII est gratuit, sauf s'il est utilisé commercialement  █
-// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
+// █ Copyright (C) 2026 Bruno COURTOIS                                      █
+// █ SPDX-License-Identifier: GPL-3.0-or-later                              █
+// █ See the LICENSE file in the project root for full license information. █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 
 // Divers outils qui encombreraient les autres fichiers ...
 // └─ Classe "Chemins" qui gère les chemins d'accès
@@ -10,7 +12,7 @@
 //              ├─ "BibliothèquesPolyglot"
 //              └─ "MoteursUCI"
 // └─ Classe "Outils"  
-//              ├─ "AlgebriqueVersPgn"  
+//              ├─ "VarianteUciVersPgn"  
 //              ├─ "EstCaseClaire"
 //              ├─ "ChangerDeCoté"  
 //              └─ "MiseaZeroListes"
@@ -46,14 +48,11 @@ namespace BrunoGUI_GenII
             }
             */
             get
-            {
-                // Dans un déploiement portable, le répertoire racine est celui où se trouve l'exécutable.
+            {   // Dans un déploiement portable, le répertoire racine est celui où se trouve l'exécutable.
                 // On retourne simplement le chemin du dossier où l'application a démarré.
-
                 return Application.StartupPath;
 
                 // --- OU ---
-
                 // Si RepertoireExecutable est défini correctement comme le chemin complet du .exe :
                 // return Path.GetDirectoryName(RepertoireExecutable);
             }
@@ -75,50 +74,122 @@ namespace BrunoGUI_GenII
     }
     public class Outils
     {
-        public static string AlgebriqueVersPgn(string varianteBrute, int numeroDemiCoup)     // Retourne les coups sous la forme x. Db6 (format PGN en fait)
-        {
+        public static string VarianteUciVersPgn(string varianteBrute, int numeroDemiCoup, bool coupConseil)
+        {   // Retourne les coups dans le format PGN (Cdxe4)
             varianteBrute = varianteBrute.TrimStart();
-            string[] variantePgnDecoupe = varianteBrute.Split(' ');         // Découpage des coups de la variante
+            string[] varianteUciDecoupe = varianteBrute.Split(' ');         // Découpage des coups de la variante
             string stockeFen = LogiqueMouvements.RetourneChaineFenActuel(); // Récupérer le FEN actuel pour le remettre à la fin ? Obligé si on bouge les pièces !!
-            string coupExamine = "";
             varianteBrute = "";
-            if (LogiqueMouvements.QuiJoue == ColorPiece.Noir)                       //la PV commence par le coup Noir
+
+            if (LogiqueMouvements.QuiJoue == ColorPiece.Noir)                       // la PV commence par le coup Noir
                 varianteBrute = ((numeroDemiCoup / 2) + 1).ToString() + " ...";     // On met le numéro du coup Noir
-            for (int i = 0; i < variantePgnDecoupe.Length; i++)
+
+            for (int i = 0; i < varianteUciDecoupe.Length; i++)
             {
-                if (variantePgnDecoupe[i] != "")    // Pour blinder le code (Au cas ou la découpe donne un élément vide)
+                if (varianteUciDecoupe[i] != "")    // Pour blinder le code (Au cas ou la découpe donne un élément vide)
                 {
-                    if (variantePgnDecoupe[i].Length >= 4)   // Le coup doit comporter source et destination, sinon crash ci dessous ...
+                    if (varianteUciDecoupe[i].Length >= 4)   // Le coup doit comporter source et destination, sinon crash ci dessous ...
                     {
-                        string source = variantePgnDecoupe[i].Substring(0, 2);
-                        string destination = variantePgnDecoupe[i].Substring(2, 2);
-                        coupExamine = LogiqueMouvements.CoupNotationAlgebriquePGN(source, destination);    // On récupère le coup au format PGN comme Cd7
+                        string source = varianteUciDecoupe[i][..2];
+                        string destination = varianteUciDecoupe[i].Substring(2, 2);
+                        if (source.Length != 2 || destination.Length != 2)      // Sécurité supplémentaire
+                            continue;
+
                         // *******Traitement promotion *********
-                        if (variantePgnDecoupe[i].Length >= 5) // si promotion, on ajoute la pièce promue (ex : axb8=q)
-                            coupExamine = coupExamine + char.ToUpper(variantePgnDecoupe[i][4]); // Note: la pièce promue doit être en majuscule 
+                        PromotionPiece = TypePiece.Vide;        // Remise à zéro de la promotion
+                        if (varianteUciDecoupe[i].Length >= 5)  // si promotion, on ajoute la pièce promue (ex : axb8=q)
+                        {
+                            char piecePromo = char.ToLower(varianteUciDecoupe[i][4]);
+                            // Déterminer la couleur de la promotion
+                            bool promotionBlanche = destination[1] == '8';
+                            PromotionPiece = piecePromo switch
+                            {   // Mise à jour de PromotionPiece
+                                'q' => promotionBlanche ? TypePiece.ReineBlanche : TypePiece.ReineNoire,
+                                'r' => promotionBlanche ? TypePiece.TourBlanche : TypePiece.TourNoire,
+                                'b' => promotionBlanche ? TypePiece.FouBlanc : TypePiece.FouNoir,
+                                'n' => promotionBlanche ? TypePiece.CavalierBlanc : TypePiece.CavalierNoir,
+                                _ => TypePiece.Vide,
+                            };
+                        }
+                        // Génération du coup PGN AVANT déplacement
+                        string coupExaminePgn = LogiqueMouvements.CoupNotationAlgebriquePGN(source, destination);
+                        if (PromotionPiece != TypePiece.Vide)
+                        {   // Ajouter la pièce promue au PGN
+                            coupExaminePgn += CaracterePieceLocale(char.ToLower(varianteUciDecoupe[i][4]));
+                        }
+                        // On fait le mouvement
+                        LogiqueMouvements.DeplacementPiece(RenvoieCaseIndex120(source), RenvoieCaseIndex120(destination), false);
+                        if (PromotionPiece != TypePiece.Vide)
+                        {   // IMPORTANT : remplacer le pion par la pièce promue
+                            LogiqueMouvements.PiecesEchiquier[RenvoieCaseIndex120(destination)] = PromotionPiece;
+                        }
                         // *******Traitement promotion *********
-                        LogiqueMouvements.DeplacementPiece(RenvoieCaseIndex120(source), RenvoieCaseIndex120(destination), false);    // On fait le mouvement
+
+                        LogiqueMouvements.CalculeEchecEtMat();  
+                        if (EchecetMat)     // Affichage de "+" ou "#" après le coup, selon la situation
+                            coupExaminePgn += "#";
+                        else if (Echec)
+                        {
+                            coupExaminePgn += "+";
+                        }
+                        Echec = EchecetMat = false;
+
                         ColorPiece couleurCoup = LogiqueMouvements.CouleurCase(RenvoieCaseIndex120(destination));
-                        if (couleurCoup == ColorPiece.Noir)
-                        {   //la PV commence par le coup Noir
-                            varianteBrute = varianteBrute + " " + coupExamine;
-                        }
-                        if (couleurCoup == ColorPiece.Blanc)
-                        {   // la PV commence par le coup Blanc
+                        if (coupConseil)
+                        {   // Un seul coup à afficher, c'est le conseil du moteur...
                             int numeroCoup = (numeroDemiCoup / 2) + 2;
-                            if (numeroDemiCoup == 0)
-                            {   // Si c'est le 1er coup Blanc, il faut mettre "1." et pas "2."
-                                numeroCoup = 1;
-                                numeroDemiCoup--;            // Et ajuster le numéro de 1/2 coup ... Sinon, il passe à 3 ??!!
+                            if (LogiqueMouvements.QuiJoue == ColorPiece.Blanc)
+                            {   // C'est aux Noirs de jouer
+                                varianteBrute = (numeroCoup).ToString() + " ... " + coupExaminePgn;
                             }
-                            varianteBrute = varianteBrute + " " + (numeroCoup) + ". " + coupExamine;
+                            else
+                            {   // C'est aux Blancs de jouer
+                                varianteBrute = (numeroCoup).ToString() + ". " + coupExaminePgn;
+                            }
                         }
-                        numeroDemiCoup++;
+                        else
+                        {   // Affichage de toute la variante, coup par coup
+                            if (couleurCoup == ColorPiece.Noir)
+                            {   //la PV commence par le coup Noir
+                                varianteBrute = varianteBrute + " " + coupExaminePgn;
+                            }
+                            if (couleurCoup == ColorPiece.Blanc)
+                            {   // la PV commence par le coup Blanc
+                                int numeroCoup = (numeroDemiCoup / 2) + 2;
+                                if (numeroDemiCoup == 0)
+                                {   // Si c'est le 1er coup Blanc, il faut mettre "1." et pas "2."
+                                    numeroCoup = 1;
+                                    numeroDemiCoup--;            // Et ajuster le numéro de 1/2 coup ... Sinon, il passe à 3 ??!!
+                                }
+                                varianteBrute = varianteBrute + " " + (numeroCoup) + ". " + coupExaminePgn;
+                            }
+                            numeroDemiCoup++;
+                        }
+                        // Passer au joueur suivant pour le prochain coup de la variante    // DEUBG 14/05/2026
+                        LogiqueMouvements.QuiJoue =
+                            (LogiqueMouvements.QuiJoue == ColorPiece.Blanc)
+                            ? ColorPiece.Noir
+                            : ColorPiece.Blanc;
+                        // IMPORTANT : reset après chaque coup
+                        PromotionPiece = TypePiece.Vide;
                     }
                 }
             }
             LogiqueMouvements.MiseenplaceFen(stockeFen);        // et on réaffiche l'échiquier de départ
             return varianteBrute;
+        }
+
+        private static char CaracterePieceLocale(char lettreInitiale)
+        {
+            return char.ToUpper(lettreInitiale) switch
+            {
+                'R' => 'T',
+                'N' => 'C',
+                'B' => 'F',
+                'Q' => 'D',
+                'K' => 'R',
+                _ => '\0',
+            };
         }
         public static bool EstCaseClaire(int index120)
         {   // 👉 true = case claire, false = case sombre
@@ -153,6 +224,7 @@ namespace BrunoGUI_GenII
         public string CaseSombre { get; set; } = "CornflowerBlue";
         public string CaseClaire { get; set; } = "AliceBlue";
         public string NomHumain { get; set; } =  "Bruno";
+        public string EloHumain { get; set; } = "1767";
         public string CouleurCaseSource { get; set; } = "Khaki";
         public string CouleurCaseDestination { get; set; } = "Gold";
         public int DureeReflexionSeconde { get; set; } = 3;
@@ -171,7 +243,7 @@ namespace BrunoGUI_GenII
             Debug.WriteLine($"[DEBUG] Fichier {chemin} trouvé !");
             foreach (string ligne in File.ReadAllLines(chemin))
             {
-                if (string.IsNullOrWhiteSpace(ligne) || ligne.StartsWith(";")) continue;
+                if (string.IsNullOrWhiteSpace(ligne) || ligne.StartsWith(';')) continue;
 
                 var parts = ligne.Split('=', 2);
                 if (parts.Length != 2) continue;

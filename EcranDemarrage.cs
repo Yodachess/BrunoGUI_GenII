@@ -1,7 +1,9 @@
-﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_GenII est développé par Bruno COURTOIS.  Copyright © 2025 █
-// █ BrunoGUI_GenII est gratuit, sauf s'il est utilisé commercialement  █
-// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
+// █ Copyright (C) 2026 Bruno COURTOIS                                      █
+// █ SPDX-License-Identifier: GPL-3.0-or-later                              █
+// █ See the LICENSE file in the project root for full license information. █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 
 using System;
 using System.Windows.Forms;
@@ -11,8 +13,8 @@ namespace BrunoGUI_GenII
 {
     public partial class EcranDemarrage : Form
     {
-        Timer horlogeDeFondu = new Timer();       // Gère l'effet fondu (fade)
-        Timer horlogeDeProgression = new Timer();   // Gère la progression de la barre
+        Timer horlogeDeFondu = new();       // Gère l'effet fondu (fade)
+        Timer horlogeDeProgression = new();   // Gère la progression de la barre
         bool disparition = false;            // Indique si on est en train de disparaÃ®tre
         ProgressBar barreProgression;
         int valeurProgression = 0;
@@ -81,16 +83,14 @@ namespace BrunoGUI_GenII
         protected override void OnPaint(PaintEventArgs e)
         {   // Dessine le texte au-dessus du logo
             base.OnPaint(e);
-            using (Font font = new Font("Segoe UI", 24, FontStyle.Bold))
-            using (Brush brush = new SolidBrush(Color.White))
+            using Font font = new("Segoe UI", 24, FontStyle.Bold);
+            using Brush brush = new SolidBrush(Color.White);
+            StringFormat sf = new()
             {
-                StringFormat sf = new StringFormat()
-                {
-                    Alignment = StringAlignment.Center,
-                    LineAlignment = StringAlignment.Near  // haut
-                };
-                e.Graphics.DrawString("BrunoGUI_GenII", font, brush, this.ClientRectangle, sf);
-            }
+                Alignment = StringAlignment.Center,
+                LineAlignment = StringAlignment.Near  // haut
+            };
+            e.Graphics.DrawString("BrunoGUI_GenII", font, brush, this.ClientRectangle, sf);
         }
     }
 }

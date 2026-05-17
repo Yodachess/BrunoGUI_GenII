@@ -1,7 +1,9 @@
-﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_GenII est développé par Bruno COURTOIS.  Copyright © 2025 █
-// █ BrunoGUI_GenII est gratuit, sauf s'il est utilisé commercialement  █
-// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
+// █ Copyright (C) 2026 Bruno COURTOIS                                      █
+// █ SPDX-License-Identifier: GPL-3.0-or-later                              █
+// █ See the LICENSE file in the project root for full license information. █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 
 using System;
 using System.Collections.Generic;
@@ -20,7 +22,7 @@ namespace BrunoGUI_GenII
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             // *** Splash Screen ***
-            EcranDemarrage Démarrage = new EcranDemarrage();
+            EcranDemarrage Démarrage = new();
             Démarrage.Show();
             Démarrage.Demarrer();
             DateTime debut = DateTime.Now;
@@ -30,8 +32,10 @@ namespace BrunoGUI_GenII
             }
             // *** Fin du Splash ***
             // Créez une instance de KryptonManager (une seule fois)
-            KryptonManager kryptonManagerInstance = new KryptonManager();
-            kryptonManagerInstance.GlobalPaletteMode = (PaletteModeManager)PaletteMode.Office2010Silver;
+            KryptonManager kryptonManagerInstance = new()
+            {
+                GlobalPaletteMode = (PaletteModeManager)PaletteMode.Office2010Silver
+            };
             Application.Run(new EchiquierPrincipal());
         }
     }

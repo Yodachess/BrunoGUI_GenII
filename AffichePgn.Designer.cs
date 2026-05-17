@@ -1,4 +1,11 @@
-﻿namespace BrunoGUI_GenII
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
+// █ Copyright (C) 2026 Bruno COURTOIS                                      █
+// █ SPDX-License-Identifier: GPL-3.0-or-later                              █
+// █ See the LICENSE file in the project root for full license information. █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+
+namespace BrunoGUI_GenII
 {
     partial class AffichePgn
     {
@@ -46,7 +53,7 @@
             ZoneAffichage.Location = new System.Drawing.Point(0, 0);
             ZoneAffichage.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             ZoneAffichage.Name = "ZoneAffichage";
-            ZoneAffichage.Size = new System.Drawing.Size(617, 570);
+            ZoneAffichage.Size = new System.Drawing.Size(764, 570);
             ZoneAffichage.StateCommon.Back.Color1 = System.Drawing.Color.LightGray;
             ZoneAffichage.StateCommon.Border.Color1 = System.Drawing.Color.DimGray;
             ZoneAffichage.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
@@ -105,7 +112,7 @@
             // 
             // MasqueAffichePgn
             // 
-            MasqueAffichePgn.Location = new System.Drawing.Point(514, 576);
+            MasqueAffichePgn.Location = new System.Drawing.Point(661, 576);
             MasqueAffichePgn.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MasqueAffichePgn.Name = "MasqueAffichePgn";
             MasqueAffichePgn.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
@@ -155,7 +162,7 @@
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(617, 614);
+            ClientSize = new System.Drawing.Size(764, 611);
             Controls.Add(AfficheCoupsUci);
             Controls.Add(AffichePgnFr);
             Controls.Add(MasqueAffichePgn);

@@ -51,7 +51,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="stockfish\stockfish17-windows-x86-64-avx2.exe">
+    <Content Include="stockfish\stockfish.exe">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
