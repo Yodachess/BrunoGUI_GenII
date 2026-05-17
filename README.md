@@ -1,9 +1,9 @@
-// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-// █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms          █
-// █ Copyright (C) 2026 Bruno COURTOIS                                     █
-// █ SPDX-License-Identifier: GPL-3.0-or-later                             █
-// █ See the LICENSE file in the project root for full license information.█
-// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
+# // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+# // █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms          █
+# // █ Copyright (C) 2026 Bruno COURTOIS                                     █
+# // █ SPDX-License-Identifier: GPL-3.0-or-later                             █
+# // █ See the LICENSE file in the project root for full license information.█
+# // └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 # BrunoGUI_GenII
 
 **BrunoGUI_GenII** est une interface graphique d’échecs permettant de jouer, analyser et rejouer des parties à l’aide de moteurs compatibles **UCI**, dont **Stockfish**.
