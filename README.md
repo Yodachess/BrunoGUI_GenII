@@ -1,6 +1,4 @@
 # BrunoGUI_GenII - Chess GUI in C# WinForms  
-# Interface graphique d'échecs en C# WinForms  
-
 (Copyright (C) 2026 Bruno COURTOIS)
 
 ---
