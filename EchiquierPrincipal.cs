@@ -68,16 +68,16 @@ namespace BrunoGUI_GenII
         public string _dossierRacine, _dossierStockfish;
         private int _indexSource120, _forceMoteurElo, _nombreLignesPV, _tempsRestant;
         private int _dernierCoupMoteurUci;   // dernière case jouée par le moteur UCI
-        private int _numeroLigne;    // Indices dans la DataGrid FeuillePartie
+        private int _numeroLigne;       // Indices dans la DataGrid FeuillePartie
         private int _indexCaseSourceDernierMouvement, _indexCaseDestinationDernierMouvement;
         private string _caseSource, _caseDestination, _couleurHumain;
         private string _nomHumain, _joueurElo, _nomMoteur, _moteurElo, _joueurBlanc, _joueurNoir;
         private string _cheminMoteur, _moteurChoisi, _variationMoteur, _meilleureSuite, _scoreCourant, _evaluationCourante;
-        private string[] _donneesUci;        // Données en provenance du Moteur UCI
+        private string[] _donneesUci;   // Données en provenance du Moteur UCI
         private string _bibliotheque = "rodent.bin";
         private bool _clickCaseSource, _visuSymbole, _montreDonneesBrutesUci, _montre3VariantesUci, _analyseEnCours, _montreListeParties, _partieTerminee;
-        private bool _humain;   // True pour simuler 2 joueurs humains et False pour jouer contre le moteur UCI
-        private bool _visuCoteNoir;          // True quand les Noirs sont en bas de l'écran
+        private bool _humain;           // True pour simuler 2 joueurs humains et False pour jouer contre le moteur UCI
+        private bool _visuCoteNoir;     // True quand les Noirs sont en bas de l'écran
         private bool _clavierActif, _emetUnSon, _bibliothèqueAléatoire, _positionChargeeDepuisFen = false;
         private bool _bibliothèqueActive = true;
         private int _indexFenCoupActuel = 0; // Indice du coup affiché
@@ -214,7 +214,8 @@ namespace BrunoGUI_GenII
             this.ActiveControl = Plateau;       // Met le focus sur le plateau pour éviter le Bug des radiobutton "Résultat"
             _humain = false;                    // L'opposant est l'ordinateur, à mettre à true pour simuler 2 joueurs humains
 
-
+            ActiverMenus(false);    // On désactive les menus après la mise à jour
+            VarianteMoteurUci2.Text = "     ---       [INFO] Vérification initiale de mise à jour de Stockfish...      ---";
             _ = Task.Run(async () =>            // MISE A JOUR STOCKFISH SI ELLE EXISTE
            {   // Vérification de la mise à jour de Stockfish, puis lancement du moteur
                 
@@ -229,14 +230,16 @@ namespace BrunoGUI_GenII
                    Debug.WriteLine("[INFO] Pas de mise à jour effectuée : " + ex.Message);
                    // VarianteMoteurUci1.Text = "[INFO] Pas de mise à jour effectuée : ";
                }
-               // B. MAINTENANT, on démarre le moteur. 
-               // Le fichier est libre, remplacé et prêt.
+                    // B. MAINTENANT, on démarre le moteur. 
+                    // Le fichier est libre, remplacé et prêt.
                Debug.WriteLine("chemin Load = " + _moteurChoisi);
-                
+
                MoteurUci.Start(_moteurChoisi);
+               ActiverMenus(true);    // On réactive les menus après la mise à jour
            });
             Debug.WriteLine("Moteur = " + _nomMoteur);
             PartieEnCours.Black = LabelJoueurNoir.Text = _nomMoteur;
+            // VarianteMoteurUci2.Text = "[INFO] Fin de la vérification de mise à jour de Stockfish...";
         }
 
         private void NouvellePartieStockfish_Click(object sender, EventArgs e)
@@ -428,7 +431,7 @@ namespace BrunoGUI_GenII
                         {
                             switch (_donneesUci[1])
                             {
-                                case "name":    // Récupération du nom du moteur
+                                case "name":    // Récupération du nom du moteur (limité à 20 caractères pour l'affichage)
                                     _nomMoteur = MoteurUci.DataUci[8..];
                                     _nomMoteur = _nomMoteur[..Math.Min(20, _nomMoteur.Length)];
                                     LabelJoueurNoir.Text = _nomMoteur;
@@ -569,7 +572,7 @@ namespace BrunoGUI_GenII
                 bool gainBlanc = (estTourBlanc && !estNegatif) || (!estTourBlanc && estNegatif);
                 return gainBlanc ? "#+" : "#-"; // ou ce que l'on veut afficher
             }
-            // CAS CP
+                // CAS CP
             if (!decimal.TryParse(scoreCourant, NumberStyles.Any,
                 CultureInfo.InvariantCulture, out decimal score))
                 return "?";
@@ -1293,7 +1296,8 @@ namespace BrunoGUI_GenII
         }
         private void Apropos_Click(object sender, EventArgs e)
         {   // Option de menu "A propos"
-            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.00\n--  Bruno COURTOIS  -- " +
+            // Version 1.01 = gestion des fichiers réseaux neuronaux dans même répertoire que le moteur UCI (Stockfish NNUE)
+            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.01\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", "A propos de",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -1966,6 +1970,15 @@ namespace BrunoGUI_GenII
         private void ActiveSon_CheckedChanged(object sender, EventArgs e)
         {   // Bascule pour mettre ou enlever le son
             _emetUnSon = !_emetUnSon;
+        }
+        public void ActiverMenus(bool actif)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => ActiverMenus(actif)));
+                return;
+            }
+            MenuInterfaceGraphique.Enabled = actif;
         }
         private void Promo0_Click(object sender, EventArgs e)
         {   //  Gestion de la promotion de Pion
