@@ -45,19 +45,23 @@ namespace BrunoGUI_GenII
 
         public void Start(string fichierMoteurUci)
         {   // Démarrage du moteur Uci dont le chemin est passé en paramêtre
-            var CurrentDirectory = Directory.GetCurrentDirectory();
+            string cheminComplet = Path.GetFullPath(fichierMoteurUci);
+            string repertoireMoteur = Path.GetDirectoryName(cheminComplet)!;
+
             Proc = new Process();
-            //  paramétrage de Proc.StartInfo
-            Proc.StartInfo.FileName = fichierMoteurUci;
+
+            Proc.StartInfo.FileName = cheminComplet;
+            Proc.StartInfo.WorkingDirectory = repertoireMoteur;
+            
             Proc.StartInfo.UseShellExecute = false;
             Proc.StartInfo.RedirectStandardOutput = true;
             Proc.StartInfo.RedirectStandardInput = true;
             Proc.StartInfo.CreateNoWindow = true;
             Proc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            // démarrer le processus
-            Proc.Start();
             // gestionnaire d'événement de sortie de données
             Proc.OutputDataReceived += ProcOutputDataReceived;
+            // démarrer le processus
+            Proc.Start();
             // commencer à lire les sorties de données
             Proc.BeginOutputReadLine();
             // première interrogation du processus: le moteur UCI est il pret ? 
