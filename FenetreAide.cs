@@ -26,7 +26,7 @@ namespace BrunoGUI_GenII
 
         private void FenetreAide_Load(object sender, EventArgs e)
         {   // Chargement du fichier d'aide
-            ContenuAide.LoadFile("AideBrunoGUI.rtf");
+            ContenuAide.LoadFile(System.IO.Path.Combine(Chemins.RepertoireRacine, "AideBrunoGUI.rtf"));   // à côté de l'exécutable
             // Ajouter une petite marge à gauche
             ContenuAide.SelectAll();
             ContenuAide.SelectionIndent = 20; // 20 pixels de marge

@@ -28,7 +28,7 @@ namespace BrunoGUI_GenII
             this.ClientSize = new Size(400, 250);
             this.TopMost = true; // Toujours au-dessus
             // Logo
-            this.BackgroundImage = Image.FromFile("Bruno_NB.jpg");
+            this.BackgroundImage = Image.FromFile(System.IO.Path.Combine(Chemins.RepertoireRacine, "Bruno_NB.jpg"));   // à côté de l'exécutable
             this.BackgroundImageLayout = ImageLayout.Stretch;
             // Barre de progression
             barreProgression = new ProgressBar()

@@ -254,6 +254,7 @@ namespace BrunoGUI_GenII
         public int ForceMoteur { get; set; } = 1850;
         public int NombreLignesPV { get; set; } = 3;
         public int NombreCoeursThread { get; set; } = 4;
+        public int? TailleHachageMo { get; set; }       // null : taille par défaut du moteur
         public string Bibliotheque { get; set; } = "rodent.bin";
 
         public static Color ConvertitCouleur(string valeur, string parDefaut)
@@ -268,6 +269,12 @@ namespace BrunoGUI_GenII
             catch (Exception) { }
             Debug.WriteLine($"[DEBUG] Couleur illisible dans le .ini : '{valeur}', utilisation de {parDefaut}");
             return ColorTranslator.FromHtml(parDefaut);
+        }
+
+        private static int? PremierEntier(string valeur)
+        {   // Premier nombre entier de la valeur (ex : "256 min" -> 256), null s'il n'y en a pas
+            var nombre = System.Text.RegularExpressions.Regex.Match(valeur, @"\d+");
+            return nombre.Success && int.TryParse(nombre.Value, out int entier) ? entier : null;
         }
 
         public void ChargerDepuisIni(string chemin)
@@ -302,6 +309,7 @@ namespace BrunoGUI_GenII
                     case "Forcemoteur": ForceMoteur = int.Parse(valeur); break;
                     case "NombrelignesPV": NombreLignesPV = int.Parse(valeur); break;
                     case "NombreCoeursThread": NombreCoeursThread = int.Parse(valeur); break;
+                    case "TableHachage": TailleHachageMo = PremierEntier(valeur); break;     // en Mo, ex : "256" ou "256 min"
                     case "Bibliotheque": Bibliotheque = valeur; break;
                 }
             }
