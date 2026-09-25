@@ -156,6 +156,42 @@ Verifie("NAL d'une prise ambiguë", L.ListeCoupsNal.LastOrDefault()?.Trim().Ends
 TestNotation("Prise d'un pion par un pion", "4k3/8/8/3p4/4P3/8/8/4K3 w - - 0 1", "e4", "d5", "exd5");
 Verifie("NAL d'une prise de pion", L.ListeCoupsNal.LastOrDefault()?.Trim().EndsWith("e4xd5") == true, L.ListeCoupsNal.LastOrDefault() ?? "(vide)");
 
+// ═══════════════ Décodage des lignes UCI ═══════════════
+Console.WriteLine("── Lignes UCI ──");
+
+LigneUci info = LigneUci.Analyser("info depth 22 seldepth 30 multipv 2 score cp -35 nodes 123456 nps 1000000 hashfull 50 tbhits 0 time 120 pv e7e5 g1f3 b8c6");
+Verifie("info : variante, score et numéro de variante",
+    info.Commande == "info" && info.NumeroVariante == 2 && info.ScoreCentipions == -35 && info.MatEn == null && info.Variante == "e7e5 g1f3 b8c6",
+    $"multipv={info.NumeroVariante} cp={info.ScoreCentipions} pv={info.Variante}");
+
+LigneUci mat = LigneUci.Analyser("info depth 12 multipv 1 score mate -3 nodes 999 pv e1d1 d8d1");
+Verifie("info : mat contre le camp au trait (signe conservé)", mat.MatEn == -3 && mat.ScoreCentipions == null, $"mate={mat.MatEn}");
+
+LigneUci borne = LigneUci.Analyser("info depth 10 score cp 12 lowerbound nodes 500");
+Verifie("info : score avec lowerbound, sans variante", borne.ScoreCentipions == 12 && borne.Variante == null, $"cp={borne.ScoreCentipions}");
+
+LigneUci tronquee = LigneUci.Analyser("info depth 5 multipv");
+Verifie("info : ligne tronquée sans plantage", tronquee.NumeroVariante == null, "multipv absent");
+
+LigneUci texte = LigneUci.Analyser("info string NNUE evaluation using nn-1c0000000000.nnue (pv cp mate)");
+Verifie("info string : texte libre ignoré", texte.Variante == null && texte.ScoreCentipions == null, texte.Commande);
+
+LigneUci sargon = LigneUci.Analyser("info depth 6 score cp 40 time 900 pv d2d4 d7d5");
+Verifie("info sans multipv (Sargon)", sargon.NumeroVariante == null && sargon.ScoreCentipions == 40 && sargon.Variante == "d2d4 d7d5", $"pv={sargon.Variante}");
+
+LigneUci meilleur = LigneUci.Analyser("bestmove e2e4 ponder e7e5");
+Verifie("bestmove avec ponder", meilleur.MeilleurCoup == "e2e4" && meilleur.CoupConseil == "e7e5" && !meilleur.AucunCoupLegal, $"{meilleur.MeilleurCoup} / {meilleur.CoupConseil}");
+Verifie("bestmove sans ponder", LigneUci.Analyser("bestmove g1f3").CoupConseil == null, "ponder absent");
+Verifie("bestmove (none) = aucun coup légal", LigneUci.Analyser("bestmove (none)").AucunCoupLegal && LigneUci.Analyser("bestmove 0000").AucunCoupLegal, "(none) et 0000");
+
+LigneUci nom = LigneUci.Analyser("id name Stockfish 19");
+LigneUci auteur = LigneUci.Analyser("id author the Stockfish developers (see AUTHORS file)");
+Verifie("id name / id author", nom.NomMoteur == "Stockfish 19" && auteur.AuteurMoteur == "the Stockfish developers (see AUTHORS file)", $"{nom.NomMoteur} / {auteur.AuteurMoteur}");
+
+Verifie("option : nom simple", LigneUci.Analyser("option name UCI_LimitStrength type check default false").NomOption == "UCI_LimitStrength", "UCI_LimitStrength");
+Verifie("option : nom avec espace", LigneUci.Analyser("option name Skill Level type spin default 20 min 0 max 20").NomOption == "Skill Level", "Skill Level");
+Verifie("ligne vide", LigneUci.Analyser("   ").Commande == "", "commande vide");
+
 // ═══════════════ Classe Position ═══════════════
 Console.WriteLine("── Position ──");
 
