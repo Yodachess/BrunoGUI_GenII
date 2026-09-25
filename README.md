@@ -83,11 +83,33 @@ L’application s’adresse aussi bien aux joueurs débutants qu’aux joueurs a
 
 ---
 
-## 🧩 Prérequis
+## 🧩 Prérequis / Requirements
 
-- Windows
-- .NET (version selon projet)
-- Moteurs d’échecs compatibles UCI
+- Windows 10 ou 11 (x64)
+- Pour utiliser l’application / to run : [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
+- Pour compiler / to build : [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) (ou Visual Studio 2022)
+- Moteurs d’échecs compatibles UCI / UCI chess engines (Stockfish est fourni et mis à jour automatiquement au démarrage / Stockfish is included and updated automatically at startup)
+
+---
+
+## 🛠️ Compilation et tests / Build and tests
+
+```bash
+dotnet build BrunoGUI_GenII.sln
+dotnet run --project BrunoGUI_GenII.csproj
+```
+
+Tests de la logique d’échecs (règles, notation PGN, protocole UCI, perft) / Chess logic tests (rules, PGN notation, UCI protocol, perft):
+
+```bash
+dotnet run --project Tests
+dotnet run --project Tests -- --complet
+```
+
+`--complet` ajoute les tests perft profonds (environ 20 s) / adds the deep perft tests (about 20 s).
+
+Les paramètres (moteur, couleurs de l’échiquier, force, temps de réflexion, nombre de variantes…) se règlent dans `BrunoGUI.ini`.
+Settings (engine, board colours, strength, thinking time, number of lines…) are in `BrunoGUI.ini`.
 
 ---
 
