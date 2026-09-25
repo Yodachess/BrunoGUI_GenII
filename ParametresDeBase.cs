@@ -25,13 +25,19 @@ namespace BrunoGUI_GenII
             InitializeComponent();
             interfaceGraphique = brunoigInstance;
             this.FormClosing += ParametresDeBase_FormClosing;   // Gestion du click sur la croix rouge en haut à droite ...
+            this.VisibleChanged += ParametresDeBase_VisibleChanged;
+        }
+        private void ParametresDeBase_VisibleChanged(object sender, EventArgs e)
+        {   // A chaque affichage, on montre le nombre de variantes actuellement demandé au moteur
+            if (Visible)
+                baseMultipvNumerique.Value = Math.Clamp(MoteurUci.NombreLignesPV, (int)baseMultipvNumerique.Minimum, (int)baseMultipvNumerique.Maximum);
         }
         private void BaseBoutonOk_Click(object sender, EventArgs e)
         {
             PartieForceModule maNouvellePartieForceModule = new();
             MoteurUci.DefinitLimiteElo(baseEloNumerique.Value.ToString());
             MoteurUci.StandardInputDataToUci("setoption name Threads value " + (int)baseThreadsNumerique.Value);
-            MoteurUci.StandardInputDataToUci("setoption name MultiPV value " + (int)baseMultipvNumerique.Value);
+            MoteurUci.DefinitMultiPV((int)baseMultipvNumerique.Value);
             maNouvellePartieForceModule.DureeReflexionSeconde = interfaceGraphique.TrackBarTempsReflexion.Value = ((int)baseReflexionNumerique.Value);
             if (interfaceGraphique.OrdinateurJoueNoir)
                 interfaceGraphique.PartieEnCours.BlackElo = interfaceGraphique.EloNoir.Text = baseEloNumerique.Value.ToString();

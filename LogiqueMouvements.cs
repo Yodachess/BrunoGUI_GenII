@@ -86,28 +86,42 @@ namespace BrunoGUI_GenII
         {
             Vide, Blanc, Noir, BordPlateau
         }
-        [Flags]
-        // Pour gérer si les roques sont possibles ou non
-        public enum FlagEnableRoque
-        {
-            AucunRoque,
-            RoqueBlanc,     // pour le petit et le grand roque du roi blanc
-            RoqueNoir       // pour le petit et le grand roque du roi noir 
-        }
         // Identification des 4 mouvements de roque possibles : permet de savoir si le roi roque et quel roque il joue
         public enum FlagMouvementRoque
         {
             PasDeRoque, PetitRoqueNoir, GrandRoqueNoir, PetitRoqueBlanc, GrandRoqueBlanc
         }
-        public static bool PetitRoqueBlancPossible { get; set; }
-        public static bool GrandRoqueBlancPossible { get; set; }
-        public static bool PetitRoqueNoirPossible { get; set; }
-        public static bool GrandRoqueNoirPossible { get; set; }
+        // ═══ Position de la partie ═══
+        // Tout l'état de la position est dans l'objet PositionActuelle. Les propriétés statiques ci-dessous
+        // (PiecesEchiquier, QuiJoue, droits de roque, IndexCaseEnPassant, SansPrise, NombreCoupsJoues, Echec, EchecetMat)
+        // ne sont que des raccourcis vers cet objet. Pour un calcul "pour voir", utiliser CalculerSurCopie.
+        public static Position PositionActuelle { get; private set; } = new();
+        public static List<TypePiece> PiecesEchiquier => PositionActuelle.Pieces;
+        public static bool PetitRoqueBlancPossible { get => PositionActuelle.PetitRoqueBlancPossible; set => PositionActuelle.PetitRoqueBlancPossible = value; }
+        public static bool GrandRoqueBlancPossible { get => PositionActuelle.GrandRoqueBlancPossible; set => PositionActuelle.GrandRoqueBlancPossible = value; }
+        public static bool PetitRoqueNoirPossible { get => PositionActuelle.PetitRoqueNoirPossible; set => PositionActuelle.PetitRoqueNoirPossible = value; }
+        public static bool GrandRoqueNoirPossible { get => PositionActuelle.GrandRoqueNoirPossible; set => PositionActuelle.GrandRoqueNoirPossible = value; }
+        public static bool Echec { get => PositionActuelle.Echec; set => PositionActuelle.Echec = value; }
+        public static bool EchecetMat { get => PositionActuelle.EchecetMat; set => PositionActuelle.EchecetMat = value; }
+
+        public static T CalculerSurCopie<T>(Func<T> calcul)
+        {   // Exécute un calcul sur une copie de la position actuelle : tout ce que le calcul modifie
+            // (pièces, trait, roques, en passant, échec...) est abandonné à la fin, même en cas d'exception
+            Position original = PositionActuelle;
+            PositionActuelle = original.Copier();
+            try
+            {
+                return calcul();
+            }
+            finally
+            {
+                PositionActuelle = original;
+            }
+        }
+
         public static bool CoupValide { get; set; }
         public static bool BloquerChoixPromo { get; set;    }// Lors de l'execution du coup, il ne faudra pas proposer le choix de pièce promue
         public static bool StatutMoteurUci { get; set; } // true si MoteurUci a démarré
-        public static bool Echec { get; set; }
-        public static bool EchecetMat { get; set; }
         public static bool Pat { get; set; }
         public static bool PartieEnCoursMat { get; set; }
         public static bool PartieEnCoursPat { get; set; }
@@ -133,7 +147,6 @@ namespace BrunoGUI_GenII
         };
         private static readonly Dictionary<int, TypePiece> ListeMouvementsPiece = []; // liste des déplacements possibles pour une pièce
         private static readonly Dictionary<int, TypePiece> ListeMenacesPiece = [];    // liste des menaces pour une pièce
-        public static List<TypePiece> PiecesEchiquier { get; set; } = [];
         private static readonly List<string> ListePieces = ["k", "K", "q", "Q", "b", "B", "r", "R", "n", "N", "p", "P"]; // minuscule = Noir et majuscule = Blanc
         private static readonly List<int> ListDeplacementsCavalier = [+8, +12, +19, +21, -8, -12, -19, -21];
         private static readonly List<int> ListDeplacementsFou = [+9, -9, +11, -11];
@@ -149,17 +162,16 @@ namespace BrunoGUI_GenII
         public static List<string> ListeCoupsUci = [];      // Notation protocole UCI
 
         // Information Fen
-        public static ColorPiece QuiJoue { get; set; }          // le champ 2  : w ou b ( Blanc ou Noir ), indique la couleur qui a le trait
-        public static FlagEnableRoque StatutRoque { get; set; } // le champ 3  : pour les 4 possibilités de roque
-                                                                // KQkq signifie que les blancs peuvent faire le grand et le petit roque, idem pour les noirs.
-                                                                // Si le roque n’est pas possible, marquer –
-        public static int IndexCaseEnPassant { get; set; }      // le champ 4  : index de la case en passant si elle existe
+        public static ColorPiece QuiJoue { get => PositionActuelle.QuiJoue; set => PositionActuelle.QuiJoue = value; }  // le champ 2  : w ou b ( Blanc ou Noir ), indique la couleur qui a le trait
+                                                                // le champ 3 (droits de roque KQkq, ou –) correspond aux 4 booléens
+                                                                // PetitRoqueBlancPossible, GrandRoqueBlancPossible, PetitRoqueNoirPossible, GrandRoqueNoirPossible
+        public static int IndexCaseEnPassant { get => PositionActuelle.IndexCaseEnPassant; set => PositionActuelle.IndexCaseEnPassant = value; }  // le champ 4  : index de la case en passant si elle existe
                                                                 // "–" signifie qu’aucune prise en passant n’est possible.
                                                                 // Sil y en avait eu une, il aurait suffi de remplacer – par la case de capture en passant exemple f6.
-        public static int SansPrise { get; set; }               // le champ 5  : +1 à chaque mouvement sans prise ou mouvement de pion
+        public static int SansPrise { get => PositionActuelle.SansPrise; set => PositionActuelle.SansPrise = value; }  // le champ 5  : +1 à chaque mouvement sans prise ou mouvement de pion
                                                                 // Compteur qui compte le nombre de demi-coups depuis la dernière capture ou le dernier mouvement de pions.
                                                                 // Ce compteur sert uniquement pour la règle des 50 coups.
-        public static Single NombreCoupsJoues { get; set; }     //le champ 6  : on avance de 0.5 en 0.5 et on récupère la partie entière
+        public static Single NombreCoupsJoues { get => PositionActuelle.NombreCoupsJoues; set => PositionActuelle.NombreCoupsJoues = value; }  //le champ 6  : on avance de 0.5 en 0.5 et on récupère la partie entière
                 // Ce champ correspond au nombre de coups complets.
                 // C’est le PROCHAIN numéro qui s’affichera dans votre notation de partie.
                 // Son incrémentation est de 1 et est actualisé après que Noir ait joué.
@@ -171,7 +183,6 @@ namespace BrunoGUI_GenII
             PromotionPiece = TypePiece.Vide;
             MouvementCoup = string.Empty;
             QuiJoue = ColorPiece.Blanc;     // détermination du trait ( les blancs commencent )
-            StatutRoque = FlagEnableRoque.RoqueBlanc | FlagEnableRoque.RoqueNoir; // détermination des droits au roque au départ ( les 2 rois peuvent roquer )
             PetitRoqueBlancPossible = PetitRoqueNoirPossible = GrandRoqueBlancPossible = GrandRoqueNoirPossible = true; // Tous roques possible 
             IndexCaseEnPassant = 0;         // détermination de la case e.p. ( pas de case en passant au départ )
             SansPrise = 0;                  // détermination du nombre de 1/2 coups sans mouvement de pion, ni prise de pièce
@@ -282,31 +293,14 @@ namespace BrunoGUI_GenII
             /* Champ 3 : Présence d'une lettre indique que le roque est possible; on utilise  respectivement les lettres 
             K et Q pour petit et grand roque blanc, et les lettres k et q pour les noirs. Si aucun roque n'est possible, on utilise "-" */
             string ChampRoque = ChampsFen[2];
-            if (ChampRoque.Contains('-'))
-            {
-                StatutRoque = FlagEnableRoque.AucunRoque;       // Aucun roque possible
-                PetitRoqueNoirPossible = PetitRoqueBlancPossible = GrandRoqueNoirPossible = GrandRoqueBlancPossible = false;
-            }
-            else if (ChampRoque.Contains('K'))
-            {
-                PetitRoqueBlancPossible = true;     // Petit roque blanc possible
-                StatutRoque |= FlagEnableRoque.RoqueBlanc;
-            }
-            else if (ChampRoque.Contains('Q'))
-            {
-                GrandRoqueBlancPossible = true;     // Grand roque blanc possible
-                StatutRoque |= FlagEnableRoque.RoqueBlanc;
-            }
-            else if (ChampRoque.Contains('k'))
-            {
-                PetitRoqueNoirPossible = true;     // Petit roque noir possible
-                StatutRoque |= FlagEnableRoque.RoqueNoir;
-            }
-            else if (ChampRoque.Contains('q'))
-            {
-                GrandRoqueNoirPossible = true;     // Grand roque noir possible
-                StatutRoque |= FlagEnableRoque.RoqueNoir;
-            }
+            PetitRoqueBlancPossible = ChampRoque.Contains('K');     // Petit roque blanc possible
+            GrandRoqueBlancPossible = ChampRoque.Contains('Q');     // Grand roque blanc possible
+            PetitRoqueNoirPossible = ChampRoque.Contains('k');      // Petit roque noir possible
+            GrandRoqueNoirPossible = ChampRoque.Contains('q');      // Grand roque noir possible
+
+            // Champ 5 : nombre de demi-coups depuis la dernière capture ou le dernier mouvement de pion
+            if (ChampsFen.Length > 4 && int.TryParse(ChampsFen[4], out int DemiCoupsSansPrise))
+                SansPrise = DemiCoupsSansPrise;
 
             string[] RangeesFen = ChampsFen[0].Split('/');          // Champ 1 : Décodage du Champ qui décrit la postion
             Array.Reverse(RangeesFen);
@@ -487,7 +481,7 @@ namespace BrunoGUI_GenII
             {
                 ChaineFen += "q";
             }
-            if (StatutRoque == FlagEnableRoque.AucunRoque)
+            if (!PetitRoqueBlancPossible && !GrandRoqueBlancPossible && !PetitRoqueNoirPossible && !GrandRoqueNoirPossible)
             {
                 ChaineFen += "-";
             }
@@ -633,10 +627,10 @@ namespace BrunoGUI_GenII
                             ListeCoupsPgnFr.Add(MouvementCoup + " ");           // dans 3 listes de coups
                             ListeCoupsNal.Add(MouvementCoupNal + " ");          // internationale, francaise et NAL
                         }
-                        // Traitement des coups au format UCI (pas de numéro de coup, ni de notation pour la prise en passant)
-                        MouvementCoupUci = caseSource + caseDestination + LettrePromotionUci(lettrePromo);
-                        ListeCoupsUci.Add(MouvementCoupUci + " ");
                     }
+                    // Traitement des coups au format UCI (pas de numéro de coup, ni de notation pour l'échec, le mat ou la prise en passant)
+                    MouvementCoupUci = caseSource + caseDestination + LettrePromotionUci(lettrePromo);
+                    ListeCoupsUci.Add(MouvementCoupUci + " ");
 
                     CouleurEchec = QuiJoue == ColorPiece.Noir ? "Noir" : "Blanc";
                     // Affiche si le roi est en échec
@@ -743,6 +737,25 @@ namespace BrunoGUI_GenII
                 DessinePiece(IndexSource, TypePiece.Vide);
             }
         }
+        public static void SimuleCoup(int IndexSource, int IndexDestination)
+        {   // Joue un coup dans le tableau des pièces uniquement (sans affichage, ni changement de trait, de roques ou de FEN)
+            // Contrairement à DeplacementPiece, déplace aussi la tour lors d'un roque et retire le pion pris en passant.
+            // A n'utiliser que dans CalculerSurCopie, pour que la position réelle ne soit pas modifiée
+            FlagMouvementRoque RoqueSimule = TestSiRoque(IndexSource, IndexDestination);
+            if (TestEnPassant(IndexSource, IndexDestination))
+            {   // Le pion pris en passant est derrière la case d'arrivée
+                int IndexPionPris = IndexDestination + (PiecesEchiquier[IndexSource] == TypePiece.PionBlanc ? -10 : +10);
+                PiecesEchiquier[IndexPionPris] = TypePiece.Vide;
+            }
+            DeplacementPiece(IndexSource, IndexDestination, false);
+            switch (RoqueSimule)
+            {   // Déplacement de la tour du roque
+                case FlagMouvementRoque.PetitRoqueBlanc: DeplacementPiece(28, 26, false); break;
+                case FlagMouvementRoque.GrandRoqueBlanc: DeplacementPiece(21, 24, false); break;
+                case FlagMouvementRoque.PetitRoqueNoir: DeplacementPiece(98, 96, false); break;
+                case FlagMouvementRoque.GrandRoqueNoir: DeplacementPiece(91, 94, false); break;
+            }
+        }
         public static List<string> RetourneMouvements(string CaseEchiquier)
         {   // Retourne tous les déplacements possibles pour une case selon la pièce sur cette case
             int indexCase = RenvoieCaseIndex120(CaseEchiquier);
@@ -817,14 +830,12 @@ namespace BrunoGUI_GenII
         public static void CalculeEchecEtMat()
         {   // Calcule si le roi du joueur au trait est en échec et mat
             CalculeEchec();
-            ColorPiece joueurInitial = QuiJoue;
-            Outils.ChangerDeCoté();
-            // QuiJoue = (QuiJoue == ColorPiece.Blanc) ? ColorPiece.Noir : ColorPiece.Blanc;
-            if (Echec)
-                EchecetMat = !ResteCoupsValidesJouables();
-            else
-                EchecetMat = false;
-            QuiJoue = joueurInitial;
+            // Mat si le roi est en échec et que l'adversaire n'a plus de coup (trait changé sur une copie seulement)
+            EchecetMat = Echec && CalculerSurCopie(() =>
+            {
+                Outils.ChangerDeCoté();
+                return !ResteCoupsValidesJouables();
+            });
         }
         public static void CalculeEchec()
         {   // Calcule si le roi du joueur au trait est en échec
@@ -850,6 +861,23 @@ namespace BrunoGUI_GenII
                 NbMouvements += RetourneMouvementsValides(NomCaseAlgebrique(i)).Count;
             }
             return NbMouvements > 0;
+        }
+        public static List<(string Source, string Destination)> CoupsLegaux()
+        {   // Retourne tous les coups légaux du joueur au trait (une promotion n'apparaît qu'une fois, quelle que soit la pièce choisie)
+            List<(string Source, string Destination)> Coups = [];
+            for (int i = 21; i <= 98; i++)
+            {
+                if (PiecesEchiquier[i] == TypePiece.Vide || PiecesEchiquier[i] == TypePiece.Bordure || CouleurCase(i) != QuiJoue)
+                    continue;
+                string CaseSource = NomCaseAlgebrique(i);
+                foreach (string Mouvement in RetourneMouvementsValides(CaseSource))
+                {
+                    var Coup = (CaseSource, Mouvement.Substring(Mouvement.Length - 2, 2));
+                    if (!Coups.Contains(Coup))
+                        Coups.Add(Coup);
+                }
+            }
+            return Coups;
         }
         private static List<string> RetourneMouvementsValides(string CaseEchiquier)
         {   // Retourne les coups valides pour une case
@@ -885,15 +913,14 @@ namespace BrunoGUI_GenII
                         return false;
                 }
                 // On teste ensuite si le roi est en échec ou pas suite au déplacement de la pièce jouée
-                TypePiece BackupPiece = PiecesEchiquier[IndexDestination];  // sauvegarde de la pièce
-                DeplacementPiece(IndexSource, IndexDestination, false);     // on simule le déplacement de la pièce sur l'échiquier
-                // On cherche l'emplacement du roi du joueur courant 
-                string CaseRoi = QuiJoue == ColorPiece.Noir ? PositionRoi(TypePiece.RoiNoir) : PositionRoi(TypePiece.RoiBlanc);
-                // Le roi peut-il être en échec ?
-                List<string> Menaces = CasesPiecesMenacantes(CaseRoi);
-                DeplacementPiece(IndexDestination, IndexSource, false);     // on remet la pièce à sa place sur l'échiquier
-                PiecesEchiquier[IndexDestination] = BackupPiece;            // on récupère la pièce
-                return (Menaces.Count == 0);
+                return CalculerSurCopie(() =>
+                {   // on simule le coup sur une copie de l'échiquier
+                    SimuleCoup(IndexSource, IndexDestination);
+                    // On cherche l'emplacement du roi du joueur courant
+                    string CaseRoi = QuiJoue == ColorPiece.Noir ? PositionRoi(TypePiece.RoiNoir) : PositionRoi(TypePiece.RoiBlanc);
+                    // Le roi peut-il être en échec ?
+                    return CasesPiecesMenacantes(CaseRoi).Count == 0;
+                });
             }
             else
                 return false;
@@ -918,49 +945,23 @@ namespace BrunoGUI_GenII
                         IndexCaseEnPassant = Convert.ToInt32((IndexSource + IndexDestination) / (double)2);   // la case entre les deux est la case en passant )
                     else
                         IndexCaseEnPassant = 0;
-                    // Augmente ou remet à 0 pour les 50 coups
-                    if (PiecesEchiquier[IndexSource] == TypePiece.PionBlanc || PiecesEchiquier[IndexDestination] == TypePiece.PionBlanc || PiecesEchiquier[IndexSource] == TypePiece.PionNoir || PiecesEchiquier[IndexDestination] == TypePiece.PionNoir)
+                    // Augmente ou remet à 0 pour les 50 coups : remise à 0 pour tout mouvement de pion ou toute prise
+                    if (PiecesEchiquier[IndexSource] == TypePiece.PionBlanc || PiecesEchiquier[IndexSource] == TypePiece.PionNoir || PiecesEchiquier[IndexDestination] != TypePiece.Vide)
                         SansPrise = 0;
                     else
                         SansPrise += 1;
 
-                    // Si le roi blanc peut encore roquer 
-                    if (StatutRoque.HasFlag(FlagEnableRoque.RoqueBlanc))
-                        if (PiecesEchiquier[IndexSource] == TypePiece.RoiBlanc)
-                        {
-                            StatutRoque ^= FlagEnableRoque.RoqueBlanc;      // Si le Roi blanc bouge, plus de roque blanc possible
-                            PetitRoqueBlancPossible = GrandRoqueBlancPossible = false;
-                        }
-                    if (PiecesEchiquier[IndexSource] == TypePiece.TourBlanche)
-                    {
-                        if (IndexSource == 21)                          // Si la tour en a1 bouge, plus de grand roque possiblle
-                        {
-                            GrandRoqueBlancPossible = false;
-                        }
-                        if (IndexSource == 28)                                  // Si la tour en h1 bouge, plus de petit roque possiblle
-                        {
-                            PetitRoqueBlancPossible = false;
-                        }
-                    }
-                    // Si le roi noir peut encore roquer 
-                    if (StatutRoque.HasFlag(FlagEnableRoque.RoqueNoir))
-                        if (PiecesEchiquier[IndexSource] == TypePiece.RoiNoir)
-                        {
-                            StatutRoque ^= FlagEnableRoque.RoqueNoir;      // Si le Roi noir bouge, plus de roque noir possible
-                            PetitRoqueNoirPossible = GrandRoqueNoirPossible = false;
-                        }
-                    if (PiecesEchiquier[IndexSource] == TypePiece.TourNoire)
-                    {
-                        if (IndexSource == 91)                          // Si la tour en a8 bouge, plus de grand roque possiblle
-                        {
-                            GrandRoqueNoirPossible = false;
-                        }
-                        if (IndexSource == 98)                          // Si la tour en h8 bouge, plus de petit roque possiblle
-                        {
-                            PetitRoqueNoirPossible = false;
-                        }
-                    }
- 
+                    // Si un roi bouge, plus de roque possible pour sa couleur
+                    if (PiecesEchiquier[IndexSource] == TypePiece.RoiBlanc)
+                        PetitRoqueBlancPossible = GrandRoqueBlancPossible = false;
+                    if (PiecesEchiquier[IndexSource] == TypePiece.RoiNoir)
+                        PetitRoqueNoirPossible = GrandRoqueNoirPossible = false;
+                    // Si une tour quitte son coin, ou y est prise, plus de roque de ce côté
+                    if (IndexSource == 21 || IndexDestination == 21) GrandRoqueBlancPossible = false;   // a1
+                    if (IndexSource == 28 || IndexDestination == 28) PetitRoqueBlancPossible = false;   // h1
+                    if (IndexSource == 91 || IndexDestination == 91) GrandRoqueNoirPossible = false;    // a8
+                    if (IndexSource == 98 || IndexDestination == 98) PetitRoqueNoirPossible = false;    // h8
+
                     // *******Traitement promotion *********
 
                     DeplacementPiece(IndexSource, IndexDestination, true);  // Déplacement standard
@@ -982,11 +983,8 @@ namespace BrunoGUI_GenII
                         // Remplace le pion par la pièce promue
                         PiecesEchiquier[IndexDestination] = PromotionPiece;
                         DessinePiece(IndexDestination, PromotionPiece);
-                        // Test échec
-                        Echec = TestEchecPromotionPion(
-                            IndexDestination,
-                            couleur == "Blanc" ? TypePiece.RoiNoir : TypePiece.RoiBlanc
-                        );
+                        // Test échec avec la pièce promue en place (échec direct ou à la découverte)
+                        CalculeEchec();
                     }
                     // *******Traitement promotion *********
                 }
@@ -1077,23 +1075,19 @@ namespace BrunoGUI_GenII
                             MouvementSpecifique = "O-O-O"; // grand roque
                             break;
                     }
-                    if (!string.IsNullOrEmpty(MouvementSpecifique))
-                    {   // Si c'est un roque, on teste si il y a échec ou échec et mat après le roque
-                        if (EchecetMat)
-                            MouvementSpecifique += "#";
-                        else if (Echec)
-                            MouvementSpecifique += "+";
-                    }
+                    // Les "+" et "#" éventuels sont ajoutés par l'appelant, à partir du calcul d'échec ci-dessous
                     break;
             }
 
-            TypePiece BackupPiece = PiecesEchiquier[IndexDestination];  // sauvegarde de la pièce de destination
-            // test si prise d'une pièce à l'adversaire
-            DeplacementPiece(IndexSource, IndexDestination, false); // simulation déplacement pièce
-            // Test si le roi est en échec
-            CalculeEchec();
-            DeplacementPiece(IndexDestination, IndexSource, false); // on remet la pièce déplacée à sa place de départ
-            PiecesEchiquier[IndexDestination] = BackupPiece; // on récupère la pièce d'origine
+            // Test si le roi adverse est en échec après le coup (la simulation déplace aussi la tour du roque
+            // et retire le pion pris en passant, pour détecter les échecs à la découverte)
+            // Echec fait partie de la position : on le recopie de la copie simulée vers la position réelle
+            Echec = CalculerSurCopie(() =>
+            {
+                SimuleCoup(IndexSource, IndexDestination);
+                CalculeEchec();
+                return Echec;
+            });
 
             return MouvementSpecifique == string.Empty ? MouvementParDefaut : MouvementSpecifique;
         }
@@ -1187,13 +1181,18 @@ namespace BrunoGUI_GenII
         private static List<string> MouvementsRoi(int IndexCase)
         {   // Déplacements du roi avec gestion des roques mais sans vérifier les échecs
             List<string> MouvementsDuRoi = MouvementsReine(IndexCase); // 8 déplacements, comme la reine mais d'une seule case )
-            // on traite les 2 petits roques
-            if ((IndexCase == 25 && StatutRoque.HasFlag(FlagEnableRoque.RoqueBlanc)) || (IndexCase == 95 && StatutRoque.HasFlag(FlagEnableRoque.RoqueNoir)))
-                if (PiecesEchiquier[IndexCase + 1] == TypePiece.Vide && PiecesEchiquier[IndexCase + 2] == TypePiece.Vide)
+            bool RoiBlancDepart = IndexCase == 25 && PiecesEchiquier[IndexCase] == TypePiece.RoiBlanc;
+            bool RoiNoirDepart = IndexCase == 95 && PiecesEchiquier[IndexCase] == TypePiece.RoiNoir;
+            if (!RoiBlancDepart && !RoiNoirDepart)
+                return MouvementsDuRoi;
+            TypePiece TourDuRoi = RoiBlancDepart ? TypePiece.TourBlanche : TypePiece.TourNoire;
+            // on traite les 2 petits roques : droit au roque, tour présente dans son coin et cases libres
+            if (RoiBlancDepart ? PetitRoqueBlancPossible : PetitRoqueNoirPossible)
+                if (PiecesEchiquier[IndexCase + 3] == TourDuRoi && PiecesEchiquier[IndexCase + 1] == TypePiece.Vide && PiecesEchiquier[IndexCase + 2] == TypePiece.Vide)
                     AjouteMouvements(IndexCase, +2, MouvementsDuRoi);
             // idem pour les 2 grands roques
-            if ((IndexCase == 25 && StatutRoque.HasFlag(FlagEnableRoque.RoqueBlanc)) || (IndexCase == 95 && StatutRoque.HasFlag(FlagEnableRoque.RoqueNoir)))
-                if (PiecesEchiquier[IndexCase - 1] == TypePiece.Vide && PiecesEchiquier[IndexCase - 2] == TypePiece.Vide && PiecesEchiquier[IndexCase - 3] == TypePiece.Vide)
+            if (RoiBlancDepart ? GrandRoqueBlancPossible : GrandRoqueNoirPossible)
+                if (PiecesEchiquier[IndexCase - 4] == TourDuRoi && PiecesEchiquier[IndexCase - 1] == TypePiece.Vide && PiecesEchiquier[IndexCase - 2] == TypePiece.Vide && PiecesEchiquier[IndexCase - 3] == TypePiece.Vide)
                     AjouteMouvements(IndexCase, -2, MouvementsDuRoi);
             return MouvementsDuRoi;
         }
@@ -1204,25 +1203,21 @@ namespace BrunoGUI_GenII
             switch (roque)
             {
                 case FlagMouvementRoque.PetitRoqueBlanc: // petit roque blanc
-                    StatutRoque ^= FlagEnableRoque.RoqueBlanc; // plus de roque pour le roi blanc
                     PetitRoqueBlancPossible = GrandRoqueBlancPossible = false;
                     DeplacementPiece(25, 27, true);
                     DeplacementPiece(28, 26, true);
                     return "O-O";
                 case FlagMouvementRoque.GrandRoqueBlanc: // grand roque blanc
-                    StatutRoque ^= FlagEnableRoque.RoqueBlanc; // plus de roque pour le roi blanc
                     PetitRoqueBlancPossible = GrandRoqueBlancPossible = false;
                     DeplacementPiece(25, 23, true);
                     DeplacementPiece(21, 24, true);
                     return "O-O-O";
                 case FlagMouvementRoque.PetitRoqueNoir: // petit roque noir
-                    StatutRoque ^= FlagEnableRoque.RoqueNoir; // plus de roque pour le roi noir
                     PetitRoqueNoirPossible = GrandRoqueNoirPossible = false;
                     DeplacementPiece(95, 97, true);
                     DeplacementPiece(98, 96, true);
                     return "O-O";
                 case FlagMouvementRoque.GrandRoqueNoir: // grand roque noir
-                    StatutRoque ^= FlagEnableRoque.RoqueNoir; // plus de roque pour le roi noir
                     PetitRoqueNoirPossible = GrandRoqueNoirPossible = false;
                     DeplacementPiece(95, 93, true);
                     DeplacementPiece(91, 94, true);
@@ -1230,15 +1225,6 @@ namespace BrunoGUI_GenII
                 default:
                     return string.Empty;
             }
-        }
-        public static bool TestEchecPromotionPion(int IndexCasePromotion, TypePiece Roi)
-        {   // Promotion d'un pion ( retourne true si le roi adverse est en échec )
-            List<string> MouvementsPiecePromue = RetourneMouvements(NomCaseAlgebrique(IndexCasePromotion));
-            if (MouvementsPiecePromue.Count > 0)
-                // true si le roi est menacé
-                return MouvementsPiecePromue.Contains("x" + PositionRoi(Roi));
-            else
-                return false;
         }
         private static List<string> MouvementsPion(int IndexCase)
         {   // Déplacement du pion

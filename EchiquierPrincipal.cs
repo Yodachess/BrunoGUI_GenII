@@ -118,7 +118,7 @@ namespace BrunoGUI_GenII
             _dureeReflexionMilliSeconde = parametres.DureeReflexionSeconde * 1000;
             _nomMoteur = parametres.Moteur;
             _forceMoteurElo = parametres.ForceMoteur;
-            _nombreLignesPV = parametres.NombreLignesPV;
+            _nombreLignesPV = MoteurUci.NombreLignesPV = parametres.NombreLignesPV;
             _bibliotheque = parametres.Bibliotheque;
             LabelJoueurNoir.Text = _cheminMoteur = parametres.Moteur;
             EloNoir.Text = _moteurElo = _forceMoteurElo.ToString();
@@ -202,9 +202,8 @@ namespace BrunoGUI_GenII
 
             DessineEchiquier();
             for (int i = 0; i <= 119; i++)
-            {   // On place des bords sur tout l'échiquier
-                LogiqueMouvements.PiecesEchiquier.Add(LogiqueMouvements.TypePiece.Bordure);
-                IndiceVisuCoteNoir.Add(i);      // et on crée la liste de 1 à 120
+            {   // L'échiquier 120 cases (bordures comprises) est créé par la classe Position
+                IndiceVisuCoteNoir.Add(i);      // on crée la liste de 1 à 120
             }
             IndiceVisuCoteNoir.Reverse();       // On inverse l'ordre pour avoir la liste de 120 à 1 pour la vue côté noir
             LogiqueMouvements.InitialisationEchiquier();
@@ -267,7 +266,7 @@ namespace BrunoGUI_GenII
                 }
                 MoteurUci.ActiveLimiteElo();
                 MoteurUci.DefinitLimiteElo(_forceMoteurElo.ToString());
-                MoteurUci.StandardInputDataToUci("setoption name MultiPV value " + mesParametresUciStockfish.MultiPV);
+                MoteurUci.DefinitMultiPV(MoteurUci.NombreLignesPV);
                 if (couleurMoteur == "Blancs")
                 {   // Le moteur joue les blancs
                     OrdinateurJoueNoir = false;
@@ -425,7 +424,7 @@ namespace BrunoGUI_GenII
                             break;
                         }
                         VarianteMoteurCourante.Text = "Coup joué : " + Outils.VarianteUciVersPgn(_donneesUci[1], NumeroDemiCoup, false) +
-                            (_donneesUci.Length > 3 ? "   (Conseil : " + Outils.VarianteUciVersPgn(_donneesUci[3], NumeroDemiCoup, true) + ")" : "");
+                            (_donneesUci.Length > 3 ? "   (Conseil : " + Outils.VarianteUciVersPgn(_donneesUci[1] + " " + _donneesUci[3], NumeroDemiCoup, true) + ")" : "");  // Le conseil (ponder) se joue après le coup du moteur
                         break;
                     case "id":
                         {
@@ -924,7 +923,7 @@ namespace BrunoGUI_GenII
                 InformationsPartie.Text = " Bruno vous souhaite une bonne partie !";
                 MoteurUci.ActiveLimiteElo();        // Préparation du moteur en cas de demande d'analyse
                 MoteurUci.DefinitLimiteElo("3190");
-                MoteurUci.StandardInputDataToUci("setoption name MultiPV value 3");
+                MoteurUci.DefinitMultiPV(MoteurUci.NombreLignesPV);
                 maNouvellePartieForceModule.DureeReflexionSeconde = 10;
                 CommencerPartie();
             }
@@ -1129,37 +1128,9 @@ namespace BrunoGUI_GenII
                     LogiqueMouvements.MiseenplaceFen(FenDepart);
                     _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(FenDepart));
                     NumeroDemiCoup = 0;
-                    PetitRoqueBlancPossible = PetitRoqueNoirPossible = GrandRoqueBlancPossible = GrandRoqueNoirPossible = true;
                 }
                 else
-                {
-                    // Réactivation du roque si besoin ...  (champ 3 du FEN, mais indice 2 du Split)
-                    string[] FenPrecedent = LogiqueMouvements.ListeCoupsFen[^1].Split(' ');  // Récupère le dernier FEN découpé
-                    if ((FenPrecedent[2]).Contains('-'))
-                    {   // Aucun roque possible
-                        StatutRoque = FlagEnableRoque.AucunRoque;
-                        PetitRoqueNoirPossible = PetitRoqueBlancPossible = GrandRoqueNoirPossible = GrandRoqueBlancPossible = false;
-                    }
-                    else if ((FenPrecedent[2]).Contains('K'))
-                    {   // Petit roque blanc possible
-                        PetitRoqueBlancPossible = true;
-                        StatutRoque |= FlagEnableRoque.RoqueBlanc;
-                    }
-                    else if ((FenPrecedent[2]).Contains('Q'))
-                    {   // Grand roque blanc possible
-                        GrandRoqueBlancPossible = true;
-                        StatutRoque |= FlagEnableRoque.RoqueBlanc;
-                    }
-                    else if ((FenPrecedent[2]).Contains('k'))
-                    {   // Petit roque noir possible
-                        PetitRoqueNoirPossible = true;
-                        StatutRoque |= FlagEnableRoque.RoqueNoir;
-                    }
-                    else if ((FenPrecedent[2]).Contains('q'))
-                    {   // Grand roque noir possible
-                        GrandRoqueNoirPossible = true;
-                        StatutRoque |= FlagEnableRoque.RoqueNoir;
-                    }
+                {   // MiseenplaceFen rétablit aussi les droits de roque, la case en passant et le compteur des 50 coups
                     string Fenaenvoyer = LogiqueMouvements.ListeCoupsFen[^1];    // Récupère le dernier FEN (position)
                     LogiqueMouvements.MiseenplaceFen(Fenaenvoyer);              // et on l'affiche sur l'échiquier
                     _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(Fenaenvoyer));
@@ -1297,7 +1268,9 @@ namespace BrunoGUI_GenII
         private void Apropos_Click(object sender, EventArgs e)
         {   // Option de menu "A propos"
             // Version 1.01 = gestion des fichiers réseaux neuronaux dans même répertoire que le moteur UCI (Stockfish NNUE)
-            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.01\n--  Bruno COURTOIS  -- " +
+            // Version 1.02 = corrections des règles (roque, prise en passant, promotion, 50 coups, lecture FEN), classe Position,
+            //                MultiPV réglable, mise à jour automatique compatible Stockfish 19 (binaire "universal"), projet de tests (perft)
+            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.02\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", "A propos de",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -1305,12 +1278,13 @@ namespace BrunoGUI_GenII
         {   // Bouton "A propos"
             Apropos_Click(sender, e);
         }
-        public async Task LancerMiseAJourAsync()
+        public async Task<bool> LancerMiseAJourAsync()
         {   // Appelle la classe de mise à jour de Stockfish, qui vérifie la version actuelle
-            // et télécharge la nouvelle version si besoin
+            // et télécharge la nouvelle version si besoin (retourne false si Stockfish était déjà à jour)
             MiseAJourStockfish maj = new(_moteurChoisi);
-            await maj.ExecuterMiseAJour();
-            Debug.WriteLine("Moteur mis à jour = " + _nomMoteur);
+            bool misAJour = await maj.ExecuterMiseAJour();
+            Debug.WriteLine(misAJour ? "Moteur mis à jour" : "Moteur déjà à jour");
+            return misAJour;
         }
         private async void BtnMiseAJour_Click(object sender, EventArgs e)
         {   // 1. On prépare l'UI
@@ -1319,9 +1293,9 @@ namespace BrunoGUI_GenII
             VarianteMoteurUci2.Text = "Vérification de la version courante de Stockfish...";
             try
             {   // 2. On appelle la méthode de mise à jour
-                await LancerMiseAJourAsync();
+                bool misAJour = await LancerMiseAJourAsync();
                 VarianteMoteurUci2.Text = "Stockfish est à jour !";
-                KryptonMessageBox.Show("Mise à jour réussie.", "Stockfish", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                KryptonMessageBox.Show(misAJour ? "Mise à jour réussie." : "Vous avez déjà la dernière version.", "Stockfish", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {   // On gère les messages (ex: "Déjà à jour" ou "Pas de connexion")
@@ -1639,13 +1613,6 @@ namespace BrunoGUI_GenII
                 GrandRoqueBlancPossible = ChampsFen[2].Contains('Q');
                 PetitRoqueNoirPossible = ChampsFen[2].Contains('k');
                 GrandRoqueNoirPossible = ChampsFen[2].Contains('q');
-                // Mise à jour de StatutRoque (conserve ton enum existant)
-                if (PetitRoqueBlancPossible || GrandRoqueBlancPossible)
-                    StatutRoque = FlagEnableRoque.RoqueBlanc;
-                else if (PetitRoqueNoirPossible || GrandRoqueNoirPossible)
-                    StatutRoque = FlagEnableRoque.RoqueNoir;
-                else
-                    StatutRoque = FlagEnableRoque.AucunRoque;
                 // Case en passant
                 if (ChampsFen[3] == "-")
                     IndexCaseEnPassant = 0;      // ou -1 selon ta convention

@@ -21,12 +21,16 @@ namespace BrunoGUI_GenII
 {
     public partial class ParametresUciStockfish : Form
     {
-        public int MultiPV { get; private set; }
         public ParametresUciStockfish()
         {
             InitializeComponent();
-            MultiPV = 3;
             this.FormClosing += ParametresUciStockfish_FormClosing;     // Gestion du click sur la croix rouge en haut à droite ...
+            this.VisibleChanged += ParametresUciStockfish_VisibleChanged;
+        }
+        private void ParametresUciStockfish_VisibleChanged(object sender, EventArgs e)
+        {   // A chaque affichage, on montre le nombre de variantes actuellement demandé au moteur
+            if (Visible)
+                MultiPVUpDown.Value = Math.Clamp(MoteurUci.NombreLignesPV, (int)MultiPVUpDown.Minimum, (int)MultiPVUpDown.Maximum);
         }
         private void ParametresUciStockfish_Load(object sender, EventArgs e)
         {   // Affichage des paramêtres dans la console
@@ -38,10 +42,10 @@ namespace BrunoGUI_GenII
         }
         private void ParametresFermer_Click(object sender, EventArgs e)
         {   // Passage au moteur des paramètres sélectionnés 
-            MoteurUci.StandardInputDataToUci("setoption name Ponder " + (bool)checkBoxPonder.Checked);
+            MoteurUci.StandardInputDataToUci("setoption name Ponder value " + (checkBoxPonder.Checked ? "true" : "false"));
             MoteurUci.StandardInputDataToUci("setoption name Threads value " + (int)ThreadsUpDown.Value);
             MoteurUci.StandardInputDataToUci("setoption name Hash value " + (int)HashSizeUpDown.Value);
-            MoteurUci.StandardInputDataToUci("setoption name MultiPV value " + (int)MultiPVUpDown.Value);
+            MoteurUci.DefinitMultiPV((int)MultiPVUpDown.Value);
             MoteurUci.StandardInputDataToUci("setoption name Skill Level value " + (int)SkillLevelUpDown.Value);
             MoteurUci.StandardInputDataToUci("setoption name Move Overhead value " + (int)MoveOverheadUpDown.Value);
             MoteurUci.StandardInputDataToUci("setoption name nodestime value " + (int)NodesTimeUpDown.Value);

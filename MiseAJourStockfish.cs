@@ -41,8 +41,8 @@ public class MiseAJourStockfish
         if (!client.DefaultRequestHeaders.Contains("User-Agent"))
             client.DefaultRequestHeaders.Add("User-Agent", "Stockfish-Updater-CSharp");
     }
-    public async Task ExecuterMiseAJour()
-    {
+    public async Task<bool> ExecuterMiseAJour()
+    {   // Retourne true si Stockfish a été mis à jour, false s'il était déjà à jour (exception en cas d'erreur)
         bool miseAJourReussie = false;
         Debug.WriteLine("[MAJ] Début du processus de mise à jour.");
         try
@@ -60,7 +60,7 @@ public class MiseAJourStockfish
             if (newTag == null)
             {
                 Debug.WriteLine("[MAJ] Aucun nouveau tag trouvé. Fin.");
-                throw new Exception("Vous avez déjà la dernière version.");
+                return false;       // Déjà à jour : ce n'est pas une erreur
             }
             Debug.WriteLine($"[MAJ] Nouvelle version disponible: {newTag}");
 
@@ -146,6 +146,7 @@ public class MiseAJourStockfish
                 throw;
             }
         }
+        return true;
     }
     private static void VerifierVerrouillageFichier(string chemin)
     {
@@ -290,14 +291,17 @@ public class MiseAJourStockfish
         foreach (var p in Process.GetProcessesByName(name))
         {
             try
-            {
+            {   // On n'arrête que le Stockfish de BrunoGUI (même fichier), pas ceux d'autres logiciels
+                string cheminProcessus = p.MainModule?.FileName;
+                if (!string.Equals(cheminProcessus, _cheminComplet, StringComparison.OrdinalIgnoreCase))
+                    continue;
                 Debug.WriteLine($"[DEBUG] ArreterProcessus: Kill du processus ID {p.Id}");
                 p.Kill();
                 p.WaitForExit(2000); // CRUCIAL : attend que Windows libère le fichier
                 if (!p.WaitForExit(3000))
                 {
                     Debug.WriteLine("[DEBUG] ArreterProcessus: Le processus résiste, appel à TaskKill...");
-                    Process.Start(new ProcessStartInfo("taskkill", $"/F /IM {name}.exe /T") { CreateNoWindow = true });
+                    Process.Start(new ProcessStartInfo("taskkill", $"/F /PID {p.Id} /T") { CreateNoWindow = true });
                 }
             }
             catch (Exception ex) { Debug.WriteLine($"[DEBUG] ArreterProcessus: Exception: {ex.Message}"); }
@@ -389,23 +393,31 @@ public class MiseAJourStockfish
 
         if (latestTag.Equals(tagCourant, StringComparison.OrdinalIgnoreCase)) return (null, null);
         Debug.WriteLine($"[DEBUG] Comparaison: Local={tagCourant} | GitHub={latestTag}");
-        string arch = GetBestArchitectureSuffix();
-        var asset = root.GetProperty("assets").EnumerateArray()
-            .FirstOrDefault(a => a.GetProperty("name").GetString().ToLower().Contains("windows") &&
-                                 a.GetProperty("name").GetString().ToLower().Contains(arch));
-        Debug.WriteLine($"[DEBUG] Architecture détectée = " + arch);
-        if (asset.ValueKind == JsonValueKind.Undefined)
-            throw new Exception("Architecture non trouvée sur GitHub.");
-
-        return (latestTag, asset.GetProperty("browser_download_url").GetString());
+        var assetsWindows = root.GetProperty("assets").EnumerateArray()
+            .Where(a => a.GetProperty("name").GetString().ToLower().Contains("windows"))
+            .ToList();
+        foreach (string arch in SuffixesArchitecture())
+        {   // On prend la meilleure version disponible pour ce processeur
+            var asset = assetsWindows.FirstOrDefault(a => a.GetProperty("name").GetString().ToLower().Contains(arch));
+            if (asset.ValueKind != JsonValueKind.Undefined)
+            {
+                Debug.WriteLine($"[DEBUG] Architecture retenue = " + arch);
+                return (latestTag, asset.GetProperty("browser_download_url").GetString());
+            }
+        }
+        throw new Exception("Architecture non trouvée sur GitHub.");
     }
 
-    private static string GetBestArchitectureSuffix()
-    {
-        if (Bmi2.IsSupported && Avx2.IsSupported) return "x86-64-bmi2";
-        if (Avx2.IsSupported) return "x86-64-avx2";
-        if (Sse42.IsSupported) return "x86-64-modern";
-        return "x86-64";
+    private static string[] SuffixesArchitecture()
+    {   // Suffixes des fichiers de Stockfish, du plus performant au plus générique.
+        // Depuis Stockfish 19, un seul binaire "universal" détecte lui-même les instructions du processeur.
+        System.Collections.Generic.List<string> suffixes = [];
+        if (Bmi2.IsSupported && Avx2.IsSupported) suffixes.Add("x86-64-bmi2");
+        if (Avx2.IsSupported) suffixes.Add("x86-64-avx2");
+        if (Sse42.IsSupported) suffixes.Add("x86-64-modern");
+        suffixes.Add("x86-64-universal");
+        suffixes.Add("x86-64");
+        return [.. suffixes];
     }
 
     private static async Task TelechargerFichier(string url, string dest)

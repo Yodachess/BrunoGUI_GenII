@@ -15,7 +15,8 @@
 //                      ├─ "OptionsCourantes"  
 //                      ├─ "ActiveLimiteElo"            Activation de la limitation du ELO
 //                      ├─ "DefinitLimiteElo"           Définition de la force ELO du moteur  
-//                      ├─ "SpecialeSargon"             Profondeur = 6 sinon boucle infinie ...  
+//                      ├─ "DefinitMultiPV"             Nombre de variantes demandées au moteur
+//                      ├─ "SpecialeSargon"            Profondeur = 6 sinon boucle infinie ...  
 //                      └─ "Quitte"
 
 using System;
@@ -41,6 +42,7 @@ namespace BrunoGUI_GenII
         public static string AuteurMoteur { get; set; }
         public static bool LimiteElo { get; set; }
         public static bool UciVersGui { get; set; }
+        public static int NombreLignesPV { get; set; } = 3;     // Nombre de variantes (MultiPV) demandées au moteur
         private static Process Proc;
 
         public void Start(string fichierMoteurUci)
@@ -133,14 +135,12 @@ namespace BrunoGUI_GenII
         }
         public static void JeuMoteurUci(string FenActuel, int Duree)
         {   // Envoie au moteur UCI le Fen actuel et invitation à jouer pour le moteur UCI
-            MoteurUci.StandardInputDataToUci("setoption name MultiPV value 3");     // On demande 3 variations au moteur
+            StandardInputDataToUci("setoption name MultiPV value " + NombreLignesPV);   // On demande le nombre de variations choisi
+            PositionFenUci(FenActuel);
             if (Duree == 9999)
-                StandardInputDataToUci("go movetime infinite");
+                StandardInputDataToUci("go infinite");      // Réflexion sans limite, jusqu'à l'envoi de "stop"
             else
-            {
-                PositionFenUci(FenActuel);
                 StandardInputDataToUci("go movetime " + Duree.ToString());
-            }
         }
         public static void OptionsCourantes()
         {   // Envoi au moteur UCI les options courantes
@@ -148,7 +148,12 @@ namespace BrunoGUI_GenII
             StandardInputDataToUci("setoption name Verbose value true");
             StandardInputDataToUci("setoption name Ownbook value true");
             StandardInputDataToUci("setoption name VerboseBook value true");
-            StandardInputDataToUci("setoption name MultiPV value 3");
+            StandardInputDataToUci("setoption name MultiPV value " + NombreLignesPV);
+        }
+        public static void DefinitMultiPV(int nombreLignes)
+        {   // Mémorise et envoie au moteur le nombre de variantes (MultiPV)
+            NombreLignesPV = nombreLignes;
+            StandardInputDataToUci("setoption name MultiPV value " + nombreLignes);
         }
         public static void ActiveLimiteElo()
         {   // Activation de la limitation du ELO
