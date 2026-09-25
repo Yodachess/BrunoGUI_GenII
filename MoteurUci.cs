@@ -35,7 +35,8 @@ namespace BrunoGUI_GenII
         public static event AfficheDonneesBrutesUci  AfficheDonneesBrutes;
         public static event AfficheCoupMoteurUci AfficheCoupMoteur;
         public static List<string> OptionsUci = [];  // Liste pour stocker les options du moteur UCi
-        public static string DataUci { get; set; }
+        public static string DataUci { get; set; }              // dernière ligne reçue du moteur, telle quelle
+        public static LigneUci DerniereLigne { get; private set; } = new();   // la même ligne, décodée
         public static string DataVersUci { get; set; }
         public static string CoupAuFormatUci { get; set; }
         public static string FichierMoteurUci { get; set; }
@@ -75,27 +76,22 @@ namespace BrunoGUI_GenII
         {   // Evènement de sortie de données du processus UCI vers l'interface pour jouer le coup du moteur UCI
             UciVersGui = true; 
             if (string.IsNullOrWhiteSpace(e.Data) == false)   // true si la chaine est " ", "\n", null, ""
-            {   // extraire les mots de l'instruction
+            {   // La ligne est décodée une seule fois ; l'interface lit le résultat dans DerniereLigne
                 DataUci = e.Data;
+                DerniereLigne = LigneUci.Analyser(DataUci);
                 AfficheUci();
-
-                string[] DataTableau = DataUci.Split(' ');
                 AfficheDonneesBrutes();
 
-                switch (DataTableau[0])         // Analyse réponse moteur UCI 
-                {   // identifier le premier mot 
-                    case "\n":
-                    case " ":
-                        break;
+                switch (DerniereLigne.Commande)         // Analyse réponse moteur UCI
+                {
                     case "readyok": // le moteur UCI est prêt à jouer
                         // position de départ ( Fen correspondant à un début de partie )
                         PositionFenUci(LogiqueMouvements.FenDepart);
                         break;
                     case "bestmove": // le moteur UCI propose le meilleur coup
-                                     //  CRASH : tester si DataTableau[1] = (none), alors il y a MAT, il ne faut pas AfficherCoupMoteur
-                        if (DataTableau[1] != "(none)" && DataTableau[1] != "0000") // Un moteur au - retourne 0000 en cas de Mat ou Pat
-                        {                               
-                            CoupAuFormatUci = DataTableau[1];
+                        if (!DerniereLigne.AucunCoupLegal) // Un moteur retourne "(none)" ou "0000" en cas de Mat ou Pat
+                        {
+                            CoupAuFormatUci = DerniereLigne.MeilleurCoup;
                             AfficheCoupMoteur();
                         }
                         else
@@ -111,7 +107,7 @@ namespace BrunoGUI_GenII
                         }
                         break;
                     case "option":
-                        if (DataTableau[2] == "UCI_LimitStrength")  // il est possible de régler la force ELO
+                        if (DerniereLigne.NomOption == "UCI_LimitStrength")  // il est possible de régler la force ELO
                         {
                             ActiveLimiteElo();
                             LimiteElo = true;

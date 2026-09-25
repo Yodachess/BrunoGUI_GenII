@@ -73,7 +73,6 @@ namespace BrunoGUI_GenII
         private string _caseSource, _caseDestination, _couleurHumain;
         private string _nomHumain, _joueurElo, _nomMoteur, _moteurElo, _joueurBlanc, _joueurNoir;
         private string _cheminMoteur, _moteurChoisi, _variationMoteur, _meilleureSuite, _scoreCourant, _evaluationCourante;
-        private string[] _donneesUci;   // Données en provenance du Moteur UCI
         private string _bibliotheque = "rodent.bin";
         private bool _clickCaseSource, _visuSymbole, _montreDonneesBrutesUci, _montre3VariantesUci, _analyseEnCours, _montreListeParties, _partieTerminee;
         private bool _humain;           // True pour simuler 2 joueurs humains et False pour jouer contre le moteur UCI
@@ -398,114 +397,81 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         // Procédures d'affichage diverses
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-        private void AfficheUci()   // Analyse et affiche les informations du moteur UCI
+        private void AfficheUci()   // Affiche les informations du moteur UCI (la ligne est déjà décodée dans MoteurUci.DerniereLigne)
         {   // ATTENTION : MALGRE LA PRESENCE DU PROTOCOLE UCI, LES MOTEURS ONT DES REPONSES DIFFERENTES !!?? (voir case "info", par ex)
-            string numeroVarianteNomBox = "";
-            string varianteExaminee = "";
             if (InvokeRequired)
             {
                 Invoke(new MethodInvoker(AfficheUci));
                 return; // Empêche l'exécution du reste de la méthode sur le thread d'origine
             }
-            else
-                _donneesUci = MoteurUci.DataUci.Split(' ');                      // Découpage des informations du moteur UCI
-            if (string.IsNullOrWhiteSpace(_donneesUci[0]) == false & _donneesUci.Length >= 2)
-            {   // true si la chaine est " ", "\n", null, ""
-                _donneesUci = MoteurUci.DataUci.Trim().Split(' ');
-                switch (_donneesUci[0])     // identifier le premier mot
-                {
-                    case "\n":              // Analyse réponse moteur UCI
-                    case " ":
+            LigneUci ligne = MoteurUci.DerniereLigne;
+            switch (ligne.Commande)     // identifier le premier mot
+            {
+                case "bestmove":        // **** le moteur UCI propose le meilleur coup ! ****
+                    if (ligne.AucunCoupLegal)
+                    {   // Cas particulier : le moteur retourne "bestmove (none)" ou "bestmove 0000" => partie terminée (mat ou pat)
+                        VarianteMoteurCourante.Text = "Aucun coup légal (mat ou pat)";
                         break;
-                    case "bestmove":        // **** le moteur UCI propose le meilleur coup ! ****
-                        if (_donneesUci.Length < 2 || _donneesUci[1] == "(none)" || _donneesUci[1] == "0000")
-                        {   // Cas particulier : le moteur retourne "bestmove (none)" ou "bestmove 0000" => partie terminée (mat ou pat)
-                            VarianteMoteurCourante.Text = "Aucun coup légal (mat ou pat)";
-                            break;
-                        }
-                        VarianteMoteurCourante.Text = "Coup joué : " + Outils.VarianteUciVersPgn(_donneesUci[1], NumeroDemiCoup, false) +
-                            (_donneesUci.Length > 3 ? "   (Conseil : " + Outils.VarianteUciVersPgn(_donneesUci[1] + " " + _donneesUci[3], NumeroDemiCoup, true) + ")" : "");  // Le conseil (ponder) se joue après le coup du moteur
-                        break;
-                    case "id":
-                        {
-                            switch (_donneesUci[1])
-                            {
-                                case "name":    // Récupération du nom du moteur (limité à 20 caractères pour l'affichage)
-                                    _nomMoteur = MoteurUci.DataUci[8..];
-                                    _nomMoteur = _nomMoteur[..Math.Min(20, _nomMoteur.Length)];
-                                    LabelJoueurNoir.Text = _nomMoteur;
-                                    break;
-                                case "author":  // Récupération de l'auteur
-                                    VarianteMoteurUci3.Text = "     Auteur(s) du moteur " + _nomMoteur + " = " + MoteurUci.DataUci[10..];
-                                    break;
-                            }
-                        }
-                        break;
-                    case "info":            // **** Infos de réflexion moteur ****
-                        {   // Parcours des données Uci
-                            for (int ucindex = 1; (ucindex < _donneesUci.Length); ucindex++) // Recherche des informations sur la chaine _donneesUci
-                                switch (_donneesUci[ucindex])
-                                {
-                                    case "book":
-                                        VarianteMoteurUci1.Invoke(new Action(() =>
-                                        {
-                                            VarianteMoteurUci1.Text = "    Le moteur est dans sa bibliothèque d'ouvertures";
-                                        }));
-                                        break;
+                    }
+                    VarianteMoteurCourante.Text = "Coup joué : " + Outils.VarianteUciVersPgn(ligne.MeilleurCoup, NumeroDemiCoup, false) +
+                        (ligne.CoupConseil != null ? "   (Conseil : " + Outils.VarianteUciVersPgn(ligne.MeilleurCoup + " " + ligne.CoupConseil, NumeroDemiCoup, true) + ")" : "");  // Le conseil (ponder) se joue après le coup du moteur
+                    break;
+                case "id":
+                    if (ligne.NomMoteur != null)
+                    {   // Récupération du nom du moteur (limité à 20 caractères pour l'affichage)
+                        _nomMoteur = ligne.NomMoteur[..Math.Min(20, ligne.NomMoteur.Length)];
+                        LabelJoueurNoir.Text = _nomMoteur;
+                    }
+                    if (ligne.AuteurMoteur != null)     // Récupération de l'auteur
+                        VarianteMoteurUci3.Text = "     Auteur(s) du moteur " + _nomMoteur + " = " + ligne.AuteurMoteur;
+                    break;
+                case "info":            // **** Infos de réflexion moteur ****
+                    AfficheInfoMoteur(ligne);
+                    break;
+            }
+        }
 
-                                    case "multipv":
-                                        numeroVarianteNomBox = "VarianteMoteurUci" + _donneesUci[ucindex + 1];
-                                        break;
+        private void AfficheInfoMoteur(LigneUci ligne)
+        {   // Affiche le score et la variante d'une ligne "info" du moteur
+            if (ligne.DansBibliotheque)
+                VarianteMoteurUci1.Text = "    Le moteur est dans sa bibliothèque d'ouvertures";
 
-                                    case "cp":
-                                        _scoreCourant = (Decimal.Parse(_donneesUci[ucindex + 1]) / 100).ToString("N2", CultureInfo.InvariantCulture);
-                                        if (numeroVarianteNomBox == "VarianteMoteurUci1")
-                                        {   // On affiche seulement le score de la meilleure variante
-                                            ScoreMoteur.Text = "Score : " + _scoreCourant;
-                                            AfficheEvaluation(_scoreCourant);
-                                        }
-                                        break;
-
-                                    case "mate":
-                                        string nombreCoupsMat = "MAT en " + Math.Abs(int.Parse(_donneesUci[ucindex + 1]));
-                                        _scoreCourant = "M" + Math.Abs(int.Parse(_donneesUci[ucindex + 1]));
-                                        if (numeroVarianteNomBox == "VarianteMoteurUci1")
-                                        {   // On affiche le Mat seulement si c'est la meilleure variante
-                                            InformationPourJoueur.Text = ScoreMoteur.Text = nombreCoupsMat;
-                                        }
-                                        break;
-
-                                    case "pv":          // Affichage de la variation principlale
-                                        int position = MoteurUci.DataUci.IndexOf(" pv ");
-                                        _variationMoteur = MoteurUci.DataUci[(position + 3)..];
-                                        if (_variationMoteur.Length > 60)
-                                            _variationMoteur = _variationMoteur[..60];     // On limite la longueur de la variation, pour rester dans le label
-                                        _variationMoteur = Outils.VarianteUciVersPgn(_variationMoteur, NumeroDemiCoup, false);  // Elle est en Uci, il la faut en PGN Fr ...
-                                        varianteExaminee = string.Join(" ", _variationMoteur.Split(' ').Take(3));
-                                        if (numeroVarianteNomBox != "")     // Par exemple Sargon n'a pas de multipv ?
-                                        {
-                                            RichTextBox numeroVarianteBox = Controls.Find(numeroVarianteNomBox, true).FirstOrDefault() as RichTextBox;
-                                            numeroVarianteBox?.Invoke(new Action(() =>    // Si numeroVarianteBox n'est pas nul
-                                            {
-                                                numeroVarianteBox.Text = " " + AfficheEvalSymbole(_scoreCourant) + " (" + varianteExaminee + ") █[ " +
-                                                _scoreCourant + " ]█  " + "[ " + _variationMoteur + " ]";
-                                            }));
-                                        }
-                                        else
-                                        {   // Pour ceux qui n'ont qu'une variante principale (Sargon, ...) ?!
-                                            VarianteMoteurUci1.Invoke(new Action(() =>
-                                            {  // On n'utilise que la Box VarianteMoteurUci1 ...
-                                                VarianteMoteurUci1.Text = AfficheEvalSymbole(_scoreCourant) + " (" + varianteExaminee + ") █[ "
-                                                                                        + _scoreCourant + " ]█  " + "[ " + _variationMoteur + " ]";
-                                                VarianteMoteurUci2.Text = "... " + _moteurChoisi + " n'affiche qu'une variante ..."; VarianteMoteurUci3.Text = "...";
-                                                Debug.WriteLine($"Seulement une variante !!! : {VarianteMoteurUci1.Text}");
-                                            }));
-                                        }
-                                        break;
-                                }
-                        }
-                        break;
+            // Un moteur sans MultiPV (Sargon, ...) n'envoie pas de numéro de variante : sa variante unique est la meilleure
+            bool meilleureVariante = (ligne.NumeroVariante ?? 1) == 1;
+            if (ligne.ScoreCentipions is int centipions)
+            {
+                _scoreCourant = (centipions / 100m).ToString("N2", CultureInfo.InvariantCulture);
+                if (meilleureVariante)
+                {   // On affiche seulement le score de la meilleure variante
+                    ScoreMoteur.Text = "Score : " + _scoreCourant;
+                    AfficheEvaluation(_scoreCourant);
                 }
+            }
+            if (ligne.MatEn is int matEn)
+            {   // Le signe est conservé : négatif si le camp au trait se fait mater (voir AfficheEvalSymbole)
+                _scoreCourant = (matEn < 0 ? "-M" : "M") + Math.Abs(matEn);
+                if (meilleureVariante)
+                    InformationPourJoueur.Text = ScoreMoteur.Text = "MAT en " + Math.Abs(matEn);
+            }
+            if (ligne.Variante == null)
+                return;
+
+            // Affichage de la variation principale
+            _variationMoteur = ligne.Variante;
+            if (_variationMoteur.Length > 60)
+                _variationMoteur = _variationMoteur[..60];     // On limite la longueur de la variation, pour rester dans le label
+            _variationMoteur = Outils.VarianteUciVersPgn(_variationMoteur, NumeroDemiCoup, false);  // Elle est en Uci, il la faut en PGN Fr ...
+            string varianteExaminee = string.Join(" ", _variationMoteur.Split(' ').Take(3));
+            string texteVariante = AfficheEvalSymbole(_scoreCourant) + " (" + varianteExaminee + ") █[ " + _scoreCourant + " ]█  " + "[ " + _variationMoteur + " ]";
+            if (ligne.NumeroVariante is int numeroVariante)
+            {   // Une zone d'affichage par variante (VarianteMoteurUci1, 2, 3) ; les variantes au-delà ne sont pas affichées
+                if (Controls.Find("VarianteMoteurUci" + numeroVariante, true).FirstOrDefault() is RichTextBox zoneVariante)
+                    zoneVariante.Text = " " + texteVariante;
+            }
+            else
+            {   // Pour ceux qui n'ont qu'une variante principale (Sargon, ...) : on n'utilise que la zone VarianteMoteurUci1
+                VarianteMoteurUci1.Text = texteVariante;
+                VarianteMoteurUci2.Text = "... " + _moteurChoisi + " n'affiche qu'une variante ..."; VarianteMoteurUci3.Text = "...";
             }
         }
 
