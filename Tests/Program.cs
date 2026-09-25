@@ -195,6 +195,22 @@ Verifie("Couleur .ini en hexadécimal (Lichess)", hexa.R == 181 && hexa.G == 136
 System.Drawing.Color illisible = Parametres.ConvertitCouleur("PasUneCouleur", Parametres.LichessCaseClaire);
 Verifie("Couleur .ini illisible : valeur par défaut Lichess", illisible.R == 240 && illisible.G == 217 && illisible.B == 181, $"{illisible.R},{illisible.G},{illisible.B}");
 
+string iniTest = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "BrunoGUI_test.ini");
+System.IO.File.WriteAllLines(iniTest, [
+    "; commentaire ignoré",
+    "Casesombre = #B58863",
+    "NomHumain = Testeur",
+    "NombrelignesPV = 2",
+    "NombreCoeursThread = 8",
+    "TableHachage = 256 min" ]);
+Parametres lus = new();
+lus.ChargerDepuisIni(iniTest);
+System.IO.File.Delete(iniTest);
+Verifie("Lecture du .ini (couleur, nom, MultiPV, Threads, Hash)",
+    lus.CaseSombre == "#B58863" && lus.NomHumain == "Testeur" && lus.NombreLignesPV == 2 && lus.NombreCoeursThread == 8 && lus.TailleHachageMo == 256,
+    $"Hash = {lus.TailleHachageMo} Mo, Threads = {lus.NombreCoeursThread}");
+Verifie(".ini sans TableHachage : taille du moteur conservée", new Parametres().TailleHachageMo == null, "null");
+
 // ═══════════════ Classe Position ═══════════════
 Console.WriteLine("── Position ──");
 

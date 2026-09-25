@@ -106,7 +106,9 @@ namespace BrunoGUI_GenII
             InitializeComponent();
 
             parametres = new Parametres(); // valeurs par défaut
-            parametres.ChargerDepuisIni("BrunoGUI.ini");    // Chargement du fichier des paramètres
+            parametres.ChargerDepuisIni(Path.Combine(Chemins.RepertoireRacine, "BrunoGUI.ini"));    // Chargement du fichier des paramètres (à côté de l'exécutable)
+            MoteurUci.NombreThreads = parametres.NombreCoeursThread;    // envoyés au moteur à son démarrage (voir MoteurUci)
+            MoteurUci.TailleHachageMo = parametres.TailleHachageMo;
             // Mise à jour des variables à partir des données du fichier
             _couleurCaseSombre = Parametres.ConvertitCouleur(parametres.CaseSombre, Parametres.LichessCaseSombre);
             _couleurCaseClaire = Parametres.ConvertitCouleur(parametres.CaseClaire, Parametres.LichessCaseClaire);

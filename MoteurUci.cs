@@ -9,6 +9,7 @@
 //      └─ Classe "MoteurUci" qui gère le moteur UCI
 //                      ├─ "Start"  pour démarrer le moteur
 //                      ├─ "ProcOutputDataReceived"     Evènement de sortie de données du processus UCI  
+//                      ├─ "EnvoieOptionsDemarrage"     Threads et Hash de BrunoGUI.ini, envoyés à la réception de "uciok"
 //                      ├─ "StandardInputDataToUci"     Envoi de données de l'interface vers moteur UCI
 //                      ├─ "PositionFenUci"             Position Fen courante envoyée au Moteur UCI
 //                      ├─ "JeuMoteurUci"               Envoie au moteur UCI le Fen actuel
@@ -34,7 +35,7 @@ namespace BrunoGUI_GenII
         public static event AfficheMoteurUci AfficheUci;
         public static event AfficheDonneesBrutesUci  AfficheDonneesBrutes;
         public static event AfficheCoupMoteurUci AfficheCoupMoteur;
-        public static List<string> OptionsUci = [];  // Liste pour stocker les options du moteur UCi
+        public static List<string> OptionsUci = [];  // Noms des options déclarées par le moteur (lignes "option name ...")
         public static string DataUci { get; set; }              // dernière ligne reçue du moteur, telle quelle
         public static LigneUci DerniereLigne { get; private set; } = new();   // la même ligne, décodée
         public static string DataVersUci { get; set; }
@@ -44,6 +45,9 @@ namespace BrunoGUI_GenII
         public static bool LimiteElo { get; set; }
         public static bool UciVersGui { get; set; }
         public static int NombreLignesPV { get; set; } = 3;     // Nombre de variantes (MultiPV) demandées au moteur
+        public static int? NombreThreads { get; set; }          // Threads et Hash (Mo) envoyés au démarrage du moteur (null : valeur du moteur)
+        public static int? TailleHachageMo { get; set; }
+        private static bool _optionsDemarrageEnvoyees;          // Threads/Hash ne sont envoyés qu'une fois par démarrage du moteur
         private static Process Proc;
 
         public void Start(string fichierMoteurUci)
@@ -69,7 +73,9 @@ namespace BrunoGUI_GenII
             Proc.BeginOutputReadLine();
             // première interrogation du processus: le moteur UCI est il pret ? 
             LogiqueMouvements.StatutMoteurUci = true;
-            StandardInputDataToUci("uci");  // On demande les infos au moteur
+            OptionsUci.Clear();
+            _optionsDemarrageEnvoyees = false;
+            StandardInputDataToUci("uci");  // On demande les infos au moteur (il répond par ses options puis "uciok")
         }
 
         private void ProcOutputDataReceived(object sender, DataReceivedEventArgs e)
@@ -106,7 +112,12 @@ namespace BrunoGUI_GenII
                             }
                         }
                         break;
+                    case "uciok":   // le moteur a fini de déclarer ses options
+                        EnvoieOptionsDemarrage();
+                        break;
                     case "option":
+                        if (DerniereLigne.NomOption != null && !OptionsUci.Contains(DerniereLigne.NomOption))
+                            OptionsUci.Add(DerniereLigne.NomOption);
                         if (DerniereLigne.NomOption == "UCI_LimitStrength")  // il est possible de régler la force ELO
                         {
                             ActiveLimiteElo();
@@ -116,6 +127,17 @@ namespace BrunoGUI_GenII
                 }
             }
             UciVersGui = false;
+        }
+        private static void EnvoieOptionsDemarrage()
+        {   // Threads et Hash de BrunoGUI.ini, envoyés une seule fois et seulement si le moteur déclare ces options
+            // (un nouveau "uci", par exemple depuis la fenêtre des paramètres, ne doit pas écraser les réglages faits entre-temps)
+            if (_optionsDemarrageEnvoyees)
+                return;
+            _optionsDemarrageEnvoyees = true;
+            if (NombreThreads is int threads && OptionsUci.Contains("Threads"))
+                StandardInputDataToUci("setoption name Threads value " + threads);
+            if (TailleHachageMo is int hachage && OptionsUci.Contains("Hash"))
+                StandardInputDataToUci("setoption name Hash value " + hachage);
         }
         public static void StandardInputDataToUci(string Data)
         {   // Envoi de données de l'interface vers moteur UCI
