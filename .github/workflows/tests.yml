@@ -19,8 +19,10 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      # SignManifests=false : le certificat de signature ClickOnce n'existe que sur le PC de développement ;
+      # la signature ne sert qu'à la publication, pas aux tests
       - name: Compilation
-        run: dotnet build BrunoGUI_GenII.sln -c Release
+        run: dotnet build BrunoGUI_GenII.sln -c Release -p:SignManifests=false
 
       - name: Tests (règles, notation, UCI, perft complets)
         run: dotnet run --project Tests -c Release --no-build -- --complet
