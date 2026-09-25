@@ -539,11 +539,11 @@ namespace BrunoGUI_GenII
                     {
                         if (char.IsLower(MouvementCoupPgn[0]))
                         {   // C'est un coup de Pion
-                            MouvementCoupNal = caseSource + 'x' + MouvementCoupPgn[2] + MouvementCoupPgn[3] + LettrePromotionUci(lettrePromo).ToUpper(); ;
+                            MouvementCoupNal = caseSource + 'x' + caseDestination + LettrePromotionUci(lettrePromo).ToUpper();
                         }
                         else
                         {   // C'est un coup de Pièce
-                            MouvementCoupNal = MouvementCoupPgn[0] + caseSource + 'x' + MouvementCoupPgn[2] + MouvementCoupPgn[3];
+                            MouvementCoupNal = MouvementCoupPgn[0] + caseSource + 'x' + caseDestination;   // la case d'arrivée, pas des positions fixes dans le PGN (ex : Cgxe2)
                         }
                     }
                     else
@@ -1030,25 +1030,14 @@ namespace BrunoGUI_GenII
                 case TypePiece.CavalierBlanc:
                 case TypePiece.CavalierNoir:
                 case TypePiece.TourBlanche:
-                case TypePiece.TourNoire: // si c'est un cavalier ou une tour   
-                    string AutrePosition = NomCaseAlgebrique(PositionSecondePiece(IndexSource)); // cherche la position de l'autre cavalier ou de l'autre tour
-                    if (AutrePosition != string.Empty)
-                    {
-                        List<string> AutreCaseDestinations = RetourneMouvements(AutrePosition); // récupère les mouvements possibles de l'autre pièce
-                        // on enlève le "x" qui signifie la prise
-                        for (int i = 0; i <= AutreCaseDestinations.Count - 1; i++)
-                            if (AutreCaseDestinations[i].StartsWith('x'))
-                                AutreCaseDestinations[i] = AutreCaseDestinations[i][1..];
-                        if (AutreCaseDestinations.Contains(CaseDestination))
-                        {
-                            if (caseSource[..1] != AutrePosition[..1])
-                                // si les deux pièces ne sont pas sur les mêmes colonnes
-                                MouvementSpecifique = NomsPieceLocale(Piece) + caseSource[..1] + (PiecesEchiquier[IndexDestination] == TypePiece.Vide ? string.Empty : "x") + CaseDestination;
-                            else
-                                // sinon il faut rajouter la ligne pour spécifier la bonne pièce car les 2 pièces sont sur la même colonne 
-                                MouvementSpecifique = NomsPieceLocale(Piece) + caseSource.Substring(1, 1) + (PiecesEchiquier[IndexDestination] == TypePiece.Vide ? string.Empty : "x") + CaseDestination;
-                        }
-                    }
+                case TypePiece.TourNoire:
+                case TypePiece.FouBlanc:
+                case TypePiece.FouNoir:
+                case TypePiece.ReineBlanche:
+                case TypePiece.ReineNoire: // Si une autre pièce identique peut jouer sur la même case, on précise la case de départ
+                    string Precision = LeveeAmbiguite(IndexSource, IndexDestination);
+                    if (Precision != string.Empty)
+                        MouvementSpecifique = NomsPieceLocale(Piece) + Precision + (PiecesEchiquier[IndexDestination] == TypePiece.Vide ? string.Empty : "x") + CaseDestination;
                     break;
                 case TypePiece.PionBlanc:
                 case TypePiece.PionNoir: // Si c'est un pion
@@ -1091,15 +1080,31 @@ namespace BrunoGUI_GenII
 
             return MouvementSpecifique == string.Empty ? MouvementParDefaut : MouvementSpecifique;
         }
-        private static int PositionSecondePiece(int IndexCase)
-        {   // Renvoie la position de la seconde pièce ( -1 si elle n'est pas présente )
-            // Valable pour tour et cavalier (pas le fou, car chaque fou est sur une case de couleur différente )
-            TypePiece Piece = PiecesEchiquier[IndexCase];
-            if (Piece != TypePiece.Vide)
-                for (int i = 0; i <= 99; i++)
-                    if (PiecesEchiquier[i] == Piece && i != IndexCase)
-                        return i;
-            return -1;
+        private static string LeveeAmbiguite(int IndexSource, int IndexDestination)
+        {   // Règle PGN : si d'autres pièces identiques peuvent jouer LÉGALEMENT sur la même case (une pièce clouée ne compte pas),
+            // on ajoute la colonne de départ ; si l'une d'elles est sur la même colonne, la rangée ; si les deux, la case entière.
+            // Retourne "" s'il n'y a pas d'ambiguïté. Gère plusieurs pièces identiques (ex : dames ou fous après promotion)
+            string CaseSource = NomCaseAlgebrique(IndexSource);
+            string CaseDestination = NomCaseAlgebrique(IndexDestination);
+            bool Ambiguite = false, MemeColonne = false, MemeRangee = false;
+            for (int i = 21; i <= 98; i++)
+            {
+                if (i == IndexSource || PiecesEchiquier[i] != PiecesEchiquier[IndexSource])
+                    continue;
+                string AutreCase = NomCaseAlgebrique(i);
+                if (!TestMouvementValide(AutreCase, CaseDestination))
+                    continue;
+                Ambiguite = true;
+                MemeColonne |= AutreCase[0] == CaseSource[0];
+                MemeRangee |= AutreCase[1] == CaseSource[1];
+            }
+            if (!Ambiguite)
+                return string.Empty;
+            if (!MemeColonne)
+                return CaseSource[..1];         // la colonne suffit (ex : Cge2)
+            if (!MemeRangee)
+                return CaseSource.Substring(1, 1);  // la rangée suffit (ex : T1a3)
+            return CaseSource;                  // il faut la case complète (ex : Da1b2)
         }
         public static string NomCaseAlgebrique(int IndexCase)
         {   // Renvoie le nom d'une case sous la forme e2 ou un caractère vide en cas d'erreur
