@@ -1,0 +1,26 @@
+# Compile BrunoGUI_GenII et lance les tests de la logique d'échecs à chaque push et pull request.
+# Le résultat apparaît sur GitHub (coche verte ou croix rouge à côté de chaque commit, onglet "Actions").
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:        # permet aussi de lancer les tests à la main depuis l'onglet "Actions"
+
+jobs:
+  tests:
+    runs-on: windows-latest     # application WinForms : il faut Windows
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      - name: Installation de .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Compilation
+        run: dotnet build BrunoGUI_GenII.sln -c Release
+
+      - name: Tests (règles, notation, UCI, perft complets)
+        run: dotnet run --project Tests -c Release --no-build -- --complet
