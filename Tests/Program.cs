@@ -192,6 +192,16 @@ Verifie("option : nom simple", LigneUci.Analyser("option name UCI_LimitStrength 
 Verifie("option : nom avec espace", LigneUci.Analyser("option name Skill Level type spin default 20 min 0 max 20").NomOption == "Skill Level", "Skill Level");
 Verifie("ligne vide", LigneUci.Analyser("   ").Commande == "", "commande vide");
 
+// ═══════════════ Paramètres (.ini) ═══════════════
+Console.WriteLine("── Paramètres ──");
+
+System.Drawing.Color peru = Parametres.ConvertitCouleur("Peru", Parametres.LichessCaseSombre);
+Verifie("Couleur .ini par son nom", peru.R == 205 && peru.G == 133 && peru.B == 63, $"{peru.R},{peru.G},{peru.B}");
+System.Drawing.Color hexa = Parametres.ConvertitCouleur("#B58863", Parametres.LichessCaseClaire);
+Verifie("Couleur .ini en hexadécimal (Lichess)", hexa.R == 181 && hexa.G == 136 && hexa.B == 99, $"{hexa.R},{hexa.G},{hexa.B}");
+System.Drawing.Color illisible = Parametres.ConvertitCouleur("PasUneCouleur", Parametres.LichessCaseClaire);
+Verifie("Couleur .ini illisible : valeur par défaut Lichess", illisible.R == 240 && illisible.G == 217 && illisible.B == 181, $"{illisible.R},{illisible.G},{illisible.B}");
+
 // ═══════════════ Classe Position ═══════════════
 Console.WriteLine("── Position ──");
 

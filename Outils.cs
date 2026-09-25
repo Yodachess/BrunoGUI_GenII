@@ -19,7 +19,9 @@
 // └─ Classe "Parametres"  
 //              └─ "ChargerDepuisIni"
 
+using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Reflection;
 using System.Security.Claims;
@@ -237,17 +239,36 @@ namespace BrunoGUI_GenII
     {
         public string Moteur { get; set; } = "stockfish.exe";
         public string SiteMoteur { get; set; } = "";
-        public string CaseSombre { get; set; } = "CornflowerBlue";
-        public string CaseClaire { get; set; } = "AliceBlue";
+        // Couleurs par défaut (si absentes du .ini ou illisibles) : style Lichess
+        public const string LichessCaseSombre = "#B58863";              // RVB 181, 136, 99
+        public const string LichessCaseClaire = "#F0D9B5";              // RVB 240, 217, 181
+        public const string LichessCaseSource = "#86A66C";              // RVB 134, 166, 108
+        public const string LichessCaseDestination = "#C4C87F";         // RVB 196, 200, 127
+        public string CaseSombre { get; set; } = LichessCaseSombre;
+        public string CaseClaire { get; set; } = LichessCaseClaire;
         public string NomHumain { get; set; } =  "Bruno";
         public string EloHumain { get; set; } = "1767";
-        public string CouleurCaseSource { get; set; } = "Khaki";
-        public string CouleurCaseDestination { get; set; } = "Gold";
+        public string CouleurCaseSource { get; set; } = LichessCaseSource;
+        public string CouleurCaseDestination { get; set; } = LichessCaseDestination;
         public int DureeReflexionSeconde { get; set; } = 3;
         public int ForceMoteur { get; set; } = 1850;
         public int NombreLignesPV { get; set; } = 3;
         public int NombreCoeursThread { get; set; } = 4;
         public string Bibliotheque { get; set; } = "rodent.bin";
+
+        public static Color ConvertitCouleur(string valeur, string parDefaut)
+        {   // Couleur du .ini : un nom de couleur .NET (ex : Peru) ou un code hexadécimal (ex : #B58863)
+            // Si la valeur est illisible, on utilise la couleur par défaut
+            try
+            {
+                Color couleur = valeur.StartsWith('#') ? ColorTranslator.FromHtml(valeur) : Color.FromName(valeur);
+                if (couleur.IsKnownColor || valeur.StartsWith('#'))
+                    return couleur;
+            }
+            catch (Exception) { }
+            Debug.WriteLine($"[DEBUG] Couleur illisible dans le .ini : '{valeur}', utilisation de {parDefaut}");
+            return ColorTranslator.FromHtml(parDefaut);
+        }
 
         public void ChargerDepuisIni(string chemin)
         {

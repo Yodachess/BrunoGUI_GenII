@@ -108,10 +108,10 @@ namespace BrunoGUI_GenII
             parametres = new Parametres(); // valeurs par défaut
             parametres.ChargerDepuisIni("BrunoGUI.ini");    // Chargement du fichier des paramètres
             // Mise à jour des variables à partir des données du fichier
-            _couleurCaseSombre = Color.FromName(parametres.CaseSombre);
-            _couleurCaseClaire = Color.FromName(parametres.CaseClaire);
-            _couleurCaseSource = Color.FromName(parametres.CouleurCaseSource);
-            _couleurCaseDestination = Color.FromName(parametres.CouleurCaseDestination);
+            _couleurCaseSombre = Parametres.ConvertitCouleur(parametres.CaseSombre, Parametres.LichessCaseSombre);
+            _couleurCaseClaire = Parametres.ConvertitCouleur(parametres.CaseClaire, Parametres.LichessCaseClaire);
+            _couleurCaseSource = Parametres.ConvertitCouleur(parametres.CouleurCaseSource, Parametres.LichessCaseSource);
+            _couleurCaseDestination = Parametres.ConvertitCouleur(parametres.CouleurCaseDestination, Parametres.LichessCaseDestination);
             _nomHumain = parametres.NomHumain;
             _joueurElo = parametres.EloHumain;
             _dureeReflexionMilliSeconde = parametres.DureeReflexionSeconde * 1000;
@@ -176,13 +176,7 @@ namespace BrunoGUI_GenII
             ListeBitmapsSymbole.Add(LogiqueMouvements.TypeSymbole.SymboleMouvementInterdit, CercleViolet); // symbole Mouvement interdit
             ListeBitmapsSymbole.Add(LogiqueMouvements.TypeSymbole.SymboleMouvementAvecPrise, CroixPriseVerte); // symbole Mouvement avec prise
 
-            // _couleurCaseSombre = Color.CornflowerBlue;   // Couleurs cases noires par défaut
-            // _couleurCaseClaire = Color.AliceBlue;        // Couleurs cases blanches par défaut
-
-            _couleurCaseSombre = Color.FromArgb(181, 136, 99);  // Couleur style Lichess
-            _couleurCaseClaire = Color.FromArgb(240, 217, 181); // Couleur style Lichess
-            _couleurCaseSource = Color.FromArgb(134, 166, 108);
-            _couleurCaseDestination = Color.FromArgb(196, 200, 127);
+            // Les couleurs des cases viennent de BrunoGUI.ini (voir le constructeur) ; le style Lichess est la valeur par défaut
 
 
             _dossierRacine = Chemins.RepertoireRacine;
