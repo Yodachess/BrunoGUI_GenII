@@ -39,6 +39,12 @@
     <None Include="Resources\FichierrOuvrir.bmp" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Le projet de tests a son propre .csproj : on l'exclut de l'application -->
+    <Compile Remove="Tests\**" />
+    <EmbeddedResource Remove="Tests\**" />
+    <None Remove="Tests\**" />
+  </ItemGroup>
+  <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">
       <Visible>False</Visible>
       <ProductName>Microsoft .NET Framework 4.7.2 %28x86 et x64%29</ProductName>
@@ -51,8 +57,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <!-- PreserveNewest : un Stockfish mis à jour par l'application dans bin n'est pas écrasé à chaque compilation -->
     <Content Include="stockfish\stockfish.exe">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <ItemGroup>

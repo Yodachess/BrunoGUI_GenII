@@ -76,9 +76,22 @@ namespace BrunoGUI_GenII
     {
         public static string VarianteUciVersPgn(string varianteBrute, int numeroDemiCoup, bool coupConseil)
         {   // Retourne les coups dans le format PGN (Cdxe4)
+            // Si coupConseil = true, seul le dernier coup de la variante est retourné (avec son numéro)
+            // Les coups sont joués sur une copie de la position : la partie en cours n'est ni modifiée, ni redessinée
+            TypePiece promotionEnCours = PromotionPiece;
+            try
+            {
+                return LogiqueMouvements.CalculerSurCopie(() => ConvertitVarianteUci(varianteBrute, numeroDemiCoup, coupConseil));
+            }
+            finally
+            {
+                PromotionPiece = promotionEnCours;
+            }
+        }
+        private static string ConvertitVarianteUci(string varianteBrute, int numeroDemiCoup, bool coupConseil)
+        {   // Joue la variante sur la position actuelle (qui doit être une copie, voir VarianteUciVersPgn)
             varianteBrute = varianteBrute.TrimStart();
             string[] varianteUciDecoupe = varianteBrute.Split(' ');         // Découpage des coups de la variante
-            string stockeFen = LogiqueMouvements.RetourneChaineFenActuel(); // Récupérer le FEN actuel pour le remettre à la fin ? Obligé si on bouge les pièces !!
             varianteBrute = "";
 
             if (LogiqueMouvements.QuiJoue == ColorPiece.Noir)                       // la PV commence par le coup Noir
@@ -117,8 +130,13 @@ namespace BrunoGUI_GenII
                         {   // Ajouter la pièce promue au PGN
                             coupExaminePgn += CaracterePieceLocale(char.ToLower(varianteUciDecoupe[i][4]));
                         }
-                        // On fait le mouvement
-                        LogiqueMouvements.DeplacementPiece(RenvoieCaseIndex120(source), RenvoieCaseIndex120(destination), false);
+                        // On fait le mouvement (avec la tour du roque et le pion pris en passant)
+                        int indexSource = RenvoieCaseIndex120(source);
+                        int indexDestination = RenvoieCaseIndex120(destination);
+                        bool doublePasPion = System.Math.Abs(indexDestination - indexSource) == 20 &&
+                            (PiecesEchiquier[indexSource] == TypePiece.PionBlanc || PiecesEchiquier[indexSource] == TypePiece.PionNoir);
+                        LogiqueMouvements.SimuleCoup(indexSource, indexDestination);
+                        IndexCaseEnPassant = doublePasPion ? (indexSource + indexDestination) / 2 : 0;   // pour le coup suivant de la variante
                         if (PromotionPiece != TypePiece.Vide)
                         {   // IMPORTANT : remplacer le pion par la pièce promue
                             LogiqueMouvements.PiecesEchiquier[RenvoieCaseIndex120(destination)] = PromotionPiece;
@@ -132,18 +150,17 @@ namespace BrunoGUI_GenII
                         {
                             coupExaminePgn += "+";
                         }
-                        Echec = EchecetMat = false;
-
                         ColorPiece couleurCoup = LogiqueMouvements.CouleurCase(RenvoieCaseIndex120(destination));
                         if (coupConseil)
-                        {   // Un seul coup à afficher, c'est le conseil du moteur...
+                        {   // Un seul coup à afficher, c'est le conseil du moteur : la variante reçue est "meilleurCoup conseil",
+                            // on ne garde que le dernier coup, joué sur la position obtenue après le meilleur coup
                             int numeroCoup = (numeroDemiCoup / 2) + 2;
-                            if (LogiqueMouvements.QuiJoue == ColorPiece.Blanc)
-                            {   // C'est aux Noirs de jouer
+                            if (couleurCoup == ColorPiece.Noir)
+                            {   // Le conseil est un coup Noir
                                 varianteBrute = (numeroCoup).ToString() + " ... " + coupExaminePgn;
                             }
                             else
-                            {   // C'est aux Blancs de jouer
+                            {   // Le conseil est un coup Blanc
                                 varianteBrute = (numeroCoup).ToString() + ". " + coupExaminePgn;
                             }
                         }
@@ -175,7 +192,6 @@ namespace BrunoGUI_GenII
                     }
                 }
             }
-            LogiqueMouvements.MiseenplaceFen(stockeFen);        // et on réaffiche l'échiquier de départ
             return varianteBrute;
         }
 
@@ -257,6 +273,10 @@ namespace BrunoGUI_GenII
                     case "Sitemoteur": SiteMoteur = valeur; break;
                     case "Casesombre": CaseSombre = valeur; break;
                     case "Caseclaire": CaseClaire = valeur; break;
+                    case "CouleurCaseSource": CouleurCaseSource = valeur; break;
+                    case "CouleurCaseDestination": CouleurCaseDestination = valeur; break;
+                    case "NomHumain": NomHumain = valeur; break;
+                    case "EloHumain": EloHumain = valeur; break;
                     case "DureereflexionSeconde": DureeReflexionSeconde = int.Parse(valeur); break;
                     case "Forcemoteur": ForceMoteur = int.Parse(valeur); break;
                     case "NombrelignesPV": NombreLignesPV = int.Parse(valeur); break;
