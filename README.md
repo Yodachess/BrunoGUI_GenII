@@ -1,6 +1,8 @@
 # BrunoGUI_GenII - Chess GUI in C# WinForms  
 (Copyright (C) 2026 Bruno COURTOIS)
 
+[![Tests](https://github.com/Yodachess/BrunoGUI_GenII/actions/workflows/tests.yml/badge.svg)](https://github.com/Yodachess/BrunoGUI_GenII/actions/workflows/tests.yml)
+
 ---
 
 ## 🇬🇧 English
