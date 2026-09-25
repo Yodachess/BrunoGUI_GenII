@@ -22,6 +22,7 @@ using ComponentFactory.Krypton.Toolkit;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Drawing;
 using System.Windows.Forms;
 using static BrunoGUI_GenII.LogiqueMouvements;
@@ -89,9 +90,7 @@ namespace BrunoGUI_GenII
 
         public static void DecodeCoupPartie(string coupPartie, bool couleurTraitBlanc)
         {   // Décode UN coup au format Pgn en case source / destination et execute le coup
-            char dernierCaractereCoup, LeveeDeDoute;
-            bool PromotionExiste = false;
-            bool PriseExiste = false;
+            char dernierCaractereCoup;
             BloquerChoixPromo = false;
             ColorPiece couleurQuiJoue;
             string CaseDestination, CaseSource;
@@ -174,36 +173,17 @@ namespace BrunoGUI_GenII
                             break;
                     }
                     //      Partie commune
-                    // CoupPGN a 5 caractères maximum, car on a enlevé les échecs au début de la méthode
-                    // On enlève le "x" de la prise si il existe, ainsi que les 2 derniers caractères qui sont la destination
+                    // On enlève le "x" de la prise si il existe : il reste la lettre de la pièce, la levée d'ambiguïté éventuelle
+                    // (colonne, rangée ou case complète, ex : Nge2, R1a3, Qa1b2) et les 2 caractères de la destination
                     CoupPGN = CoupPGN.Replace("x", "");
-                    CoupPGN = CoupPGN[..^2];
-                    // Si CoupPGN.Length == 2, CoupPGN[1] est le caractère de "LeveeDeDoute", peut être une lettre ou un chiffre. Sinon c'est vide
-                    if (CoupPGN.Length == 2)
-                        LeveeDeDoute = CoupPGN[1];      // C'est le caractère de levée de doute, une lettre pour la colonne ou un chiffre pour la ligne
-                    else
-                        LeveeDeDoute = '\0';            // Il n'y a pas d'ambiguité, 
-
-                    for (int i = 21; i <= 98; i++)
+                    string LeveeDeDoute = CoupPGN[1..^2];
+                    // On ne retient que les coups LÉGAUX : une pièce clouée n'est pas candidate (et le PGN ne la mentionne pas)
+                    foreach (var (source, destination) in LogiqueMouvements.CoupsLegaux())
                     {
-                        if (PiecesEchiquier[i] == pieceQuiJoue)     // Pour chaque Pièce trouvée, 
-                        {                                       // On génère les mouvements possibles
-                            List<string> Mouvements = RetourneMouvements(LogiqueMouvements.NomCaseAlgebrique(i));
-                            for (int j = 0; j < Mouvements.Count; j++)
-                            {                                                                               // Mouvements[x] est sous la forme c5 ou xc5 si prise
-                                if (Mouvements[j][^2..] == CaseDestination)   // Au cas ou il y a prise, on prend la fin de la chaine
-                                {   // Si un des mouvements est la case de destination, ce n'est pas forcément le bon Cavalier, Dame ou Tour ou Fou
-                                    // Si LogiqueMouvements.NomCaseAlgebrique(i) contient LeveeDeDoute, ou que LeveeDeDoute est vide (il n'y a plus de doute)
-                                    // c'est la bonne Pièce et CaseSource = LogiqueMouvements.NomCaseAlgebrique(i);
-                                    if (LeveeDeDoute == '\0' || LeveeDeDoute == LogiqueMouvements.NomCaseAlgebrique(i)[0] || LeveeDeDoute == LogiqueMouvements.NomCaseAlgebrique(i)[1])
-                                    {       //  Il n'y a pas d'ambiguité, 
-                                        CaseSource = LogiqueMouvements.NomCaseAlgebrique(i);
-                                        if (Mouvements[j].Contains('x'))
-                                            PriseExiste = true;
-                                    }
-                                }
-                            }
-                        }
+                        if (destination != CaseDestination || PiecesEchiquier[RenvoieCaseIndex120(source)] != pieceQuiJoue)
+                            continue;
+                        if (LeveeDeDoute.All(c => source.Contains(c)))     // chaque caractère de la levée de doute correspond à la case de départ
+                            CaseSource = source;
                     }
                 }
 
@@ -211,7 +191,6 @@ namespace BrunoGUI_GenII
                 {
                     if (CoupPGN.Contains('='))              // PROMOTION
                     {   // PROMOTION  
-                        PromotionExiste = true;
                         switch (CoupPGN[CoupPGN.Length - 1])
                         {
                             case 'Q':
@@ -232,7 +211,6 @@ namespace BrunoGUI_GenII
                     }
                     if (CoupPGN.Contains('x'))              // PRISE
                     {   // PRISE
-                        PriseExiste = true;
                         CaseDestination = CoupPGN.Substring(CoupPGN.Length - 2, 2);       // La CaseDestination = 2 derniers caractères de CoupPGN
                         pieceQuiJoue = TypePiece.PionNoir;
                         if (CoupPGN[2].CompareTo(CoupPGN[0]) > 0)
@@ -252,7 +230,6 @@ namespace BrunoGUI_GenII
 
                     if (!CoupPGN.Contains('x'))             // NI PROMOTION, NI PRISE
                     {   // NI PROMOTION, NI PRISE
-                        PriseExiste = false;
                         CaseDestination = CoupPGN;
                         if (couleurQuiJoue == ColorPiece.Blanc)
                         {       // Le Pion est Blanc
@@ -274,8 +251,6 @@ namespace BrunoGUI_GenII
                 {   // On change de couleur si c'est pas le numéro du coup
                     _ = couleurQuiJoue == ColorPiece.Noir ? ColorPiece.Blanc : ColorPiece.Noir;
                     string CoupNal = (CaseSource + "-" + CaseDestination);
-                    PriseExiste = false;
-                    PromotionExiste = false;
                     CoupNal = pieceQuiJoue + "  " + CoupNal;
 
                     if (string.IsNullOrWhiteSpace(CaseSource) || string.IsNullOrWhiteSpace(CaseDestination))

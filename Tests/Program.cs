@@ -125,6 +125,37 @@ foreach (var (s, d) in new[] { ("e2", "e4"), ("e7", "e5"), ("f1", "c4"), ("b8", 
     L.ExecutionCoup(s, d);
 Verifie("Mat du berger détecté", L.EchecetMat, string.Concat(L.ListeCoupsPgnIntl).Trim());
 
+// ═══════════════ Notation des coups ambigus ═══════════════
+Console.WriteLine("── Notation ──");
+
+void TestNotation(string nom, string fen, string source, string destination, string attendu)
+{   // Joue le coup et compare sa notation PGN internationale (sans numéro, sans espace),
+    // puis vérifie l'aller-retour : relire cette notation (chargement PGN) doit donner la même position
+    Charger(fen);
+    L.ExecutionCoup(source, destination);
+    string fenApresCoup = L.RetourneChaineFenActuel();
+    string coup = DernierCoupPgn().Trim();
+    coup = coup[(coup.LastIndexOf(' ') + 1)..];     // retire le numéro de coup éventuel ("1. ")
+    Verifie(nom, coup == attendu, $"{coup} (attendu {attendu})");
+
+    Charger(fen);
+    GestionPartiePgn.DecodeCoupPartie(coup, L.QuiJoue == L.ColorPiece.Blanc);
+    Verifie(nom + " : relecture PGN", L.RetourneChaineFenActuel() == fenApresCoup, L.RetourneChaineFenActuel());
+}
+
+TestNotation("Deux tours sur la même rangée", "4k3/8/8/8/8/8/4K3/R6R w - - 0 1", "a1", "d1", "Rad1");
+TestNotation("Deux tours sur la même colonne", "4k3/8/8/R7/8/8/8/R3K3 w - - 0 1", "a1", "a3", "R1a3");
+TestNotation("Deux cavaliers pouvant aller sur la même case", "4k3/8/8/8/8/2N5/8/4K1N1 w - - 0 1", "g1", "e2", "Nge2");
+TestNotation("Cavalier cloué : pas d'ambiguïté", "4k3/8/8/8/1b6/2N5/8/4K1N1 w - - 0 1", "g1", "e2", "Ne2");
+TestNotation("Deux dames sur la même colonne", "4k3/8/8/8/8/8/Q7/Q3K3 w - - 0 1", "a1", "b2", "Q1b2");
+TestNotation("Deux fous de même couleur", "4k3/8/8/8/8/B7/8/2B1K3 w - - 0 1", "c1", "b2", "Bcb2");
+TestNotation("Trois dames : colonne et rangée", "4k3/8/8/8/8/Q7/8/Q1Q1K3 w - - 0 1", "a1", "b2", "Qa1b2");
+TestNotation("Autre tour qui ne peut pas y aller", "4k3/8/8/8/8/8/8/R3K1R1 w - - 0 1", "g1", "g5", "Rg5");
+TestNotation("Prise ambiguë par un cavalier", "4k3/8/8/8/8/2N5/4p3/4K1N1 w - - 0 1", "g1", "e2", "Ngxe2");
+Verifie("NAL d'une prise ambiguë", L.ListeCoupsNal.LastOrDefault()?.Trim().EndsWith("Ng1xe2") == true, L.ListeCoupsNal.LastOrDefault() ?? "(vide)");
+TestNotation("Prise d'un pion par un pion", "4k3/8/8/3p4/4P3/8/8/4K3 w - - 0 1", "e4", "d5", "exd5");
+Verifie("NAL d'une prise de pion", L.ListeCoupsNal.LastOrDefault()?.Trim().EndsWith("e4xd5") == true, L.ListeCoupsNal.LastOrDefault() ?? "(vide)");
+
 // ═══════════════ Classe Position ═══════════════
 Console.WriteLine("── Position ──");
 
