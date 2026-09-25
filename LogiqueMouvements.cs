@@ -204,7 +204,7 @@ namespace BrunoGUI_GenII
         public static void DessinePiecePlateau(int IndexCase, TypePiece Piece)
         {   // Dessine les piéces sur le plateau à l'initialisation
             PiecesEchiquier[IndexCase] = Piece;
-            DessinePiece(IndexCase, Piece);
+            DessinePiece?.Invoke(IndexCase, Piece);
         }
         public static void DessinPieces()
         {   //  Dessine toutes les pièces
@@ -215,46 +215,46 @@ namespace BrunoGUI_GenII
                     switch (PiecesEchiquier[(ligne * 10) + colonne])
                     {
                         case TypePiece.RoiBlanc:
-                            DessinePiece((ligne * 10) + colonne, TypePiece.RoiBlanc);
+                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.RoiBlanc);
                             break;
                         case TypePiece.ReineBlanche:
-                            DessinePiece((ligne * 10) + colonne, TypePiece.ReineBlanche);
+                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.ReineBlanche);
                             break;
                         case TypePiece.FouBlanc:
-                            DessinePiece((ligne * 10) + colonne, TypePiece.FouBlanc);
+                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.FouBlanc);
                             break;
                         case TypePiece.CavalierBlanc:
-                            DessinePiece((ligne * 10) + colonne, TypePiece.CavalierBlanc);
+                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.CavalierBlanc);
                             break;
                         case TypePiece.TourBlanche:
-                            DessinePiece((ligne * 10) + colonne, TypePiece.TourBlanche);
+                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.TourBlanche);
                             break;
                         case TypePiece.PionBlanc:
-                            DessinePiece((ligne * 10) + colonne, TypePiece.PionBlanc);
+                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.PionBlanc);
                             break;
                         case TypePiece.RoiNoir:
-                            DessinePiece((ligne * 10) + colonne, TypePiece.RoiNoir);
+                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.RoiNoir);
                             break;
                         case TypePiece.ReineNoire:
-                            DessinePiece((ligne * 10) + colonne, TypePiece.ReineNoire);
+                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.ReineNoire);
                             break;
                         case TypePiece.FouNoir:
-                            DessinePiece((ligne * 10) + colonne, TypePiece.FouNoir);
+                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.FouNoir);
                             break;
                         case TypePiece.CavalierNoir:
-                            DessinePiece((ligne * 10) + colonne, TypePiece.CavalierNoir);
+                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.CavalierNoir);
                             break;
                         case TypePiece.TourNoire:
-                            DessinePiece((ligne * 10) + colonne, TypePiece.TourNoire);
+                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.TourNoire);
                             break;
                         case TypePiece.PionNoir:
-                            DessinePiece((ligne * 10) + colonne, TypePiece.PionNoir);
+                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.PionNoir);
                             break;
                         case TypePiece.Bordure:
-                            DessinePiece((ligne * 10) + colonne, TypePiece.Bordure);
+                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.Bordure);
                             break;
                         case TypePiece.Vide:
-                            DessinePiece((ligne * 10) + colonne, TypePiece.Vide);
+                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.Vide);
                             break;
                     }
                 }
@@ -317,7 +317,7 @@ namespace BrunoGUI_GenII
                         {
                             IndiceCases++;
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.Vide;
-                            DessinePiece(20 + r * 10 + IndiceCases, TypePiece.Vide);
+                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.Vide);
                         }
                     }
                     else                                // Si le caractère n'est pas un chiffre
@@ -326,51 +326,51 @@ namespace BrunoGUI_GenII
                     {
                         case 'K':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.RoiBlanc;
-                            DessinePiece(20 + r * 10 + IndiceCases, TypePiece.RoiBlanc);
+                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.RoiBlanc);
                             break;
                         case 'Q':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.ReineBlanche;
-                            DessinePiece(20 + r * 10 + IndiceCases, TypePiece.ReineBlanche);
+                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.ReineBlanche);
                             break;
                         case 'B':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.FouBlanc;
-                            DessinePiece(20 + r * 10 + IndiceCases, TypePiece.FouBlanc);
+                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.FouBlanc);
                             break;
                         case 'N':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.CavalierBlanc;
-                            DessinePiece(20 + r * 10 + IndiceCases, TypePiece.CavalierBlanc);
+                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.CavalierBlanc);
                             break;
                         case 'R':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.TourBlanche;
-                            DessinePiece(20 + r * 10 + IndiceCases, TypePiece.TourBlanche);
+                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.TourBlanche);
                             break;
                         case 'P':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.PionBlanc;
-                            DessinePiece(20 + r * 10 + IndiceCases, TypePiece.PionBlanc);
+                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.PionBlanc);
                             break;
                         case 'k':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.RoiNoir;
-                            DessinePiece(20 + r * 10 + IndiceCases, TypePiece.RoiNoir);
+                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.RoiNoir);
                             break;
                         case 'q':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.ReineNoire;
-                            DessinePiece(20 + r * 10 + IndiceCases, TypePiece.ReineNoire);
+                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.ReineNoire);
                             break;
                         case 'b':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.FouNoir;
-                            DessinePiece(20 + r * 10 + IndiceCases, TypePiece.FouNoir);
+                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.FouNoir);
                             break;
                         case 'n':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.CavalierNoir;
-                            DessinePiece(20 + r * 10 + IndiceCases, TypePiece.CavalierNoir);
+                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.CavalierNoir);
                             break;
                         case 'r':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.TourNoire;
-                            DessinePiece(20 + r * 10 + IndiceCases, TypePiece.TourNoire);
+                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.TourNoire);
                             break;
                         case 'p':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.PionNoir;
-                            DessinePiece(20 + r * 10 + IndiceCases, TypePiece.PionNoir);
+                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.PionNoir);
                             break;
                     }
                 }
@@ -400,7 +400,7 @@ namespace BrunoGUI_GenII
                         Indexcase = RenvoieCaseIndex120(CaseDestination);
                         ListeMouvementsPiece.Add(Indexcase, PiecesEchiquier[Indexcase]);
                         if (visu)
-                            DessineSymbole(Indexcase, Symbole);
+                            DessineSymbole?.Invoke(Indexcase, Symbole);
                     }
             List<string> Menaces = CasesPiecesMenacantes(caseSource);
             if (Menaces != null)
@@ -411,13 +411,13 @@ namespace BrunoGUI_GenII
                         ListeMenacesPiece.Add(Indexcase, PiecesEchiquier[Indexcase]);
                         // Pour l'instant, je n'affiche pas les menaces sur la pièce sélectionnée, ce n'est pas assez clair ... ??!!   DEBUG 26/02
                         //if (visu)
-                        //    DessineSymbole(Indexcase, TypeSymbole.SymboleMenacePiece); // Menace la pièce sélectionnée
+                        //    DessineSymbole?.Invoke(Indexcase, TypeSymbole.SymboleMenacePiece); // Menace la pièce sélectionnée
                     }
         }
 
         public static void DessineCaseVide(int IndexCasePion, TypePiece Vide)
         {   // Dessine une case vide pour le pion adverse capturé lors d'un mouvement en passant pour un pion
-            DessinePiece(IndexCasePion, Vide);
+            DessinePiece?.Invoke(IndexCasePion, Vide);
         }
         public static void EffaceSymboles(bool visu)
         {   // Efface les symboles sur l'échiquier si ceux-ci sont visibles
@@ -434,7 +434,7 @@ namespace BrunoGUI_GenII
         private static void EffaceListe(Dictionary<int, TypePiece> ListeEfface)
         {   // Efface les symboles à l'écran
             foreach (KeyValuePair<int, TypePiece> Element in ListeEfface)
-                DessinePiece(Element.Key, Element.Value);
+                DessinePiece?.Invoke(Element.Key, Element.Value);
         }
         public static string RetourneChaineFenActuel()
         {   // Retourne le FEN correspondant à la position actuelle
@@ -498,7 +498,7 @@ namespace BrunoGUI_GenII
             {
                 if (TestMouvementValide(caseSource, caseDestination))
                 {
-                    AfficheInfoEchec(string.Empty);
+                    AfficheInfoEchec?.Invoke(string.Empty);
                     MouvementCoup = CoupNotationAlgebriquePGN(caseSource, caseDestination);
                     FaireMouvement(caseSource, caseDestination);
 
@@ -636,15 +636,15 @@ namespace BrunoGUI_GenII
                     // Affiche si le roi est en échec
                     if (Echec)
                     {
-                        AfficheInfoEchec("Le roi " + CouleurEchec + " est en échec");
+                        AfficheInfoEchec?.Invoke("Le roi " + CouleurEchec + " est en échec");
                     }
                     if (QuiJoue == ColorPiece.Noir)
                     {
-                        AfficheCoupBlanc(MouvementCoup);
+                        AfficheCoupBlanc?.Invoke(MouvementCoup);
                     }
                     else
                     {
-                        AfficheCoupNoir(MouvementCoup);
+                        AfficheCoupNoir?.Invoke(MouvementCoup);
                     }
                 }
             }
@@ -656,14 +656,14 @@ namespace BrunoGUI_GenII
                     if (ResteCoupsValidesJouables() == false)
                     {
                         EchecetMat = true;
-                        AfficheEchecEtMat(CouleurEchec);
+                        AfficheEchecEtMat?.Invoke(CouleurEchec);
                     }
                 }
                 else
                 {   // sinon on affiche si le joueur qui a la couleur est Pat
                     // ( plus de coups valides jouables + le joueur n'est pas échec )
                     if (ResteCoupsValidesJouables() == false)
-                        AfficheInfoEchec("Le joueur " + CouleurEchec + " est Pat - plus de coup possible ");
+                        AfficheInfoEchec?.Invoke("Le joueur " + CouleurEchec + " est Pat - plus de coup possible ");
                 }
             }
         }
@@ -733,8 +733,8 @@ namespace BrunoGUI_GenII
             // QuiJoue = (QuiJoue == ColorPiece.Blanc) ? ColorPiece.Noir : ColorPiece.Blanc;
             if (visu)
             {
-                DessinePiece(IndexDestination, PiecesEchiquier[IndexDestination]);
-                DessinePiece(IndexSource, TypePiece.Vide);
+                DessinePiece?.Invoke(IndexDestination, PiecesEchiquier[IndexDestination]);
+                DessinePiece?.Invoke(IndexSource, TypePiece.Vide);
             }
         }
         public static void SimuleCoup(int IndexSource, int IndexDestination)
@@ -978,11 +978,11 @@ namespace BrunoGUI_GenII
                         string couleur = piece == TypePiece.PionBlanc ? "Blanc" : "Noir";
 
                         if (!BloquerChoixPromo)
-                            AffichePromotionPion(couleur);
+                            AffichePromotionPion?.Invoke(couleur);
 
                         // Remplace le pion par la pièce promue
                         PiecesEchiquier[IndexDestination] = PromotionPiece;
-                        DessinePiece(IndexDestination, PromotionPiece);
+                        DessinePiece?.Invoke(IndexDestination, PromotionPiece);
                         // Test échec avec la pièce promue en place (échec direct ou à la découverte)
                         CalculeEchec();
                     }
@@ -990,7 +990,7 @@ namespace BrunoGUI_GenII
                 }
                 // Changement de joueur
                 Outils.ChangerDeCoté();
-                AfficheTour((QuiJoue == ColorPiece.Blanc) ? "Blancs" : "Noirs");
+                AfficheTour?.Invoke((QuiJoue == ColorPiece.Blanc) ? "Blancs" : "Noirs");
                 NombreCoupsJoues += Convert.ToSingle(0.5);      // On incrémente d'un demi-coup
             }
         }

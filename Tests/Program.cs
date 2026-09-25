@@ -28,16 +28,9 @@ void Verifie(string nom, bool ok, string detail)
     if (!ok) nombreEchecs++;
 }
 
-// La logique appelle ses événements sans tester s'ils ont des abonnés : on les branche à vide
-int nombreDessins = 0;      // compte les dessins de pièces demandés à l'interface
+// La logique fonctionne sans interface (événements sans abonné) ; on compte seulement les dessins de pièces demandés
+int nombreDessins = 0;
 L.DessinePiece += (i, p) => nombreDessins++;
-L.DessineSymbole += (i, s) => { };
-L.AfficheCoupBlanc += c => { };
-L.AfficheCoupNoir += c => { };
-L.AfficheInfoEchec += c => { };
-L.AfficheEchecEtMat += c => { };
-L.AfficheTour += c => { };
-L.AffichePromotionPion += c => { };
 
 void Charger(string fen)
 {   // Met en place une position FEN et remet à zéro l'état de la partie

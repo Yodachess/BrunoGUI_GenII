@@ -79,8 +79,8 @@ namespace BrunoGUI_GenII
             {   // La ligne est décodée une seule fois ; l'interface lit le résultat dans DerniereLigne
                 DataUci = e.Data;
                 DerniereLigne = LigneUci.Analyser(DataUci);
-                AfficheUci();
-                AfficheDonneesBrutes();
+                AfficheUci?.Invoke();
+                AfficheDonneesBrutes?.Invoke();
 
                 switch (DerniereLigne.Commande)         // Analyse réponse moteur UCI
                 {
@@ -92,7 +92,7 @@ namespace BrunoGUI_GenII
                         if (!DerniereLigne.AucunCoupLegal) // Un moteur retourne "(none)" ou "0000" en cas de Mat ou Pat
                         {
                             CoupAuFormatUci = DerniereLigne.MeilleurCoup;
-                            AfficheCoupMoteur();
+                            AfficheCoupMoteur?.Invoke();
                         }
                         else
                         {   // Si le moteur répond "bestmove (none)", c'est MAT ou PAT , alors il ne faut pas AfficherCoupMoteur
@@ -122,7 +122,7 @@ namespace BrunoGUI_GenII
             Debug.WriteLine($"[App] {Data}");
             UciVersGui = false;
             DataVersUci = Data;
-            AfficheDonneesBrutes();
+            AfficheDonneesBrutes?.Invoke();
             Proc.StandardInput.Write(Data + Environment.NewLine);
         }
         private static void PositionFenUci(string PositionFenActuel)
