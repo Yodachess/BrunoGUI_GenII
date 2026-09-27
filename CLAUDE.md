@@ -29,9 +29,11 @@ dotnet run --project Tests -- --complet
 - Les tests couvrent les règles (roque, prise en passant, promotion, 50 coups, lecture FEN, conversion de variantes UCI), la notation PGN des coups ambigus (avec aller-retour écriture/relecture), le décodage des lignes UCI (`LigneUci`), la classe `Position` (copie, `CalculerSurCopie`) et des **perft** (chaque coup y est joué via `CalculerSurCopie`) comparés aux valeurs de référence (position initiale, Kiwipete, positions 3 à 5). `--complet` ajoute les perft profonds (~15 s). Toute modification du générateur de coups doit garder les perft verts.
 - Pour ajouter un test : appeler `Charger(fen)`, jouer avec `L.ExecutionCoup(source, destination)`, puis `Verifie(nom, condition, détail)`.
 - L'interface graphique n'a pas de tests : vérifier à la main dans l'application tout ce qui touche à `EchiquierPrincipal` ou au moteur.
-- Le build émet parfois 2 warnings connus (CS0219 dans `GestionPartiePgn.cs`).
+- La solution compile sans avertissement : garder cet état.
 - `CA1416` est désactivé dans le `.csproj`.
-- `git` n'est pas dans le PATH de PowerShell sur cette machine.
+- `git` n'est pas dans le PATH de PowerShell sur cette machine : utiliser celui de Visual Studio 2022 (`C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Git\cmd\git.exe`).
+- GitHub Actions (`.github/workflows/tests.yml`) compile et lance les tests à chaque push. La compilation y passe `-p:SignManifests=false` : le certificat ClickOnce n'existe que sur le PC de développement.
+- `.gitattributes` impose CRLF aux fichiers du projet (`.cs`, `.csproj`, `.sln`, `.resx`, `.md`, `.ini`, `.yml`) : écrire les nouveaux fichiers en CRLF.
 
 ## Architecture
 
@@ -64,7 +66,8 @@ dotnet run --project Tests -- --complet
 ## Chemins et fichiers d'exécution
 
 - `Chemins.RepertoireRacine` = `Application.StartupPath` (déploiement portable) : moteurs, livres et `.ini` sont cherchés **à côté de l'exécutable**, pas à la racine du dépôt. Un fichier ajouté dans `Moteurs_UCI\` ou `BibliothèquesPolyglot\` doit donc être déclaré dans le `.csproj` avec `CopyToOutputDirectory` (seuls Rodent IV, Sargon et `stockfish\stockfish.exe` le sont côté moteurs).
-- `BrunoGUI.ini` (format `clé = valeur`, `;` pour les commentaires) est lu par `Parametres.ChargerDepuisIni`. Seules les clés présentes dans le `switch` sont lues (`LimiteForce`, `Tempsreflexion`, `TableHachage` sont encore ignorées) ; une nouvelle clé doit y être ajoutée. Attention : les couleurs de cases chargées depuis l'ini sont ensuite écrasées par des valeurs en dur dans `BrunoInterfaceGraphique_Load`.
+- `BrunoGUI.ini` (format `clé = valeur`, `;` pour les commentaires) est lu par `Parametres.ChargerDepuisIni`. Seules les clés présentes dans le `switch` sont lues ; une nouvelle clé doit y être ajoutée. Les couleurs acceptent un nom .NET (`Peru`) ou un code `#RRGGBB` (`Parametres.ConvertitCouleur`), avec le style Lichess par défaut. `NombreCoeursThread` et `TableHachage` sont envoyés au moteur à la réception de `uciok` (`MoteurUci.EnvoieOptionsDemarrage`), une seule fois et seulement si le moteur déclare ces options. L'application ne réécrit jamais le `.ini` (les réglages faits dans l'interface sont perdus à la fermeture).
+- `BrunoGUI.ini`, `Bruno_NB.jpg` et `AideBrunoGUI.rtf` sont cherchés via `Chemins.RepertoireRacine` : ne jamais utiliser de chemin relatif au dossier courant (l'application est parfois lancée depuis un raccourci).
 - Le dossier `Tests\` est exclu de la compilation de l'application dans `BrunoGUI_GenII.csproj` (le projet racine inclut sinon tous les `.cs` des sous-dossiers).
 - `stockfish\src\` et `stockfish\wiki\` sont les sources/doc upstream de Stockfish, fournies pour référence — elles ne font pas partie du build C#.
 
