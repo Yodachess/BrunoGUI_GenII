@@ -123,7 +123,6 @@ namespace BrunoGUI_GenII
         public static bool DernierCoupTerminePartie { get; private set; }  // le dernier coup joué a maté ou pat l'adversaire
         public static bool BloquerChoixPromo { get; set;    }// Lors de l'execution du coup, il ne faudra pas proposer le choix de pièce promue
         public static bool StatutMoteurUci { get; set; } // true si MoteurUci a démarré
-        public static bool Pat { get; set; }
         public static bool PartieEnCoursMat { get; set; }
         public static bool PartieEnCoursPat { get; set; }
         private static bool TestSecondPion { get; set; }
@@ -856,6 +855,15 @@ namespace BrunoGUI_GenII
             {
                 Outils.ChangerDeCoté();
                 return !ResteCoupsValidesJouables();
+            });
+        }
+        public static bool CampAuTraitEnEchec()
+        {   // Le roi du camp qui a le trait est-il en échec ? (CalculeEchec regarde le roi adverse : on change le trait sur une copie)
+            return CalculerSurCopie(() =>
+            {
+                Outils.ChangerDeCoté();
+                CalculeEchec();
+                return Echec;
             });
         }
         public static void CalculeEchec()

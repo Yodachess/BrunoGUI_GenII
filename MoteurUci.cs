@@ -96,21 +96,12 @@ namespace BrunoGUI_GenII
                         PositionFenUci(LogiqueMouvements.FenDepart);
                         break;
                     case "bestmove": // le moteur UCI propose le meilleur coup
-                        if (!DerniereLigne.AucunCoupLegal) // Un moteur retourne "(none)" ou "0000" en cas de Mat ou Pat
+                        // Un moteur retourne "(none)" ou "0000" en cas de mat ou de pat : aucun coup à jouer.
+                        // Ce cas est traité par l'interface (AfficheUci, sur son thread), pas ici sur le thread du moteur
+                        if (!DerniereLigne.AucunCoupLegal)
                         {
                             CoupAuFormatUci = DerniereLigne.MeilleurCoup;
                             AfficheCoupMoteur?.Invoke();
-                        }
-                        else
-                        {   // Si le moteur répond "bestmove (none)", c'est MAT ou PAT , alors il ne faut pas AfficherCoupMoteur
-                            if (LogiqueMouvements.Echec)
-                            {   // Roi en échec => MAT
-                                LogiqueMouvements.EchecetMat = true;
-                            }
-                            else
-                            {   // Roi pas en échec => PAT
-                                LogiqueMouvements.Pat = true;
-                            }
                         }
                         break;
                     case "uciok":   // le moteur a fini de déclarer ses options
