@@ -1238,7 +1238,10 @@ namespace BrunoGUI_GenII
             // Version 1.03 = notation PGN des coups ambigus (écriture et relecture), décodage UCI (signe du mat, moteurs sans MultiPV),
             //                couleurs lues dans le .ini (#hexadécimal, style Lichess par défaut), Threads et Hash envoyés au moteur,
             //                lancement depuis un raccourci, tests automatiques et publication sur GitHub
-            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.03\n--  Bruno COURTOIS  -- " +
+            // Version 1.04 = préférences enregistrées (BrunoGUI.preferences.ini), liste unique des coups, nulles automatiques
+            //                (50 coups, matériel insuffisant, répétition FIDE), mise à jour de Stockfish tous les 30 jours avec accord,
+            //                Krypton 95 seul (boutons en français, palette choisie dans le .ini), corrections de fiabilité
+            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.04\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", "A propos de",
                 KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
         }
