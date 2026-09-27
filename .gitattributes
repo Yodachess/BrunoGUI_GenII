@@ -61,3 +61,15 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+###############################################################################
+# Fichiers du projet : fins de ligne Windows (CRLF) dans la copie de travail,
+# LF dans le dépôt. Evite les avertissements "LF will be replaced by CRLF".
+###############################################################################
+*.cs      text eol=crlf
+*.csproj  text eol=crlf
+*.sln     text eol=crlf
+*.resx    text eol=crlf
+*.md      text eol=crlf
+*.ini     text eol=crlf
+*.yml     text eol=crlf

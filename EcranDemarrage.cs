@@ -15,7 +15,7 @@ namespace BrunoGUI_GenII
     {
         Timer horlogeDeFondu = new();       // Gère l'effet fondu (fade)
         Timer horlogeDeProgression = new();   // Gère la progression de la barre
-        bool disparition = false;            // Indique si on est en train de disparaÃ®tre
+        bool disparition = false;            // Indique si on est en train de disparaître
         ProgressBar barreProgression;
         int valeurProgression = 0;
 
