@@ -121,6 +121,49 @@ Verifie("Mat : '#' posé par la logique dans toutes les notations",
     L.ListeCoupsPgnIntl[^1] == "4. Qxf7# " && L.ListeCoupsPgnFr[^1] == "4. Dxf7# " && L.ListeCoupsNal[^1].Trim().EndsWith('#') && L.ListeCoupsUci[^1] == "h5f7 ",
     $"{L.ListeCoupsPgnIntl[^1]}| {L.ListeCoupsPgnFr[^1]}| {L.ListeCoupsNal[^1]}| {L.ListeCoupsUci[^1]}");
 
+// ═══════════════ Nulles ═══════════════
+Console.WriteLine("── Nulles ──");
+
+void Joue(params string[] coups)
+{   // coups au format "g1f3"
+    foreach (string c in coups)
+        L.ExecutionCoup(c[..2], c[2..4]);
+}
+
+Charger(L.FenDepart);
+Joue("g1f3", "g8f6", "f3g1", "f6g8", "g1f3", "g8f6", "f3g1");
+string avantRepetition = L.RaisonNulle() ?? "aucune";
+Joue("f6g8");   // la position initiale apparaît pour la 3e fois (départ, après 4 et après 8 demi-coups)
+Verifie("Répétition : la position initiale compte", avantRepetition == "aucune" && L.RaisonNulle() == "Nulle par répétition", $"avant : {avantRepetition}, après : {L.RaisonNulle()}");
+
+Charger(L.FenDepart);
+L.AjouteCoup(new Coup { Fen = "4k3/8/8/8/8/8/8/4K2R w K - 0 1" });
+L.AjouteCoup(new Coup { Fen = "4k3/8/8/8/8/8/8/4K2R b K - 0 1" });
+L.AjouteCoup(new Coup { Fen = "4k3/8/8/8/8/8/8/4K2R w - - 0 1" });
+Verifie("Répétition : trait ou droits de roque différents = positions différentes", !L.TripleRepetition(), "même placement 3 fois, mais pas la même position");
+
+Charger("4k3/8/8/8/8/8/8/R3K3 w - - 99 80");
+Joue("a1a2");
+Verifie("50 coups : nulle au 100e demi-coup sans prise ni coup de pion", L.RaisonNulle() == "Nulle (règle des 50 coups)", L.RaisonNulle() ?? "aucune");
+Charger("4k3/p7/8/8/8/8/P7/R3K3 w - - 99 80");
+Joue("a2a3");
+Verifie("50 coups : un coup de pion remet le compteur à zéro", L.RaisonNulle() == null, L.RaisonNulle() ?? "aucune");
+
+Charger("4k3/8/8/8/8/8/3n4/2B1K3 w - - 0 1");
+Joue("c1d2");
+Verifie("Matériel insuffisant : roi et fou contre roi", L.RaisonNulle() == "Nulle (matériel insuffisant)", L.RaisonNulle() ?? "aucune");
+bool MaterielInsuffisantDans(string fen) { Charger(fen); return L.MaterielInsuffisant(); }
+Verifie("Matériel insuffisant : roi contre roi", MaterielInsuffisantDans("4k3/8/8/8/8/8/8/4K3 w - - 0 1"), "K-K");
+Verifie("Matériel insuffisant : fous de même couleur", MaterielInsuffisantDans("4kb2/8/8/8/8/8/8/2B1K3 w - - 0 1"), "c1 et f8 : cases sombres");
+Verifie("Mat possible : fous de couleurs opposées", !MaterielInsuffisantDans("4k1b1/8/8/8/8/8/8/2B1K3 w - - 0 1"), "c1 sombre, g8 claire");
+Verifie("Mat possible : deux cavaliers", !MaterielInsuffisantDans("4k3/8/8/8/8/8/8/1N2K1N1 w - - 0 1"), "K+C+C contre K");
+Verifie("Mat possible : un pion", !MaterielInsuffisantDans("4k3/8/8/8/8/8/4P3/4K3 w - - 0 1"), "K+P contre K");
+
+// Un mat au 100e demi-coup reste un mat (pas de nulle signalée)
+Charger("6k1/5ppp/8/8/8/8/8/R5K1 w - - 99 80");
+Joue("a1a8");
+Verifie("Mat prioritaire sur la règle des 50 coups", L.EchecetMat && L.RaisonNulle() == null, $"mat : {L.EchecetMat}, nulle : {L.RaisonNulle() ?? "aucune"}");
+
 // ═══════════════ Liste des coups ═══════════════
 Console.WriteLine("── Liste des coups ──");
 

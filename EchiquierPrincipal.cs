@@ -76,6 +76,7 @@ namespace BrunoGUI_GenII
         private string _bibliotheque = "rodent.bin";
         private bool _clickCaseSource, _visuSymbole, _montreDonneesBrutesUci, _montre3VariantesUci, _analyseEnCours, _montreListeParties, _partieTerminee;
         private bool _humain;           // True pour simuler 2 joueurs humains et False pour jouer contre le moteur UCI
+        private bool _rejeuPartiePgn;   // True pendant le rejeu d'une partie PGN chargée (pas de nulle automatique)
         private bool _visuCoteNoir;     // True quand les Noirs sont en bas de l'écran
         private bool _clavierActif, _emetUnSon, _bibliothèqueAléatoire, _positionChargeeDepuisFen = false;
         private bool _bibliothèqueActive = true;
@@ -685,10 +686,9 @@ namespace BrunoGUI_GenII
                 // ******      Traitement du numéro de demi-coup :     ******
                 PartieEnCours.CompteDePLy = (LogiqueMouvements.ListeCoupsFen.Count).ToString();
                 _numeroLigne++;
-                if (LogiqueMouvements.TripleRepetition())
-                {
-                    PartieNulle_Repetition();
-                }
+                string raisonNulle = _rejeuPartiePgn ? null : LogiqueMouvements.RaisonNulle();    // répétition, 50 coups ou matériel insuffisant
+                if (raisonNulle != null)
+                    GestionResultat("1/2-1/2", raisonNulle);
                 RetourArriere.Enabled = AnalysePosition.Enabled = ListeCoupsBouton.Enabled = true;
             }
             else
@@ -716,10 +716,9 @@ namespace BrunoGUI_GenII
                 }
                 // ******      Traitement du numéro de demi-coup :     ******
                 PartieEnCours.CompteDePLy = (LogiqueMouvements.ListeCoupsFen.Count).ToString();
-                if (LogiqueMouvements.TripleRepetition())
-                {
-                    PartieNulle_Repetition();
-                }
+                string raisonNulle = _rejeuPartiePgn ? null : LogiqueMouvements.RaisonNulle();    // répétition, 50 coups ou matériel insuffisant
+                if (raisonNulle != null)
+                    GestionResultat("1/2-1/2", raisonNulle);
                 RetourArriere.Enabled = AnalysePosition.Enabled = ListeCoupsBouton.Enabled = true;
             }
             else
@@ -808,10 +807,6 @@ namespace BrunoGUI_GenII
         private void BoutonNulle_Click(object sender, EventArgs e)
         {   // Si un des joueurs propose la nulle et que l'autre accepte, c'est la règle de la nulle par accord mutuel
             GestionResultat("1/2-1/2", " Nulle");
-        }
-        private void PartieNulle_Repetition()
-        {   // Si la position courante a déjà été atteinte 3 fois, c'est la règle de la triple répétition : partie nulle
-            GestionResultat("1/2-1/2", "Nulle par répétition");
         }
         private void GestionResultat(string resultat, string vainqueur)
         {   // Fin de partie : on affiche le résultat et le vainqueur, on désactive les boutons de gain/nulle,
@@ -1727,13 +1722,21 @@ namespace BrunoGUI_GenII
             RetourArriere.Enabled = OrdinateurJoue.Enabled = BoutonBalises.Enabled = SaisiePartieBouton.Enabled = RetourArriere.Enabled = false;
             VarianteMoteurCourante.Text = "";
             PartieEnCoursMat = PartieEnCoursPat = false;     // On réinitialise les indicateurs de fin de partie
-            for (int indicecoup = 0; indicecoup < suiteCoups.Length - 1; indicecoup++)  // Parcourir tous les coups de la partie
+            _rejeuPartiePgn = true;     // pas de nulle automatique pendant le rejeu : c'est le résultat du PGN qui compte
+            try
             {
-                GestionPartiePgn.DecodeCoupPartie(suiteCoups[indicecoup], _couleurTraitBlanc);
-                if (!suiteCoups[indicecoup].Contains('.'))
+                for (int indicecoup = 0; indicecoup < suiteCoups.Length - 1; indicecoup++)  // Parcourir tous les coups de la partie
                 {
-                    _couleurTraitBlanc = !_couleurTraitBlanc;
+                    GestionPartiePgn.DecodeCoupPartie(suiteCoups[indicecoup], _couleurTraitBlanc);
+                    if (!suiteCoups[indicecoup].Contains('.'))
+                    {
+                        _couleurTraitBlanc = !_couleurTraitBlanc;
+                    }
                 }
+            }
+            finally
+            {
+                _rejeuPartiePgn = false;
             }
             switch (PartieEnCours.Result)       // Et on ajoute le résultat
             {

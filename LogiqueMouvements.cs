@@ -120,6 +120,7 @@ namespace BrunoGUI_GenII
         }
 
         public static bool CoupValide { get; set; }
+        public static bool DernierCoupTerminePartie { get; private set; }  // le dernier coup joué a maté ou pat l'adversaire
         public static bool BloquerChoixPromo { get; set;    }// Lors de l'execution du coup, il ne faudra pas proposer le choix de pièce promue
         public static bool StatutMoteurUci { get; set; } // true si MoteurUci a démarré
         public static bool Pat { get; set; }
@@ -509,6 +510,7 @@ namespace BrunoGUI_GenII
             string CouleurEchec = string.Empty;
             bool AucunCoupJouable = false;      // après le coup : l'adversaire n'a plus de coup (mat s'il est en échec, pat sinon)
             CoupValide = false;
+            DernierCoupTerminePartie = false;
             EchecetMat = false;
             MouvementCoup = MouvementCoupPgn = MouvementCoupNal = MouvementCoupUci = string.Empty;
             if (caseSource != caseDestination)
@@ -600,6 +602,7 @@ namespace BrunoGUI_GenII
 
                     // Fin du coup : "#" si mat, "+" si échec, puis un espace (pas de symbole en UCI)
                     AucunCoupJouable = !ResteCoupsValidesJouables();
+                    DernierCoupTerminePartie = AucunCoupJouable;    // mat ou pat : lu par RaisonNulle pendant les événements du coup
                     string Fin = Echec ? (AucunCoupJouable ? "# " : "+ ") : " ";
                     // Le numéro n'est écrit que devant un coup blanc (après un coup blanc, c'est aux Noirs de jouer : champ 2 = "b")
                     string Numero = FenTableau[1] == "b" ? NumeroCoup + ". " : "";
@@ -682,30 +685,66 @@ namespace BrunoGUI_GenII
         }
 
         public static bool TripleRepetition()
-        {   // Détection de la triple répétition des coups qui donne partie nulle !
+        {   // Détection de la triple répétition qui donne partie nulle.
+            // Règle FIDE : même placement des pièces, même trait et mêmes droits de roque (champs 1 à 3 du FEN)
+            // et même case en passant (champ 4 : ici, elle est notée après toute avance de deux cases, même sans prise possible).
             Dictionary<string, int> positionsVues = [];
-            // Parcourir la liste des FEN pour détecter la triple répétition
-            foreach (string fen in ListeCoupsFen)
+            IEnumerable<string> positions = ListeCoupsFen;
+            if (_coups.Count == 0 || !_coups[0].EstPositionDeDepart)
+                positions = positions.Prepend(FenDepart);       // la position initiale compte aussi
+            foreach (string fen in positions)
             {
-                // Récupérer la partie de la FEN qui représente l'état du plateau
-                string[] elements = fen.Split(' ');
-                string positionPlateau = elements[0];
-                // Vérifier si la position est déjà dans le dictionnaire
-                if (positionsVues.ContainsKey(positionPlateau))
+                string position = string.Join(' ', fen.Split(' ').Take(4));
+                positionsVues[position] = positionsVues.GetValueOrDefault(position) + 1;
+                if (positionsVues[position] >= 3)
+                    return true;
+            }
+            return false;
+        }
+
+        public static bool MaterielInsuffisant()
+        {   // Aucun mat possible, quelle que soit la suite : il ne reste que les rois, plus au plus un fou ou un cavalier,
+            // ou seulement des fous tous sur des cases de même couleur (ex : roi et fou contre roi et fou de même couleur)
+            int pieces = 0, cavaliers = 0, fousCasesClaires = 0, fousCasesSombres = 0;
+            for (int i = 21; i <= 98; i++)
+            {
+                switch (PiecesEchiquier[i])
                 {
-                    positionsVues[positionPlateau]++;
-                }
-                else
-                {
-                    positionsVues[positionPlateau] = 1;
-                }
-                // Vérifier si la position a été vue trois fois
-                if (positionsVues[positionPlateau] >= 3)
-                {
-                    return true; // Triple répétition détectée
+                    case TypePiece.Vide:
+                    case TypePiece.Bordure:
+                    case TypePiece.RoiBlanc:
+                    case TypePiece.RoiNoir:
+                        break;
+                    case TypePiece.CavalierBlanc:
+                    case TypePiece.CavalierNoir:
+                        cavaliers++; pieces++;
+                        break;
+                    case TypePiece.FouBlanc:
+                    case TypePiece.FouNoir:
+                        if (Outils.EstCaseClaire(i)) fousCasesClaires++; else fousCasesSombres++;
+                        pieces++;
+                        break;
+                    default:
+                        return false;   // pion, tour ou dame : le mat reste possible
                 }
             }
-            return false; // Pas de triple répétition
+            if (pieces <= 1)
+                return true;
+            return cavaliers == 0 && (fousCasesClaires == 0 || fousCasesSombres == 0);
+        }
+
+        public static string RaisonNulle()
+        {   // Après un coup : raison de la nulle automatique, ou null si la partie continue.
+            // Le mat et le pat du dernier coup sont signalés par leurs propres événements (AfficheEchecEtMat, AfficheInfoEchec).
+            if (DernierCoupTerminePartie)
+                return null;
+            if (TripleRepetition())
+                return "Nulle par répétition";
+            if (SansPrise >= 100)
+                return "Nulle (règle des 50 coups)";
+            if (MaterielInsuffisant())
+                return "Nulle (matériel insuffisant)";
+            return null;
         }
         public static void DeplacementPiece(int IndexSource, int IndexDestination, bool visu)
         {   // Déplace une pièce dans le tableau des pièces avec les 2 index des cases
