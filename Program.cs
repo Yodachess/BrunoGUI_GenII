@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using ComponentFactory.Krypton.Toolkit;
+using Krypton.Toolkit;
 
 namespace BrunoGUI_GenII
 {
@@ -31,11 +31,8 @@ namespace BrunoGUI_GenII
                 Application.DoEvents(); // laisse le formulaire se peindre
             }
             // *** Fin du Splash ***
-            // Créez une instance de KryptonManager (une seule fois)
-            KryptonManager kryptonManagerInstance = new()
-            {
-                GlobalPaletteMode = (PaletteModeManager)PaletteMode.Office2010Silver
-            };
+            // Pas de KryptonManager : toutes les fenêtres (et les boîtes de message) utilisent la palette par défaut de Krypton 95.
+            // L'ancien réglage "Office2010Silver" ne s'appliquait qu'à l'ancienne bibliothèque ComponentFactory.Krypton.
             Application.Run(new EchiquierPrincipal());
         }
     }

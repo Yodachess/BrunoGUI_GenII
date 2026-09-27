@@ -13,7 +13,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Forms;
-using ComponentFactory.Krypton.Toolkit;
+using Krypton.Toolkit;
 
 namespace BrunoGUI_GenII
 {
@@ -1106,7 +1106,7 @@ namespace BrunoGUI_GenII
             }
             catch (Exception ex)
             {
-                KryptonMessageBox.Show($"Une erreur s'est produite : {ex.Message}", "dans RenvoieCaseIndex120", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                KryptonMessageBox.Show($"Une erreur s'est produite : {ex.Message}", "dans RenvoieCaseIndex120", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                 Debug.WriteLine($"StackTrace : {ex.StackTrace}");
                 return -1;
             }

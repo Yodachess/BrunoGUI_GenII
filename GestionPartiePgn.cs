@@ -18,7 +18,7 @@
 //              ├─ "SauveBalises_Click"
 //              └─ "AnnulerBalises_Click"
 
-using ComponentFactory.Krypton.Toolkit;
+using Krypton.Toolkit;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -284,9 +284,7 @@ namespace BrunoGUI_GenII
             {
                 partieBalises = partie;
                 InitializeComponents();
-                this.StartPosition = FormStartPosition.CenterScreen;
-                // Appliquer la palette globale Krypton
-                this.Palette = KryptonManager.CurrentGlobalPalette;
+                this.StartPosition = FormStartPosition.CenterScreen;     // palette globale Krypton appliquée par défaut
             }
             private void InitializeComponents()
             {

@@ -37,7 +37,7 @@ dotnet run --project Tests -- --complet
 
 ## Architecture
 
-**Point d'entrée** : `Program.cs` affiche le splash (`EcranDemarrage`), configure le `KryptonManager` (palette Office2010Silver), puis lance `EchiquierPrincipal`.
+**Point d'entrée** : `Program.cs` affiche le splash (`EcranDemarrage`), puis lance `EchiquierPrincipal` (palette par défaut de Krypton 95, pas de `KryptonManager`).
 
 **`EchiquierPrincipal`** (~130 Ko) est le formulaire central : il gère l'échiquier, les menus, la feuille de partie, l'analyse et l'orchestration du moteur. Les autres formulaires (`ParametresDeBase`, `ParametresUciStockfish`, `PartieForceModule`, `FenetrePartie`, `AffichePgn`, `FichierPartiePgn`, `DonneesBrutesUci`, `FenetreAide`) sont des boîtes de dialogue secondaires.
 
@@ -73,4 +73,4 @@ dotnet run --project Tests -- --complet
 
 ## UI
 
-Composants Krypton (`ComponentFactory.Krypton.Toolkit` + `Krypton.*` 95.x). Les fichiers `*.Designer.cs` sont générés par le designer WinForms : les modifier avec précaution (ou via le designer), en cohérence avec les `.resx`.
+Composants Krypton 95 uniquement (`Krypton.Toolkit`, `Krypton.Navigator`, `Krypton.Ribbon`, `Krypton.Workspace`, espace de noms `Krypton.Toolkit`) ; l'ancienne bibliothèque `ComponentFactory.Krypton.Toolkit` a été retirée. `KryptonMessageBox.Show` prend `KryptonMessageBoxButtons` / `KryptonMessageBoxIcon` (pas les énumérations Windows Forms). Les fichiers `*.Designer.cs` sont générés par le designer WinForms : les modifier avec précaution (ou via le designer), en cohérence avec les `.resx`.

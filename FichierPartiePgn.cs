@@ -26,7 +26,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Diagnostics;
-using ComponentFactory.Krypton.Toolkit;
+using Krypton.Toolkit;
 
 namespace BrunoGUI_GenII
 {
@@ -319,7 +319,7 @@ namespace BrunoGUI_GenII
                 }
                 else
                 {
-                    KryptonMessageBox.Show("La partie sélectionnée ne contient pas de coups", "Pas de coups dans la partie", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    KryptonMessageBox.Show("La partie sélectionnée ne contient pas de coups", "Pas de coups dans la partie", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                     Debug.WriteLine("Erreur : La partie = null !? (sans doute vide ...)");
                 }
             }
