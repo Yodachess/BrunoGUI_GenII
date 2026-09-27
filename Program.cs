@@ -31,9 +31,7 @@ namespace BrunoGUI_GenII
                 Application.DoEvents(); // laisse le formulaire se peindre
             }
             // *** Fin du Splash ***
-            Parametres parametres = new();
-            parametres.ChargerDepuisIni(System.IO.Path.Combine(Chemins.RepertoireRacine, "BrunoGUI.ini"));
-            ConfigureKrypton(parametres.Palette);
+            ConfigureKrypton(Parametres.Charger(Chemins.RepertoireRacine).Palette);
             Application.Run(new EchiquierPrincipal());
         }
 

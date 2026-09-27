@@ -19,7 +19,8 @@
 // └─ Classe "Parametres"  
 //              ├─ "ConvertitCouleur" / "FormatCouleur"
 //              ├─ "ChargerDepuisIni"
-//              └─ "SauverDansIni"      Enregistrement des préférences (commentaires et ordre des lignes conservés)
+//              ├─ "Charger"            BrunoGUI.ini (valeurs par défaut) puis BrunoGUI.preferences.ini (préférences) par-dessus
+//              └─ "SauverPreferences"  Enregistrement des préférences dans BrunoGUI.preferences.ini (commentaires et ordre conservés)
 
 using System;
 using System.Collections.Generic;
@@ -326,19 +327,28 @@ namespace BrunoGUI_GenII
             return couleur.IsNamedColor ? couleur.Name : $"#{couleur.R:X2}{couleur.G:X2}{couleur.B:X2}";
         }
 
-        public void SauverDansIni(string chemin)
-        {   // Enregistre les paramètres dans le .ini en conservant les commentaires, l'ordre des lignes et les clés inconnues :
-            // la valeur de chaque clé existante est remplacée sur place, les clés absentes sont ajoutées à la fin
+        public const string FichierParDefaut = "BrunoGUI.ini";                  // valeurs par défaut, livrées avec l'application, jamais écrites par elle
+        public const string FichierPreferences = "BrunoGUI.preferences.ini";    // préférences personnelles, écrites à la fermeture
+
+        public static Parametres Charger(string dossier)
+        {   // Valeurs par défaut (BrunoGUI.ini), puis préférences personnelles par-dessus (BrunoGUI.preferences.ini, si elles existent)
+            Parametres parametres = new();
+            parametres.ChargerDepuisIni(Path.Combine(dossier, FichierParDefaut));
+            parametres.ChargerDepuisIni(Path.Combine(dossier, FichierPreferences));
+            return parametres;
+        }
+
+        public void SauverPreferences(string chemin)
+        {   // Enregistre les réglages modifiables dans l'interface (pas le moteur, son site, l'Elo de l'humain ni la palette,
+            // qui restent dans BrunoGUI.ini). Si le fichier existe, ses commentaires, l'ordre des lignes et les clés inconnues sont
+            // conservés : la valeur de chaque clé est remplacée sur place, les clés absentes sont ajoutées à la fin
             var valeurs = new Dictionary<string, string>
             {
-                ["Moteur"] = Moteur,
-                ["Sitemoteur"] = SiteMoteur,
                 ["Casesombre"] = CaseSombre,
                 ["Caseclaire"] = CaseClaire,
                 ["CouleurCaseSource"] = CouleurCaseSource,
                 ["CouleurCaseDestination"] = CouleurCaseDestination,
                 ["NomHumain"] = NomHumain,
-                ["EloHumain"] = EloHumain,
                 ["DureereflexionSeconde"] = DureeReflexionSeconde.ToString(),
                 ["Forcemoteur"] = ForceMoteur.ToString(),
                 ["ForceMaximale"] = ForceMaximale ? "true" : "false",
@@ -349,10 +359,10 @@ namespace BrunoGUI_GenII
             };
             if (TailleHachageMo is int hachage)
                 valeurs["TableHachage"] = hachage.ToString();
-            if (!string.IsNullOrWhiteSpace(Palette))
-                valeurs["Palette"] = Palette;
 
-            List<string> lignes = File.Exists(chemin) ? [.. File.ReadAllLines(chemin)] : [];
+            List<string> lignes = File.Exists(chemin) ? [.. File.ReadAllLines(chemin)] :
+                ["; Préférences personnelles de BrunoGUI, enregistrées à la fermeture de l'application.",
+                 "; Elles remplacent les valeurs par défaut de BrunoGUI.ini. Supprimer ce fichier pour revenir aux valeurs par défaut."];
             for (int i = 0; i < lignes.Count; i++)
             {
                 if (string.IsNullOrWhiteSpace(lignes[i]) || lignes[i].TrimStart().StartsWith(';'))
