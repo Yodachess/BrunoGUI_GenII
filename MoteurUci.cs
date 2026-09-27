@@ -146,7 +146,14 @@ namespace BrunoGUI_GenII
             UciVersGui = false;
             DataVersUci = Data;
             AfficheDonneesBrutes?.Invoke();
-            Proc.StandardInput.Write(Data + Environment.NewLine);
+            try
+            {
+                Proc?.StandardInput.Write(Data + Environment.NewLine);   // pas de moteur démarré : commande ignorée
+            }
+            catch (Exception ex) when (ex is IOException || ex is InvalidOperationException)
+            {   // Le moteur a été arrêté (ex : pendant une mise à jour) : commande ignorée plutôt que plantage
+                Debug.WriteLine($"[App] Commande non envoyée, moteur arrêté : {ex.Message}");
+            }
         }
         private static void PositionFenUci(string PositionFenActuel)
         {   // Position Fen courante envoyée au Moteur UCI
@@ -197,11 +204,14 @@ namespace BrunoGUI_GenII
             StandardInputDataToUci("setoption name FixedDepth value 6");       
         }
         public static void Quitte()
-        {   // On ferme le moteur UCI
-            StandardInputDataToUci("quit");
+        {   // On ferme le moteur UCI (sans erreur s'il n'a jamais démarré ou s'il a déjà été arrêté, ex : par une mise à jour)
             LogiqueMouvements.StatutMoteurUci = false;
             LimiteElo = false;
+            if (Proc == null)
+                return;
+            StandardInputDataToUci("quit");
             Proc.Dispose();
+            Proc = null;
         }
     }
 }

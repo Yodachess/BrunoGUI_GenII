@@ -259,6 +259,15 @@ namespace BrunoGUI_GenII
         public int? TailleHachageMo { get; set; }       // null : taille par défaut du moteur
         public string Bibliotheque { get; set; } = "rodent.bin";
         public string Palette { get; set; } = "";               // palette Krypton (ex : Microsoft365Silver) ; vide : palette par défaut
+        public int VerificationMiseAJourJours { get; set; } = 30;       // intervalle entre deux vérifications automatiques de Stockfish (0 : jamais)
+        public DateTime? DerniereVerificationMiseAJour { get; set; }    // date de la dernière vérification réussie (préférences)
+
+        public bool VerificationMiseAJourDue(DateTime aujourdhui)
+        {   // Vérification automatique à faire au démarrage ? (jamais faite, ou faite il y a au moins VerificationMiseAJourJours jours)
+            if (VerificationMiseAJourJours <= 0)
+                return false;
+            return DerniereVerificationMiseAJour is not DateTime derniere || (aujourdhui.Date - derniere.Date).TotalDays >= VerificationMiseAJourJours;
+        }
 
         public static Color ConvertitCouleur(string valeur, string parDefaut)
         {   // Couleur du .ini : un nom de couleur .NET (ex : Peru) ou un code hexadécimal (ex : #B58863)
@@ -318,6 +327,11 @@ namespace BrunoGUI_GenII
                     case "TableHachage": TailleHachageMo = PremierEntier(valeur); break;     // en Mo, ex : "256" ou "256 min"
                     case "Bibliotheque": Bibliotheque = valeur; break;
                     case "Palette": Palette = valeur; break;
+                    case "VerificationMiseAJourJours": VerificationMiseAJourJours = PremierEntier(valeur) ?? VerificationMiseAJourJours; break;
+                    case "DerniereVerificationMiseAJour":
+                        if (DateTime.TryParseExact(valeur, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime date))
+                            DerniereVerificationMiseAJour = date;
+                        break;
                 }
             }
         }
@@ -359,6 +373,8 @@ namespace BrunoGUI_GenII
             };
             if (TailleHachageMo is int hachage)
                 valeurs["TableHachage"] = hachage.ToString();
+            if (DerniereVerificationMiseAJour is DateTime verification)
+                valeurs["DerniereVerificationMiseAJour"] = verification.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
 
             List<string> lignes = File.Exists(chemin) ? [.. File.ReadAllLines(chemin)] :
                 ["; Préférences personnelles de BrunoGUI, enregistrées à la fermeture de l'application.",
