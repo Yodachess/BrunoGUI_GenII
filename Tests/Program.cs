@@ -159,6 +159,13 @@ Verifie("Mat possible : fous de couleurs opposées", !MaterielInsuffisantDans("4
 Verifie("Mat possible : deux cavaliers", !MaterielInsuffisantDans("4k3/8/8/8/8/8/8/1N2K1N1 w - - 0 1"), "K+C+C contre K");
 Verifie("Mat possible : un pion", !MaterielInsuffisantDans("4k3/8/8/8/8/8/4P3/4K3 w - - 0 1"), "K+P contre K");
 
+Charger("7k/6Q1/6K1/8/8/8/8/8 b - - 0 1");
+bool matAuTrait = L.CampAuTraitEnEchec();
+string fenAvant = L.RetourneChaineFenActuel();
+Charger("7k/5Q2/6K1/8/8/8/8/8 b - - 0 1");
+Verifie("Camp au trait en échec : oui si maté, non si pat (position inchangée)",
+    matAuTrait && !L.CampAuTraitEnEchec() && fenAvant == "7k/6Q1/6K1/8/8/8/8/8 b - - 0 1", $"mat : {matAuTrait}");
+
 // Un mat au 100e demi-coup reste un mat (pas de nulle signalée)
 Charger("6k1/5ppp/8/8/8/8/8/R5K1 w - - 99 80");
 Joue("a1a8");

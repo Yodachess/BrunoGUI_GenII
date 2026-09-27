@@ -417,8 +417,12 @@ namespace BrunoGUI_GenII
             {
                 case "bestmove":        // **** le moteur UCI propose le meilleur coup ! ****
                     if (ligne.AucunCoupLegal)
-                    {   // Cas particulier : le moteur retourne "bestmove (none)" ou "bestmove 0000" => partie terminée (mat ou pat)
-                        VarianteMoteurCourante.Text = "Aucun coup légal (mat ou pat)";
+                    {   // Cas particulier : le moteur retourne "bestmove (none)" ou "bestmove 0000" => partie terminée (mat ou pat).
+                        // Le camp au trait est-il en échec ? (calculé ici, sur la position affichée, pas sur un état d'échec éventuellement ancien)
+                        bool mat = LogiqueMouvements.CampAuTraitEnEchec();
+                        if (mat)
+                            LogiqueMouvements.EchecetMat = true;
+                        VarianteMoteurCourante.Text = mat ? "Aucun coup légal : échec et mat" : "Aucun coup légal : pat";
                         break;
                     }
                     VarianteMoteurCourante.Text = "Coup joué : " + Outils.VarianteUciVersPgn(ligne.MeilleurCoup, NumeroDemiCoup, false) +
