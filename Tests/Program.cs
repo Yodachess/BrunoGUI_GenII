@@ -254,7 +254,7 @@ prefs.NombreLignesPV = 2;
 prefs.ForceMaximale = false;
 prefs.CouleurMoteur = "Blancs";
 prefs.TailleHachageMo = 512;
-prefs.SauverDansIni(iniSauve);
+prefs.SauverPreferences(iniSauve);
 string[] lignesSauvees = System.IO.File.ReadAllLines(iniSauve);
 Parametres relus = new();
 relus.ChargerDepuisIni(iniSauve);
@@ -266,6 +266,28 @@ Verifie("Préférences : commentaire, ordre et clé inconnue conservés",
 Verifie("Préférences : relecture de toutes les valeurs",
     relus.CaseSombre == "#B58863" && relus.NombreLignesPV == 2 && !relus.ForceMaximale && relus.CouleurMoteur == "Blancs" && relus.TailleHachageMo == 512 && relus.ForceMoteur == 1850,
     $"{relus.CaseSombre}, PV={relus.NombreLignesPV}, max={relus.ForceMaximale}, moteur={relus.CouleurMoteur}, Hash={relus.TailleHachageMo}");
+
+// Deux fichiers : BrunoGUI.ini (valeurs par défaut, jamais écrit) + BrunoGUI.preferences.ini (préférences, par-dessus)
+string dossierTest = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "BrunoGUI_test_prefs");
+System.IO.Directory.CreateDirectory(dossierTest);
+string cheminDefaut = System.IO.Path.Combine(dossierTest, Parametres.FichierParDefaut);
+string cheminPrefs = System.IO.Path.Combine(dossierTest, Parametres.FichierPreferences);
+System.IO.File.Delete(cheminPrefs);
+System.IO.File.WriteAllLines(cheminDefaut, ["Moteur = Stockfish", "Casesombre = Peru", "Forcemoteur = 1950", "EloHumain = 1767", "Palette = Office2010Silver"]);
+string defautAvant = System.IO.File.ReadAllText(cheminDefaut);
+Parametres p1 = Parametres.Charger(dossierTest);
+Verifie("Sans fichier de préférences : valeurs par défaut", p1.CaseSombre == "Peru" && p1.ForceMoteur == 1950 && p1.Palette == "Office2010Silver", $"{p1.CaseSombre}, {p1.ForceMoteur}");
+p1.CaseSombre = "#8080FF";
+p1.ForceMoteur = 2026;
+p1.SauverPreferences(cheminPrefs);
+string[] lignesPrefs = System.IO.File.ReadAllLines(cheminPrefs);
+Parametres p2 = Parametres.Charger(dossierTest);
+Verifie("Préférences créées avec un commentaire d'en-tête, sans les clés du fichier par défaut",
+    lignesPrefs[0].StartsWith(';') && lignesPrefs.Contains("Casesombre = #8080FF") && !lignesPrefs.Any(l => l.StartsWith("Moteur") || l.StartsWith("EloHumain") || l.StartsWith("Palette")),
+    $"{lignesPrefs.Length} lignes");
+Verifie("Préférences lues par-dessus les valeurs par défaut", p2.CaseSombre == "#8080FF" && p2.ForceMoteur == 2026 && p2.Palette == "Office2010Silver" && p2.EloHumain == "1767", $"{p2.CaseSombre}, {p2.ForceMoteur}, {p2.Palette}");
+Verifie("Le fichier des valeurs par défaut n'est jamais modifié", System.IO.File.ReadAllText(cheminDefaut) == defautAvant, Parametres.FichierParDefaut);
+System.IO.Directory.Delete(dossierTest, true);
 Verifie("FormatCouleur : nom pour une couleur nommée", Parametres.FormatCouleur(System.Drawing.Color.Peru) == "Peru", Parametres.FormatCouleur(System.Drawing.Color.Peru));
 
 // ═══════════════ Classe Position ═══════════════

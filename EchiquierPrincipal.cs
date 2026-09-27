@@ -105,8 +105,7 @@ namespace BrunoGUI_GenII
         {
             InitializeComponent();
 
-            parametres = new Parametres(); // valeurs par défaut
-            parametres.ChargerDepuisIni(Path.Combine(Chemins.RepertoireRacine, "BrunoGUI.ini"));    // Chargement du fichier des paramètres (à côté de l'exécutable)
+            parametres = Parametres.Charger(Chemins.RepertoireRacine);   // BrunoGUI.ini puis préférences personnelles (à côté de l'exécutable)
             MoteurUci.NombreThreads = parametres.NombreCoeursThread;    // envoyés au moteur à son démarrage (voir MoteurUci)
             MoteurUci.TailleHachageMo = parametres.TailleHachageMo;
             // Mise à jour des variables à partir des données du fichier
@@ -1297,7 +1296,7 @@ namespace BrunoGUI_GenII
             SauvePreferences();
         }
         private void SauvePreferences()
-        {   // Enregistre les réglages faits dans l'interface dans BrunoGUI.ini (à côté de l'exécutable)
+        {   // Enregistre les réglages faits dans l'interface dans BrunoGUI.preferences.ini (à côté de l'exécutable)
             parametres.CaseSombre = Parametres.FormatCouleur(_couleurCaseSombre);
             parametres.CaseClaire = Parametres.FormatCouleur(_couleurCaseClaire);
             parametres.CouleurCaseSource = Parametres.FormatCouleur(_couleurCaseSource);
@@ -1316,7 +1315,7 @@ namespace BrunoGUI_GenII
                 ? Path.GetFileName(_bibliotheque) : _bibliotheque;
             try
             {
-                parametres.SauverDansIni(Path.Combine(Chemins.RepertoireRacine, "BrunoGUI.ini"));
+                parametres.SauverPreferences(Path.Combine(Chemins.RepertoireRacine, Parametres.FichierPreferences));
             }
             catch (Exception ex)
             {   // Par exemple si l'application est installée dans un dossier protégé en écriture : on ne bloque pas la fermeture
