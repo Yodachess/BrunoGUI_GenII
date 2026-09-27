@@ -125,6 +125,14 @@ namespace BrunoGUI_GenII
             EloNoir.Text = _moteurElo = _forceMoteurElo.ToString();
             LabelJoueurBlanc.Text = _nomHumain;
             EloBlanc.Text = _joueurElo;
+            // Préférences : la fenêtre "Nouvelle partie" propose les derniers choix, le curseur reprend le dernier temps de réflexion
+            maNouvellePartieForceModule.ChoixCouleur = parametres.CouleurMoteur;
+            maNouvellePartieForceModule.ForceMaximale = parametres.ForceMaximale;
+            maNouvellePartieForceModule.ForceModule = parametres.ForceMoteur;
+            maNouvellePartieForceModule.DureeReflexionSeconde = parametres.DureeReflexionSeconde;
+            maNouvellePartieForceModule.NomAdversaire = parametres.NomHumain;
+            TrackBarTempsReflexion.Value = Math.Clamp(parametres.DureeReflexionSeconde, TrackBarTempsReflexion.Minimum, TrackBarTempsReflexion.Maximum);
+            labelTempsReflexion.Text = "[" + TrackBarTempsReflexion.Value + "]";
             // Debug pour vérifier
             Debug.WriteLine($"Paramètres chargés : Moteur = {_cheminMoteur}, Case sombre = {_couleurCaseSombre.Name}, Case claire = {_couleurCaseClaire.Name}");
             Debug.WriteLine($"Paramètres chargés : Case source = {_couleurCaseSource.Name}, Case destination = {_couleurCaseDestination.Name}");
@@ -250,6 +258,7 @@ namespace BrunoGUI_GenII
                 string couleurMoteur = maNouvellePartieForceModule.ChoixCouleur;
                 bool forceMaximale = maNouvellePartieForceModule.ForceMaximale;
                 _forceMoteurElo = maNouvellePartieForceModule.ForceModule;
+                _nomHumain = maNouvellePartieForceModule.NomAdversaire;     // mémorisé dans les préférences à la fermeture
                 _dureeReflexionMilliSeconde = maNouvellePartieForceModule.DureeReflexionSeconde * 1000;
                 TrackBarTempsReflexion.Value = maNouvellePartieForceModule.DureeReflexionSeconde;   // On met à jour la trackbar ...
                 labelTempsReflexion.Text = "[" + TrackBarTempsReflexion.Value.ToString() + "]";
@@ -1286,6 +1295,34 @@ namespace BrunoGUI_GenII
                 return;
             }
             StopMoteur_Click(sender, e);
+            SauvePreferences();
+        }
+        private void SauvePreferences()
+        {   // Enregistre les réglages faits dans l'interface dans BrunoGUI.ini (à côté de l'exécutable)
+            parametres.CaseSombre = Parametres.FormatCouleur(_couleurCaseSombre);
+            parametres.CaseClaire = Parametres.FormatCouleur(_couleurCaseClaire);
+            parametres.CouleurCaseSource = Parametres.FormatCouleur(_couleurCaseSource);
+            parametres.CouleurCaseDestination = Parametres.FormatCouleur(_couleurCaseDestination);
+            parametres.NomHumain = _nomHumain;
+            parametres.DureeReflexionSeconde = TrackBarTempsReflexion.Value;
+            parametres.ForceMoteur = maNouvellePartieForceModule.ForceModule;       // l'Elo choisi, même si la dernière partie était en force maximale
+            parametres.ForceMaximale = maNouvellePartieForceModule.ForceMaximale;
+            parametres.CouleurMoteur = maNouvellePartieForceModule.ChoixCouleur;
+            parametres.NombreLignesPV = MoteurUci.NombreLignesPV;
+            parametres.NombreCoeursThread = MoteurUci.NombreThreads ?? parametres.NombreCoeursThread;
+            parametres.TailleHachageMo = MoteurUci.TailleHachageMo;
+            // Bibliothèque : juste le nom si elle est dans le dossier des bibliothèques fournies, sinon le chemin complet
+            parametres.Bibliotheque = string.Equals(Path.GetDirectoryName(Path.GetFullPath(Path.Combine(Chemins.BibliothèquesPolyglot, _bibliotheque))),
+                                                    Path.GetFullPath(Chemins.BibliothèquesPolyglot), StringComparison.OrdinalIgnoreCase)
+                ? Path.GetFileName(_bibliotheque) : _bibliotheque;
+            try
+            {
+                parametres.SauverDansIni(Path.Combine(Chemins.RepertoireRacine, "BrunoGUI.ini"));
+            }
+            catch (Exception ex)
+            {   // Par exemple si l'application est installée dans un dossier protégé en écriture : on ne bloque pas la fermeture
+                Debug.WriteLine("[INFO] Préférences non enregistrées : " + ex.Message);
+            }
         }
         private void KryptonQuitter_Click(object sender, EventArgs e)
         {   // Note : Envoie l’événement FormClosing puis l’événement FormClosed (après la fermeture complète)

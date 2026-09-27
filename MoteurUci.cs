@@ -17,6 +17,7 @@
 //                      ├─ "ActiveLimiteElo"            Activation de la limitation du ELO
 //                      ├─ "DefinitLimiteElo"           Définition de la force ELO du moteur  
 //                      ├─ "DefinitMultiPV"             Nombre de variantes demandées au moteur
+//                      ├─ "DefinitThreads" / "DefinitHachage"   Threads et table de hachage (mémorisés pour les redémarrages)
 //                      ├─ "SpecialeSargon"            Profondeur = 6 sinon boucle infinie ...  
 //                      └─ "Quitte"
 
@@ -172,6 +173,16 @@ namespace BrunoGUI_GenII
         {   // Mémorise et envoie au moteur le nombre de variantes (MultiPV)
             NombreLignesPV = nombreLignes;
             StandardInputDataToUci("setoption name MultiPV value " + nombreLignes);
+        }
+        public static void DefinitThreads(int nombreThreads)
+        {   // Mémorise (renvoyé à chaque redémarrage du moteur, enregistré dans le .ini) et envoie au moteur le nombre de threads
+            NombreThreads = nombreThreads;
+            StandardInputDataToUci("setoption name Threads value " + nombreThreads);
+        }
+        public static void DefinitHachage(int tailleMo)
+        {   // Mémorise (renvoyé à chaque redémarrage du moteur, enregistré dans le .ini) et envoie au moteur la table de hachage (Mo)
+            TailleHachageMo = tailleMo;
+            StandardInputDataToUci("setoption name Hash value " + tailleMo);
         }
         public static void ActiveLimiteElo()
         {   // Activation de la limitation du ELO

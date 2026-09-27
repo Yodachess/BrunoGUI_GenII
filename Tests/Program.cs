@@ -211,6 +211,36 @@ Verifie("Lecture du .ini (couleur, nom, MultiPV, Threads, Hash)",
     $"Hash = {lus.TailleHachageMo} Mo, Threads = {lus.NombreCoeursThread}");
 Verifie(".ini sans TableHachage : taille du moteur conservée", new Parametres().TailleHachageMo == null, "null");
 
+// Enregistrement des préférences : commentaires, ordre et clés inconnues conservés, valeurs remplacées, clés manquantes ajoutées
+string iniSauve = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "BrunoGUI_test_sauve.ini");
+System.IO.File.WriteAllLines(iniSauve, [
+    "; Mon commentaire",
+    "Casesombre = Peru",
+    "CleInconnue = gardee",
+    "NombrelignesPV = 3",
+    "Forcemoteur = abc" ]);         // valeur illisible : ignorée à la lecture
+Parametres prefs = new();
+prefs.ChargerDepuisIni(iniSauve);
+bool lectureTolerante = prefs.ForceMoteur == 1850;
+prefs.CaseSombre = Parametres.FormatCouleur(System.Drawing.Color.FromArgb(181, 136, 99));
+prefs.NombreLignesPV = 2;
+prefs.ForceMaximale = false;
+prefs.CouleurMoteur = "Blancs";
+prefs.TailleHachageMo = 512;
+prefs.SauverDansIni(iniSauve);
+string[] lignesSauvees = System.IO.File.ReadAllLines(iniSauve);
+Parametres relus = new();
+relus.ChargerDepuisIni(iniSauve);
+System.IO.File.Delete(iniSauve);
+Verifie("Préférences : valeur numérique illisible ignorée", lectureTolerante, "Forcemoteur = abc -> 1850");
+Verifie("Préférences : commentaire, ordre et clé inconnue conservés",
+    lignesSauvees[0] == "; Mon commentaire" && lignesSauvees[1] == "Casesombre = #B58863" && lignesSauvees[2] == "CleInconnue = gardee" && lignesSauvees[3] == "NombrelignesPV = 2",
+    string.Join(" | ", lignesSauvees.Take(4)));
+Verifie("Préférences : relecture de toutes les valeurs",
+    relus.CaseSombre == "#B58863" && relus.NombreLignesPV == 2 && !relus.ForceMaximale && relus.CouleurMoteur == "Blancs" && relus.TailleHachageMo == 512 && relus.ForceMoteur == 1850,
+    $"{relus.CaseSombre}, PV={relus.NombreLignesPV}, max={relus.ForceMaximale}, moteur={relus.CouleurMoteur}, Hash={relus.TailleHachageMo}");
+Verifie("FormatCouleur : nom pour une couleur nommée", Parametres.FormatCouleur(System.Drawing.Color.Peru) == "Peru", Parametres.FormatCouleur(System.Drawing.Color.Peru));
+
 // ═══════════════ Classe Position ═══════════════
 Console.WriteLine("── Position ──");
 
