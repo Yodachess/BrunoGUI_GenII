@@ -121,6 +121,14 @@ Verifie("Mat : '#' posé par la logique dans toutes les notations",
     L.ListeCoupsPgnIntl[^1] == "4. Qxf7# " && L.ListeCoupsPgnFr[^1] == "4. Dxf7# " && L.ListeCoupsNal[^1].Trim().EndsWith('#') && L.ListeCoupsUci[^1] == "h5f7 ",
     $"{L.ListeCoupsPgnIntl[^1]}| {L.ListeCoupsPgnFr[^1]}| {L.ListeCoupsNal[^1]}| {L.ListeCoupsUci[^1]}");
 
+Verifie("Traduction français -> anglais des coups",
+    L.NotationInternationale("Tdxe1=D+") == "Rdxe1=Q+" && L.NotationInternationale("Rf1") == "Kf1" && L.NotationInternationale("Cbd7") == "Nbd7"
+    && L.NotationInternationale("Fxc4") == "Bxc4" && L.NotationInternationale("O-O-O#") == "O-O-O#" && L.NotationInternationale("exd8=C") == "exd8=N",
+    L.NotationInternationale("Tdxe1=D+"));
+Verifie("Nom de case invalide : -1 sans plantage ni message",
+    L.RenvoieCaseIndex120("a1") == 21 && L.RenvoieCaseIndex120("h8") == 98 && L.RenvoieCaseIndex120("") == -1 && L.RenvoieCaseIndex120("z9") == -1 && L.RenvoieCaseIndex120(null) == -1,
+    $"a1={L.RenvoieCaseIndex120("a1")}, h8={L.RenvoieCaseIndex120("h8")}");
+
 // ═══════════════ Nulles ═══════════════
 Console.WriteLine("── Nulles ──");
 

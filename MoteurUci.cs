@@ -150,11 +150,13 @@ namespace BrunoGUI_GenII
         {   // Position Fen courante envoyée au Moteur UCI
             StandardInputDataToUci("position fen " + PositionFenActuel);
         }
+        public const int ReflexionInfinie = -1;     // durée à passer à JeuMoteurUci pour une réflexion sans limite (jusqu'à "stop")
+
         public static void JeuMoteurUci(string FenActuel, int Duree)
-        {   // Envoie au moteur UCI le Fen actuel et invitation à jouer pour le moteur UCI
+        {   // Envoie au moteur UCI le Fen actuel et invitation à jouer pour le moteur UCI (Duree en millisecondes, ou ReflexionInfinie)
             StandardInputDataToUci("setoption name MultiPV value " + NombreLignesPV);   // On demande le nombre de variations choisi
             PositionFenUci(FenActuel);
-            if (Duree == 9999)
+            if (Duree == ReflexionInfinie)
                 StandardInputDataToUci("go infinite");      // Réflexion sans limite, jusqu'à l'envoi de "stop"
             else
                 StandardInputDataToUci("go movetime " + Duree.ToString());
