@@ -41,33 +41,34 @@ public class MiseAJourStockfish
         if (!client.DefaultRequestHeaders.Contains("User-Agent"))
             client.DefaultRequestHeaders.Add("User-Agent", "Stockfish-Updater-CSharp");
     }
-    public async Task<bool> ExecuterMiseAJour()
-    {   // Retourne true si Stockfish a été mis à jour, false s'il était déjà à jour (exception en cas d'erreur)
+    public record VersionStockfish(string Tag, string Url, long TailleOctets);  // ex : sf_19, lien du zip, taille du zip
+
+    public async Task<VersionStockfish> RechercherNouvelleVersion()
+    {   // Compare la version installée à la dernière version publiée sur GitHub, sans rien arrêter ni télécharger.
+        // Retourne null si Stockfish est déjà à jour (exception en cas d'erreur, ex : pas de connexion)
+        Debug.WriteLine("[MAJ] Récupération de la version locale...");
+        string versionLocale = await ObtenirVersionLocale();
+        Debug.WriteLine($"[MAJ] Version locale détectée: {versionLocale}");
+        var (tag, url, taille) = await VerifierNouvelleVersionGitHub(versionLocale);
+        Debug.WriteLine(tag == null ? "[MAJ] Stockfish est à jour." : $"[MAJ] Nouvelle version disponible: {tag}");
+        return tag == null ? null : new VersionStockfish(tag, url, taille);
+    }
+
+    public async Task Installer(VersionStockfish version)
+    {   // Télécharge et installe la version trouvée par RechercherNouvelleVersion (exception en cas d'erreur, l'ancien moteur est alors restauré).
+        // ATTENTION : arrête d'abord le Stockfish lancé depuis ce fichier (le moteur doit être redémarré ensuite)
         bool miseAJourReussie = false;
-        Debug.WriteLine("[MAJ] Début du processus de mise à jour.");
+        Debug.WriteLine($"[MAJ] Installation de {version.Tag}.");
         try
         {   // 1. ARRÊT PRÉVENTIF (On évite le verrouillage avant même de commencer)
             Debug.WriteLine("[MAJ] Étape 0: Arrêt préventif des instances de Stockfish...");
             ArreterProcessusStockfish();
             await Task.Delay(1000); // Pause pour laisser l'OS respirer
 
-            // 2. VÉRIFICATION VERSION
-            Debug.WriteLine("[MAJ] Étape 1: Récupération de la version locale...");
-            string versionLocale = await ObtenirVersionLocale();
-            Debug.WriteLine($"[MAJ] Version locale détectée: {versionLocale}");
-
-            var (newTag, downloadUrl) = await VerifierNouvelleVersionGitHub(versionLocale);
-            if (newTag == null)
-            {
-                Debug.WriteLine("[MAJ] Aucun nouveau tag trouvé. Fin.");
-                return false;       // Déjà à jour : ce n'est pas une erreur
-            }
-            Debug.WriteLine($"[MAJ] Nouvelle version disponible: {newTag}");
-
             // 3. TÉLÉCHARGEMENT
             Debug.WriteLine("[MAJ] Étape 2: Téléchargement du ZIP...");
             string tempZip = Path.Combine(Path.GetTempPath(), "sf_update.zip");
-            await TelechargerFichier(downloadUrl, tempZip);
+            await TelechargerFichier(version.Url, tempZip);
             Debug.WriteLine($"[MAJ] ZIP téléchargé dans: {tempZip}");
 
             // 4. EXTRACTION TEMP
@@ -146,7 +147,6 @@ public class MiseAJourStockfish
                 throw;
             }
         }
-        return true;
     }
     private static void VerifierVerrouillageFichier(string chemin)
     {
@@ -383,7 +383,7 @@ public class MiseAJourStockfish
             return false;
         }
     }
-    private async Task<(string tag, string url)> VerifierNouvelleVersionGitHub(string tagCourant)
+    private async Task<(string tag, string url, long taille)> VerifierNouvelleVersionGitHub(string tagCourant)
     {
         string apiUrl = "https://api.github.com/repos/official-stockfish/Stockfish/releases/latest";
         var response = await client.GetStringAsync(apiUrl);
@@ -391,7 +391,7 @@ public class MiseAJourStockfish
         var root = doc.RootElement;
         string latestTag = root.GetProperty("tag_name").GetString();
 
-        if (latestTag.Equals(tagCourant, StringComparison.OrdinalIgnoreCase)) return (null, null);
+        if (latestTag.Equals(tagCourant, StringComparison.OrdinalIgnoreCase)) return (null, null, 0);
         Debug.WriteLine($"[DEBUG] Comparaison: Local={tagCourant} | GitHub={latestTag}");
         var assetsWindows = root.GetProperty("assets").EnumerateArray()
             .Where(a => a.GetProperty("name").GetString().ToLower().Contains("windows"))
@@ -402,7 +402,7 @@ public class MiseAJourStockfish
             if (asset.ValueKind != JsonValueKind.Undefined)
             {
                 Debug.WriteLine($"[DEBUG] Architecture retenue = " + arch);
-                return (latestTag, asset.GetProperty("browser_download_url").GetString());
+                return (latestTag, asset.GetProperty("browser_download_url").GetString(), asset.GetProperty("size").GetInt64());
             }
         }
         throw new Exception("Architecture non trouvée sur GitHub.");

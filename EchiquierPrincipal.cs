@@ -227,10 +227,8 @@ namespace BrunoGUI_GenII
            {   // Vérification de la mise à jour de Stockfish, puis lancement du moteur
                 
                try
-               {   // A. On lance la MAJ et on ATTEND qu'elle finisse
-                   Debug.WriteLine("[INFO] Vérification initiale de mise à jour...");
-                   // VarianteMoteurUci1.Text = "[INFO] Vérification initiale de mise à jour de Stockfish...";
-                   await LancerMiseAJourAsync();
+               {   // A. Vérification (au plus tous les 30 jours) et, après accord, installation ; on ATTEND qu'elle finisse
+                   await VerificationAutomatiqueMiseAJour();
                }
                catch (Exception ex)
                {   // On log juste, on ne bloque pas le démarrage si la MAJ échoue (ex: hors ligne)
@@ -1245,13 +1243,29 @@ namespace BrunoGUI_GenII
         {   // Bouton "A propos"
             Apropos_Click(sender, e);
         }
-        public async Task<bool> LancerMiseAJourAsync()
-        {   // Appelle la classe de mise à jour de Stockfish, qui vérifie la version actuelle
-            // et télécharge la nouvelle version si besoin (retourne false si Stockfish était déjà à jour)
-            MiseAJourStockfish maj = new(_moteurChoisi);
-            bool misAJour = await maj.ExecuterMiseAJour();
-            Debug.WriteLine(misAJour ? "Moteur mis à jour" : "Moteur déjà à jour");
-            return misAJour;
+        private string CheminStockfish => Path.Combine(Chemins.RepertoireRacine, "stockfish", "stockfish.exe");
+
+        private async Task VerificationAutomatiqueMiseAJour()
+        {   // Au démarrage : au plus tous les VerificationMiseAJourJours jours (BrunoGUI.ini), téléchargement seulement après accord.
+            // Exception si la vérification échoue (ex : hors ligne) : la date n'est pas enregistrée, on réessaiera au prochain démarrage
+            if (!parametres.VerificationMiseAJourDue(DateTime.Today))
+            {
+                Debug.WriteLine($"[MAJ] Pas de vérification automatique (dernière : {parametres.DerniereVerificationMiseAJour:yyyy-MM-dd}).");
+                return;
+            }
+            MiseAJourStockfish maj = new(CheminStockfish);
+            var version = await maj.RechercherNouvelleVersion();
+            parametres.DerniereVerificationMiseAJour = DateTime.Today;     // enregistrée dans les préférences à la fermeture
+            if (version != null && DemandeInstallation(version))
+                await maj.Installer(version);       // le moteur n'est pas encore démarré à ce stade
+        }
+        private bool DemandeInstallation(MiseAJourStockfish.VersionStockfish version)
+        {   // Demande l'accord avant de télécharger (question posée sur le thread de l'interface)
+            string question = $"Une nouvelle version de Stockfish est disponible : {version.Tag.Replace("sf_", "Stockfish ")} " +
+                              $"({version.TailleOctets / 1_000_000} Mo).\n\nLa télécharger et l'installer maintenant ?";
+            DialogResult Demander() => KryptonMessageBox.Show(question, "Mise à jour de Stockfish", KryptonMessageBoxButtons.YesNo, KryptonMessageBoxIcon.Question);
+            DialogResult reponse = InvokeRequired ? (DialogResult)Invoke(new Func<DialogResult>(Demander)) : Demander();
+            return reponse == DialogResult.Yes;
         }
         private async void BtnMiseAJour_Click(object sender, EventArgs e)
         {   // 1. On prépare l'UI
@@ -1259,10 +1273,34 @@ namespace BrunoGUI_GenII
             Cursor = Cursors.WaitCursor;
             VarianteMoteurUci2.Text = "Vérification de la version courante de Stockfish...";
             try
-            {   // 2. On appelle la méthode de mise à jour
-                bool misAJour = await LancerMiseAJourAsync();
+            {   // 2. Recherche, puis installation après accord
+                MiseAJourStockfish maj = new(CheminStockfish);
+                var version = await maj.RechercherNouvelleVersion();
+                parametres.DerniereVerificationMiseAJour = DateTime.Today;
+                if (version == null)
+                {
+                    VarianteMoteurUci2.Text = "Stockfish est à jour !";
+                    KryptonMessageBox.Show("Vous avez déjà la dernière version.", "Stockfish", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                    return;
+                }
+                if (!DemandeInstallation(version))
+                {
+                    VarianteMoteurUci2.Text = "Prêt";
+                    return;
+                }
+                VarianteMoteurUci2.Text = "Téléchargement et installation de Stockfish...";
+                await maj.Installer(version);       // arrête le Stockfish en cours
+                bool stockfishEnCours = _cheminMoteur == parametres.Moteur      // au démarrage, _cheminMoteur contient encore le nom du .ini
+                                        || (!string.IsNullOrEmpty(_cheminMoteur) && string.Equals(Path.GetFullPath(_cheminMoteur), CheminStockfish, StringComparison.OrdinalIgnoreCase));
+                if (stockfishEnCours)
+                {   // Le moteur arrêté par l'installation est redémarré avec la nouvelle version
+                    MoteurUci.Quitte();
+                    MoteurUci.Start(CheminStockfish);
+                }
                 VarianteMoteurUci2.Text = "Stockfish est à jour !";
-                KryptonMessageBox.Show(misAJour ? "Mise à jour réussie." : "Vous avez déjà la dernière version.", "Stockfish", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                KryptonMessageBox.Show($"{version.Tag.Replace("sf_", "Stockfish ")} est installé." +
+                                       (stockfishEnCours ? "\nSes réglages de force seront appliqués à la prochaine nouvelle partie." : ""),
+                                       "Stockfish", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
             }
             catch (Exception ex)
             {   // On gère les messages (ex: "Déjà à jour" ou "Pas de connexion")

@@ -330,6 +330,24 @@ Verifie("Préférences créées avec un commentaire d'en-tête, sans les clés d
     $"{lignesPrefs.Length} lignes");
 Verifie("Préférences lues par-dessus les valeurs par défaut", p2.CaseSombre == "#8080FF" && p2.ForceMoteur == 2026 && p2.Palette == "Office2010Silver" && p2.EloHumain == "1767", $"{p2.CaseSombre}, {p2.ForceMoteur}, {p2.Palette}");
 Verifie("Le fichier des valeurs par défaut n'est jamais modifié", System.IO.File.ReadAllText(cheminDefaut) == defautAvant, Parametres.FichierParDefaut);
+// Vérification automatique de Stockfish : au plus tous les VerificationMiseAJourJours jours, date gardée dans les préférences
+var jour = new DateTime(2026, 9, 27);
+Parametres m = new();
+bool jamaisFaite = m.VerificationMiseAJourDue(jour);
+m.DerniereVerificationMiseAJour = jour.AddDays(-29);
+bool apres29Jours = m.VerificationMiseAJourDue(jour);
+m.DerniereVerificationMiseAJour = jour.AddDays(-30);
+bool apres30Jours = m.VerificationMiseAJourDue(jour);
+m.VerificationMiseAJourJours = 0;
+bool desactivee = m.VerificationMiseAJourDue(jour);
+Verifie("Mise à jour : due si jamais faite ou après 30 jours, jamais si 0",
+    jamaisFaite && !apres29Jours && apres30Jours && !desactivee, $"jamais : {jamaisFaite}, 29 j : {apres29Jours}, 30 j : {apres30Jours}, 0 : {desactivee}");
+p2.DerniereVerificationMiseAJour = jour;
+p2.SauverPreferences(cheminPrefs);
+Parametres p3 = Parametres.Charger(dossierTest);
+Verifie("Mise à jour : date de la dernière vérification enregistrée et relue",
+    p3.DerniereVerificationMiseAJour == jour && System.IO.File.ReadAllLines(cheminPrefs).Contains("DerniereVerificationMiseAJour = 2026-09-27"),
+    $"{p3.DerniereVerificationMiseAJour:yyyy-MM-dd}");
 System.IO.Directory.Delete(dossierTest, true);
 Verifie("FormatCouleur : nom pour une couleur nommée", Parametres.FormatCouleur(System.Drawing.Color.Peru) == "Peru", Parametres.FormatCouleur(System.Drawing.Color.Peru));
 
