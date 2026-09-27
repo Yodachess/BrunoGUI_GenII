@@ -1,0 +1,62 @@
+# Publication d'une version : quand un tag "v..." est poussé (ex : v1.03), GitHub compile BrunoGUI_GenII,
+# lance les tests, prépare une archive portable (avec la dernière version de Stockfish) et crée une
+# "Release" GitHub avec cette archive, prête à télécharger.
+#   Créer et pousser un tag :  git tag v1.03   puis   git push BrunoGUI_GenII v1.03
+name: Publication
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write           # nécessaire pour créer la Release
+
+jobs:
+  publication:
+    runs-on: windows-latest
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v7
+
+      - name: Installation de .NET 8
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      # SignManifests=false : le certificat de signature ClickOnce n'existe que sur le PC de développement
+      - name: Compilation
+        run: dotnet build BrunoGUI_GenII.sln -c Release -p:SignManifests=false
+
+      - name: Tests (une version n'est publiée que si tous les tests passent)
+        run: dotnet run --project Tests -c Release --no-build -- --complet
+
+      - name: Dernière version de Stockfish (évite un téléchargement au premier lancement)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $release = gh api repos/official-stockfish/Stockfish/releases/latest | ConvertFrom-Json
+          $fichier = $release.assets | Where-Object { $_.name -like "*windows*x86-64*.zip" } |
+                     Sort-Object { if ($_.name -like "*universal*") { 0 } else { 1 } } | Select-Object -First 1
+          if (-not $fichier) { throw "Aucun Stockfish Windows x86-64 dans la release $($release.tag_name)" }
+          Write-Host "Stockfish $($release.tag_name) : $($fichier.name)"
+          Invoke-WebRequest $fichier.browser_download_url -OutFile stockfish.zip
+          Expand-Archive stockfish.zip -DestinationPath stockfish_extrait
+          $exe = Get-ChildItem stockfish_extrait -Recurse -Filter *.exe | Select-Object -First 1
+          Copy-Item $exe.FullName bin/Release/net8.0-windows/stockfish/stockfish.exe -Force
+
+      - name: Archive portable
+        run: |
+          $sortie = "bin/Release/net8.0-windows"
+          # Fichiers de publication ClickOnce et de débogage : inutiles dans une archive portable
+          Remove-Item "$sortie/publish" -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item "$sortie/*.application", "$sortie/*.manifest", "$sortie/*.pdb" -Force -ErrorAction SilentlyContinue
+          Compress-Archive -Path "$sortie/*" -DestinationPath "BrunoGUI_GenII-${{ github.ref_name }}.zip"
+
+      - name: Création de la Release GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "${{ github.ref_name }}" "BrunoGUI_GenII-${{ github.ref_name }}.zip"
+          --title "BrunoGUI GenII ${{ github.ref_name }}"
+          --notes "Archive portable : décompresser puis lancer BrunoGUI_GenII.exe (nécessite le .NET 8 Desktop Runtime : https://dotnet.microsoft.com/download/dotnet/8.0)."
