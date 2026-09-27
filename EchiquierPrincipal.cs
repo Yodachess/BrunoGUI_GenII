@@ -1232,7 +1232,10 @@ namespace BrunoGUI_GenII
             // Version 1.01 = gestion des fichiers réseaux neuronaux dans même répertoire que le moteur UCI (Stockfish NNUE)
             // Version 1.02 = corrections des règles (roque, prise en passant, promotion, 50 coups, lecture FEN), classe Position,
             //                MultiPV réglable, mise à jour automatique compatible Stockfish 19 (binaire "universal"), projet de tests (perft)
-            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.02\n--  Bruno COURTOIS  -- " +
+            // Version 1.03 = notation PGN des coups ambigus (écriture et relecture), décodage UCI (signe du mat, moteurs sans MultiPV),
+            //                couleurs lues dans le .ini (#hexadécimal, style Lichess par défaut), Threads et Hash envoyés au moteur,
+            //                lancement depuis un raccourci, tests automatiques et publication sur GitHub
+            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.03\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", "A propos de",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
