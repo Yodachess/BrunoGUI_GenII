@@ -46,7 +46,7 @@ void Charger(string fen)
 
 void ViderListes()
 {
-    L.ListeCoupsFen.Clear(); L.ListeCoupsPgnIntl.Clear(); L.ListeCoupsPgnFr.Clear(); L.ListeCoupsNal.Clear(); L.ListeCoupsUci.Clear();
+    L.ViderCoups();
 }
 
 string DernierCoupPgn() => L.ListeCoupsPgnIntl.LastOrDefault() ?? "(aucun)";
@@ -117,6 +117,33 @@ Charger("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 foreach (var (s, d) in new[] { ("e2", "e4"), ("e7", "e5"), ("f1", "c4"), ("b8", "c6"), ("d1", "h5"), ("g8", "f6"), ("h5", "f7") })
     L.ExecutionCoup(s, d);
 Verifie("Mat du berger détecté", L.EchecetMat, string.Concat(L.ListeCoupsPgnIntl).Trim());
+Verifie("Mat : '#' posé par la logique dans toutes les notations",
+    L.ListeCoupsPgnIntl[^1] == "4. Qxf7# " && L.ListeCoupsPgnFr[^1] == "4. Dxf7# " && L.ListeCoupsNal[^1].Trim().EndsWith('#') && L.ListeCoupsUci[^1] == "h5f7 ",
+    $"{L.ListeCoupsPgnIntl[^1]}| {L.ListeCoupsPgnFr[^1]}| {L.ListeCoupsNal[^1]}| {L.ListeCoupsUci[^1]}");
+
+// ═══════════════ Liste des coups ═══════════════
+Console.WriteLine("── Liste des coups ──");
+
+Charger("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+L.ExecutionCoup("e2", "e4"); L.ExecutionCoup("e7", "e5");
+Verifie("Un coup = toutes ses notations au même index",
+    L.ListeCoups.Count == 2 && L.ListeCoupsFen[1].StartsWith("rnbqkbnr/pppp1ppp/8/4p3/4P3/") && L.ListeCoupsPgnFr[0] == "1. e4 " && L.ListeCoupsNal[1] == "e7-e5 " && L.ListeCoupsUci[1] == "e7e5 ",
+    $"{L.ListeCoupsPgnFr[0]}| {L.ListeCoupsNal[1]}| {L.ListeCoupsUci[1]}");
+Verifie("Retour arrière : les notations du dernier coup partent ensemble",
+    L.RetireDernierCoup() && L.ListeCoups.Count == 1 && L.ListeCoupsNal.Count == 1 && L.ListeCoupsUci.Count == 1, $"{L.ListeCoups.Count} coup(s)");
+
+// Partie commencée depuis un FEN : la position de départ est un élément sans coup, en tête de liste
+string fenDepartPartie = "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3";
+Charger(fenDepartPartie);
+L.AjoutePositionDeDepart(fenDepartPartie);
+L.ExecutionCoup("f1", "b5");
+Verifie("Départ FEN : notations alignées (le coup est à l'index 1)",
+    L.ListeCoups.Count == 2 && L.ListeCoups[0].EstPositionDeDepart && L.ListeCoupsNal[0] == "" && L.ListeCoupsPgnIntl[1] == "3. Bb5 " && L.ListeCoupsFen[0] == fenDepartPartie,
+    $"Nal[0]='{L.ListeCoupsNal[0]}', PGN[1]='{L.ListeCoupsPgnIntl[1]}'");
+bool retire1 = L.RetireDernierCoup();
+bool retire2 = L.RetireDernierCoup();
+Verifie("Départ FEN : le retour arrière ne retire jamais la position de départ",
+    retire1 && !retire2 && L.ListeCoups.Count == 1 && L.ListeCoupsFen[^1] == fenDepartPartie, $"{L.ListeCoups.Count} élément(s)");
 
 // ═══════════════ Notation des coups ambigus ═══════════════
 Console.WriteLine("── Notation ──");

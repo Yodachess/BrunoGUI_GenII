@@ -735,11 +735,8 @@ namespace BrunoGUI_GenII
         private void AfficheEchecEtMat(string couleurRoiMat)   // Affiche l'échec et mat du roi de la couleur en paramètre
         {   // Affiche l'échec et mat du roi de la couleur en paramètre, et gère la fin de partie
             int indexCouleur = couleurRoiMat == "Blanc" ? 2 : 1;
-            LogiqueMouvements.ListeCoupsPgnIntl[^1] = (LogiqueMouvements.ListeCoupsPgnIntl[^1].ToString()).Replace("+", "#");
-            LogiqueMouvements.ListeCoupsPgnFr[^1] = (LogiqueMouvements.ListeCoupsPgnFr[^1].ToString()).Replace("+", "#");
-            LogiqueMouvements.ListeCoupsNal[^1] = (LogiqueMouvements.ListeCoupsNal[^1].ToString()).Replace("+", "#");
-            LogiqueMouvements.PartieEnCoursMat = true;
-            string coupMat = (LogiqueMouvements.ListeCoupsPgnFr[LogiqueMouvements.ListeCoupsPgnIntl.Count - 1].ToString()).Replace("+", "#");
+            LogiqueMouvements.PartieEnCoursMat = true;      // le "#" du mat est déjà dans les notations du dernier coup (LogiqueMouvements.ExecutionCoup)
+            string coupMat = LogiqueMouvements.ListeCoupsPgnFr[^1];
             int indexPoint = coupMat.IndexOf('.');  // On enlève le numéro de coup s'il existe
             if (indexPoint != -1)
             {   // Ce if n'est jamais éxecuté, mais pourrait être utile ?
@@ -1082,18 +1079,13 @@ namespace BrunoGUI_GenII
         private void RetourArriere_Click(object sender, EventArgs e)
         {   // Permet de revenir en arrière d'un demi-coup (coup des blancs ou des noirs)
             EffaceDernierCoup();
-            if (LogiqueMouvements.ListeCoupsFen.Count == 0)
+            if (!LogiqueMouvements.RetireDernierCoup())     // On supprime le dernier 1/2 coup (toutes ses notations), jamais la position de départ
                 _ = KryptonMessageBox.Show("Pas assez de coups joués \nPas de retour arrière possible", "Retour impossible", MessageBoxButtons.OK, MessageBoxIcon.Information);
             else
             {
                 Outils.ChangerDeCoté();
                 NombreCoupsJoues -= Convert.ToSingle(0.5);      // On décrémente d'un demi-coup
                 NumeroDemiCoup--;
-                LogiqueMouvements.ListeCoupsFen.RemoveAt(LogiqueMouvements.ListeCoupsFen.Count - 1);    // On supprime le dernier 1/2 coup
-                LogiqueMouvements.ListeCoupsPgnIntl.RemoveAt(LogiqueMouvements.ListeCoupsPgnIntl.Count - 1);        // pour les 5 listes
-                LogiqueMouvements.ListeCoupsPgnFr.RemoveAt(LogiqueMouvements.ListeCoupsPgnFr.Count - 1);
-                LogiqueMouvements.ListeCoupsNal.RemoveAt(LogiqueMouvements.ListeCoupsNal.Count - 1);
-                LogiqueMouvements.ListeCoupsUci.RemoveAt(LogiqueMouvements.ListeCoupsUci.Count - 1);
                 if (LogiqueMouvements.ListeCoupsFen.Count == 0)
                 {
                     LogiqueMouvements.MiseenplaceFen(FenDepart);
@@ -1136,12 +1128,14 @@ namespace BrunoGUI_GenII
             mafenetrePartie.LblJoueurNoir.Text = PartieEnCours.Black;
             mafenetrePartie.LblEloBlanc.Text = PartieEnCours.WhiteElo;
             mafenetrePartie.LblEloNoir.Text = PartieEnCours.BlackElo;
+            // Les coups joués en PGN français (sans l'éventuelle position de départ d'une partie chargée depuis un FEN)
+            List<string> coupsPgnFr = LogiqueMouvements.ListeCoups.Where(c => !c.EstPositionDeDepart).Select(c => c.PgnFr).ToList();
             // Nombre de coups à traiter (sans compter le résultat s'il est à la fin)
-            int nombreCoups = LogiqueMouvements.ListeCoupsPgnFr.Count;
+            int nombreCoups = coupsPgnFr.Count;
             if (nombreCoups != 0)
             {
                 // Vérifier si la dernière ligne est un résultat (1-0, 0-1, 1/2-1/2)
-                string dernierElement = LogiqueMouvements.ListeCoupsPgnFr[^1].Trim();
+                string dernierElement = coupsPgnFr[^1].Trim();
                 bool dernierElementEstResultat = (dernierElement == "1-0" || dernierElement == "0-1" || dernierElement == "1/2-1/2");
                 // Si le dernier élément est un résultat, on ne le traite pas comme un coup
                 if (dernierElementEstResultat)
@@ -1150,7 +1144,7 @@ namespace BrunoGUI_GenII
                 // Traitement des coups
                 for (int i = 0; i < nombreCoups; i++)
                 {
-                    string coup = LogiqueMouvements.ListeCoupsPgnFr[i].Trim();
+                    string coup = coupsPgnFr[i].Trim();
 
                     if (i % 2 == 0) // Lignes paires : coups des Blancs avec numéro
                     {
@@ -1556,11 +1550,7 @@ namespace BrunoGUI_GenII
             _positionChargeeDepuisFen = true;
             ListeParties.Clear();    // On vide la liste des parties 
             ListePartiesPGN.Clear(); // On vide la liste des parties PGN
-            ListeCoupsFen.Clear();     // On vide la liste des coups FEN
-            ListeCoupsNal.Clear();     // On vide la liste des coups NAL
-            ListeCoupsPgnFr.Clear();   // On vide la liste des coups PGN français
-            ListeCoupsPgnIntl.Clear();  // On vide la liste des coups PGN international
-            ListeCoupsUci.Clear();     // On vide la liste des coups UCI
+            ViderCoups();              // On vide la liste des coups (toutes les notations)
             InitialisationEchiquier();    // On réinitialise l'échiquier
             AnalysePosition.Enabled = true;    // On veut anlyser la position chargée ...
             if (ChargerPositionFen.ShowDialog() == DialogResult.OK)
@@ -1576,7 +1566,7 @@ namespace BrunoGUI_GenII
                     Debug.WriteLine("Contenu du fichier FEN : " + contenuFen);
                     VarianteMoteurUci1.Text = "Fen chargé : " + contenuFen;
                     LogiqueMouvements.MiseenplaceFen(contenuFen);  // Affiche la position FEN sur l'échiquier
-                    ListeCoupsFen.Add(contenuFen);  // On ajoute le FEN à la liste des coups FEN 
+                    AjoutePositionDeDepart(contenuFen);  // La partie commence à cette position (élément sans coup, en tête de liste)
                     RetourArriere.Enabled = false;    // On ne peut PAS faire un retour arrière sur la position chargée
                 }
                 catch (Exception ex)
