@@ -49,6 +49,7 @@ namespace BrunoGUI_GenII
         public static int? NombreThreads { get; set; }          // Threads et Hash (Mo) envoyés au démarrage du moteur (null : valeur du moteur)
         public static int? TailleHachageMo { get; set; }
         private static bool _optionsDemarrageEnvoyees;          // Threads/Hash ne sont envoyés qu'une fois par démarrage du moteur
+        public static string NomAnnonce { get; private set; }  // nom annoncé par le moteur ("id name ..."), ex : Stockfish 19
         private static Process Proc;
 
         public void Start(string fichierMoteurUci)
@@ -75,6 +76,7 @@ namespace BrunoGUI_GenII
             // première interrogation du processus: le moteur UCI est il pret ? 
             LogiqueMouvements.StatutMoteurUci = true;
             OptionsUci.Clear();
+            NomAnnonce = null;
             _optionsDemarrageEnvoyees = false;
             StandardInputDataToUci("uci");  // On demande les infos au moteur (il répond par ses options puis "uciok")
         }
@@ -104,6 +106,10 @@ namespace BrunoGUI_GenII
                             AfficheCoupMoteur?.Invoke();
                         }
                         break;
+                    case "id":
+                        if (DerniereLigne.NomMoteur != null)
+                            NomAnnonce = DerniereLigne.NomMoteur;
+                        break;
                     case "uciok":   // le moteur a fini de déclarer ses options
                         EnvoieOptionsDemarrage();
                         break;
@@ -121,11 +127,15 @@ namespace BrunoGUI_GenII
             UciVersGui = false;
         }
         private static void EnvoieOptionsDemarrage()
-        {   // Threads et Hash de BrunoGUI.ini, envoyés une seule fois et seulement si le moteur déclare ces options
-            // (un nouveau "uci", par exemple depuis la fenêtre des paramètres, ne doit pas écraser les réglages faits entre-temps)
+        {   // Threads et Hash de BrunoGUI.ini (réglages de Stockfish), envoyés une seule fois et seulement si le moteur déclare ces options
+            // (un nouveau "uci", par exemple depuis la fenêtre des paramètres, ne doit pas écraser les réglages faits entre-temps).
+            // Uniquement à Stockfish : d'autres moteurs se comportent autrement avec plusieurs threads
+            // (ex : Rodent IV ignore alors MultiPV et n'affiche plus qu'une variante) ; ils gardent leurs propres réglages.
             if (_optionsDemarrageEnvoyees)
                 return;
             _optionsDemarrageEnvoyees = true;
+            if (NomAnnonce?.StartsWith("Stockfish", StringComparison.OrdinalIgnoreCase) != true)
+                return;
             if (NombreThreads is int threads && OptionsUci.Contains("Threads"))
                 StandardInputDataToUci("setoption name Threads value " + threads);
             if (TailleHachageMo is int hachage && OptionsUci.Contains("Hash"))
