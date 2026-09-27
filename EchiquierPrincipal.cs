@@ -147,7 +147,12 @@ namespace BrunoGUI_GenII
             BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = ListeCoupsBouton.Enabled = false;
             PartieEnCours.Date = Aujourdhui.ToString("yyyy.MM.dd");
             PartieEnCours.Lieu = "Maison"; PartieEnCours.Tournoi = "Entrainement";
-            PartieEnCours.WhiteElo = PartieEnCours.BlackElo = "?"; PartieEnCours.Result = "*";
+            PartieEnCours.Result = "*";
+            // En-têtes PGN de départ = joueurs affichés (humain avec les Blancs, moteur avec les Noirs), repris par la fenêtre "Entête PGN"
+            PartieEnCours.White = _nomHumain;
+            PartieEnCours.WhiteElo = string.IsNullOrWhiteSpace(_joueurElo) ? "?" : _joueurElo;
+            PartieEnCours.Black = parametres.Moteur;
+            PartieEnCours.BlackElo = _forceMoteurElo.ToString();
             mesparametresDeBase = new ParametresDeBase(this);
         }
 
@@ -425,7 +430,7 @@ namespace BrunoGUI_GenII
                     if (ligne.NomMoteur != null)
                     {   // Récupération du nom du moteur (limité à 20 caractères pour l'affichage)
                         _nomMoteur = ligne.NomMoteur[..Math.Min(20, ligne.NomMoteur.Length)];
-                        LabelJoueurNoir.Text = _nomMoteur;
+                        PartieEnCours.Black = LabelJoueurNoir.Text = _nomMoteur;     // étiquette et en-tête PGN identiques
                     }
                     if (ligne.AuteurMoteur != null)     // Récupération de l'auteur
                         VarianteMoteurUci3.Text = "     Auteur(s) du moteur " + _nomMoteur + " = " + ligne.AuteurMoteur;

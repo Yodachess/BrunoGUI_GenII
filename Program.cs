@@ -31,9 +31,36 @@ namespace BrunoGUI_GenII
                 Application.DoEvents(); // laisse le formulaire se peindre
             }
             // *** Fin du Splash ***
-            // Pas de KryptonManager : toutes les fenêtres (et les boîtes de message) utilisent la palette par défaut de Krypton 95.
-            // L'ancien réglage "Office2010Silver" ne s'appliquait qu'à l'ancienne bibliothèque ComponentFactory.Krypton.
+            Parametres parametres = new();
+            parametres.ChargerDepuisIni(System.IO.Path.Combine(Chemins.RepertoireRacine, "BrunoGUI.ini"));
+            ConfigureKrypton(parametres.Palette);
             Application.Run(new EchiquierPrincipal());
+        }
+
+        private static void ConfigureKrypton(string palette)
+        {   // Textes des boutons des boîtes de message en français (Krypton 95 les affiche en anglais par défaut)
+            var textes = KryptonManager.Strings.GeneralStrings;
+            textes.OK = "O&K";
+            textes.Cancel = "&Annuler";
+            textes.Yes = "&Oui";
+            textes.No = "&Non";
+            textes.Abort = "A&bandonner";
+            textes.Retry = "&Réessayer";
+            textes.Ignore = "&Ignorer";
+            textes.Close = "&Fermer";
+            textes.Today = "Au&jourd'hui";
+            textes.Help = "Ai&de";
+            textes.Continue = "&Continuer";
+            textes.TryAgain = "Réessa&yer";
+
+            // Palette de toute l'application (clé "Palette" de BrunoGUI.ini, ex : Microsoft365Silver) ;
+            // absente ou inconnue : palette par défaut de Krypton 95 (Microsoft365Blue)
+            if (string.IsNullOrWhiteSpace(palette))
+                return;
+            if (Enum.TryParse(palette.Trim(), true, out PaletteMode mode) && mode != PaletteMode.Custom && mode != PaletteMode.Global)
+                _ = new KryptonManager { GlobalPaletteMode = mode };
+            else
+                System.Diagnostics.Debug.WriteLine($"[INFO] Palette inconnue dans BrunoGUI.ini : '{palette}' (palette par défaut conservée)");
         }
     }
 }
