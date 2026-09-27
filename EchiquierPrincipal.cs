@@ -72,7 +72,7 @@ namespace BrunoGUI_GenII
         private int _indexCaseSourceDernierMouvement, _indexCaseDestinationDernierMouvement;
         private string _caseSource, _caseDestination, _couleurHumain;
         private string _nomHumain, _joueurElo, _nomMoteur, _moteurElo, _joueurBlanc, _joueurNoir;
-        private string _cheminMoteur, _moteurChoisi, _variationMoteur, _meilleureSuite, _scoreCourant, _evaluationCourante;
+        private string _cheminMoteur, _nomMoteurChoisi, _variationMoteur, _meilleureSuite, _scoreCourant, _evaluationCourante;
         private string _bibliotheque = "rodent.bin";
         private bool _clickCaseSource, _visuSymbole, _montreDonneesBrutesUci, _montre3VariantesUci, _analyseEnCours, _montreListeParties, _partieTerminee;
         private bool _humain;           // True pour simuler 2 joueurs humains et False pour jouer contre le moteur UCI
@@ -121,7 +121,7 @@ namespace BrunoGUI_GenII
             _forceMoteurElo = parametres.ForceMoteur;
             _nombreLignesPV = MoteurUci.NombreLignesPV = parametres.NombreLignesPV;
             _bibliotheque = parametres.Bibliotheque;
-            LabelJoueurNoir.Text = _cheminMoteur = parametres.Moteur;
+            LabelJoueurNoir.Text = parametres.Moteur;
             EloNoir.Text = _moteurElo = _forceMoteurElo.ToString();
             LabelJoueurBlanc.Text = _nomHumain;
             EloBlanc.Text = _joueurElo;
@@ -198,7 +198,7 @@ namespace BrunoGUI_GenII
             string cheminMoteurs = Chemins.MoteursUCI;
             string cheminPolyglot = Chemins.BibliothèquesPolyglot;
 
-            _moteurChoisi = Path.Combine(_dossierRacine, "stockfish", "stockfish.exe");
+            _cheminMoteur = CheminStockfish;            // moteur lancé au démarrage
             _dossierStockfish = Path.Combine(_dossierRacine, "stockfish");
 
             Debug.WriteLine("Dossier Racine = " + _dossierRacine);
@@ -237,9 +237,9 @@ namespace BrunoGUI_GenII
                }
                     // B. MAINTENANT, on démarre le moteur. 
                     // Le fichier est libre, remplacé et prêt.
-               Debug.WriteLine("chemin Load = " + _moteurChoisi);
+               Debug.WriteLine("chemin Load = " + _cheminMoteur);
 
-               MoteurUci.Start(_moteurChoisi);
+               MoteurUci.Start(_cheminMoteur);
                ActiverMenus(true);    // On réactive les menus après la mise à jour
            });
             Debug.WriteLine("Moteur = " + _nomMoteur);
@@ -483,7 +483,7 @@ namespace BrunoGUI_GenII
             else
             {   // Pour ceux qui n'ont qu'une variante principale (Sargon, ...) : on n'utilise que la zone VarianteMoteurUci1
                 VarianteMoteurUci1.Text = texteVariante;
-                VarianteMoteurUci2.Text = "... " + _moteurChoisi + " n'affiche qu'une variante ..."; VarianteMoteurUci3.Text = "...";
+                VarianteMoteurUci2.Text = "... " + _nomMoteurChoisi + " n'affiche qu'une variante ..."; VarianteMoteurUci3.Text = "...";
             }
         }
 
@@ -788,9 +788,13 @@ namespace BrunoGUI_GenII
             Promo2.Image = Couleur == "Noir" ? FouNoir : FouBlanc;
             Promo3.Image = Couleur == "Noir" ? CavalierNoir : CavalierBlanc;
             GroupPromo.Visible = true;
-            while (_selectionPromotion == LogiqueMouvements.TypePiece.Vide)
+            while (_selectionPromotion == LogiqueMouvements.TypePiece.Vide && !IsDisposed)
+            {   // Attente du clic sur une pièce : la courte pause évite d'occuper le processeur à 100 % pendant l'attente
                 Application.DoEvents();
-            GroupPromo.Visible = false;
+                Thread.Sleep(15);
+            }
+            if (!IsDisposed)
+                GroupPromo.Visible = false;
         }
         private void EffaceDernierCoup()
         {   // Efface les couleurs de la case source et destination du dernier coup joué
@@ -918,18 +922,14 @@ namespace BrunoGUI_GenII
         }
         private void RodentIV_Click(object sender, EventArgs e)
         {   //  https://echecs-et-informatique.franceserv.com/rodent-iv.html
-            _moteurChoisi = "Rodent IV ";
             EloNoir.Text = _moteurElo = "+- 3000";
-            Directory.SetCurrentDirectory(Chemins.MoteursUCI + @"\Rodent_IV");
             _cheminMoteur = Path.Combine(Chemins.MoteursUCI + @"\Rodent_IV", "rodent-iv-x64.exe");
             Debug.WriteLine("Chemin Rodent IV = " + _cheminMoteur);
             DémarrageMoteur();
         }
         private void Sargon1_1978_Click(object sender, EventArgs e)
         {   // https://echecs-et-informatique.franceserv.com/sargon-1978.html
-            _moteurChoisi = "Sargon I 1978";
             EloNoir.Text = _moteurElo = "1678";
-            Directory.SetCurrentDirectory(Chemins.MoteursUCI + @"\sargon1978");
             _cheminMoteur = Path.Combine(Chemins.MoteursUCI + @"\sargon1978", "sargon1978_1_01b.exe");
             Debug.WriteLine("Chemin sargon I 1978 = " + _cheminMoteur);
             DémarrageMoteur();
@@ -937,23 +937,22 @@ namespace BrunoGUI_GenII
         }
         public void DémarreStockfish()
         {   //  https://stockfishchess.org/
-            // _moteurChoisi = "Stockfish 17 ";
             EloNoir.Text = _moteurElo = "+- 3000";
-            Directory.SetCurrentDirectory(Application.StartupPath);
-            _cheminMoteur = Path.Combine(_dossierRacine, "stockfish", "stockfish.exe");
+            _cheminMoteur = CheminStockfish;
             Debug.WriteLine("Chemin Stockfish = " + _cheminMoteur);
             DémarrageMoteur();
         }
         private void DémarrageMoteur()
         {   // Arrête le moteur UCI s'il est déjà en cours d'exécution, pour éviter les conflits
+            // (le dossier de travail du moteur est celui de son .exe : voir MoteurUci.Start)
             MoteurUci.Quitte();
             MoteurUci.Start(_cheminMoteur); // on démarre le nouveau moteur Uci
-            _moteurChoisi = Path.GetFileNameWithoutExtension(_cheminMoteur);
-            Debug.WriteLine("Moteur = " + _moteurChoisi);
+            _nomMoteurChoisi = Path.GetFileNameWithoutExtension(_cheminMoteur);
+            Debug.WriteLine("Moteur = " + _nomMoteurChoisi);
             if (OrdinateurJoueBlanc)
-                LabelJoueurBlanc.Text = _moteurChoisi;
+                LabelJoueurBlanc.Text = _nomMoteurChoisi;
             if (OrdinateurJoueNoir)
-                LabelJoueurNoir.Text = _moteurChoisi;
+                LabelJoueurNoir.Text = _nomMoteurChoisi;
         }
         private void ParametresDeBase_Click(object sender, EventArgs e)
         {   // Affiche les paramètres de base du moteur UCI
@@ -1294,8 +1293,7 @@ namespace BrunoGUI_GenII
                 }
                 VarianteMoteurUci2.Text = "Téléchargement et installation de Stockfish...";
                 await maj.Installer(version);       // arrête le Stockfish en cours
-                bool stockfishEnCours = _cheminMoteur == parametres.Moteur      // au démarrage, _cheminMoteur contient encore le nom du .ini
-                                        || (!string.IsNullOrEmpty(_cheminMoteur) && string.Equals(Path.GetFullPath(_cheminMoteur), CheminStockfish, StringComparison.OrdinalIgnoreCase));
+                bool stockfishEnCours = string.Equals(Path.GetFullPath(_cheminMoteur), CheminStockfish, StringComparison.OrdinalIgnoreCase);
                 if (stockfishEnCours)
                 {   // Le moteur arrêté par l'installation est redémarré avec la nouvelle version
                     MoteurUci.Quitte();

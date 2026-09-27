@@ -12,8 +12,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Windows.Forms;
-using Krypton.Toolkit;
 
 namespace BrunoGUI_GenII
 {
@@ -540,16 +538,7 @@ namespace BrunoGUI_GenII
 
                     string ChaineFen = RetourneChaineFenActuel();       // Position après le coup
 
-                    char[] decoupe = MouvementCoup.ToCharArray();       // Remplissage de liste de coups PGN
-                    for (int i = 0; i < decoupe.Length; i++)
-                    {                                                   // On traduit le coup en notation internationale
-                        if (decoupe[i] == 'R') decoupe[i] = 'K';
-                        if (decoupe[i] == 'D') decoupe[i] = 'Q';
-                        if (decoupe[i] == 'T') decoupe[i] = 'R';
-                        if (decoupe[i] == 'F') decoupe[i] = 'B';
-                        if (decoupe[i] == 'C') decoupe[i] = 'N';
-                    }
-                    MouvementCoupPgn = new string(decoupe);
+                    MouvementCoupPgn = NotationInternationale(MouvementCoup);   // PGN international (lettres anglaises des pièces)
 
                     // Traitement de la notation algébrique longue
                     if (MouvementCoupPgn.Contains('x'))
@@ -857,6 +846,20 @@ namespace BrunoGUI_GenII
                 return !ResteCoupsValidesJouables();
             });
         }
+        public static string NotationInternationale(string coupFrancais)
+        {   // Traduit les lettres des pièces du français vers l'anglais : R(oi)→K, D(ame)→Q, T(our)→R, F(ou)→B, C(avalier)→N.
+            // Sans ambiguïté : les pièces sont en majuscules, les colonnes (a à h) en minuscules, et le roque "O-O" est identique.
+            // Chaque lettre n'est traduite qu'une fois (le "R" issu de T n'est pas retraduit en K)
+            return string.Concat(coupFrancais.Select(lettre => lettre switch
+            {
+                'R' => 'K',
+                'D' => 'Q',
+                'T' => 'R',
+                'F' => 'B',
+                'C' => 'N',
+                _ => lettre,
+            }));
+        }
         public static bool CampAuTraitEnEchec()
         {   // Le roi du camp qui a le trait est-il en échec ? (CalculeEchec regarde le roi adverse : on change le trait sur une copie)
             return CalculerSurCopie(() =>
@@ -1143,20 +1146,15 @@ namespace BrunoGUI_GenII
             else
                 return string.Empty;
         }
-        public static int RenvoieCaseIndex120(string NomCase) // Crash quand il y a Mat :-- 'Le format de la chaîne d'entrée est incorrect.'
-        {   // Renvoie l'index d'une case à partir de son nom (sous la forme "e2")
-            try
+        public static int RenvoieCaseIndex120(string NomCase)
+        {   // Renvoie l'index d'une case à partir de son nom (sous la forme "e2"), ou -1 si le nom n'est pas une case (ex : "" ou "z9")
+            // Index = (rangée x 10) + (colonne : a = 1, b = 2 ... h = 8) + 10  (voir le schéma de l'échiquier 120 cases en tête du fichier)
+            if (string.IsNullOrEmpty(NomCase) || NomCase.Length < 2 || NomCase[0] < 'a' || NomCase[0] > 'h' || NomCase[1] < '1' || NomCase[1] > '8')
             {
-                return (Convert.ToInt32(NomCase.Substring(1, 1)) * 10) + (Convert.ToInt32(Convert.ToChar(NomCase[..1])) - 96) + 10;
-                //            on multiplie le numéro de ligne par 10  :  on convertit le code ASCII en entier, puis -96   : on ajoute 10       
-                // Note : Code ASCII de a = 97, code ASCII de e  = 101, d’où le - 96 !! Pour avoir a = 1, b = 2, c= 3,… e = 5
-            }
-            catch (Exception ex)
-            {
-                KryptonMessageBox.Show($"Une erreur s'est produite : {ex.Message}", "dans RenvoieCaseIndex120", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
-                Debug.WriteLine($"StackTrace : {ex.StackTrace}");
+                Debug.WriteLine($"[Logique] RenvoieCaseIndex120 : case invalide '{NomCase}'");
                 return -1;
             }
+            return ((NomCase[1] - '0') * 10) + (NomCase[0] - 'a' + 1) + 10;
         }
         public static ColorPiece CouleurAdversaireJoueurCourant()
         {   // Renvoie la couleur de l'adversaire du joueur courant
