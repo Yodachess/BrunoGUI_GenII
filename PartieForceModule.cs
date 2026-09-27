@@ -22,25 +22,32 @@ namespace BrunoGUI_GenII
 {
     public partial class PartieForceModule : Form
     {
-        public string ChoixCouleur { get; set; }
-        public string NomAdversaire { get; set; }
-        public int ForceModule { get; set; }
-        public int DureeReflexionSeconde { get; set; }
-        public bool ForceMaximale { get; set; }
+        // Choix proposés à l'ouverture de la fenêtre (préférences du .ini, puis derniers choix), et choix validés
+        public string ChoixCouleur { get; set; } = "Noirs";     // couleur jouée par le moteur
+        public string NomAdversaire { get; set; } = "Bruno";    // nom du joueur humain
+        public int ForceModule { get; set; } = 1850;            // Elo du moteur si pas force maximale
+        public int DureeReflexionSeconde { get; set; } = 5;
+        public bool ForceMaximale { get; set; } = true;
 
         public PartieForceModule()
         {
             InitializeComponent();
+            this.VisibleChanged += (s, e) => { if (Visible) AfficheChoix(); };
+        }
+        private void AfficheChoix()
+        {   // Met les contrôles de la fenêtre aux valeurs des propriétés
+            ModuleJoueBlancs.Checked = ChoixCouleur == "Blancs";
+            ModuleJoueNoirs.Checked = ChoixCouleur != "Blancs";
+            ForceMoteurMaximum.Checked = ForceMaximale;
+            ForceMoteurDefinie.Checked = !ForceMaximale;
+            ValeurLimiteElo.Value = Math.Clamp(ForceModule, (int)ValeurLimiteElo.Minimum, (int)ValeurLimiteElo.Maximum);
+            ValeurLimiteElo.Enabled = !ForceMaximale;
+            TempsReflexion.Value = Math.Clamp(DureeReflexionSeconde, (int)TempsReflexion.Minimum, (int)TempsReflexion.Maximum);
+            TextBoxNomAdvesaire.Text = NomAdversaire;
         }
         private void NouvellePartieForceModule_Load(object sender, EventArgs e)
         {
-            ModuleJoueNoirs.Checked = true;     // Les Noirs par défaut
-            ForceMoteurMaximum.Checked = true;  // Force Maximum par défaut
-            DureeReflexionSeconde = 2;
-            ValeurLimiteElo.Value = 1850;       // Valeur par défaut du ELO si pas max
-            NomAdversaire = "Bruno";
-            TextBoxNomAdvesaire.Text = NomAdversaire;
-            ValeurLimiteElo.Enabled = false;    // Désactiver le NumericUpDown par défaut
+            AfficheChoix();
             TempsReflexion.Enabled = true;
 
             // Méthodes séparées pour la gestion des événements

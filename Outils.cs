@@ -17,9 +17,12 @@
 //              ├─ "ChangerDeCoté"  
 //              └─ "MiseaZeroListes"
 // └─ Classe "Parametres"  
-//              └─ "ChargerDepuisIni"
+//              ├─ "ConvertitCouleur" / "FormatCouleur"
+//              ├─ "ChargerDepuisIni"
+//              └─ "SauverDansIni"      Enregistrement des préférences (commentaires et ordre des lignes conservés)
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -251,7 +254,9 @@ namespace BrunoGUI_GenII
         public string CouleurCaseSource { get; set; } = LichessCaseSource;
         public string CouleurCaseDestination { get; set; } = LichessCaseDestination;
         public int DureeReflexionSeconde { get; set; } = 3;
-        public int ForceMoteur { get; set; } = 1850;
+        public int ForceMoteur { get; set; } = 1850;            // Elo choisi dans "Nouvelle partie" (si pas force maximale)
+        public bool ForceMaximale { get; set; } = true;         // "Nouvelle partie" : moteur à sa force maximale
+        public string CouleurMoteur { get; set; } = "Noirs";    // "Nouvelle partie" : couleur jouée par le moteur (Blancs ou Noirs)
         public int NombreLignesPV { get; set; } = 3;
         public int NombreCoeursThread { get; set; } = 4;
         public int? TailleHachageMo { get; set; }       // null : taille par défaut du moteur
@@ -305,14 +310,60 @@ namespace BrunoGUI_GenII
                     case "CouleurCaseDestination": CouleurCaseDestination = valeur; break;
                     case "NomHumain": NomHumain = valeur; break;
                     case "EloHumain": EloHumain = valeur; break;
-                    case "DureereflexionSeconde": DureeReflexionSeconde = int.Parse(valeur); break;
-                    case "Forcemoteur": ForceMoteur = int.Parse(valeur); break;
-                    case "NombrelignesPV": NombreLignesPV = int.Parse(valeur); break;
-                    case "NombreCoeursThread": NombreCoeursThread = int.Parse(valeur); break;
+                    // Une valeur numérique illisible est ignorée (la valeur par défaut est conservée)
+                    case "DureereflexionSeconde": DureeReflexionSeconde = PremierEntier(valeur) ?? DureeReflexionSeconde; break;
+                    case "Forcemoteur": ForceMoteur = PremierEntier(valeur) ?? ForceMoteur; break;
+                    case "ForceMaximale": ForceMaximale = !valeur.Equals("false", StringComparison.OrdinalIgnoreCase); break;
+                    case "CouleurMoteur": CouleurMoteur = valeur == "Blancs" ? "Blancs" : "Noirs"; break;
+                    case "NombrelignesPV": NombreLignesPV = PremierEntier(valeur) ?? NombreLignesPV; break;
+                    case "NombreCoeursThread": NombreCoeursThread = PremierEntier(valeur) ?? NombreCoeursThread; break;
                     case "TableHachage": TailleHachageMo = PremierEntier(valeur); break;     // en Mo, ex : "256" ou "256 min"
                     case "Bibliotheque": Bibliotheque = valeur; break;
                 }
             }
+        }
+
+        public static string FormatCouleur(Color couleur)
+        {   // Couleur écrite dans le .ini : son nom si elle en a un (ex : Peru), sinon son code hexadécimal (ex : #B58863)
+            return couleur.IsNamedColor ? couleur.Name : $"#{couleur.R:X2}{couleur.G:X2}{couleur.B:X2}";
+        }
+
+        public void SauverDansIni(string chemin)
+        {   // Enregistre les paramètres dans le .ini en conservant les commentaires, l'ordre des lignes et les clés inconnues :
+            // la valeur de chaque clé existante est remplacée sur place, les clés absentes sont ajoutées à la fin
+            var valeurs = new Dictionary<string, string>
+            {
+                ["Moteur"] = Moteur,
+                ["Sitemoteur"] = SiteMoteur,
+                ["Casesombre"] = CaseSombre,
+                ["Caseclaire"] = CaseClaire,
+                ["CouleurCaseSource"] = CouleurCaseSource,
+                ["CouleurCaseDestination"] = CouleurCaseDestination,
+                ["NomHumain"] = NomHumain,
+                ["EloHumain"] = EloHumain,
+                ["DureereflexionSeconde"] = DureeReflexionSeconde.ToString(),
+                ["Forcemoteur"] = ForceMoteur.ToString(),
+                ["ForceMaximale"] = ForceMaximale ? "true" : "false",
+                ["CouleurMoteur"] = CouleurMoteur,
+                ["NombrelignesPV"] = NombreLignesPV.ToString(),
+                ["NombreCoeursThread"] = NombreCoeursThread.ToString(),
+                ["Bibliotheque"] = Bibliotheque,
+            };
+            if (TailleHachageMo is int hachage)
+                valeurs["TableHachage"] = hachage.ToString();
+
+            List<string> lignes = File.Exists(chemin) ? [.. File.ReadAllLines(chemin)] : [];
+            for (int i = 0; i < lignes.Count; i++)
+            {
+                if (string.IsNullOrWhiteSpace(lignes[i]) || lignes[i].TrimStart().StartsWith(';'))
+                    continue;
+                string cle = lignes[i].Split('=', 2)[0].Trim();
+                if (valeurs.Remove(cle, out string valeur))
+                    lignes[i] = $"{cle} = {valeur}";
+            }
+            foreach (var (cle, valeur) in valeurs)      // clés absentes du fichier
+                lignes.Add($"{cle} = {valeur}");
+            File.WriteAllLines(chemin, lignes);
         }
     }
 }

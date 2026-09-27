@@ -28,17 +28,21 @@ namespace BrunoGUI_GenII
             this.VisibleChanged += ParametresDeBase_VisibleChanged;
         }
         private void ParametresDeBase_VisibleChanged(object sender, EventArgs e)
-        {   // A chaque affichage, on montre le nombre de variantes actuellement demandé au moteur
-            if (Visible)
-                baseMultipvNumerique.Value = Math.Clamp(MoteurUci.NombreLignesPV, (int)baseMultipvNumerique.Minimum, (int)baseMultipvNumerique.Maximum);
+        {   // A chaque affichage, on montre les réglages actuels (variantes, threads, temps de réflexion)
+            if (!Visible)
+                return;
+            baseMultipvNumerique.Value = Math.Clamp(MoteurUci.NombreLignesPV, (int)baseMultipvNumerique.Minimum, (int)baseMultipvNumerique.Maximum);
+            if (MoteurUci.NombreThreads is int threads)
+                baseThreadsNumerique.Value = Math.Clamp(threads, (int)baseThreadsNumerique.Minimum, (int)baseThreadsNumerique.Maximum);
+            baseReflexionNumerique.Value = Math.Clamp(interfaceGraphique.TrackBarTempsReflexion.Value, (int)baseReflexionNumerique.Minimum, (int)baseReflexionNumerique.Maximum);
         }
         private void BaseBoutonOk_Click(object sender, EventArgs e)
         {
-            PartieForceModule maNouvellePartieForceModule = new();
             MoteurUci.DefinitLimiteElo(baseEloNumerique.Value.ToString());
-            MoteurUci.StandardInputDataToUci("setoption name Threads value " + (int)baseThreadsNumerique.Value);
+            MoteurUci.DefinitThreads((int)baseThreadsNumerique.Value);
             MoteurUci.DefinitMultiPV((int)baseMultipvNumerique.Value);
-            maNouvellePartieForceModule.DureeReflexionSeconde = interfaceGraphique.TrackBarTempsReflexion.Value = ((int)baseReflexionNumerique.Value);
+            var curseur = interfaceGraphique.TrackBarTempsReflexion;
+            curseur.Value = Math.Clamp((int)baseReflexionNumerique.Value, curseur.Minimum, curseur.Maximum);   // met aussi à jour le temps de réflexion
             if (interfaceGraphique.OrdinateurJoueNoir)
                 interfaceGraphique.PartieEnCours.BlackElo = interfaceGraphique.EloNoir.Text = baseEloNumerique.Value.ToString();
             else

@@ -28,9 +28,14 @@ namespace BrunoGUI_GenII
             this.VisibleChanged += ParametresUciStockfish_VisibleChanged;
         }
         private void ParametresUciStockfish_VisibleChanged(object sender, EventArgs e)
-        {   // A chaque affichage, on montre le nombre de variantes actuellement demandé au moteur
-            if (Visible)
-                MultiPVUpDown.Value = Math.Clamp(MoteurUci.NombreLignesPV, (int)MultiPVUpDown.Minimum, (int)MultiPVUpDown.Maximum);
+        {   // A chaque affichage, on montre les réglages actuels (variantes, threads, table de hachage)
+            if (!Visible)
+                return;
+            MultiPVUpDown.Value = Math.Clamp(MoteurUci.NombreLignesPV, (int)MultiPVUpDown.Minimum, (int)MultiPVUpDown.Maximum);
+            if (MoteurUci.NombreThreads is int threads)
+                ThreadsUpDown.Value = Math.Clamp(threads, (int)ThreadsUpDown.Minimum, (int)ThreadsUpDown.Maximum);
+            if (MoteurUci.TailleHachageMo is int hachage)
+                HashSizeUpDown.Value = Math.Clamp(hachage, (int)HashSizeUpDown.Minimum, (int)HashSizeUpDown.Maximum);
         }
         private void ParametresUciStockfish_Load(object sender, EventArgs e)
         {   // Affichage des paramêtres dans la console
@@ -43,8 +48,8 @@ namespace BrunoGUI_GenII
         private void ParametresFermer_Click(object sender, EventArgs e)
         {   // Passage au moteur des paramètres sélectionnés 
             MoteurUci.StandardInputDataToUci("setoption name Ponder value " + (checkBoxPonder.Checked ? "true" : "false"));
-            MoteurUci.StandardInputDataToUci("setoption name Threads value " + (int)ThreadsUpDown.Value);
-            MoteurUci.StandardInputDataToUci("setoption name Hash value " + (int)HashSizeUpDown.Value);
+            MoteurUci.DefinitThreads((int)ThreadsUpDown.Value);
+            MoteurUci.DefinitHachage((int)HashSizeUpDown.Value);
             MoteurUci.DefinitMultiPV((int)MultiPVUpDown.Value);
             MoteurUci.StandardInputDataToUci("setoption name Skill Level value " + (int)SkillLevelUpDown.Value);
             MoteurUci.StandardInputDataToUci("setoption name Move Overhead value " + (int)MoveOverheadUpDown.Value);

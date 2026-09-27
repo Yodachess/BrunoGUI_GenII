@@ -132,8 +132,9 @@
     <None Update="BibliothèquesPolyglot\varied.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <!-- PreserveNewest : les préférences enregistrées par l'application dans bin ne sont pas écrasées à chaque compilation -->
     <None Update="BrunoGUI.ini">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Bruno_NB.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
