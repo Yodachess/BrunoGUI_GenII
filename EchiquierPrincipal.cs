@@ -21,7 +21,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using ComponentFactory.Krypton.Toolkit;
+using Krypton.Toolkit;
 using static BrunoGUI_GenII.GestionPartiePgn;
 using static BrunoGUI_GenII.LogiqueMouvements;
 using static BrunoGUI_GenII.Parametres;
@@ -342,7 +342,7 @@ namespace BrunoGUI_GenII
                     if (_visuCoteNoir)
                         IndexCase120 = IndiceVisuCoteNoir[IndexCase120];    // Si on regarde côté noir, il faut inverser l'index par rapport a la vue côté blanc
                     if (_couleurHumain == string.Empty && _humain == false)
-                        KryptonMessageBox.Show("Veuillez choisir votre couleur\n(Menu Partie / Nouvelle Partie)", string.Empty, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        KryptonMessageBox.Show("Veuillez choisir votre couleur\n(Menu Partie / Nouvelle Partie)", string.Empty, KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                     else
                     {
                         if (_clickCaseSource)     // Permet de savoir si c'est la sélection de la pièce ou le déplacement
@@ -653,7 +653,7 @@ namespace BrunoGUI_GenII
                         _ = KryptonMessageBox.Show("La meilleure suite est : " + debutVariante +
                                             "\n Evaluation --- " + meilleureVariante[1] + " --- " + "(" + AfficheEvaluation(meilleureVariante[1]) + ")" +
                                             "\n" + meilleureVariante[3], "Analyse Moteur " + " (" + _dureeReflexionMilliSeconde / 1000 + " sec.)"
-                                            + " par " + _nomMoteur, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                            + " par " + _nomMoteur, KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                     }
                     RetourArriere.Enabled = AnalysePosition.Enabled = groupParcoursPartie.Enabled = true;      // On réautorise si le moteur a fini de réfléchir
                     _analyseEnCours = false;
@@ -837,7 +837,7 @@ namespace BrunoGUI_GenII
             LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = _positionChargeeDepuisFen = false;
             // On demande confirmation car la partie est remise à zéro
             string confirmation = "Vous aurez les Blancs contre " + _nomMoteur + ". " + "\nToute position précédente sera effacée,\n confirmez avec Oui, sinon Annuler";
-            DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Le joueur a les Blancs, l'ordinateur les Noirs ", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+            DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Le joueur a les Blancs, l'ordinateur les Noirs ", KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
             if (Resultat == DialogResult.OK)
             {
                 StatusProgramme.Text = ScoreMoteur.Text = EvaluationUci.Text = VarianteMoteurCourante.Text = "";    // On efface les données de la partie précédente
@@ -862,7 +862,7 @@ namespace BrunoGUI_GenII
             LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = _positionChargeeDepuisFen = false;
             // On demande confirmation car la partie est remise à zéro
             string confirmation = "Vous aurez les Noirs contre " + _nomMoteur + ". " + "\nToute position précédente sera effacée,\n confirmez avec Oui, sinon Annuler";
-            DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Le joueur a les Noirs, l'ordinateur les Blancs ", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+            DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Le joueur a les Noirs, l'ordinateur les Blancs ", KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
             if (Resultat == DialogResult.OK)
             {
                 StatusProgramme.Text = ScoreMoteur.Text = EvaluationUci.Text = VarianteMoteurCourante.Text = "";     // On efface les données de la partie précédente
@@ -882,7 +882,7 @@ namespace BrunoGUI_GenII
             // On demande confirmation car la partie est remise à zéro
             string confirmation = "Vous jouez contre votre ami/partenaire,\n" + "ou vous saisissez une partie ...\n" +
                 "Toute position précédente sera effacée,\n confirmez avec Oui, sinon Annuler";
-            DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Jeu entre amis, ou saisie de partie", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+            DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Jeu entre amis, ou saisie de partie", KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
             if (Resultat == DialogResult.OK)
             {
                 _humain = OrdinateurJoue.Enabled = true;
@@ -1080,7 +1080,7 @@ namespace BrunoGUI_GenII
         {   // Permet de revenir en arrière d'un demi-coup (coup des blancs ou des noirs)
             EffaceDernierCoup();
             if (!LogiqueMouvements.RetireDernierCoup())     // On supprime le dernier 1/2 coup (toutes ses notations), jamais la position de départ
-                _ = KryptonMessageBox.Show("Pas assez de coups joués \nPas de retour arrière possible", "Retour impossible", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                _ = KryptonMessageBox.Show("Pas assez de coups joués \nPas de retour arrière possible", "Retour impossible", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
             else
             {
                 Outils.ChangerDeCoté();
@@ -1240,7 +1240,7 @@ namespace BrunoGUI_GenII
             //                lancement depuis un raccourci, tests automatiques et publication sur GitHub
             _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.03\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", "A propos de",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+                KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
         }
         private void KryptonApropos_Click(object sender, EventArgs e)
         {   // Bouton "A propos"
@@ -1263,12 +1263,12 @@ namespace BrunoGUI_GenII
             {   // 2. On appelle la méthode de mise à jour
                 bool misAJour = await LancerMiseAJourAsync();
                 VarianteMoteurUci2.Text = "Stockfish est à jour !";
-                KryptonMessageBox.Show(misAJour ? "Mise à jour réussie." : "Vous avez déjà la dernière version.", "Stockfish", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                KryptonMessageBox.Show(misAJour ? "Mise à jour réussie." : "Vous avez déjà la dernière version.", "Stockfish", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
             }
             catch (Exception ex)
             {   // On gère les messages (ex: "Déjà à jour" ou "Pas de connexion")
                 VarianteMoteurUci2.Text = "Prêt";
-                KryptonMessageBox.Show(ex.Message, "Mise à jour", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                KryptonMessageBox.Show(ex.Message, "Mise à jour", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
             }
             finally
             {
@@ -1283,7 +1283,7 @@ namespace BrunoGUI_GenII
         private void EchiquierPrincipal_FormClosing(object sender, FormClosingEventArgs e)
         {   // Demande de confirmation avant de quitter l'application
             if (KryptonMessageBox.Show("Quitter l'application ?", "Confirmer",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+                KryptonMessageBoxButtons.YesNo, KryptonMessageBoxIcon.Question) == DialogResult.No)
             {
                 e.Cancel = true; // Annule la fermeture
                 return;
@@ -1331,7 +1331,7 @@ namespace BrunoGUI_GenII
         {   // On recule d'un demi-coup (si possible), en affichant le FEN correspondant
             if (ListeCoupsFen == null || ListeCoupsFen.Count == 0)
             {
-                KryptonMessageBox.Show("Aucun coup à afficher.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                KryptonMessageBox.Show("Aucun coup à afficher.", "Info", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                 return;
             }
             if (_indexFenCoupActuel > 0)
@@ -1373,7 +1373,7 @@ namespace BrunoGUI_GenII
             }
             else
             {
-                KryptonMessageBox.Show("Vous êtes au début de la partie.", "Début de partie", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                KryptonMessageBox.Show("Vous êtes au début de la partie.", "Début de partie", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
             }
             AnalysePosition.Enabled = true;    // On réactive le bouton d'analyse de la position    
         }
@@ -1381,7 +1381,7 @@ namespace BrunoGUI_GenII
         {   // On avance d'un coup dans la partie
             if (ListeCoupsFen == null || ListeCoupsFen.Count == 0)
             {
-                KryptonMessageBox.Show("Aucun coup à afficher.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                KryptonMessageBox.Show("Aucun coup à afficher.", "Info", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                 return;
             }
             if (_indexFenCoupActuel < ListeCoupsFen.Count - 1)
@@ -1418,10 +1418,10 @@ namespace BrunoGUI_GenII
             {
                 if (LogiqueMouvements.EchecetMat)
                 {
-                    KryptonMessageBox.Show("Il y a échec et mat.", "Terminé : échec et mat", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    KryptonMessageBox.Show("Il y a échec et mat.", "Terminé : échec et mat", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                 }
                 else
-                    KryptonMessageBox.Show("Vous êtes à la fin de la partie.", "Fin de partie", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    KryptonMessageBox.Show("Vous êtes à la fin de la partie.", "Fin de partie", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
             }
         }
         private void BoutonDebut_Click(object sender, EventArgs e)
@@ -1641,7 +1641,7 @@ namespace BrunoGUI_GenII
                         {   // On demande à l'utilisateur s'il veut écraser le fichier ou ajouter la partie
                             DialogResult resultat = KryptonMessageBox.Show("ATTENTION, le fichier " + Path.GetFileName(cheminPgn) + " existe déjà. \nCliquer Oui pour ajouter la partie à la fin." +
                                "\nCliquer Non pour écraser le fichier existant.\nCancel pour afficher le fichier PGN.",
-                               "Fichier existant", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
+                               "Fichier existant", KryptonMessageBoxButtons.YesNoCancel, KryptonMessageBoxIcon.Warning);
                             if (resultat == DialogResult.No)
                             {   // Écrase le fichier existant avec la nouvelle partie
                                 File.WriteAllText(cheminPgn, contenuPgn);
@@ -1656,7 +1656,7 @@ namespace BrunoGUI_GenII
                             }
                             else if (resultat == DialogResult.Cancel)
                             {   // Affiche la nouvelle partie
-                                KryptonMessageBox.Show($"Fichier PGN :\n {contenuPgn}", "Affichage fichier PGN", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                KryptonMessageBox.Show($"Fichier PGN :\n {contenuPgn}", "Affichage fichier PGN", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                             }
                         }
                         else
@@ -1668,7 +1668,7 @@ namespace BrunoGUI_GenII
             }
             catch (Exception ex)
             {
-                KryptonMessageBox.Show($"Une erreur s'est produite : {ex.Message}", "Erreur méthode Enregistrer PGN", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                KryptonMessageBox.Show($"Une erreur s'est produite : {ex.Message}", "Erreur méthode Enregistrer PGN", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                 Debug.WriteLine($"StackTrace : {ex.StackTrace}");
             }
         }
@@ -1713,7 +1713,7 @@ namespace BrunoGUI_GenII
             Debug.WriteLine($"Partie en PGN : {PartieEnCours.CoupsPartiePGN}");
             if (coupsPartie[0] != "1.")     // Tester si CoupsPartie[0] = "1." pour vérifier que c'est bien le début d'une partie ?
                 _ = KryptonMessageBox.Show("Problème avec la partie \n Elle ne débute pas avec 1. ", "Problème de partie",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
             ParcoursPartie(coupsPartie);
         }
         private void ParcoursPartie(string[] suiteCoups)

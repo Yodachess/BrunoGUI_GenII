@@ -63,7 +63,6 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="ComponentFactory.Krypton.Toolkit" Version="1.0.0" />
     <PackageReference Include="Krypton.Navigator" Version="95.25.10.293" />
     <PackageReference Include="Krypton.Ribbon" Version="95.25.10.293" />
     <PackageReference Include="Krypton.Toolkit" Version="95.25.10.293" />
