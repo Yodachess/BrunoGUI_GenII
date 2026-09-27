@@ -257,6 +257,7 @@ namespace BrunoGUI_GenII
         public int NombreCoeursThread { get; set; } = 4;
         public int? TailleHachageMo { get; set; }       // null : taille par défaut du moteur
         public string Bibliotheque { get; set; } = "rodent.bin";
+        public string Palette { get; set; } = "";               // palette Krypton (ex : Microsoft365Silver) ; vide : palette par défaut
 
         public static Color ConvertitCouleur(string valeur, string parDefaut)
         {   // Couleur du .ini : un nom de couleur .NET (ex : Peru) ou un code hexadécimal (ex : #B58863)
@@ -315,6 +316,7 @@ namespace BrunoGUI_GenII
                     case "NombreCoeursThread": NombreCoeursThread = PremierEntier(valeur) ?? NombreCoeursThread; break;
                     case "TableHachage": TailleHachageMo = PremierEntier(valeur); break;     // en Mo, ex : "256" ou "256 min"
                     case "Bibliotheque": Bibliotheque = valeur; break;
+                    case "Palette": Palette = valeur; break;
                 }
             }
         }
@@ -347,6 +349,8 @@ namespace BrunoGUI_GenII
             };
             if (TailleHachageMo is int hachage)
                 valeurs["TableHachage"] = hachage.ToString();
+            if (!string.IsNullOrWhiteSpace(Palette))
+                valeurs["Palette"] = Palette;
 
             List<string> lignes = File.Exists(chemin) ? [.. File.ReadAllLines(chemin)] : [];
             for (int i = 0; i < lignes.Count; i++)
