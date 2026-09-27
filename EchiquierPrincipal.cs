@@ -206,7 +206,7 @@ namespace BrunoGUI_GenII
             Debug.WriteLine("Chemin moteurs = " + cheminMoteurs);
             Debug.WriteLine("Chemin Polyglot = " + cheminPolyglot);
 
-            InformationPourJoueur.Text = _dossierRacine;
+            InformationPourJoueur.Text = "   Bienvenue   ";
 
             DessineEchiquier();
             for (int i = 0; i <= 119; i++)
