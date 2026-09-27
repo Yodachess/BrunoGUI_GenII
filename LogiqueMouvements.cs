@@ -154,12 +154,28 @@ namespace BrunoGUI_GenII
         private static readonly List<TypePiece> ListPiecesNoires = [TypePiece.TourNoire, TypePiece.CavalierNoir, TypePiece.FouNoir, TypePiece.ReineNoire, TypePiece.RoiNoir, TypePiece.FouNoir, TypePiece.CavalierNoir, TypePiece.TourNoire];
         private static readonly List<TypePiece> ListPiecesBlanches = [TypePiece.TourBlanche, TypePiece.CavalierBlanc, TypePiece.FouBlanc, TypePiece.ReineBlanche, TypePiece.RoiBlanc, TypePiece.FouBlanc, TypePiece.CavalierBlanc, TypePiece.TourBlanche];
 
-        // Contient la liste de coups dans différents formats  
-        public static List<string> ListeCoupsFen = []; // https://www.pousseurdebois.fr/cours/notation-fen/
-        public static List<string> ListeCoupsPgnIntl = []; // https://fr.wikipedia.org/wiki/Portable_Game_Notation
-        public static List<string> ListeCoupsPgnFr = []; // https://fr.wikipedia.org/wiki/Portable_Game_Notation
-        public static List<string> ListeCoupsNal = []; // Notation Algébrique longue (NAL)  
-        public static List<string> ListeCoupsUci = [];      // Notation protocole UCI
+        // Les coups de la partie : une seule liste d'objets Coup (toutes les notations d'un coup ensemble).
+        // Une partie chargée depuis un FEN commence par un élément "position de départ" (Coup.PositionDeDepart), sans coup.
+        // On ne la modifie que par AjouteCoup, AjoutePositionDeDepart, RetireDernierCoup et ViderCoups.
+        private static readonly List<Coup> _coups = [];
+        public static IReadOnlyList<Coup> ListeCoups => _coups;
+        // Vues en lecture seule par notation (même index que ListeCoups, donc toujours alignées)
+        public static readonly VueCoups ListeCoupsFen = new(_coups, c => c.Fen);          // https://www.pousseurdebois.fr/cours/notation-fen/
+        public static readonly VueCoups ListeCoupsPgnIntl = new(_coups, c => c.PgnIntl);  // https://fr.wikipedia.org/wiki/Portable_Game_Notation
+        public static readonly VueCoups ListeCoupsPgnFr = new(_coups, c => c.PgnFr);
+        public static readonly VueCoups ListeCoupsNal = new(_coups, c => c.Nal);          // Notation Algébrique longue (NAL)
+        public static readonly VueCoups ListeCoupsUci = new(_coups, c => c.Uci);          // Notation protocole UCI
+
+        public static void AjouteCoup(Coup coup) => _coups.Add(coup);
+        public static void AjoutePositionDeDepart(string fen) => _coups.Add(Coup.PositionDeDepart(fen));
+        public static void ViderCoups() => _coups.Clear();
+        public static bool RetireDernierCoup()
+        {   // Retire le dernier coup joué (jamais la position de départ) ; retourne false s'il n'y a aucun coup à retirer
+            if (_coups.Count == 0 || _coups[^1].EstPositionDeDepart)
+                return false;
+            _coups.RemoveAt(_coups.Count - 1);
+            return true;
+        }
 
         // Information Fen
         public static ColorPiece QuiJoue { get => PositionActuelle.QuiJoue; set => PositionActuelle.QuiJoue = value; }  // le champ 2  : w ou b ( Blanc ou Noir ), indique la couleur qui a le trait
@@ -491,6 +507,7 @@ namespace BrunoGUI_GenII
         public static void ExecutionCoup(string caseSource, string caseDestination)
         {   // Exécute un coup pour le joueur humain ou le moteur UCI
             string CouleurEchec = string.Empty;
+            bool AucunCoupJouable = false;      // après le coup : l'adversaire n'a plus de coup (mat s'il est en échec, pat sinon)
             CoupValide = false;
             EchecetMat = false;
             MouvementCoup = MouvementCoupPgn = MouvementCoupNal = MouvementCoupUci = string.Empty;
@@ -520,8 +537,7 @@ namespace BrunoGUI_GenII
                     LogiqueMouvements.PromotionPiece = TypePiece.Vide;        
                     // *******Traitement promotion *********
 
-                    string ChaineFen = RetourneChaineFenActuel();       // Remplissage de liste de coups FEN
-                    ListeCoupsFen.Add(ChaineFen);                       // Mise en liste des FEN
+                    string ChaineFen = RetourneChaineFenActuel();       // Position après le coup
 
                     char[] decoupe = MouvementCoup.ToCharArray();       // Remplissage de liste de coups PGN
                     for (int i = 0; i < decoupe.Length; i++)
@@ -582,55 +598,20 @@ namespace BrunoGUI_GenII
                     string[] FenTableau = ChaineFen.Split(' '); // On decoupe les champs du FEN
                     string NumeroCoup = FenTableau[5];  // Champ 6 = numéro du coup de la partie (incrémenté à chaque coup des blancs)
 
-                    if (EchecetMat)
-                    {   // Note : dans la notation UCI, il n'y a pas de symbole pour indiquer le mat
-                        if (FenTableau[1] == "b")   // Champ 1 =  couleur au trait: w si c'est aux blancs de jouer, b pour les noirs
-                        {
-                            ListeCoupsPgnIntl.Add(NumeroCoup + ". " + MouvementCoupPgn + "# "); // C'est mat, il faut mettre le # pour l'indiquer
-                            ListeCoupsPgnFr.Add(NumeroCoup + ". " + MouvementCoup + "# ");      // dans 3 listes de coups,
-                            ListeCoupsNal.Add(NumeroCoup + ". " + MouvementCoupNal + "# ");     // internationale, francaise et NAL
-                        }
-                        if (FenTableau[1] == "w")   // Champ 1 =  couleur au trait: w si c'est aux blancs de jouer, b pour les noirs
-                        {
-                            ListeCoupsPgnIntl.Add(MouvementCoupPgn + "# ");     // C'est mat, il faut mettre le # pour l'indiquer
-                            ListeCoupsPgnFr.Add(MouvementCoup + "# ");          // dans 3 listes de coups, 
-                            ListeCoupsNal.Add(MouvementCoupNal + "# ");         // internationale, francaise et NAL
-                        }
-                    }
-                    else
-                        if (Echec)
-                    {   // Note : dans la notation UCI, il n'y a pas de symbole pour indiquer l'échec 
-                        if (FenTableau[1] == "b")   // Champ 1 =  couleur au trait: w si c'est aux blancs de jouer, b pour les noirs
-                        {
-                            ListeCoupsPgnIntl.Add(NumeroCoup + ". " + MouvementCoupPgn + "+ "); // C'est Echec, il faut mettre le + pour l'indiquer
-                            ListeCoupsPgnFr.Add(NumeroCoup + ". " + MouvementCoup + "+ ");      // dans 3 listes de coups,
-                            ListeCoupsNal.Add(NumeroCoup + ". " + MouvementCoupNal + "+ ");     // internationale, francaise et NAL
-                        }
-                        if (FenTableau[1] == "w")   // Champ 1 =  couleur au trait: w si c'est aux blancs de jouer, b pour les noirs
-                        {
-                            ListeCoupsPgnIntl.Add(MouvementCoupPgn + "+ ");     // C'est Echec, il faut mettre le + pour l'indiquer
-                            ListeCoupsPgnFr.Add(MouvementCoup + "+ ");          // dans 3 listes de coups
-                            ListeCoupsNal.Add(MouvementCoupNal + "+ ");         // internationale, francaise et NAL
-                        }
-                    }
-                    else
-                    {
-                        if (FenTableau[1] == "b")   // Champ 1 =  couleur au trait: w si c'est aux blancs de jouer, b pour les noirs
-                        {
-                            ListeCoupsPgnIntl.Add(NumeroCoup + ". " + MouvementCoupPgn + " ");  // Ni Echec, ni Mat, il faut mettre un espace
-                            ListeCoupsPgnFr.Add(NumeroCoup + ". " + MouvementCoup + " ");       // dans 3 listes de coups,
-                            ListeCoupsNal.Add(NumeroCoup + ". " + MouvementCoupNal + " ");      // internationale, francaise et NAL
-                        }
-                        if (FenTableau[1] == "w")   // Champ 1 =  couleur au trait: w si c'est aux blancs de jouer, b pour les noirs
-                        {
-                            ListeCoupsPgnIntl.Add(MouvementCoupPgn + " ");      // Ni Echec, ni Mat, il faut mettre un espace
-                            ListeCoupsPgnFr.Add(MouvementCoup + " ");           // dans 3 listes de coups
-                            ListeCoupsNal.Add(MouvementCoupNal + " ");          // internationale, francaise et NAL
-                        }
-                    }
-                    // Traitement des coups au format UCI (pas de numéro de coup, ni de notation pour l'échec, le mat ou la prise en passant)
+                    // Fin du coup : "#" si mat, "+" si échec, puis un espace (pas de symbole en UCI)
+                    AucunCoupJouable = !ResteCoupsValidesJouables();
+                    string Fin = Echec ? (AucunCoupJouable ? "# " : "+ ") : " ";
+                    // Le numéro n'est écrit que devant un coup blanc (après un coup blanc, c'est aux Noirs de jouer : champ 2 = "b")
+                    string Numero = FenTableau[1] == "b" ? NumeroCoup + ". " : "";
                     MouvementCoupUci = caseSource + caseDestination + LettrePromotionUci(lettrePromo);
-                    ListeCoupsUci.Add(MouvementCoupUci + " ");
+                    AjouteCoup(new Coup
+                    {
+                        Fen = ChaineFen,
+                        PgnIntl = Numero + MouvementCoupPgn + Fin,
+                        PgnFr = Numero + MouvementCoup + Fin,
+                        Nal = Numero + MouvementCoupNal + Fin,
+                        Uci = MouvementCoupUci + " ",
+                    });
 
                     CouleurEchec = QuiJoue == ColorPiece.Noir ? "Noir" : "Blanc";
                     // Affiche si le roi est en échec
@@ -651,9 +632,10 @@ namespace BrunoGUI_GenII
             if (MouvementCoup != string.Empty)
             {
                 CoupValide = true;
+                // EchecetMat n'est positionné qu'ici, après les événements AfficheCoupBlanc/AfficheCoupNoir (l'interface en dépend)
                 if (Echec)
-                {   // si il y a échec on teste s'il reste des coups valides à jouer sinon il y a échec et mat
-                    if (ResteCoupsValidesJouables() == false)
+                {   // s'il y a échec et plus aucun coup valide à jouer : échec et mat
+                    if (AucunCoupJouable)
                     {
                         EchecetMat = true;
                         AfficheEchecEtMat?.Invoke(CouleurEchec);
@@ -662,7 +644,7 @@ namespace BrunoGUI_GenII
                 else
                 {   // sinon on affiche si le joueur qui a la couleur est Pat
                     // ( plus de coups valides jouables + le joueur n'est pas échec )
-                    if (ResteCoupsValidesJouables() == false)
+                    if (AucunCoupJouable)
                         AfficheInfoEchec?.Invoke("Le joueur " + CouleurEchec + " est Pat - plus de coup possible ");
                 }
             }

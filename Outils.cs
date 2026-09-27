@@ -230,11 +230,7 @@ namespace BrunoGUI_GenII
         public static void MiseaZeroListes()
         {
             LogiqueMouvements.InitialisationEchiquier();
-            LogiqueMouvements.ListeCoupsPgnIntl.Clear();    // Mise à zéro des liste de coups PGN International
-            LogiqueMouvements.ListeCoupsPgnFr.Clear();      // Mise à zéro des liste de coups PGN Francais
-            LogiqueMouvements.ListeCoupsFen.Clear();        // Mise à zéro des liste de coups FEN
-            LogiqueMouvements.ListeCoupsNal.Clear();        // Mise à zéro des liste de coups Notation Algébrique Longue (Itnl)
-            LogiqueMouvements.ListeCoupsUci.Clear();        // Mise à zéro des liste de coups UCI (protocole moteur)
+            LogiqueMouvements.ViderCoups();                 // Mise à zéro de la liste des coups (toutes les notations)
             LogiqueMouvements.EchecetMat = LogiqueMouvements.Echec = false;
         }
     }
