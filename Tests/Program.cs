@@ -440,6 +440,60 @@ Verifie("Position neuve : 120 cases, 64 vides et 56 bordures",
     vide.Pieces.Count == 120 && vide.Pieces.Count(p => p == L.TypePiece.Vide) == 64 && vide.Pieces.Count(p => p == L.TypePiece.Bordure) == 56,
     $"{vide.Pieces.Count} cases");
 
+// ═══════════════ Partie (déroulement, sans interface) ═══════════════
+Console.WriteLine("── Partie ──");
+
+Partie partie = new();
+Verifie("Partie neuve : aucune partie, rien à annuler",
+    partie.Mode == ModePartie.AucunePartie && !partie.AnnulerDernierCoup() && !partie.MoteurAuTrait && !partie.HumainAuTrait, partie.Mode.ToString());
+
+Charger(L.FenDepart);
+partie.Commencer(Joueur.Humain, Joueur.Moteur);
+bool humainAuTraitDebut = partie.HumainAuTrait;
+L.ExecutionCoup("e2", "e4");
+Verifie("Humain (Blancs) contre moteur : au moteur de répondre après le coup de l'humain",
+    partie.EnCours && humainAuTraitDebut && partie.MoteurAuTrait && !partie.EntreHumains, $"trait aux {L.QuiJoue}");
+L.ExecutionCoup("e7", "e5"); L.ExecutionCoup("e1", "e2");
+Verifie("Annuler un coup : trait et droits de roque rétablis (depuis la FEN)",
+    partie.AnnulerDernierCoup() && L.QuiJoue == L.ColorPiece.Blanc && L.PetitRoqueBlancPossible && L.GrandRoqueBlancPossible && L.ListeCoups.Count == 2,
+    L.RetourneChaineFenActuel());
+bool annule2 = partie.AnnulerDernierCoup(), annule3 = partie.AnnulerDernierCoup(), annule4 = partie.AnnulerDernierCoup();
+Verifie("Annuler jusqu'au début : position initiale, puis plus rien à annuler",
+    annule2 && annule3 && !annule4 && L.ListeCoups.Count == 0 && L.RetourneChaineFenActuel() == L.FenDepart, L.RetourneChaineFenActuel());
+
+// Mat du lion (1. f3 e5 2. g4 Dh4#) : la partie terminée reprend après un retour arrière
+Charger(L.FenDepart);
+partie.Commencer(Joueur.Moteur, Joueur.Humain);
+L.ExecutionCoup("f2", "f3"); L.ExecutionCoup("e7", "e5"); L.ExecutionCoup("g2", "g4"); L.ExecutionCoup("d8", "h4");
+bool matAvant = L.EchecetMat;
+L.PartieEnCoursMat = true;      // (posé par l'interface à l'annonce du mat)
+partie.Terminer();
+bool rienAuTrait = !partie.MoteurAuTrait && !partie.HumainAuTrait;
+Verifie("Partie terminée par un mat : personne n'est au trait", matAvant && partie.Mode == ModePartie.Terminee && rienAuTrait, $"mat : {matAvant}");
+Verifie("Retour arrière après le mat : la partie reprend, plus de mat, Noirs au trait",
+    partie.AnnulerDernierCoup() && partie.EnCours && !L.EchecetMat && !L.PartieEnCoursMat && L.QuiJoue == L.ColorPiece.Noir && L.ListeCoups.Count == 3 && partie.HumainAuTrait,
+    L.RetourneChaineFenActuel());
+
+// Partie depuis une position FEN (Noirs au trait) : l'humain joue le camp au trait
+string fenNoirsAuTrait = "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 3 3";
+Charger(fenNoirsAuTrait);
+L.AjoutePositionDeDepart(fenNoirsAuTrait);
+partie.CommencerDepuisPosition();
+Verifie("Départ FEN : l'humain a le camp au trait, le moteur l'autre",
+    partie.DepuisPosition && partie.Noirs == Joueur.Humain && partie.Blancs == Joueur.Moteur && partie.HumainAuTrait, $"Blancs {partie.Blancs}, Noirs {partie.Noirs}");
+L.ExecutionCoup("g8", "f6");
+bool annuleFen1 = partie.AnnulerDernierCoup(), annuleFen2 = partie.AnnulerDernierCoup();
+Verifie("Départ FEN : retour arrière jusqu'à la position de départ, jamais avant (numéro de coup 3 + 0,5)",
+    annuleFen1 && !annuleFen2 && L.RetourneChaineFenActuel() == fenNoirsAuTrait && L.NombreCoupsJoues == 3.5f, $"{L.RetourneChaineFenActuel()} / {L.NombreCoupsJoues}");
+
+partie.MoteurPrendLeTrait();
+Verifie("Ordinateur joue : le moteur prend le camp au trait", partie.Noirs == Joueur.Moteur && partie.Blancs == Joueur.Humain && partie.MoteurAuTrait, $"Blancs {partie.Blancs}, Noirs {partie.Noirs}");
+partie.Commencer(Joueur.Humain, Joueur.Humain);
+Verifie("Entre humains : jamais au moteur", partie.EntreHumains && !partie.MoteurAuTrait && !partie.DepuisPosition, $"Blancs {partie.Blancs}, Noirs {partie.Noirs}");
+L.ExecutionCoup("g8", "f6");
+partie.PasserEnLectureSeule();
+Verifie("Lecture seule (PGN) : pas de retour arrière", !partie.AnnulerDernierCoup() && L.ListeCoups.Count == 2, $"{L.ListeCoups.Count} élément(s)");
+
 // ═══════════════ Perft ═══════════════
 Console.WriteLine("── Perft ──");
 

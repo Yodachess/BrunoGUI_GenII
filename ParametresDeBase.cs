@@ -43,7 +43,7 @@ namespace BrunoGUI_GenII
             MoteurUci.DefinitMultiPV((int)baseMultipvNumerique.Value);
             var curseur = interfaceGraphique.TrackBarTempsReflexion;
             curseur.Value = Math.Clamp((int)baseReflexionNumerique.Value, curseur.Minimum, curseur.Maximum);   // met aussi à jour le temps de réflexion
-            if (interfaceGraphique.OrdinateurJoueNoir)
+            if (interfaceGraphique.PartieCourante.Noirs == Joueur.Moteur)
                 interfaceGraphique.PartieEnCours.BlackElo = interfaceGraphique.EloNoir.Text = baseEloNumerique.Value.ToString();
             else
                 interfaceGraphique.PartieEnCours.WhiteElo = interfaceGraphique.EloBlanc.Text = baseEloNumerique.Value.ToString();

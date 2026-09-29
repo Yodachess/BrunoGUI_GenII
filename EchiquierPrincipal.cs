@@ -64,7 +64,8 @@ namespace BrunoGUI_GenII
 
         // les variables
         public static int NumeroDemiCoup { get; set; } = 0;
-        public bool OrdinateurJoueNoir, OrdinateurJoueBlanc;
+        private readonly Partie _partie = new();    // mode de la partie, qui joue quel camp (voir Partie.cs)
+        public Partie PartieCourante => _partie;
         public string _dossierRacine, _dossierStockfish;
         private int _indexSource120, _forceMoteurElo, _nombreLignesPV, _tempsRestant;
         private int _dernierCoupMoteurUci;   // dernière case jouée par le moteur UCI
@@ -72,15 +73,13 @@ namespace BrunoGUI_GenII
         private int _indexCaseSourceDernierMouvement, _indexCaseDestinationDernierMouvement;
         private bool _plateauAutorise = true;   // c'est au joueur de bouger les pièces (voir PlateauEnable et MetAJourPlateau)
         private bool _dernierCoupColore;        // les cases du dernier coup du moteur sont à montrer (masquées pendant le parcours)
-        private string _caseSource, _caseDestination, _couleurHumain;
+        private string _caseSource, _caseDestination;
         private string _nomHumain, _joueurElo, _nomMoteur, _moteurElo, _joueurBlanc, _joueurNoir;
         private string _cheminMoteur, _nomMoteurChoisi, _variationMoteur, _meilleureSuite, _scoreCourant, _evaluationCourante;
         private string _bibliotheque = "rodent.bin";
         private bool _clickCaseSource, _visuSymbole, _montreDonneesBrutesUci, _montre3VariantesUci, _analyseEnCours, _montreListeParties;
-        private bool _humain;           // True pour simuler 2 joueurs humains et False pour jouer contre le moteur UCI
-        private bool _rejeuPartiePgn;   // True pendant le rejeu d'une partie PGN chargée (pas de nulle automatique)
         private bool _visuCoteNoir;     // True quand les Noirs sont en bas de l'écran
-        private bool _clavierActif, _emetUnSon, _bibliothèqueAléatoire, _positionChargeeDepuisFen = false;
+        private bool _clavierActif, _emetUnSon, _bibliothèqueAléatoire;
         private bool _bibliothèqueActive = true;
         private int _dureeReflexionMilliSeconde = 5000;
         private Color _couleurCaseSombre, _couleurCaseClaire, _couleurCaseSource, _couleurCaseDestination;
@@ -141,10 +140,9 @@ namespace BrunoGUI_GenII
             Debug.WriteLine($"Paramètres chargés : Biblio = {_bibliotheque}, Force = {_forceMoteurElo}, Nombre PV = {_nombreLignesPV}");
             Debug.WriteLine($"Paramètres chargés : Temps de réflexion = {_dureeReflexionMilliSeconde}");
 
-            OrdinateurJoueNoir = true;
             DateTime Aujourdhui = DateTime.Today;
-            _visuCoteNoir = OrdinateurJoueBlanc = false; // On commence avec la vue côté Blanc, l'odinateur a les Noirs
-            _montreDonneesBrutesUci = _analyseEnCours = _clavierActif = _positionChargeeDepuisFen = false;
+            _visuCoteNoir = false;      // On commence avec la vue côté Blanc (par défaut, l'ordinateur a les Noirs : voir Partie)
+            _montreDonneesBrutesUci = _analyseEnCours = _clavierActif = false;
             PartieEnCours.Date = Aujourdhui.ToString("yyyy.MM.dd");
             PartieEnCours.Lieu = "Maison"; PartieEnCours.Tournoi = "Entrainement";
             PartieEnCours.Result = "*";
@@ -219,7 +217,6 @@ namespace BrunoGUI_GenII
             MiseaZeroAffichages();
             QuiJoue = ColorPiece.Blanc;
             this.ActiveControl = Plateau;       // Met le focus sur le plateau pour éviter le Bug des radiobutton "Résultat"
-            _humain = false;                    // L'opposant est l'ordinateur, à mettre à true pour simuler 2 joueurs humains
             MetAJourCommandes();                // aucune partie : seuls les menus sont utiles
 
             ActiverMenus(false);    // On désactive les menus après la mise à jour
@@ -252,7 +249,7 @@ namespace BrunoGUI_GenII
         {   // Nouvelle partie contre Stockfish, avec la possibilité de régler la force du moteur et le temps de réflexion
             AbandonneReflexion();   // nouvelle partie
             QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
-            _humain = _analyseEnCours = _positionChargeeDepuisFen = false;
+            _analyseEnCours = false;
             LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = false;
             QuiJoue = ColorPiece.Blanc;
             NumeroDemiCoup = 0;
@@ -277,13 +274,11 @@ namespace BrunoGUI_GenII
                 MoteurUci.DefinitMultiPV(MoteurUci.NombreLignesPV);
                 if (couleurMoteur == "Blancs")
                 {   // Le moteur joue les blancs
-                    OrdinateurJoueNoir = false;
-                    _couleurHumain = "Blancs";
                     PartieEnCours.White = LabelJoueurBlanc.Text = _nomMoteur;
                     PartieEnCours.WhiteElo = EloBlanc.Text = _forceMoteurElo.ToString();
                     PartieEnCours.Black = LabelJoueurNoir.Text = maNouvellePartieForceModule.NomAdversaire;
                     PartieEnCours.BlackElo = EloNoir.Text = _joueurElo;
-                    CommencerPartie();
+                    CommencerPartie(Joueur.Moteur, Joueur.Humain);
                     if (_visuCoteNoir == false)
                         TourneEchiquier();      // On met la vue côté Noir
                     ParametresJoueurHumain("Noirs", "Le moteur UCI joue");      // On fait jouer le moteur côté blanc
@@ -291,24 +286,22 @@ namespace BrunoGUI_GenII
                 }
                 else
                 {   // Le moteur joue les noirs
-                    OrdinateurJoueNoir = true;
-                    _couleurHumain = "Noirs";
                     PartieEnCours.White = LabelJoueurBlanc.Text = maNouvellePartieForceModule.NomAdversaire;
                     PartieEnCours.WhiteElo = EloBlanc.Text = _joueurElo;
                     PartieEnCours.Black = LabelJoueurNoir.Text = _nomMoteur;
                     PartieEnCours.BlackElo = EloNoir.Text = _forceMoteurElo.ToString();
                     if (_visuCoteNoir)
                         TourneEchiquier();
-                    CommencerPartie();
+                    CommencerPartie(Joueur.Humain, Joueur.Moteur);
                     ParametresJoueurHumain("Blancs", "A vous de jouer");            // On demande à l'humain de jouer
                     PlateauEnable(true);                                            // On lui permet de bouger les pièces
                 }
             }
         }
-        private void CommencerPartie()      // POINT D'ENTREE POUR TOUTES LES NOUVELLES PARTIES
-        {   // Début d'une nouvelle partie
-            _analyseEnCours = _positionChargeeDepuisFen = false;
-            _mode = ModePartie.EnCours;
+        private void CommencerPartie(Joueur blancs, Joueur noirs)      // POINT D'ENTREE POUR TOUTES LES NOUVELLES PARTIES
+        {   // Début d'une nouvelle partie : qui joue les Blancs et les Noirs (humain ou moteur)
+            _analyseEnCours = false;
+            _partie.Commencer(blancs, noirs);
             _dernierCoupMoteurUci = -1;
             _clickCaseSource = _visuSymbole = true;
             PartieEnCours.CoupsPartiePGN = PartieEnCours.Result = PartieEnCours.CompteDePLy = PartieEnCours.Ronde = "";
@@ -317,15 +310,11 @@ namespace BrunoGUI_GenII
             NumeroDemiCoup = 0;
             MiseaZeroAffichages();
             MiseaZéroTimer();
-            _couleurHumain = VarianteMoteurUci1.Text = string.Empty;
-            if (_humain == false)
-            {
-                InformationPourJoueur.Visible = true;
-                InformationPourJoueur.Text = "Pour commencer une partie : menu \n Stockfish ou menu Nouvelle Partie";
-            }
+            VarianteMoteurUci1.Text = string.Empty;
+            if (!_partie.EntreHumains)
+                InformationPourJoueur.Visible = true;     // le message est donné ensuite par ParametresJoueurHumain
             else
-            {
-                PartieEnCours.White = PartieEnCours.Black = "_humain";
+            {   // (les noms des joueurs sont fixés par HumainContreHumain_Click)
                 PlateauEnable(true);
                 InformationPourJoueur.Visible = true;
                 InformationPourJoueur.Text = StatusProgramme.Text = "Aux Blancs de jouer";
@@ -353,8 +342,7 @@ namespace BrunoGUI_GenII
                     int IndexCase120 = Convert.ToInt32(CaseClick.Name[8..]); // Utilise le numéro de la PictureBox comme index
                     if (_visuCoteNoir)
                         IndexCase120 = IndiceVisuCoteNoir[IndexCase120];    // Si on regarde côté noir, il faut inverser l'index par rapport a la vue côté blanc
-                    // Aucune partie choisie (au lancement), ou couleur non choisie : pas de coup (null au lancement, "" après CommencerPartie)
-                    if ((_mode == ModePartie.AucunePartie || string.IsNullOrEmpty(_couleurHumain)) && _humain == false)
+                    if (_partie.Mode == ModePartie.AucunePartie)     // au lancement, aucune partie choisie : pas de coup
                         KryptonMessageBox.Show("Veuillez choisir une partie :\n\n" +
                             "   •  Stockfish : jouer contre Stockfish (force réglable)\n" +
                             "   •  Nouvelle Partie : jouer contre le moteur choisi, ou entre amis", "Aucune partie en cours", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
@@ -389,7 +377,7 @@ namespace BrunoGUI_GenII
                             if (LogiqueMouvements.CoupValide)
                             {   // envoi de la Position Fen au moteur UCI
                                 _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(chaineFen));
-                                if (_humain == false)
+                                if (_partie.MoteurAuTrait)      // c'est au moteur de répondre (pas après un mat ou un pat : partie terminée)
                                 {
                                     JeuMoteurAvecBibliothèque(chaineFen);
                                 }
@@ -679,7 +667,7 @@ namespace BrunoGUI_GenII
             // Comme c'est le coup Blanc, il faut afficher le numéro du coup
             if (LogiqueMouvements.EchecetMat == false)
             {   // ******      Traitement du numéro de demi-coup :     ******
-                if (_positionChargeeDepuisFen)
+                if (_partie.DepuisPosition)
                 {   // Si on a chargé une position depuis une FEN,
                     // il faut calculer le numéro de demi-coup en fonction du nombre de coups joués
                     int demiCoupsFen = ((int)NombreCoupsJoues - 1) * 2;
@@ -694,7 +682,7 @@ namespace BrunoGUI_GenII
                 // ******      Traitement du numéro de demi-coup :     ******
                 PartieEnCours.CompteDePLy = (LogiqueMouvements.ListeCoupsFen.Count).ToString();
                 _numeroLigne++;
-                string raisonNulle = _rejeuPartiePgn ? null : LogiqueMouvements.RaisonNulle();    // répétition, 50 coups ou matériel insuffisant
+                string raisonNulle = _partie.RejeuPgn ? null : LogiqueMouvements.RaisonNulle();    // répétition, 50 coups ou matériel insuffisant
                 if (raisonNulle != null)
                     GestionResultat("1/2-1/2", raisonNulle);
                 MetAJourCommandes();    // un coup a été joué : on peut parcourir la partie, la liste des coups, le retour arrière...
@@ -710,7 +698,7 @@ namespace BrunoGUI_GenII
             // Comme c'est le coup Noir, on n'a pas besoin d'afficher le numéro du coup
             if (LogiqueMouvements.EchecetMat == false)
             {   // ******      Traitement du numéro de demi-coup :     ******
-                if (_positionChargeeDepuisFen)
+                if (_partie.DepuisPosition)
                 {   // Si on a chargé une position depuis une FEN,
                     // il faut calculer le numéro de demi-coup en fonction du nombre de coups joués
                     int demiCoupsFen = ((int)NombreCoupsJoues - 1) * 2;
@@ -724,7 +712,7 @@ namespace BrunoGUI_GenII
                 }
                 // ******      Traitement du numéro de demi-coup :     ******
                 PartieEnCours.CompteDePLy = (LogiqueMouvements.ListeCoupsFen.Count).ToString();
-                string raisonNulle = _rejeuPartiePgn ? null : LogiqueMouvements.RaisonNulle();    // répétition, 50 coups ou matériel insuffisant
+                string raisonNulle = _partie.RejeuPgn ? null : LogiqueMouvements.RaisonNulle();    // répétition, 50 coups ou matériel insuffisant
                 if (raisonNulle != null)
                     GestionResultat("1/2-1/2", raisonNulle);
                 MetAJourCommandes();    // un coup a été joué : on peut parcourir la partie, la liste des coups, le retour arrière...
@@ -737,10 +725,10 @@ namespace BrunoGUI_GenII
 
         private void AfficheTour(string Couleur)        // Affiche la couleur du joueur humain courant
         {   // Affiche la couleur du joueur humain courant, et active les PictureBox si c'est au tour du joueur humain
-            if (_humain)
+            if (_partie.EntreHumains)
                 InformationPourJoueur.Text = StatusProgramme.Text = "Aux " + Couleur + " de jouer";
-            else
-                PlateauEnable(Couleur == _couleurHumain); // active les Picturebox si c'est au tour du joueur humain
+            else    // active les Picturebox si c'est au tour du joueur humain
+                PlateauEnable(_partie.JoueurDe(Couleur == "Blancs" ? ColorPiece.Blanc : ColorPiece.Noir) == Joueur.Humain);
         }
 
         private void AfficheEchecEtMat(string couleurRoiMat)   // Affiche l'échec et mat du roi de la couleur en paramètre
@@ -837,7 +825,7 @@ namespace BrunoGUI_GenII
             ScoreMoteur.Text = vainqueur;
             InformationsPartie.Text = resultat + "  (" + vainqueur + ")";
             StatusProgramme.Text = "Partie terminée";
-            _mode = ModePartie.Terminee;    // le retour arrière reste possible pour reprendre la partie (ReprendPartie)
+            _partie.Terminer();     // le retour arrière reste possible pour reprendre la partie (Partie.AnnulerDernierCoup)
             PlateauEnable(false);
             MetAJourCommandes();
         }
@@ -848,22 +836,19 @@ namespace BrunoGUI_GenII
         {   // L'humain joue les blancs, l'ordinateur les noirs
             AbandonneReflexion();   // nouvelle partie
             QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
-            _couleurHumain = "Blancs";
             QuiJoue = ColorPiece.Blanc;
             PartieEnCours.White = LabelJoueurBlanc.Text = _nomHumain;
             PartieEnCours.Black = LabelJoueurNoir.Text = _nomMoteur;
             PartieEnCours.WhiteElo = EloBlanc.Text = _joueurElo;
             PartieEnCours.BlackElo = EloNoir.Text = _moteurElo;
-            OrdinateurJoueNoir = true;
-            _humain = OrdinateurJoueBlanc = _analyseEnCours = false;
-            LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = _positionChargeeDepuisFen = false;
+            _analyseEnCours = false;
             // On demande confirmation car la partie est remise à zéro
             string confirmation = "Vous aurez les Blancs contre " + _nomMoteur + ". " + "\nToute position précédente sera effacée,\n confirmez avec Oui, sinon Annuler";
             DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Le joueur a les Blancs, l'ordinateur les Noirs ", KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
             if (Resultat == DialogResult.OK)
             {
                 StatusProgramme.Text = ScoreMoteur.Text = EvaluationUci.Text = VarianteMoteurCourante.Text = "";    // On efface les données de la partie précédente
-                CommencerPartie();
+                CommencerPartie(Joueur.Humain, Joueur.Moteur);
                 if (_visuCoteNoir)
                     TourneEchiquier();
                 _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(FenDepart));
@@ -875,22 +860,19 @@ namespace BrunoGUI_GenII
         {   // L'ordinateur joue les blancs, l'humain les noirs
             AbandonneReflexion();   // nouvelle partie
             QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
-            _couleurHumain = "Noirs";
             QuiJoue = ColorPiece.Blanc;
             PartieEnCours.White = LabelJoueurBlanc.Text = _nomMoteur;
             PartieEnCours.Black = LabelJoueurNoir.Text = _nomHumain;
             PartieEnCours.WhiteElo = EloBlanc.Text = _moteurElo;
             PartieEnCours.BlackElo = EloNoir.Text = _joueurElo;
-            OrdinateurJoueBlanc = true;
-            _humain = OrdinateurJoueNoir = _analyseEnCours = false;
-            LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = _positionChargeeDepuisFen = false;
+            _analyseEnCours = false;
             // On demande confirmation car la partie est remise à zéro
             string confirmation = "Vous aurez les Noirs contre " + _nomMoteur + ". " + "\nToute position précédente sera effacée,\n confirmez avec Oui, sinon Annuler";
             DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Le joueur a les Noirs, l'ordinateur les Blancs ", KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
             if (Resultat == DialogResult.OK)
             {
                 StatusProgramme.Text = ScoreMoteur.Text = EvaluationUci.Text = VarianteMoteurCourante.Text = "";     // On efface les données de la partie précédente
-                CommencerPartie();
+                CommencerPartie(Joueur.Moteur, Joueur.Humain);
                 if (_visuCoteNoir == false)
                     TourneEchiquier();                                          // On met la vue côté Noir
                 ParametresJoueurHumain("Noirs", "Le moteur UCI joue");
@@ -903,23 +885,20 @@ namespace BrunoGUI_GenII
             AbandonneReflexion();   // nouvelle partie
             QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
             PartieEnCours.White = LabelJoueurBlanc.Text = _nomHumain;
-            PartieEnCours.Black = "Adversaire";
-            LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = _positionChargeeDepuisFen = false;
+            PartieEnCours.Black = LabelJoueurNoir.Text = "Adversaire";
             // On demande confirmation car la partie est remise à zéro
             string confirmation = "Vous jouez contre votre ami/partenaire,\n" + "ou vous saisissez une partie ...\n" +
                 "Toute position précédente sera effacée,\n confirmez avec Oui, sinon Annuler";
             DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Jeu entre amis, ou saisie de partie", KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
             if (Resultat == DialogResult.OK)
             {
-                _humain = true;
-                OrdinateurJoueBlanc = OrdinateurJoueNoir = false;
-                StatusProgramme.Text = "_humain contre _humain";
+                StatusProgramme.Text = "Humain contre humain";
                 InformationsPartie.Text = " Bruno vous souhaite une bonne partie !";
                 MoteurUci.ActiveLimiteElo();        // Préparation du moteur en cas de demande d'analyse
                 MoteurUci.DefinitLimiteElo("3190");
                 MoteurUci.DefinitMultiPV(MoteurUci.NombreLignesPV);
                 maNouvellePartieForceModule.DureeReflexionSeconde = 10;
-                CommencerPartie();
+                CommencerPartie(Joueur.Humain, Joueur.Humain);
             }
         }
         private void SelectionAutreMoteur_Click(object sender, EventArgs e)
@@ -971,9 +950,9 @@ namespace BrunoGUI_GenII
             MoteurUci.Start(_cheminMoteur); // on démarre le nouveau moteur Uci
             _nomMoteurChoisi = Path.GetFileNameWithoutExtension(_cheminMoteur);
             Debug.WriteLine("Moteur = " + _nomMoteurChoisi);
-            if (OrdinateurJoueBlanc)
+            if (_partie.Blancs == Joueur.Moteur)
                 LabelJoueurBlanc.Text = _nomMoteurChoisi;
-            if (OrdinateurJoueNoir)
+            if (_partie.Noirs == Joueur.Moteur)
                 LabelJoueurNoir.Text = _nomMoteurChoisi;
         }
         private void ParametresDeBase_Click(object sender, EventArgs e)
@@ -1070,17 +1049,7 @@ namespace BrunoGUI_GenII
         private void OrdinateurJoue_Click(object sender, EventArgs e)
         {   // Permet de faire jouer l'ordinateur UCI, sans que ce soit son tour (pour tester une position par exemple)
             AbandonneReflexion();   // une nouvelle demande remplace la réflexion en cours
-            if (QuiJoue == ColorPiece.Blanc)
-            {
-                _couleurHumain = "Noirs";
-                OrdinateurJoueBlanc = true;
-            }
-            else
-            {
-                _couleurHumain = "Blancs";
-                OrdinateurJoueNoir = true;
-            }
-            _humain = false;
+            _partie.MoteurPrendLeTrait();   // le moteur joue désormais le camp au trait, l'humain l'autre
             string Fenaenvoyer;
             if (ListeCoupsFen.Count > 0)
                 Fenaenvoyer = ListeCoupsFen[^1];   // dernier FEN
@@ -1099,42 +1068,27 @@ namespace BrunoGUI_GenII
                 return;             // sécurité : le bouton est grisé pendant le parcours (voir MetAJourCommandes)
             AbandonneReflexion();   // retour arrière : le moteur ne doit pas jouer sur la position annulée
             EffaceDernierCoup();
-            if (!LogiqueMouvements.RetireDernierCoup())     // On supprime le dernier 1/2 coup (toutes ses notations), jamais la position de départ
+            bool etaitTerminee = _partie.Mode == ModePartie.Terminee;
+            if (!_partie.AnnulerDernierCoup())      // retire le dernier 1/2 coup et rétablit la position (jamais avant la position de départ)
                 _ = KryptonMessageBox.Show("Pas assez de coups joués \nPas de retour arrière possible", "Retour impossible", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
             else
             {
-                if (_mode == ModePartie.Terminee)
-                    ReprendPartie();    // on annule un coup d'une partie terminée : elle reprend
-                Outils.ChangerDeCoté();
-                NombreCoupsJoues -= Convert.ToSingle(0.5);      // On décrémente d'un demi-coup
-                NumeroDemiCoup--;
-                if (LogiqueMouvements.ListeCoupsFen.Count == 0)
-                {
-                    LogiqueMouvements.MiseenplaceFen(FenDepart);
-                    _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(FenDepart));
-                    NumeroDemiCoup = 0;
-                }
-                else
-                {   // MiseenplaceFen rétablit aussi les droits de roque, la case en passant et le compteur des 50 coups
-                    string Fenaenvoyer = LogiqueMouvements.ListeCoupsFen[^1];    // Récupère le dernier FEN (position)
-                    LogiqueMouvements.MiseenplaceFen(Fenaenvoyer);              // et on l'affiche sur l'échiquier
-                    _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(Fenaenvoyer));
-                }
+                if (etaitTerminee)
+                    EffaceResultat();   // on a annulé un coup d'une partie terminée : elle reprend
+                NumeroDemiCoup = LogiqueMouvements.ListeCoupsFen.Count == 0 ? 0 : NumeroDemiCoup - 1;
+                _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(LogiqueMouvements.RetourneChaineFenActuel()));
                 InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + QuiJoue + "s";
-                InformationsPartie.Text = OrdinateurJoueBlanc ? "L'ordinateur joue les Blancs" :
-                          OrdinateurJoueNoir ? "L'ordinateur joue les Noirs" :
+                InformationsPartie.Text = _partie.Blancs == Joueur.Moteur ? "L'ordinateur joue les Blancs" :
+                          _partie.Noirs == Joueur.Moteur ? "L'ordinateur joue les Noirs" :
                           "L'ordinateur ne joue pas cette partie";
-                LogiqueMouvements.EchecetMat = false;     // (le coup annulé a pu mater) la position rétablie n'est pas un mat
-                LogiqueMouvements.Echec = LogiqueMouvements.CampAuTraitEnEchec();
-                PlateauEnable(true);    // le plateau était bloqué si le retour arrière a interrompu la réflexion du moteur
+                // Au joueur de jouer, sauf si c'est au tour du moteur (il faut alors un 2e retour arrière, ou "Ordinateur joue")
+                PlateauEnable(!_partie.MoteurAuTrait);
             }
             MetAJourCommandes();
         }
-        private void ReprendPartie()
+        private void EffaceResultat()
         {   // Une partie terminée reprend (retour arrière après un mat, un pat, une nulle ou un abandon) : le résultat est effacé
-            _mode = ModePartie.EnCours;
             PartieEnCours.Result = "";
-            LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = false;
             ScoreMoteur.Text = EvaluationUci.Text = VarianteMoteurCourante.Text = "...";
         }
         private void ListeCoupsBouton_Click(object sender, EventArgs e)
@@ -1483,7 +1437,6 @@ namespace BrunoGUI_GenII
         private void ChargePartiesPgn_Click(object sender, EventArgs e)
         {   // --- Affiche la boîte de dialogue et traite le fichier PGN sélectionné  ---
             AbandonneReflexion();   // chargement d'une partie
-            _positionChargeeDepuisFen = false;
             EffaceDernierCoup();
             ListeParties.Clear();    // On vide la liste des parties 
             ListePartiesPGN.Clear(); // On vide la liste des parties PGN
@@ -1528,85 +1481,52 @@ namespace BrunoGUI_GenII
         }
         private void ChargePositionFen_Click(object sender, EventArgs e)
         {
+            if (ChargerPositionFen.ShowDialog() != DialogResult.OK)
+                return;     // annulé : la partie en cours ne change pas
+            string contenuFen;
+            try
+            {
+                contenuFen = File.ReadAllText(Path.GetFullPath(ChargerPositionFen.FileName)).Trim();
+                Debug.WriteLine("Contenu du fichier FEN : " + contenuFen);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Chargement FEN : Erreur lors de la lecture du fichier : " + ex.Message);
+                return;
+            }
+            if (contenuFen.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length < 6)
+            {
+                KryptonMessageBox.Show("Ce fichier ne contient pas une position FEN complète (6 champs).", "Chargement FEN",
+                    KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+                return;
+            }
             AbandonneReflexion();   // chargement d'une position
             QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
-            string contenuFen = "";
-            _positionChargeeDepuisFen = true;
             ListeParties.Clear();    // On vide la liste des parties
             ListePartiesPGN.Clear(); // On vide la liste des parties PGN
             ViderCoups();              // On vide la liste des coups (toutes les notations)
             InitialisationEchiquier();    // On réinitialise l'échiquier
-            _mode = ModePartie.EnCours;     // on joue (ou on analyse) à partir de la position chargée
-            if (ChargerPositionFen.ShowDialog() == DialogResult.OK)
-            {
-                string cheminFichier = ChargerPositionFen.FileName;
-                try
-                {   // Vérifie et obtient le chemin complet
-                    string fullPath = Path.GetFullPath(cheminFichier);
-                    Debug.WriteLine("Chemin complet du fichier FEN : " + fullPath);
-
-                    // Lire le contenu du fichier et l'afficher dans la console
-                    contenuFen = File.ReadAllText(fullPath);
-                    Debug.WriteLine("Contenu du fichier FEN : " + contenuFen);
-                    VarianteMoteurUci1.Text = "Fen chargé : " + contenuFen;
-                    LogiqueMouvements.MiseenplaceFen(contenuFen);  // Affiche la position FEN sur l'échiquier
-                    AjoutePositionDeDepart(contenuFen);  // La partie commence à cette position (élément sans coup, en tête de liste)
-                    // Le retour arrière reste possible : RetireDernierCoup ne remonte jamais avant cette position de départ
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine("Chargement FEN : Erreur lors de la lecture du fichier : " + ex.Message);
-                }
-            }
-            string[] ChampsFen = contenuFen.Split(' ');           // On récupère les 6 champs du FEN dans un tableau
-                                                                  // Sécurité
-            if (ChampsFen.Length >= 6)
-            {   // Couleur au trait
-                QuiJoue = (ChampsFen[1] == "w") ? ColorPiece.Blanc : ColorPiece.Noir;
-                _couleurHumain = QuiJoue.ToString();    // Par défaut : c'est l'humain qui joue
-
-                _dernierCoupMoteurUci = -1;
-                _clickCaseSource = _visuSymbole = true;
-                PartieEnCours.CoupsPartiePGN = PartieEnCours.Result = PartieEnCours.CompteDePLy = PartieEnCours.Ronde = "";
-                PartieEnCours.Tournoi = "Entrainement";
-                PartieEnCours.Lieu = "Maison";
-                // NumeroDemiCoup = 0;
-                // MiseaZeroAffichages();
-                _couleurHumain = "Blancs";      // Douteux, car on ne sait pas encore qui est humain ou ordinateur,
-                                                // mais on met une valeur par défaut pour éviter les bugs d'affichage (ex: "Trait aux Blancs" au lieu de "Trait aux ...")
-                // QuiJoue = ColorPiece.Blanc;     // Douteux, caar défini plus haut à partir du FEN, donc potentiellemnt incorrect ici !
-                PartieEnCours.White = LabelJoueurBlanc.Text = "";
-                PartieEnCours.Black = LabelJoueurNoir.Text = "";
-                PartieEnCours.WhiteElo = EloBlanc.Text = "";
-                PartieEnCours.BlackElo = EloNoir.Text = "";
-                OrdinateurJoueNoir = true;
-                _humain = OrdinateurJoueBlanc = _analyseEnCours = false;
-
-                LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = false;
-                InformationPourJoueur.Text = "Trait aux " + (QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
-                // Droits de roque
-                PetitRoqueBlancPossible = ChampsFen[2].Contains('K');
-                GrandRoqueBlancPossible = ChampsFen[2].Contains('Q');
-                PetitRoqueNoirPossible = ChampsFen[2].Contains('k');
-                GrandRoqueNoirPossible = ChampsFen[2].Contains('q');
-                // Case en passant
-                if (ChampsFen[3] == "-")
-                    IndexCaseEnPassant = 0;      // ou -1 selon ta convention
-                else
-                    IndexCaseEnPassant = RenvoieCaseIndex120(ChampsFen[3]);
-                // Compteur des demi-coups (règle des 50 coups)
-                SansPrise = int.Parse(ChampsFen[4]);
-                // Numéro du coup complet                // Exemple : "1", "23", etc.
-                NombreCoupsJoues = float.Parse(ChampsFen[5], System.Globalization.CultureInfo.InvariantCulture);
-                // Calcul du numéro de demi-coup (index interne à partir de 0)
-                NumeroDemiCoup = ((int)NombreCoupsJoues - 1) * 2;
-                // Si ce sont les Noirs au trait, on ajoute 1 demi-coup
-                if (QuiJoue == ColorPiece.Noir)
-                    NumeroDemiCoup++;
-                
-                PromotionPiece = TypePiece.Vide;
-                PlateauEnable(true);   // On active le plateau pour pouvoir jouer à partir de la position chargée
-            }
+            VarianteMoteurUci1.Text = "Fen chargé : " + contenuFen;
+            // Trait, droits de roque, case en passant, compteur des 50 coups et numéro du coup : tout vient de la FEN
+            LogiqueMouvements.MiseenplaceFen(contenuFen);
+            AjoutePositionDeDepart(contenuFen);  // La partie commence à cette position (élément sans coup, en tête de liste) :
+                                                 // le retour arrière ne remonte jamais avant
+            _partie.CommencerDepuisPosition();  // l'humain joue le camp au trait, le moteur lui répond
+            _analyseEnCours = false;
+            _dernierCoupMoteurUci = -1;
+            _clickCaseSource = _visuSymbole = true;
+            PartieEnCours.CoupsPartiePGN = PartieEnCours.Result = PartieEnCours.CompteDePLy = PartieEnCours.Ronde = "";
+            PartieEnCours.Tournoi = "Entrainement";
+            PartieEnCours.Lieu = "Maison";
+            PartieEnCours.White = LabelJoueurBlanc.Text = "";
+            PartieEnCours.Black = LabelJoueurNoir.Text = "";
+            PartieEnCours.WhiteElo = EloBlanc.Text = "";
+            PartieEnCours.BlackElo = EloNoir.Text = "";
+            InformationPourJoueur.Text = "Trait aux " + (QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
+            // Numéro de demi-coup (à partir de 0) : NombreCoupsJoues vaut n (Blancs au trait) ou n + 0,5 (Noirs au trait) pour la FEN "... n"
+            NumeroDemiCoup = (int)Math.Round((NombreCoupsJoues - 1) * 2);
+            PromotionPiece = TypePiece.Vide;
+            PlateauEnable(true);   // On active le plateau pour pouvoir jouer à partir de la position chargée
             _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(contenuFen));
             MetAJourCommandes();
         }
@@ -1706,10 +1626,10 @@ namespace BrunoGUI_GenII
         private void ParcoursPartie(string[] suiteCoups)
         {   // Parcourt la partie coup par coup pour l'afficher sur l'échiquier et afficher le résultat à la fin
             bool _couleurTraitBlanc = true;        // Pour commencer avec les Blancs
-            _mode = ModePartie.EnCours;             // pendant le rejeu des coups ; lecture seule à la fin
+            _partie.Commencer(Joueur.Humain, Joueur.Humain);    // rejeu des coups de la partie ; lecture seule à la fin
             VarianteMoteurCourante.Text = "";
             PartieEnCoursMat = PartieEnCoursPat = false;     // On réinitialise les indicateurs de fin de partie
-            _rejeuPartiePgn = true;     // pas de nulle automatique pendant le rejeu : c'est le résultat du PGN qui compte
+            _partie.RejeuPgn = true;    // pas de nulle automatique pendant le rejeu : c'est le résultat du PGN qui compte
             try
             {
                 for (int indicecoup = 0; indicecoup < suiteCoups.Length - 1; indicecoup++)  // Parcourir tous les coups de la partie
@@ -1723,7 +1643,7 @@ namespace BrunoGUI_GenII
             }
             finally
             {
-                _rejeuPartiePgn = false;
+                _partie.RejeuPgn = false;
             }
             switch (PartieEnCours.Result)       // Et on ajoute le résultat
             {
@@ -1745,7 +1665,7 @@ namespace BrunoGUI_GenII
             }
             Thread.Sleep(200);  // pause 0,2 seconde
             // La partie reste sur sa position finale ; elle est en lecture seule (parcours et analyse), et on l'affiche depuis le début
-            _mode = ModePartie.LectureSeule;
+            _partie.PasserEnLectureSeule();
             PlateauEnable(false);
             MetAJourCommandes();
             string resultat = InformationsPartie.Text;
@@ -1952,36 +1872,28 @@ namespace BrunoGUI_GenII
             if (PictJeux.Count < 120)
                 return;     // cases pas encore créées
             bool actif = ParcoursEnCours
-                ? _mode != ModePartie.LectureSeule
-                : _plateauAutorise && (_mode == ModePartie.EnCours || _mode == ModePartie.AucunePartie);
+                ? !PartieEnLectureSeule
+                : _plateauAutorise && (_partie.Mode == ModePartie.EnCours || _partie.Mode == ModePartie.AucunePartie);
             for (int i = 0; i <= 119; i++)
                 if (PictJeux[i].Visible)
                     PictJeux[i].Enabled = actif;
         }
 
         // ═══ Etat de la partie et commandes actives ═══
-        // Le mode de la partie (_mode) et quelques faits (parcours, coups joués, tour du joueur) suffisent à décider de toutes
-        // les commandes : MetAJourCommandes les calcule en un seul endroit. Ne pas écrire .Enabled ailleurs pour ces commandes,
-        // changer l'état puis appeler MetAJourCommandes.
-        private enum ModePartie
-        {
-            AucunePartie,   // au lancement, avant le choix d'une partie
-            EnCours,        // partie en cours (contre le moteur, entre humains, ou depuis une position FEN)
-            Terminee,       // résultat déclaré (mat, pat, nulle, abandon) : le retour arrière permet de reprendre la partie
-            LectureSeule    // partie PGN chargée : parcours et analyse seulement
-        }
-        private ModePartie _mode = ModePartie.AucunePartie;
-        private bool PartieEnLectureSeule => _mode == ModePartie.LectureSeule;
+        // Le mode de la partie (_partie.Mode, voir Partie.cs) et quelques faits (parcours, coups joués, tour du joueur) suffisent
+        // à décider de toutes les commandes : MetAJourCommandes les calcule en un seul endroit. Ne pas écrire .Enabled ailleurs
+        // pour ces commandes, changer l'état puis appeler MetAJourCommandes.
+        private bool PartieEnLectureSeule => _partie.Mode == ModePartie.LectureSeule;
 
         private void MetAJourCommandes()
         {
-            bool enCours = _mode == ModePartie.EnCours;
+            bool enCours = _partie.EnCours;
             bool coupsJoues = LogiqueMouvements.ListeCoups.Count > IndexPremierePosition + 1;   // au moins un coup (hors position FEN de départ)
             // Retour arrière : annule le dernier coup de la partie, donc jamais pendant le parcours (il annulerait un coup autre que celui affiché)
-            RetourArriere.Enabled = (enCours || _mode == ModePartie.Terminee) && coupsJoues && !ParcoursEnCours;
+            RetourArriere.Enabled = (enCours || _partie.Mode == ModePartie.Terminee) && coupsJoues && !ParcoursEnCours;
             groupParcoursPartie.Enabled = ListeCoupsBouton.Enabled = coupsJoues;
             _clavierActif = coupsJoues;     // flèches du clavier (Echap les coupe jusqu'au prochain calcul)
-            AnalysePosition.Enabled = _mode != ModePartie.AucunePartie;
+            AnalysePosition.Enabled = _partie.Mode != ModePartie.AucunePartie;
             BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = enCours;
             OrdinateurJoue.Enabled = enCours;
             BoutonBalises.Enabled = SaisiePartieBouton.Enabled = !PartieEnLectureSeule;
@@ -2000,15 +1912,7 @@ namespace BrunoGUI_GenII
             _visuCoteNoir = !_visuCoteNoir;   // On inverse le flag de côté de visualisation
         }
         private void ParametresJoueurHumain(string Couleur, string Affichage)
-        {   // Paramètres selon joueur humain noir ou blanc
-            _couleurHumain = Couleur;
-            if (_humain == false)
-                InformationPourJoueur.Text = StatusProgramme.Text = "(Vous avez les " + Couleur + ")";
-            else
-            {
-                InformationPourJoueur.Visible = true;
-                InformationPourJoueur.Text = StatusProgramme.Text = "Aux Blancs de jouer";
-            }
+        {   // Message au joueur humain en début de partie (sa couleur est fixée par CommencerPartie)
             InformationPourJoueur.Visible = true;
             InformationPourJoueur.Text = StatusProgramme.Text = Affichage;
         }
