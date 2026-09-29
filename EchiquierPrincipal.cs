@@ -70,6 +70,7 @@ namespace BrunoGUI_GenII
         private int _dernierCoupMoteurUci;   // dernière case jouée par le moteur UCI
         private int _numeroLigne;       // Indices dans la DataGrid FeuillePartie
         private int _indexCaseSourceDernierMouvement, _indexCaseDestinationDernierMouvement;
+        private bool _retourArriereAutorise;    // la partie permet le retour arrière (le bouton reste grisé pendant le parcours)
         private bool _dernierCoupColore;        // les cases du dernier coup du moteur sont à montrer (masquées pendant le parcours)
         private string _caseSource, _caseDestination, _couleurHumain;
         private string _nomHumain, _joueurElo, _nomMoteur, _moteurElo, _joueurBlanc, _joueurNoir;
@@ -143,7 +144,8 @@ namespace BrunoGUI_GenII
             DateTime Aujourdhui = DateTime.Today;
             _visuCoteNoir = OrdinateurJoueBlanc = false; // On commence avec la vue côté Blanc, l'odinateur a les Noirs
             _montreDonneesBrutesUci = _analyseEnCours = _partieTerminee = _clavierActif = false;
-            groupParcoursPartie.Enabled = RetourArriere.Enabled = AnalysePosition.Enabled = _positionChargeeDepuisFen = false;
+            groupParcoursPartie.Enabled = AnalysePosition.Enabled = _positionChargeeDepuisFen = false;
+            AutoriseRetourArriere(false);
             BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = ListeCoupsBouton.Enabled = false;
             PartieEnCours.Date = Aujourdhui.ToString("yyyy.MM.dd");
             PartieEnCours.Lieu = "Maison"; PartieEnCours.Tournoi = "Entrainement";
@@ -252,7 +254,8 @@ namespace BrunoGUI_GenII
             AbandonneReflexion();   // nouvelle partie
             QuitteParcours(); _partieEnLectureSeule = false;     // nouvelle partie : l'échiquier suit la partie
             _humain = _analyseEnCours = _partieTerminee = _clavierActif = _positionChargeeDepuisFen = false;
-            groupParcoursPartie.Enabled = RetourArriere.Enabled = false;
+            groupParcoursPartie.Enabled = false;
+            AutoriseRetourArriere(false);
             LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = false;
             QuiJoue = ColorPiece.Blanc;
             NumeroDemiCoup = 0;
@@ -308,7 +311,8 @@ namespace BrunoGUI_GenII
         private void CommencerPartie()      // POINT D'ENTREE POUR TOUTES LES NOUVELLES PARTIES
         {   // Début d'une nouvelle partie
             _analyseEnCours = _partieTerminee = _clavierActif = _positionChargeeDepuisFen = false;
-            groupParcoursPartie.Enabled = RetourArriere.Enabled = false;
+            groupParcoursPartie.Enabled = false;
+            AutoriseRetourArriere(false);
             _dernierCoupMoteurUci = -1;
             _clickCaseSource = _visuSymbole = true;
             PartieEnCours.CoupsPartiePGN = PartieEnCours.Result = PartieEnCours.CompteDePLy = PartieEnCours.Ronde = "";
@@ -666,7 +670,8 @@ namespace BrunoGUI_GenII
                                             "\n" + meilleureVariante[3], "Analyse Moteur " + " (" + _dureeReflexionMilliSeconde / 1000 + " sec.)"
                                             + " par " + _nomMoteur, KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                     }
-                    RetourArriere.Enabled = AnalysePosition.Enabled = groupParcoursPartie.Enabled = true;      // On réautorise si le moteur a fini de réfléchir
+                    AnalysePosition.Enabled = groupParcoursPartie.Enabled = true;      // On réautorise si le moteur a fini de réfléchir
+                    AutoriseRetourArriere(true);
                     _analyseEnCours = false;
                 }
             }
@@ -695,7 +700,8 @@ namespace BrunoGUI_GenII
                 string raisonNulle = _rejeuPartiePgn ? null : LogiqueMouvements.RaisonNulle();    // répétition, 50 coups ou matériel insuffisant
                 if (raisonNulle != null)
                     GestionResultat("1/2-1/2", raisonNulle);
-                RetourArriere.Enabled = AnalysePosition.Enabled = ListeCoupsBouton.Enabled = true;
+                AnalysePosition.Enabled = ListeCoupsBouton.Enabled = true;
+                AutoriseRetourArriere(true);
                 groupParcoursPartie.Enabled = _clavierActif = true;     // un coup a été joué : on peut parcourir la partie (flèches du clavier comprises)
             }
             else
@@ -726,7 +732,8 @@ namespace BrunoGUI_GenII
                 string raisonNulle = _rejeuPartiePgn ? null : LogiqueMouvements.RaisonNulle();    // répétition, 50 coups ou matériel insuffisant
                 if (raisonNulle != null)
                     GestionResultat("1/2-1/2", raisonNulle);
-                RetourArriere.Enabled = AnalysePosition.Enabled = ListeCoupsBouton.Enabled = true;
+                AnalysePosition.Enabled = ListeCoupsBouton.Enabled = true;
+                AutoriseRetourArriere(true);
                 groupParcoursPartie.Enabled = _clavierActif = true;     // un coup a été joué : on peut parcourir la partie (flèches du clavier comprises)
             }
             else
@@ -841,7 +848,8 @@ namespace BrunoGUI_GenII
             InformationsPartie.Text = resultat + "  (" + vainqueur + ")";
             StatusProgramme.Text = "Partie terminée";
             _partieTerminee = KryptonApropos.Enabled = true;
-            BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = RetourArriere.Enabled = false;
+            BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = false;
+            AutoriseRetourArriere(false);
             PlateauEnable(false);
         }
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
@@ -1100,14 +1108,8 @@ namespace BrunoGUI_GenII
         private void RetourArriere_Click(object sender, EventArgs e)
         {   // Permet de revenir en arrière d'un demi-coup (coup des blancs ou des noirs)
             if (ParcoursEnCours)
-            {   // Le retour arrière annule le dernier coup de la partie, pas la position affichée : on montre d'abord la partie,
-                // l'utilisateur voit ainsi quel coup sera annulé (même règle que le clic sur l'échiquier)
-                RetourPositionCourante();
-                InformationsPartie.Text = "Retour à la partie : cliquez de nouveau sur Retour arrière pour annuler le dernier coup";
-                return;
-            }
+                return;             // sécurité : le bouton est grisé pendant le parcours (voir AutoriseRetourArriere)
             AbandonneReflexion();   // retour arrière : le moteur ne doit pas jouer sur la position annulée
-            QuitteParcours();       // la partie change : l'échiquier la suit (redessinée ci-dessous)
             EffaceDernierCoup();
             if (!LogiqueMouvements.RetireDernierCoup())     // On supprime le dernier 1/2 coup (toutes ses notations), jamais la position de départ
                 _ = KryptonMessageBox.Show("Pas assez de coups joués \nPas de retour arrière possible", "Retour impossible", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
@@ -1705,7 +1707,8 @@ namespace BrunoGUI_GenII
         {   // Parcourt la partie coup par coup pour l'afficher sur l'échiquier et afficher le résultat à la fin
             bool _couleurTraitBlanc = true;        // Pour commencer avec les Blancs
             groupParcoursPartie.Enabled = _clavierActif = true;
-            RetourArriere.Enabled = OrdinateurJoue.Enabled = BoutonBalises.Enabled = SaisiePartieBouton.Enabled = RetourArriere.Enabled = false;
+            OrdinateurJoue.Enabled = BoutonBalises.Enabled = SaisiePartieBouton.Enabled = false;
+            AutoriseRetourArriere(false);
             VarianteMoteurCourante.Text = "";
             PartieEnCoursMat = PartieEnCoursPat = false;     // On réinitialise les indicateurs de fin de partie
             _rejeuPartiePgn = true;     // pas de nulle automatique pendant le rejeu : c'est le résultat du PGN qui compte
@@ -1746,7 +1749,8 @@ namespace BrunoGUI_GenII
             // La partie reste sur sa position finale ; elle est en lecture seule (parcours et analyse), et on l'affiche depuis le début
             _partieEnLectureSeule = true;
             PlateauEnable(false);
-            BoutonBalises.Enabled = OrdinateurJoue.Enabled = RetourArriere.Enabled = false;   // (le rejeu des coups avait réactivé Retour arrière)
+            BoutonBalises.Enabled = OrdinateurJoue.Enabled = false;
+            AutoriseRetourArriere(false);   // (le rejeu des coups avait réactivé Retour arrière)
             AnalysePosition.Enabled = true;
             string resultat = InformationsPartie.Text;
             AfficheCoupDeLaPartie(IndexPremierePosition);
@@ -2039,6 +2043,7 @@ namespace BrunoGUI_GenII
                 CouleursNormalesDernierCoup();  // le dernier coup de la partie n'a pas de sens sur une position passée
             _positionAffichee = LogiqueMouvements.PositionDepuisFen(fen);
             _indexAffiche = index;
+            MetAJourRetourArriere();
             DessineEchiquierDe(_positionAffichee);
             _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(fen));
             InformationPourJoueur.Text = "Trait aux " + (_positionAffichee.QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
@@ -2060,6 +2065,7 @@ namespace BrunoGUI_GenII
             if (!ParcoursEnCours)
                 return;
             _positionAffichee = null;
+            MetAJourRetourArriere();
             LogiqueMouvements.DessinPieces();
             ColoreDernierCoup();
             _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(LogiqueMouvements.RetourneChaineFenActuel()));
@@ -2067,9 +2073,17 @@ namespace BrunoGUI_GenII
             InformationsPartie.Text = _partieEnLectureSeule ? "Fin de la partie" : "";
         }
         private void QuitteParcours()
-        {   // La partie va être remplacée ou modifiée (nouvelle partie, chargement, retour arrière) : l'échiquier suivra la partie
+        {   // La partie va être remplacée (nouvelle partie, chargement) : l'échiquier suivra la partie
             _positionAffichee = null;
+            MetAJourRetourArriere();
         }
+        private void AutoriseRetourArriere(bool autorise)
+        {   // Seul point d'entrée pour le bouton Retour arrière : la partie l'autorise ou non,
+            // et il reste de toute façon grisé pendant le parcours (il annulerait un coup autre que celui affiché)
+            _retourArriereAutorise = autorise;
+            MetAJourRetourArriere();
+        }
+        private void MetAJourRetourArriere() => RetourArriere.Enabled = _retourArriereAutorise && !ParcoursEnCours;
         private void DessineEchiquierDe(Position position)
         {   // Dessine directement les 64 cases d'une position (sans passer par l'événement de la partie, ignoré pendant le parcours)
             for (int ligne = 2; ligne <= 9; ligne++)
@@ -2097,7 +2111,8 @@ namespace BrunoGUI_GenII
         private void LeMoteurARépondu()
         {   // Après que le moteur a répondu pour réactiver les boutons
             BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = true;
-            AnalysePosition.Enabled = OrdinateurJoue.Enabled = RetourArriere.Enabled = ListeCoupsBouton.Enabled = true;
+            AnalysePosition.Enabled = OrdinateurJoue.Enabled = ListeCoupsBouton.Enabled = true;
+            AutoriseRetourArriere(true);
         }
 
         private void LancerReflexion()
