@@ -302,6 +302,7 @@ namespace BrunoGUI_GenII
         {   // Début d'une nouvelle partie : qui joue les Blancs et les Noirs (humain ou moteur)
             _analyseEnCours = false;
             _partie.Commencer(blancs, noirs);
+            EffaceDernierCoup();        // les cases du dernier coup de la partie précédente
             _dernierCoupMoteurUci = -1;
             _clickCaseSource = _visuSymbole = true;
             PartieEnCours.CoupsPartiePGN = PartieEnCours.Result = PartieEnCours.CompteDePLy = PartieEnCours.Ronde = "";
@@ -630,6 +631,8 @@ namespace BrunoGUI_GenII
                     LogiqueMouvements.BloquerChoixPromo = false;
                     // *******Traitement promotion *********
 
+                    if (_dernierCoupColore)
+                        CouleursNormalesDernierCoup();  // le moteur a déjà joué juste avant (ex : "Ordinateur joue") : on efface son coup précédent
                     _indexCaseSourceDernierMouvement = RenvoieCaseIndex120(_caseSource);              // convertit la case source en index
                     _indexCaseDestinationDernierMouvement = RenvoieCaseIndex120(_caseDestination);    // convertit la case destination en index
                     _dernierCoupColore = true;
@@ -1512,6 +1515,7 @@ namespace BrunoGUI_GenII
             AjoutePositionDeDepart(contenuFen);  // La partie commence à cette position (élément sans coup, en tête de liste) :
                                                  // le retour arrière ne remonte jamais avant
             _partie.CommencerDepuisPosition();  // l'humain joue le camp au trait, le moteur lui répond
+            EffaceDernierCoup();                // les cases du dernier coup de la partie précédente
             _analyseEnCours = false;
             _dernierCoupMoteurUci = -1;
             _clickCaseSource = _visuSymbole = true;
@@ -1596,6 +1600,7 @@ namespace BrunoGUI_GenII
         {   // --- Charge UNE partie depuis un fichier PGN lorsque'on double-clique ---
             AbandonneReflexion();
             QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
+            EffaceDernierCoup();    // les cases du dernier coup de la partie précédente
             Outils.MiseaZeroListes();
             Debug.WriteLine("ChargerPartieDepuisPgn / :  " + partie.White + " vs " + partie.Black + "   Résultat : " + partie.Result);
             PartieEnCours.Tournoi = partie.Tournoi;
