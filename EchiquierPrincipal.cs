@@ -249,6 +249,7 @@ namespace BrunoGUI_GenII
 
         private void NouvellePartieStockfish_Click(object sender, EventArgs e)
         {   // Nouvelle partie contre Stockfish, avec la possibilité de régler la force du moteur et le temps de réflexion
+            AbandonneReflexion();   // nouvelle partie
             _humain = _analyseEnCours = _partieTerminee = _clavierActif = _positionChargeeDepuisFen = false;
             groupParcoursPartie.Enabled = RetourArriere.Enabled = false;
             LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = false;
@@ -371,6 +372,7 @@ namespace BrunoGUI_GenII
                             Cursor = Cursors.Default;       // On revient au curseur "normal"
                             LogiqueMouvements.EffaceSymboles(true);
                             _caseDestination = LogiqueMouvements.NomCaseAlgebrique(IndexCase120);
+                            AbandonneReflexion();   // une analyse en cours porterait sur la position d'avant ce coup
                             LogiqueMouvements.ExecutionCoup(_caseSource, _caseDestination);
                             string chaineFen = LogiqueMouvements.RetourneChaineFenActuel(); // UCI : remplacer le FEN par liste de coups ?!
                             if (LogiqueMouvements.CoupValide)
@@ -413,6 +415,8 @@ namespace BrunoGUI_GenII
                 return; // Empêche l'exécution du reste de la méthode sur le thread d'origine
             }
             LigneUci ligne = MoteurUci.DerniereLigne;
+            if ((ligne.Commande == "info" || ligne.Commande == "bestmove") && MoteurUci.LigneAbandonnee)
+                return;     // réponse à une demande abandonnée (retour arrière, nouvelle partie...) : on n'affiche rien
             switch (ligne.Commande)     // identifier le premier mot
             {
                 case "bestmove":        // **** le moteur UCI propose le meilleur coup ! ****
@@ -593,6 +597,9 @@ namespace BrunoGUI_GenII
             }
             else
             {
+                if (MoteurUci.LigneAbandonnee)
+                    return;     // la demande a été abandonnée entre-temps (vérifié ici, sur le thread de l'interface) : coup ignoré
+                MiseaZéroTimer();
                 TrackBarTempsReflexion.Enabled = true;
                 if (_emetUnSon)
                 {   // Son pour dire que le coup est joué
@@ -815,6 +822,7 @@ namespace BrunoGUI_GenII
         }
         private void GestionResultat(string resultat, string vainqueur)
         {   // Fin de partie : on affiche le résultat et le vainqueur, on désactive les boutons de gain/nulle,
+            AbandonneReflexion();   // résultat déclaré : le coup en cours de réflexion ne doit pas être joué
             // on empêche de bouger les pièces, on affiche le résultat dans les données de la partie
             StopMoteur_Click(null, EventArgs.Empty);    // Au cas où le moteur tourne encore ?!
             PartieEnCours.Result = EvaluationUci.Text = resultat;
@@ -830,6 +838,7 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void HumainOrdinateur_Click(object sender, EventArgs e)
         {   // L'humain joue les blancs, l'ordinateur les noirs
+            AbandonneReflexion();   // nouvelle partie
             _couleurHumain = "Blancs";
             QuiJoue = ColorPiece.Blanc;
             PartieEnCours.White = LabelJoueurBlanc.Text = _nomHumain;
@@ -855,6 +864,7 @@ namespace BrunoGUI_GenII
         }
         private void OrdinateurHumain_Click(object sender, EventArgs e)
         {   // L'ordinateur joue les blancs, l'humain les noirs
+            AbandonneReflexion();   // nouvelle partie
             _couleurHumain = "Noirs";
             QuiJoue = ColorPiece.Blanc;
             PartieEnCours.White = LabelJoueurBlanc.Text = _nomMoteur;
@@ -880,6 +890,7 @@ namespace BrunoGUI_GenII
         }
         private void HumainContreHumain_Click(object sender, EventArgs e)
         {   // 2 joueurs humains s'affrontent, pas de moteur UCI
+            AbandonneReflexion();   // nouvelle partie
             PartieEnCours.White = LabelJoueurBlanc.Text = _nomHumain;
             PartieEnCours.Black = "Adversaire";
             LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = _positionChargeeDepuisFen = false;
@@ -943,6 +954,7 @@ namespace BrunoGUI_GenII
         }
         private void DémarrageMoteur()
         {   // Arrête le moteur UCI s'il est déjà en cours d'exécution, pour éviter les conflits
+            AbandonneReflexion();   // changement de moteur
             // (le dossier de travail du moteur est celui de son .exe : voir MoteurUci.Start)
             MoteurUci.Quitte();
             MoteurUci.Start(_cheminMoteur); // on démarre le nouveau moteur Uci
@@ -1022,6 +1034,7 @@ namespace BrunoGUI_GenII
         }
         private void AnalysePosition_Click(object sender, EventArgs e)
         {   // Permet d'analyser la position courante, même si la partie n'est pas terminée
+            AbandonneReflexion();   // une nouvelle analyse remplace la réflexion en cours
             InformationPourJoueur.Text = StatusProgramme.Text = "Analyse de la position ...";
             _analyseEnCours = true;
             if (NumeroDemiCoup <= LogiqueMouvements.ListeCoupsFen.Count - 1)    // on empêche d'analyser au-delà de la partie ...
@@ -1039,8 +1052,7 @@ namespace BrunoGUI_GenII
                     return;
                 }
                 string Fenaenvoyer = LogiqueMouvements.ListeCoupsFen[NumeroDemiCoup];   // Récupère le FEN (position)
-                RetourArriere.Enabled = AnalysePosition.Enabled = ListeCoupsBouton.Enabled = false; // Il faut empêcher le retour si le moteur réfléchit
-                BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = groupParcoursPartie.Enabled = false;
+                groupParcoursPartie.Enabled = false;    // parcourir modifie encore la position (voir NePasDérangerMoteur)
                 LancerReflexion();  // Décompte le temps de réflexion
                 MoteurUci.JeuMoteurUci(Fenaenvoyer, _dureeReflexionMilliSeconde);     // On fait jouer le moteur, avec le temps de réflexion choisi
             }
@@ -1052,6 +1064,7 @@ namespace BrunoGUI_GenII
         }
         private void OrdinateurJoue_Click(object sender, EventArgs e)
         {   // Permet de faire jouer l'ordinateur UCI, sans que ce soit son tour (pour tester une position par exemple)
+            AbandonneReflexion();   // une nouvelle demande remplace la réflexion en cours
             if (QuiJoue == ColorPiece.Blanc)
             {
                 _couleurHumain = "Noirs";
@@ -1077,6 +1090,7 @@ namespace BrunoGUI_GenII
         }
         private void RetourArriere_Click(object sender, EventArgs e)
         {   // Permet de revenir en arrière d'un demi-coup (coup des blancs ou des noirs)
+            AbandonneReflexion();   // retour arrière : le moteur ne doit pas jouer sur la position annulée
             EffaceDernierCoup();
             if (!LogiqueMouvements.RetireDernierCoup())     // On supprime le dernier 1/2 coup (toutes ses notations), jamais la position de départ
                 _ = KryptonMessageBox.Show("Pas assez de coups joués \nPas de retour arrière possible", "Retour impossible", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
@@ -1102,6 +1116,7 @@ namespace BrunoGUI_GenII
                           OrdinateurJoueNoir ? "L'ordinateur joue les Noirs" :
                           "L'ordinateur ne joue pas cette partie";
                 OrdinateurJoue.Enabled = AnalysePosition.Enabled = true;
+                PlateauEnable(true);    // le plateau était bloqué si le retour arrière a interrompu la réflexion du moteur
             }
         }
         private void ListeCoupsBouton_Click(object sender, EventArgs e)
@@ -1370,6 +1385,7 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void BoutonPrecedent_Click(object sender, EventArgs e)
         {   // On recule d'un demi-coup (si possible), en affichant le FEN correspondant
+            AbandonneReflexion();   // changement de la position affichée
             if (ListeCoupsFen == null || ListeCoupsFen.Count == 0)
             {
                 KryptonMessageBox.Show("Aucun coup à afficher.", "Info", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
@@ -1420,6 +1436,7 @@ namespace BrunoGUI_GenII
         }
         private void BoutonSuivant_Click(object sender, EventArgs e)
         {   // On avance d'un coup dans la partie
+            AbandonneReflexion();   // changement de la position affichée
             if (ListeCoupsFen == null || ListeCoupsFen.Count == 0)
             {
                 KryptonMessageBox.Show("Aucun coup à afficher.", "Info", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
@@ -1467,6 +1484,7 @@ namespace BrunoGUI_GenII
         }
         private void BoutonDebut_Click(object sender, EventArgs e)
         {   // On va au premier coup joué (premier FEN de la liste)
+            AbandonneReflexion();   // changement de la position affichée
             if (ListeCoupsFen == null || ListeCoupsFen.Count == 0)
                 return;
             LogiqueMouvements.MiseenplaceFen(LogiqueMouvements.ListeCoupsFen[0]);
@@ -1478,6 +1496,7 @@ namespace BrunoGUI_GenII
         }
         private void BoutonFin_Click(object sender, EventArgs e)
         {   // On va au dernier coup joué (dernier FEN de la liste)
+            AbandonneReflexion();   // changement de la position affichée
             if (ListeCoupsFen == null || ListeCoupsFen.Count == 0)
                 return;
             NumeroDemiCoup = ListeCoupsFen.Count - 1;
@@ -1542,6 +1561,7 @@ namespace BrunoGUI_GenII
         */
         private void ChargePartiesPgn_Click(object sender, EventArgs e)
         {   // --- Affiche la boîte de dialogue et traite le fichier PGN sélectionné  ---
+            AbandonneReflexion();   // chargement d'une partie
             _positionChargeeDepuisFen = false;
             EffaceDernierCoup();
             ListeParties.Clear();    // On vide la liste des parties 
@@ -1587,6 +1607,7 @@ namespace BrunoGUI_GenII
         }
         private void ChargePositionFen_Click(object sender, EventArgs e)
         {
+            AbandonneReflexion();   // chargement d'une position
             string contenuFen = "";
             _positionChargeeDepuisFen = true;
             ListeParties.Clear();    // On vide la liste des parties 
@@ -1836,8 +1857,7 @@ namespace BrunoGUI_GenII
             if (!LogiqueMouvements.EchecetMat)
             {
                 InformationPourJoueur.Text = StatusProgramme.Text = _nomMoteur + " réfléchit ...";
-                AnalysePosition.Enabled = OrdinateurJoue.Enabled = RetourArriere.Enabled = false;
-                groupParcoursPartie.Enabled = TrackBarTempsReflexion.Enabled = false;
+                groupParcoursPartie.Enabled = false;    // parcourir modifie encore la position de la partie (voir NePasDérangerMoteur)
             }
             if (LogiqueMouvements.RenvoieCaseIndex120(_caseDestination) == _dernierCoupMoteurUci)
                 _dernierCoupMoteurUci = -1;
@@ -2058,9 +2078,22 @@ namespace BrunoGUI_GenII
             StatusProgramme.Text = InformationsPartie.Text = "Parcours partie";
         }
         private void NePasDérangerMoteur()
-        {   // Avant de lancer le moteur, on désactive les boutons pour éviter de perturber sa réflexion
-            BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = false;
-            SaisiePartieBouton.Enabled = AnalysePosition.Enabled = OrdinateurJoue.Enabled = RetourArriere.Enabled = ListeCoupsBouton.Enabled = false;
+        {   // Pendant la réflexion du moteur, les actions restent possibles : celles qui rendent la réflexion inutile l'abandonnent
+            // (AbandonneReflexion, la réponse du moteur est alors ignorée). Seule la liste des coups reste bloquée : la parcourir
+            // modifie encore la position de la partie (à lever avec la séparation position affichée / position de la partie)
+            ListeCoupsBouton.Enabled = false;
+        }
+        private void AbandonneReflexion()
+        {   // Rend périmée la réflexion en cours (partie ou analyse) : le moteur s'arrête et sa réponse sera ignorée.
+            // A appeler avant toute action qui change la partie ou la position (retour arrière, résultat, nouvelle partie, chargement...)
+            if (!MoteurUci.EnReflexion)
+                return;
+            MoteurUci.AbandonneDemandeEnCours();
+            MiseaZéroTimer();
+            TrackBarTempsReflexion.Enabled = true;
+            _analyseEnCours = false;
+            LeMoteurARépondu();
+            InformationPourJoueur.Text = StatusProgramme.Text = "Réflexion du moteur interrompue";
         }
         private void LeMoteurARépondu()
         {   // Après que le moteur a répondu pour réactiver les boutons

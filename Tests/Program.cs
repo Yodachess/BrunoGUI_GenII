@@ -270,6 +270,29 @@ Verifie("option : nom simple", LigneUci.Analyser("option name UCI_LimitStrength 
 Verifie("option : nom avec espace", LigneUci.Analyser("option name Skill Level type spin default 20 min 0 max 20").NomOption == "Skill Level", "Skill Level");
 Verifie("ligne vide", LigneUci.Analyser("   ").Commande == "", "commande vide");
 
+// Numérotation des demandes au moteur ("go" / "bestmove")
+var suivi = new SuiviDemandesMoteur();
+suivi.DemandeEnvoyee();                                  // demande n° 1
+bool reflexion1 = suivi.EnAttenteNonAbandonnee;
+int reponse1 = suivi.ReponseRecue();
+Verifie("Demandes : réponse normale prise en compte", reflexion1 && reponse1 == 1 && !suivi.EstAbandonnee(1) && !suivi.EnAttente, $"réponse n° {reponse1}");
+
+suivi.DemandeEnvoyee();                                  // demande n° 2
+bool stopEnvoye = suivi.Abandonner();                    // ex : retour arrière pendant la réflexion
+bool plusEnReflexion = !suivi.EnAttenteNonAbandonnee;
+suivi.DemandeEnvoyee();                                  // demande n° 3 (nouvelle position)
+int reponse2 = suivi.ReponseRecue();                     // bestmove de la n° 2, arrivé après le "stop"
+int reponse3 = suivi.ReponseRecue();
+Verifie("Demandes : réponse à une demande abandonnée ignorée, la suivante prise en compte",
+    stopEnvoye && plusEnReflexion && reponse2 == 2 && suivi.EstAbandonnee(2) && reponse3 == 3 && !suivi.EstAbandonnee(3),
+    $"n° 2 abandonnée : {suivi.EstAbandonnee(2)}, n° 3 abandonnée : {suivi.EstAbandonnee(3)}");
+Verifie("Demandes : abandonner sans réflexion en cours ne fait rien (pas de 'stop')", !suivi.Abandonner(), "rien en attente");
+suivi.DemandeEnvoyee();
+suivi.Abandonner();
+Verifie("Demandes : abandonner deux fois n'envoie qu'un seul 'stop'", !suivi.Abandonner() && suivi.EnAttente, "déjà abandonnée");
+suivi.Reinitialiser();
+Verifie("Demandes : remise à zéro pour un nouveau processus moteur", !suivi.EnAttente && suivi.NumeroEnCours == 1, $"n° en cours : {suivi.NumeroEnCours}");
+
 // ═══════════════ Paramètres (.ini) ═══════════════
 Console.WriteLine("── Paramètres ──");
 

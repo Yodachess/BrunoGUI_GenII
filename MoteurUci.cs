@@ -50,6 +50,18 @@ namespace BrunoGUI_GenII
         public static int? TailleHachageMo { get; set; }
         private static bool _optionsDemarrageEnvoyees;          // Threads/Hash ne sont envoyés qu'une fois par démarrage du moteur
         public static string NomAnnonce { get; private set; }  // nom annoncé par le moteur ("id name ..."), ex : Stockfish 19
+
+        // Numérotation des demandes ("go") : une réponse à une demande abandonnée (retour arrière, nouvelle partie, résultat...)
+        // est ignorée, ce qui permet de laisser l'interface active pendant la réflexion du moteur
+        public static readonly SuiviDemandesMoteur Demandes = new();
+        public static int NumeroDemandeDeLaLigne { get; private set; }     // demande à laquelle répond DerniereLigne
+        public static bool LigneAbandonnee => Demandes.EstAbandonnee(NumeroDemandeDeLaLigne);  // DerniereLigne est une réponse périmée
+        public static bool EnReflexion => Demandes.EnAttenteNonAbandonnee;    // le moteur réfléchit à une demande toujours valable
+        public static void AbandonneDemandeEnCours()
+        {   // La demande en cours devient périmée : "stop" (le moteur répond tout de suite par un bestmove, qui sera ignoré)
+            if (Demandes.Abandonner())
+                StandardInputDataToUci("stop");
+        }
         private static Process Proc;
 
         public void Start(string fichierMoteurUci)
@@ -78,16 +90,21 @@ namespace BrunoGUI_GenII
             OptionsUci.Clear();
             NomAnnonce = null;
             _optionsDemarrageEnvoyees = false;
+            Demandes.Reinitialiser();
             StandardInputDataToUci("uci");  // On demande les infos au moteur (il répond par ses options puis "uciok")
         }
 
         private void ProcOutputDataReceived(object sender, DataReceivedEventArgs e)
         {   // Evènement de sortie de données du processus UCI vers l'interface pour jouer le coup du moteur UCI
-            UciVersGui = true; 
+            if (sender != Proc)
+                return;     // ligne d'un ancien processus moteur (arrêté par un changement de moteur ou une nouvelle partie) : ignorée
+            UciVersGui = true;
             if (string.IsNullOrWhiteSpace(e.Data) == false)   // true si la chaine est " ", "\n", null, ""
             {   // La ligne est décodée une seule fois ; l'interface lit le résultat dans DerniereLigne
                 DataUci = e.Data;
                 DerniereLigne = LigneUci.Analyser(DataUci);
+                // Demande à laquelle répond la ligne : un "bestmove" termine la demande en cours
+                NumeroDemandeDeLaLigne = DerniereLigne.Commande == "bestmove" ? Demandes.ReponseRecue() : Demandes.NumeroEnCours;
                 AfficheUci?.Invoke();
                 AfficheDonneesBrutes?.Invoke();
 
@@ -100,7 +117,7 @@ namespace BrunoGUI_GenII
                     case "bestmove": // le moteur UCI propose le meilleur coup
                         // Un moteur retourne "(none)" ou "0000" en cas de mat ou de pat : aucun coup à jouer.
                         // Ce cas est traité par l'interface (AfficheUci, sur son thread), pas ici sur le thread du moteur
-                        if (!DerniereLigne.AucunCoupLegal)
+                        if (!DerniereLigne.AucunCoupLegal && !LigneAbandonnee)     // réponse périmée : ignorée
                         {
                             CoupAuFormatUci = DerniereLigne.MeilleurCoup;
                             AfficheCoupMoteur?.Invoke();
@@ -164,8 +181,10 @@ namespace BrunoGUI_GenII
 
         public static void JeuMoteurUci(string FenActuel, int Duree)
         {   // Envoie au moteur UCI le Fen actuel et invitation à jouer pour le moteur UCI (Duree en millisecondes, ou ReflexionInfinie)
+            AbandonneDemandeEnCours();      // une nouvelle demande remplace celle en cours (UCI interdit "position"/"go" pendant une recherche)
             StandardInputDataToUci("setoption name MultiPV value " + NombreLignesPV);   // On demande le nombre de variations choisi
             PositionFenUci(FenActuel);
+            Demandes.DemandeEnvoyee();      // numéro de cette demande (compté avant l'envoi du "go", dont la réponse peut arriver très vite)
             if (Duree == ReflexionInfinie)
                 StandardInputDataToUci("go infinite");      // Réflexion sans limite, jusqu'à l'envoi de "stop"
             else
