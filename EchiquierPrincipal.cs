@@ -353,7 +353,8 @@ namespace BrunoGUI_GenII
                     int IndexCase120 = Convert.ToInt32(CaseClick.Name[8..]); // Utilise le numéro de la PictureBox comme index
                     if (_visuCoteNoir)
                         IndexCase120 = IndiceVisuCoteNoir[IndexCase120];    // Si on regarde côté noir, il faut inverser l'index par rapport a la vue côté blanc
-                    if (_couleurHumain == string.Empty && _humain == false)
+                    // Aucune partie choisie (au lancement), ou couleur non choisie : pas de coup (null au lancement, "" après CommencerPartie)
+                    if ((_mode == ModePartie.AucunePartie || string.IsNullOrEmpty(_couleurHumain)) && _humain == false)
                         KryptonMessageBox.Show("Veuillez choisir votre couleur\n(Menu Partie / Nouvelle Partie)", string.Empty, KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                     else
                     {
