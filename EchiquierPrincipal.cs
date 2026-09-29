@@ -321,7 +321,7 @@ namespace BrunoGUI_GenII
             if (_humain == false)
             {
                 InformationPourJoueur.Visible = true;
-                InformationPourJoueur.Text = "Pour commencer une partie : menu \n Stockfish / Nouvelle partie contre Stockfish";
+                InformationPourJoueur.Text = "Pour commencer une partie : menu \n Stockfish ou menu Nouvelle Partie";
             }
             else
             {
@@ -355,7 +355,7 @@ namespace BrunoGUI_GenII
                         IndexCase120 = IndiceVisuCoteNoir[IndexCase120];    // Si on regarde côté noir, il faut inverser l'index par rapport a la vue côté blanc
                     // Aucune partie choisie (au lancement), ou couleur non choisie : pas de coup (null au lancement, "" après CommencerPartie)
                     if ((_mode == ModePartie.AucunePartie || string.IsNullOrEmpty(_couleurHumain)) && _humain == false)
-                        KryptonMessageBox.Show("Veuillez d'abord choisir une partie :\nmenu Stockfish / Nouvelle partie contre Stockfish", string.Empty, KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                        KryptonMessageBox.Show("Veuillez d'abord choisir une partie :\n- menu Stockfish / Nouvelle partie contre Stockfish,\n- ou menu Nouvelle Partie", string.Empty, KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                     else
                     {
                         if (_clickCaseSource)     // Permet de savoir si c'est la sélection de la pièce ou le déplacement
