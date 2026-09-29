@@ -461,9 +461,11 @@ namespace BrunoGUI_GenII
 
             // Un moteur sans MultiPV (Sargon, ...) n'envoie pas de numéro de variante : sa variante unique est la meilleure
             bool meilleureVariante = (ligne.NumeroVariante ?? 1) == 1;
+            // Le moteur donne ses scores du point de vue du camp au trait : on les affiche tous du point de vue des Blancs (+ = avantage blanc)
+            int sens = PositionDesVariantes.QuiJoue == ColorPiece.Blanc ? 1 : -1;
             if (ligne.ScoreCentipions is int centipions)
             {
-                _scoreCourant = (centipions / 100m).ToString("N2", CultureInfo.InvariantCulture);
+                _scoreCourant = (sens * centipions / 100m).ToString("N2", CultureInfo.InvariantCulture);
                 if (meilleureVariante)
                 {   // On affiche seulement le score de la meilleure variante
                     ScoreMoteur.Text = "Score : " + _scoreCourant;
@@ -471,8 +473,8 @@ namespace BrunoGUI_GenII
                 }
             }
             if (ligne.MatEn is int matEn)
-            {   // Le signe est conservé : négatif si le camp au trait se fait mater (voir AfficheEvalSymbole)
-                _scoreCourant = (matEn < 0 ? "-M" : "M") + Math.Abs(matEn);
+            {   // Du point de vue des Blancs : "M3" = les Blancs matent, "-M3" = les Noirs matent (voir AfficheEvalSymbole)
+                _scoreCourant = (sens * matEn < 0 ? "-M" : "M") + Math.Abs(matEn);
                 if (meilleureVariante)
                     InformationPourJoueur.Text = ScoreMoteur.Text = "MAT en " + Math.Abs(matEn);
             }
@@ -500,43 +502,31 @@ namespace BrunoGUI_GenII
 
         private string AfficheEvaluation(string _scoreCourant)
         {   /*
-            La règle d'or de l'UCI : Le point de vue du moteur
-            Le signe du score dans le protocole UCI est toujours du point de vue du camp qui a le trait (celui qui doit jouer).
-            Score positif (+) : Le moteur estime qu'il est en avantage.
-            Score négatif (-) : Le moteur estime qu'il est en désavantage.
-            C'est une convention relative au camp au trait, et non absolue (ce n'est pas "toujours positif pour les blancs").
+            Le score reçu est déjà du point de vue des Blancs (converti dans AfficheInfoMoteur) :
+            positif (+) = avantage blanc, négatif (-) = avantage noir, quel que soit le camp au trait.
+            (Le moteur UCI, lui, donne ses scores du point de vue du camp au trait.)
             */
             string resultat;
             _scoreCourant = _scoreCourant?.Trim();
-            // 1. Déterminer si le moteur parle au nom des blancs
-            bool estTourBlanc = PositionDesVariantes.QuiJoue == ColorPiece.Blanc;    // le score UCI est du point de vue du camp au trait de la position analysée
             if (string.IsNullOrEmpty(_scoreCourant))
             {
                 EvaluationUci.Text = _evaluationCourante = "Éval indisponible";
                 return _evaluationCourante;
             }
-            // 2. CAS DU MAT (ex: "M3", "-M2", "mate 5", "mate -5")
+            // 1. CAS DU MAT (ex: "M3" = les Blancs matent, "-M2" = les Noirs matent)
             if (_scoreCourant.Contains('M', StringComparison.OrdinalIgnoreCase))
-            {   // On regarde si le signe '-' est présent dans la chaîne
-                bool estNegatif = _scoreCourant.Contains('-');
-                // Logique : 
-                // Si c'est positif (+), le camp qui joue (QuiJoue) gagne.
-                // Si c'est négatif (-), le camp qui joue (QuiJoue) perd.
-                bool gainBlanc = (estTourBlanc && !estNegatif) || (!estTourBlanc && estNegatif);
-                resultat = gainBlanc ? "Gain Blanc" : "Gain Noir";
+            {
+                resultat = _scoreCourant.Contains('-') ? "Gain Noir" : "Gain Blanc";
                 EvaluationUci.Text = _evaluationCourante = resultat;
             }
             else
-            {   // 3. CAS DU SCORE CP
+            {   // 2. CAS DU SCORE CP
                 if (!decimal.TryParse(_scoreCourant, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal score))
                 {
                     EvaluationUci.Text = _evaluationCourante = "Éval indisponible";
                     return _evaluationCourante;
                 }
-                // Conversion en score absolu (du point de vue des Blancs)
-                // Si c'est aux noirs, on inverse pour que '+' = Blanc et '-' = Noir
-                decimal scoreAbsolu = estTourBlanc ? score : -score;
-                resultat = scoreAbsolu switch
+                resultat = score switch
                 {
                     >= 2.5m => "Gain Blanc (+-)",
                     > 0.5m => "Avantage Blanc (±)",
@@ -549,23 +539,17 @@ namespace BrunoGUI_GenII
             return resultat;
         }
         private string AfficheEvalSymbole(string scoreCourant)
-        {
+        {   // Symbole d'évaluation ; le score est déjà du point de vue des Blancs (voir AfficheEvaluation)
             scoreCourant = scoreCourant?.Trim();
-            bool estTourBlanc = PositionDesVariantes.QuiJoue == ColorPiece.Blanc;    // le score UCI est du point de vue du camp au trait de la position analysée
             if (string.IsNullOrEmpty(scoreCourant))
                 return "?";
             if (scoreCourant.Contains('M', StringComparison.OrdinalIgnoreCase))
-            {   // CAS MAT
-                bool estNegatif = scoreCourant.Contains('-');
-                bool gainBlanc = (estTourBlanc && !estNegatif) || (!estTourBlanc && estNegatif);
-                return gainBlanc ? "#+" : "#-"; // ou ce que l'on veut afficher
-            }
-                // CAS CP
+                return scoreCourant.Contains('-') ? "#-" : "#+";     // CAS MAT
+            // CAS CP
             if (!decimal.TryParse(scoreCourant, NumberStyles.Any,
                 CultureInfo.InvariantCulture, out decimal score))
                 return "?";
-            decimal scoreAbsolu = estTourBlanc ? score : -score;
-            return scoreAbsolu switch
+            return score switch
             {
                 >= 2.5m => "+-",
                 > 0.5m => "±",
