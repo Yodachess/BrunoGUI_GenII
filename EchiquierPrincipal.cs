@@ -70,6 +70,7 @@ namespace BrunoGUI_GenII
         private int _dernierCoupMoteurUci;   // dernière case jouée par le moteur UCI
         private int _numeroLigne;       // Indices dans la DataGrid FeuillePartie
         private int _indexCaseSourceDernierMouvement, _indexCaseDestinationDernierMouvement;
+        private bool _dernierCoupColore;        // les cases du dernier coup du moteur sont à montrer (masquées pendant le parcours)
         private string _caseSource, _caseDestination, _couleurHumain;
         private string _nomHumain, _joueurElo, _nomMoteur, _moteurElo, _joueurBlanc, _joueurNoir;
         private string _cheminMoteur, _nomMoteurChoisi, _variationMoteur, _meilleureSuite, _scoreCourant, _evaluationCourante;
@@ -655,8 +656,8 @@ namespace BrunoGUI_GenII
 
                     _indexCaseSourceDernierMouvement = RenvoieCaseIndex120(_caseSource);              // convertit la case source en index
                     _indexCaseDestinationDernierMouvement = RenvoieCaseIndex120(_caseDestination);    // convertit la case destination en index
-                    PictJeux[_indexCaseSourceDernierMouvement].BackColor = _couleurCaseSource;            // montre la case source du dernier coup
-                    PictJeux[_indexCaseDestinationDernierMouvement].BackColor = _couleurCaseDestination;  // montre la case destination du dernier coup
+                    _dernierCoupColore = true;
+                    ColoreDernierCoup();        // montre les cases source et destination du coup (au retour de parcours s'il y en a un)
                     LeMoteurARépondu();      // On réautorise si le moteur a fini de réfléchir
                     if (LogiqueMouvements.EchecetMat == false)
                         BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = true;
@@ -818,8 +819,20 @@ namespace BrunoGUI_GenII
         }
         private void EffaceDernierCoup()
         {   // Efface les couleurs de la case source et destination du dernier coup joué
+            _dernierCoupColore = false;
+            CouleursNormalesDernierCoup();
+        }
+        private void CouleursNormalesDernierCoup()
+        {   // Remet la couleur normale des cases du dernier coup (sans oublier ce coup : voir ColoreDernierCoup)
             PictJeux[_indexCaseSourceDernierMouvement].BackColor = Outils.EstCaseClaire(_indexCaseSourceDernierMouvement) ? _couleurCaseClaire : _couleurCaseSombre;
             PictJeux[_indexCaseDestinationDernierMouvement].BackColor = Outils.EstCaseClaire(_indexCaseDestinationDernierMouvement) ? _couleurCaseClaire : _couleurCaseSombre;
+        }
+        private void ColoreDernierCoup()
+        {   // Montre les cases source et destination du dernier coup du moteur, sauf pendant le parcours (position passée affichée)
+            if (!_dernierCoupColore || ParcoursEnCours)
+                return;
+            PictJeux[_indexCaseSourceDernierMouvement].BackColor = _couleurCaseSource;
+            PictJeux[_indexCaseDestinationDernierMouvement].BackColor = _couleurCaseDestination;
         }
 
         private void BoutonGainBlanc_Click(object sender, EventArgs e)
@@ -2031,6 +2044,8 @@ namespace BrunoGUI_GenII
             if (_analyseEnCours)
                 AbandonneReflexion();       // l'analyse portait sur la position affichée jusqu'ici (la réflexion du moteur pour son coup continue)
             string fen = index < 0 ? FenDepart : LogiqueMouvements.ListeCoups[index].Fen;
+            if (_dernierCoupColore)
+                CouleursNormalesDernierCoup();  // le dernier coup de la partie n'a pas de sens sur une position passée
             _positionAffichee = LogiqueMouvements.PositionDepuisFen(fen);
             _indexAffiche = index;
             DessineEchiquierDe(_positionAffichee);
@@ -2055,6 +2070,7 @@ namespace BrunoGUI_GenII
                 return;
             _positionAffichee = null;
             LogiqueMouvements.DessinPieces();
+            ColoreDernierCoup();
             _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(LogiqueMouvements.RetourneChaineFenActuel()));
             InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + (QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
             InformationsPartie.Text = _partieEnLectureSeule ? "Fin de la partie" : "";
