@@ -106,8 +106,9 @@ namespace BrunoGUI_GenII
         public EchiquierPrincipal()
         {
             InitializeComponent();
+            InformationsPartie.AutoEllipsis = true;     // message trop long pour le cadre : "…" et texte complet au survol de la souris
 
-            parametres = Parametres.Charger(Chemins.RepertoireRacine);   // BrunoGUI.ini puis préférences personnelles (à côté de l'exécutable)
+            parametres =Parametres.Charger(Chemins.RepertoireRacine);   // BrunoGUI.ini puis préférences personnelles (à côté de l'exécutable)
             MoteurUci.NombreThreads = parametres.NombreCoeursThread;    // envoyés au moteur à son démarrage (voir MoteurUci)
             MoteurUci.TailleHachageMo = parametres.TailleHachageMo;
             // Mise à jour des variables à partir des données du fichier
@@ -646,7 +647,7 @@ namespace BrunoGUI_GenII
                     if (ParcoursEnCours)
                     {   // Le coup est joué dans la partie, mais l'affichage reste sur la position passée que l'utilisateur regarde
                         StatusProgramme.Text = "Le moteur a joué";
-                        InformationsPartie.Text = "Le moteur a joué : cliquez sur l'échiquier ou sur Fin pour revenir à la partie";
+                        InformationsPartie.Text = "Le moteur a joué : Fin pour revenir";
                     }
                 }
                 else
@@ -2079,7 +2080,7 @@ namespace BrunoGUI_GenII
                 ? "   [ Position initiale ]" : $"   [ {TexteCoupJoue(index, _positionAffichee)} ]";
             MiseaZeroParcours();
             if (!PartieEnLectureSeule)
-                InformationsPartie.Text = "Parcours : cliquez sur l'échiquier ou sur Fin pour revenir à la partie";
+                InformationsPartie.Text = "Parcours : Fin ou clic pour revenir";
         }
         private static string TexteCoupJoue(int index, Position positionApres)
         {   // Ex : "Coup blanc : 12. Cf3" ou "Coup noir : 12... Fe7" (coup n° index, qui a mené à positionApres)
