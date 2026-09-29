@@ -416,6 +416,25 @@ Verifie("CalculerSurCopie : position rétablie même après une exception",
     ReferenceEquals(L.PositionActuelle, avantCalcul) && L.RetourneChaineFenActuel() == "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     L.RetourneChaineFenActuel());
 
+// Position affichée (parcours) : lire une FEN sans toucher à la partie, et convertir une variante sur cette position
+Charger("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+L.ExecutionCoup("e2", "e4"); L.ExecutionCoup("e7", "e5"); L.ExecutionCoup("g1", "f3");
+string fenPartie = L.RetourneChaineFenActuel();
+int dessinsAvantLecture = nombreDessins;
+Position passee = L.PositionDepuisFen(L.ListeCoupsFen[0]);      // position après 1. e4
+Verifie("PositionDepuisFen : position lue sans toucher à la partie ni dessiner",
+    passee.QuiJoue == L.ColorPiece.Noir && passee.Pieces[L.RenvoieCaseIndex120("e4")] == L.TypePiece.PionBlanc && passee.Pieces[L.RenvoieCaseIndex120("e5")] == L.TypePiece.Vide
+    && passee.IndexCaseEnPassant == L.RenvoieCaseIndex120("e3") && L.RetourneChaineFenActuel() == fenPartie && nombreDessins == dessinsAvantLecture,
+    L.RetourneChaineFenActuel());
+string varianteSurPassee = Outils.VarianteUciVersPgn("c7c5 g1f3", L.DemiCoupAvant(passee), false, passee);
+Verifie("Variante convertie sur la position affichée (et numérotée d'après elle)", varianteSurPassee.Trim() == "1 ... c5 2. Cf3", varianteSurPassee.Trim());
+Verifie("DemiCoupAvant : numéro du dernier demi-coup joué",
+    L.DemiCoupAvant(L.PositionDepuisFen(L.FenDepart)) == 0 && L.DemiCoupAvant(passee) == 0 && L.DemiCoupAvant(L.PositionActuelle) == 2,
+    $"départ {L.DemiCoupAvant(L.PositionDepuisFen(L.FenDepart))}, après e4 {L.DemiCoupAvant(passee)}, après Cf3 {L.DemiCoupAvant(L.PositionActuelle)}");
+int dessinsAvantPosition = nombreDessins;
+L.DessinPosition(passee);
+Verifie("DessinPosition : 64 cases dessinées, partie inchangée", nombreDessins - dessinsAvantPosition == 64 && L.RetourneChaineFenActuel() == fenPartie, $"{nombreDessins - dessinsAvantPosition} cases");
+
 Position vide = new();
 Verifie("Position neuve : 120 cases, 64 vides et 56 bordures",
     vide.Pieces.Count == 120 && vide.Pieces.Count(p => p == L.TypePiece.Vide) == 64 && vide.Pieces.Count(p => p == L.TypePiece.Bordure) == 56,
