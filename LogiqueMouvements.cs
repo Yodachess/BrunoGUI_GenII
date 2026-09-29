@@ -102,11 +102,13 @@ namespace BrunoGUI_GenII
         public static bool Echec { get => PositionActuelle.Echec; set => PositionActuelle.Echec = value; }
         public static bool EchecetMat { get => PositionActuelle.EchecetMat; set => PositionActuelle.EchecetMat = value; }
 
-        public static T CalculerSurCopie<T>(Func<T> calcul)
-        {   // Exécute un calcul sur une copie de la position actuelle : tout ce que le calcul modifie
-            // (pièces, trait, roques, en passant, échec...) est abandonné à la fin, même en cas d'exception
+        public static T CalculerSurCopie<T>(Func<T> calcul) => CalculerSur(PositionActuelle, calcul);
+
+        public static T CalculerSur<T>(Position position, Func<T> calcul)
+        {   // Exécute un calcul sur une copie de la position donnée (la partie ou une autre, ex : position affichée pendant le parcours) :
+            // tout ce que le calcul modifie (pièces, trait, roques, en passant, échec...) est abandonné à la fin, même en cas d'exception
             Position original = PositionActuelle;
-            PositionActuelle = original.Copier();
+            PositionActuelle = position.Copier();
             try
             {
                 return calcul();
@@ -220,63 +222,40 @@ namespace BrunoGUI_GenII
             PiecesEchiquier[IndexCase] = Piece;
             DessinePiece?.Invoke(IndexCase, Piece);
         }
-        public static void DessinPieces()
-        {   //  Dessine toutes les pièces
+        public static void DessinPieces() => DessinPosition(PositionActuelle);
+
+        public static void DessinPosition(Position position)
+        {   // Dessine les 64 cases d'une position (la partie, ou une position passée affichée), sans rien modifier
             for (int ligne = 2; ligne <= 9; ligne++)
-            {
                 for (int colonne = 1; colonne <= 8; colonne++)
-                {
-                    switch (PiecesEchiquier[(ligne * 10) + colonne])
-                    {
-                        case TypePiece.RoiBlanc:
-                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.RoiBlanc);
-                            break;
-                        case TypePiece.ReineBlanche:
-                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.ReineBlanche);
-                            break;
-                        case TypePiece.FouBlanc:
-                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.FouBlanc);
-                            break;
-                        case TypePiece.CavalierBlanc:
-                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.CavalierBlanc);
-                            break;
-                        case TypePiece.TourBlanche:
-                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.TourBlanche);
-                            break;
-                        case TypePiece.PionBlanc:
-                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.PionBlanc);
-                            break;
-                        case TypePiece.RoiNoir:
-                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.RoiNoir);
-                            break;
-                        case TypePiece.ReineNoire:
-                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.ReineNoire);
-                            break;
-                        case TypePiece.FouNoir:
-                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.FouNoir);
-                            break;
-                        case TypePiece.CavalierNoir:
-                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.CavalierNoir);
-                            break;
-                        case TypePiece.TourNoire:
-                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.TourNoire);
-                            break;
-                        case TypePiece.PionNoir:
-                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.PionNoir);
-                            break;
-                        case TypePiece.Bordure:
-                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.Bordure);
-                            break;
-                        case TypePiece.Vide:
-                            DessinePiece?.Invoke((ligne * 10) + colonne, TypePiece.Vide);
-                            break;
-                    }
-                }
-            }
+                    DessinePiece?.Invoke((ligne * 10) + colonne, position.Pieces[(ligne * 10) + colonne]);
         }
 
         public static void MiseenplaceFen(string Fenautiliser)
-        {   // Préparation du logiciel avec la position FEN
+        {   // La partie passe à la position FEN (retour arrière, chargement...), qui est dessinée.
+            // Pour seulement AFFICHER une position (parcours de la partie), utiliser PositionDepuisFen puis DessinPosition
+            LitFen(Fenautiliser);
+            DessinPieces();
+        }
+
+        public static Position PositionDepuisFen(string fen)
+        {   // Lit une FEN dans une nouvelle Position, sans modifier la partie ni rien dessiner
+            return CalculerSur(new Position(), () =>
+            {
+                LitFen(fen);
+                return PositionActuelle;
+            });
+        }
+
+        public static int DemiCoupAvant(Position position)
+        {   // Numéro (à partir de 0) du dernier demi-coup joué avant cette position, au sens de EchiquierPrincipal.NumeroDemiCoup :
+            // sert à numéroter les variantes du moteur (Outils.VarianteUciVersPgn). 0 pour la position initiale
+            int demiCoupsJoues = (int)Math.Round((position.NombreCoupsJoues - 1) * 2);
+            return Math.Max(0, demiCoupsJoues - 1);
+        }
+
+        private static void LitFen(string Fenautiliser)
+        {   // Lit une position FEN dans PositionActuelle, sans rien dessiner (voir MiseenplaceFen et PositionDepuisFen)
 
             string[] ChampsFen = Fenautiliser.Split(' ');           // On récupère les 6 champs du FEN dans un tableau
 
@@ -331,7 +310,6 @@ namespace BrunoGUI_GenII
                         {
                             IndiceCases++;
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.Vide;
-                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.Vide);
                         }
                     }
                     else                                // Si le caractère n'est pas un chiffre
@@ -340,51 +318,39 @@ namespace BrunoGUI_GenII
                     {
                         case 'K':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.RoiBlanc;
-                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.RoiBlanc);
                             break;
                         case 'Q':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.ReineBlanche;
-                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.ReineBlanche);
                             break;
                         case 'B':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.FouBlanc;
-                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.FouBlanc);
                             break;
                         case 'N':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.CavalierBlanc;
-                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.CavalierBlanc);
                             break;
                         case 'R':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.TourBlanche;
-                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.TourBlanche);
                             break;
                         case 'P':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.PionBlanc;
-                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.PionBlanc);
                             break;
                         case 'k':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.RoiNoir;
-                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.RoiNoir);
                             break;
                         case 'q':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.ReineNoire;
-                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.ReineNoire);
                             break;
                         case 'b':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.FouNoir;
-                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.FouNoir);
                             break;
                         case 'n':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.CavalierNoir;
-                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.CavalierNoir);
                             break;
                         case 'r':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.TourNoire;
-                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.TourNoire);
                             break;
                         case 'p':
                             PiecesEchiquier[20 + r * 10 + IndiceCases] = TypePiece.PionNoir;
-                            DessinePiece?.Invoke(20 + r * 10 + IndiceCases, TypePiece.PionNoir);
                             break;
                     }
                 }

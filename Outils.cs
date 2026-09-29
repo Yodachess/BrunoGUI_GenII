@@ -80,14 +80,15 @@ namespace BrunoGUI_GenII
     }
     public class Outils
     {
-        public static string VarianteUciVersPgn(string varianteBrute, int numeroDemiCoup, bool coupConseil)
+        public static string VarianteUciVersPgn(string varianteBrute, int numeroDemiCoup, bool coupConseil, Position position = null)
         {   // Retourne les coups dans le format PGN (Cdxe4)
             // Si coupConseil = true, seul le dernier coup de la variante est retourné (avec son numéro)
-            // Les coups sont joués sur une copie de la position : la partie en cours n'est ni modifiée, ni redessinée
+            // Les coups sont joués sur une copie de la position analysée (par défaut la partie) : rien n'est modifié, ni redessiné
             TypePiece promotionEnCours = PromotionPiece;
             try
             {
-                return LogiqueMouvements.CalculerSurCopie(() => ConvertitVarianteUci(varianteBrute, numeroDemiCoup, coupConseil));
+                return LogiqueMouvements.CalculerSur(position ?? LogiqueMouvements.PositionActuelle,
+                                                     () => ConvertitVarianteUci(varianteBrute, numeroDemiCoup, coupConseil));
             }
             finally
             {

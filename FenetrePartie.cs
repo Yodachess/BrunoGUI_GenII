@@ -29,14 +29,16 @@ namespace BrunoGUI_GenII
         private int colonneActuelle = 1;    // 1: Blancs, 2: Noirs (par défaut on commence avec les Blancs)
         private EchiquierPrincipal _brunoInterfaceGraphique;
         public FenetrePartie(EchiquierPrincipal brunoInterfaceGraphique)
-        {
+        {   // A l'ouverture, l'échiquier reste sur la position qu'il montre : il ne change qu'en naviguant dans la liste
             InitializeComponent();
+            _brunoInterfaceGraphique = brunoInterfaceGraphique;
             FeuillePartie.ScrollBars = ScrollBars.Vertical; // Toujours afficher le défilement vertical
             FeuillePartie.Columns[1].DefaultCellStyle.Font = new Font("Arial", 9, FontStyle.Bold | FontStyle.Italic);
             FeuillePartie.Columns[2].DefaultCellStyle.Font = new Font("Arial", 9, FontStyle.Bold | FontStyle.Italic);
-            AfficherPositionActuelle();
-            _brunoInterfaceGraphique = brunoInterfaceGraphique;
         }
+        // Une partie commencée depuis un FEN a en tête de ListeCoups un élément "position de départ" (sans coup) : on le saute
+        private static int Decalage => LogiqueMouvements.ListeCoups.Count > 0 && LogiqueMouvements.ListeCoups[0].EstPositionDeDepart ? 1 : 0;
+        private static int NombreCoupsJoues => LogiqueMouvements.ListeCoups.Count - Decalage;
         private void MettreAJourSelection()
         {
             if (ligneActuelle >= 0 && ligneActuelle < FeuillePartie.Rows.Count)
@@ -46,32 +48,10 @@ namespace BrunoGUI_GenII
             AfficherPositionActuelle();
         }
         private void AfficherPositionActuelle()
-        {
-            int demiCoupsTotaux = LogiqueMouvements.ListeCoupsFen.Count;
-            if (ligneActuelle >= 0 && (ligneActuelle * 2) < demiCoupsTotaux)
-            {   // Vérifie que l'indice de la ligne est valide dans la ListeCoupsFen
-                string fenActuel = "";
-                if (colonneActuelle == 1)
-                {   // Si on est sur la colonne des Blancs (colonneActuelle = 1)
-                    if (ligneActuelle * 2 < demiCoupsTotaux)
-                    {   // Vérifie que l'index pour les Blancs est valide
-                        fenActuel = LogiqueMouvements.ListeCoupsFen[ligneActuelle * 2];  // Index des Blancs
-                        EchiquierPrincipal.NumeroDemiCoup = ligneActuelle * 2;
-                    }
-                }
-                else if (colonneActuelle == 2)
-                {   // Si on est sur la colonne des Noirs (colonneActuelle = 2)
-                    if ((ligneActuelle * 2 + 1) < demiCoupsTotaux)
-                    {   // Vérifie que l'index pour les Noirs est valide
-                        fenActuel = LogiqueMouvements.ListeCoupsFen[ligneActuelle * 2 + 1];  // Index des Noirs
-                        EchiquierPrincipal.NumeroDemiCoup = ligneActuelle * 2 + 1;
-                    }
-                }
-                if (!string.IsNullOrEmpty(fenActuel))
-                {   // Affiche la position dans la fenêtre en fonction du FEN actuel, si trouvé
-                    LogiqueMouvements.MiseenplaceFen(fenActuel);
-                }
-            }
+        {   // Affiche sur l'échiquier la position après le coup sélectionné (la partie n'est pas modifiée)
+            int demiCoup = ligneActuelle * 2 + (colonneActuelle - 1);     // n° du coup sélectionné parmi les coups joués (à partir de 0)
+            if (demiCoup >= 0 && demiCoup < NombreCoupsJoues)
+                _brunoInterfaceGraphique.AfficheCoupDeLaPartie(Decalage + demiCoup);
         }
         private void BoutonDebut_Click(object sender, EventArgs e)
         {
@@ -121,42 +101,23 @@ namespace BrunoGUI_GenII
         }
         private void BoutonFin_Click(object sender, EventArgs e)
         {
-            if (LogiqueMouvements.ListeCoupsFen.Count % 2 == 0)
-            {   // Vérifier si le dernier coup est un coup blanc (pas de colonne noire après la dernière ligne)
-                ligneActuelle = (LogiqueMouvements.ListeCoupsFen.Count - 1) / 2;
-                colonneActuelle = 2;  // Terminer avec le coup Noirs
-            }
-            else
-            {
-                ligneActuelle = ((LogiqueMouvements.ListeCoupsFen.Count - 1) - 1) / 2;
-                colonneActuelle = 1;  // Terminer avec le coup Blancs
-            }
+            if (NombreCoupsJoues == 0)
+                return;
+            int dernier = NombreCoupsJoues - 1;     // n° du dernier coup joué (à partir de 0)
+            ligneActuelle = dernier / 2;
+            colonneActuelle = dernier % 2 + 1;      // 1 : coup blanc, 2 : coup noir
             MettreAJourSelection();
             BoutonDroit.Enabled = BoutonFin.Enabled = false;
             BoutonDebut.Enabled = BoutonGauche.Enabled = true;
         }
         private void FermeFeuillePartie_Click(object sender, EventArgs e)
-        {   // Si on ferme la liste de coups, il faut revenir à la fin de la partie ...
-            if (LogiqueMouvements.ListeCoupsFen.Count > 0)
-            {   // retour fin de partie uniquement si la liste n'est pas vide ...
-                LogiqueMouvements.MiseenplaceFen(LogiqueMouvements.ListeCoupsFen[^1]);
-                // A la sortie de la liste de coups, il faut revenir à la fin de la partie
-                EchiquierPrincipal.NumeroDemiCoup = LogiqueMouvements.ListeCoupsFen.Count - 1; 
-            }
-            _brunoInterfaceGraphique.PlateauEnable(true);   // et autoriser de jouer
-            _brunoInterfaceGraphique.AnalysePosition.Enabled = _brunoInterfaceGraphique.RetourArriere.Enabled = true;
+        {   // Fermeture de la liste de coups (bouton) : voir FenetrePartie_FormClosing
             this.Close();
         }
         private void FenetrePartie_FormClosing(object sender, FormClosingEventArgs e)
-        {   // Fermeture de la fenêtre par la croix rouge en haut à droite ...
-            if (LogiqueMouvements.ListeCoupsFen.Count > 0)
-            {   // retour fin de partie uniquement si la liste n'est pas vide ...
-                LogiqueMouvements.MiseenplaceFen(LogiqueMouvements.ListeCoupsFen[^1]);
-                // A la sortie de la liste de coups, il faut revenir à la fin de la partie
-                EchiquierPrincipal.NumeroDemiCoup = LogiqueMouvements.ListeCoupsFen.Count - 1; 
-            }
-            _brunoInterfaceGraphique.PlateauEnable(true);   // et autoriser de jouer
-            _brunoInterfaceGraphique.AnalysePosition.Enabled = _brunoInterfaceGraphique.RetourArriere.Enabled = true;
+        {   // Fermeture de la fenêtre (bouton ou croix rouge) : l'échiquier revient à la position courante de la partie.
+            // La partie n'ayant pas été modifiée par le parcours, rien d'autre à rétablir
+            _brunoInterfaceGraphique.RetourPositionCourante();
         }
     }
 }

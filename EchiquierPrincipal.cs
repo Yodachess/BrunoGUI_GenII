@@ -80,7 +80,6 @@ namespace BrunoGUI_GenII
         private bool _visuCoteNoir;     // True quand les Noirs sont en bas de l'écran
         private bool _clavierActif, _emetUnSon, _bibliothèqueAléatoire, _positionChargeeDepuisFen = false;
         private bool _bibliothèqueActive = true;
-        private int _indexFenCoupActuel = 0; // Indice du coup affiché
         private int _dureeReflexionMilliSeconde = 5000;
         private Color _couleurCaseSombre, _couleurCaseClaire, _couleurCaseSource, _couleurCaseDestination;
         private LogiqueMouvements.TypePiece _selectionPromotion, _pieceSource;
@@ -165,7 +164,7 @@ namespace BrunoGUI_GenII
             LogiqueMouvements.AfficheEchecEtMat += AfficheEchecEtMat;
             LogiqueMouvements.AfficheTour += AfficheTour;
             LogiqueMouvements.AffichePromotionPion += AffichePromotionPion;
-            LogiqueMouvements.DessinePiece += DessinePiece;
+            LogiqueMouvements.DessinePiece += DessinePieceDeLaPartie;     // ignoré pendant le parcours de la partie
             LogiqueMouvements.DessineSymbole += DessineSymbole;
             MoteurUci.AfficheUci += AfficheUci;
             MoteurUci.AfficheDonneesBrutes += AfficheDonneesBrutes;
@@ -250,11 +249,11 @@ namespace BrunoGUI_GenII
         private void NouvellePartieStockfish_Click(object sender, EventArgs e)
         {   // Nouvelle partie contre Stockfish, avec la possibilité de régler la force du moteur et le temps de réflexion
             AbandonneReflexion();   // nouvelle partie
+            QuitteParcours(); _partieEnLectureSeule = false;     // nouvelle partie : l'échiquier suit la partie
             _humain = _analyseEnCours = _partieTerminee = _clavierActif = _positionChargeeDepuisFen = false;
             groupParcoursPartie.Enabled = RetourArriere.Enabled = false;
             LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = false;
             QuiJoue = ColorPiece.Blanc;
-            _indexFenCoupActuel = 0;     // On est au début
             NumeroDemiCoup = 0;
             DémarreStockfish();
             if (maNouvellePartieForceModule.ShowDialog() == DialogResult.OK)
@@ -340,6 +339,13 @@ namespace BrunoGUI_GenII
         {   // Le joueur sélectionne la case source ou destination avec la souris
             try
             {
+                if (_partieEnLectureSeule)
+                    return;     // partie PGN chargée : on ne joue pas de coup
+                if (ParcoursEnCours)
+                {   // On regardait un coup passé : le clic ramène à la position courante de la partie (il ne joue pas de coup)
+                    RetourPositionCourante();
+                    return;
+                }
                 if (sender is PictureBox CaseClick)
                 {
                     int IndexCase120 = Convert.ToInt32(CaseClick.Name[8..]); // Utilise le numéro de la PictureBox comme index
@@ -429,8 +435,8 @@ namespace BrunoGUI_GenII
                         VarianteMoteurCourante.Text = mat ? "Aucun coup légal : échec et mat" : "Aucun coup légal : pat";
                         break;
                     }
-                    VarianteMoteurCourante.Text = "Coup joué : " + Outils.VarianteUciVersPgn(ligne.MeilleurCoup, NumeroDemiCoup, false) +
-                        (ligne.CoupConseil != null ? "   (Conseil : " + Outils.VarianteUciVersPgn(ligne.MeilleurCoup + " " + ligne.CoupConseil, NumeroDemiCoup, true) + ")" : "");  // Le conseil (ponder) se joue après le coup du moteur
+                    VarianteMoteurCourante.Text = "Coup joué : " + Outils.VarianteUciVersPgn(ligne.MeilleurCoup, LogiqueMouvements.DemiCoupAvant(PositionDesVariantes), false, PositionDesVariantes) +
+                        (ligne.CoupConseil != null ? "   (Conseil : " + Outils.VarianteUciVersPgn(ligne.MeilleurCoup + " " + ligne.CoupConseil, LogiqueMouvements.DemiCoupAvant(PositionDesVariantes), true, PositionDesVariantes) + ")" : "");  // Le conseil (ponder) se joue après le coup du moteur
                     break;
                 case "id":
                     if (ligne.NomMoteur != null)
@@ -476,7 +482,7 @@ namespace BrunoGUI_GenII
             _variationMoteur = ligne.Variante;
             if (_variationMoteur.Length > 60)
                 _variationMoteur = _variationMoteur[..60];     // On limite la longueur de la variation, pour rester dans le label
-            _variationMoteur = Outils.VarianteUciVersPgn(_variationMoteur, NumeroDemiCoup, false);  // Elle est en Uci, il la faut en PGN Fr ...
+            _variationMoteur = Outils.VarianteUciVersPgn(_variationMoteur, LogiqueMouvements.DemiCoupAvant(PositionDesVariantes), false, PositionDesVariantes);  // Elle est en Uci, il la faut en PGN Fr ...
             string varianteExaminee = string.Join(" ", _variationMoteur.Split(' ').Take(3));
             string texteVariante = AfficheEvalSymbole(_scoreCourant) + " (" + varianteExaminee + ") █[ " + _scoreCourant + " ]█  " + "[ " + _variationMoteur + " ]";
             if (ligne.NumeroVariante is int numeroVariante)
@@ -502,7 +508,7 @@ namespace BrunoGUI_GenII
             string resultat;
             _scoreCourant = _scoreCourant?.Trim();
             // 1. Déterminer si le moteur parle au nom des blancs
-            bool estTourBlanc = (QuiJoue == ColorPiece.Blanc);
+            bool estTourBlanc = PositionDesVariantes.QuiJoue == ColorPiece.Blanc;    // le score UCI est du point de vue du camp au trait de la position analysée
             if (string.IsNullOrEmpty(_scoreCourant))
             {
                 EvaluationUci.Text = _evaluationCourante = "Éval indisponible";
@@ -541,10 +547,10 @@ namespace BrunoGUI_GenII
             EvaluationUci.Text = _evaluationCourante = resultat;
             return resultat;
         }
-        private static string AfficheEvalSymbole(string scoreCourant)
+        private string AfficheEvalSymbole(string scoreCourant)
         {
             scoreCourant = scoreCourant?.Trim();
-            bool estTourBlanc = (QuiJoue == ColorPiece.Blanc);
+            bool estTourBlanc = PositionDesVariantes.QuiJoue == ColorPiece.Blanc;    // le score UCI est du point de vue du camp au trait de la position analysée
             if (string.IsNullOrEmpty(scoreCourant))
                 return "?";
             if (scoreCourant.Contains('M', StringComparison.OrdinalIgnoreCase))
@@ -640,7 +646,8 @@ namespace BrunoGUI_GenII
                     if (_dernierCoupMoteurUci != -1)
                     {       // on redessine la case pour effacer le contour du coup précédent du Moteur UCI
                         PictJeux[_dernierCoupMoteurUci].BackColor = CouleurCaseOrigines[_dernierCoupMoteurUci];
-                        DessinePiece(_dernierCoupMoteurUci, LogiqueMouvements.PiecesEchiquier[_dernierCoupMoteurUci]);
+                        if (!ParcoursEnCours)       // pendant le parcours, l'échiquier montre une position passée
+                            DessinePiece(_dernierCoupMoteurUci, LogiqueMouvements.PiecesEchiquier[_dernierCoupMoteurUci]);
                     }
                     _dernierCoupMoteurUci = LogiqueMouvements.RenvoieCaseIndex120(_caseDestination);
                     LogiqueMouvements.BloquerChoixPromo = false;
@@ -653,6 +660,11 @@ namespace BrunoGUI_GenII
                     LeMoteurARépondu();      // On réautorise si le moteur a fini de réfléchir
                     if (LogiqueMouvements.EchecetMat == false)
                         BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = true;
+                    if (ParcoursEnCours)
+                    {   // Le coup est joué dans la partie, mais l'affichage reste sur la position passée que l'utilisateur regarde
+                        StatusProgramme.Text = "Le moteur a joué";
+                        InformationsPartie.Text = "Le moteur a joué : cliquez sur l'échiquier ou sur Fin pour revenir à la partie";
+                    }
                 }
                 else
                 {   // c'est une analyse, on affiche la meilleure variante
@@ -699,6 +711,7 @@ namespace BrunoGUI_GenII
                 if (raisonNulle != null)
                     GestionResultat("1/2-1/2", raisonNulle);
                 RetourArriere.Enabled = AnalysePosition.Enabled = ListeCoupsBouton.Enabled = true;
+                groupParcoursPartie.Enabled = _clavierActif = true;     // un coup a été joué : on peut parcourir la partie (flèches du clavier comprises)
             }
             else
             {
@@ -729,6 +742,7 @@ namespace BrunoGUI_GenII
                 if (raisonNulle != null)
                     GestionResultat("1/2-1/2", raisonNulle);
                 RetourArriere.Enabled = AnalysePosition.Enabled = ListeCoupsBouton.Enabled = true;
+                groupParcoursPartie.Enabled = _clavierActif = true;     // un coup a été joué : on peut parcourir la partie (flèches du clavier comprises)
             }
             else
             {
@@ -839,6 +853,7 @@ namespace BrunoGUI_GenII
         private void HumainOrdinateur_Click(object sender, EventArgs e)
         {   // L'humain joue les blancs, l'ordinateur les noirs
             AbandonneReflexion();   // nouvelle partie
+            QuitteParcours(); _partieEnLectureSeule = false;     // nouvelle partie : l'échiquier suit la partie
             _couleurHumain = "Blancs";
             QuiJoue = ColorPiece.Blanc;
             PartieEnCours.White = LabelJoueurBlanc.Text = _nomHumain;
@@ -865,6 +880,7 @@ namespace BrunoGUI_GenII
         private void OrdinateurHumain_Click(object sender, EventArgs e)
         {   // L'ordinateur joue les blancs, l'humain les noirs
             AbandonneReflexion();   // nouvelle partie
+            QuitteParcours(); _partieEnLectureSeule = false;     // nouvelle partie : l'échiquier suit la partie
             _couleurHumain = "Noirs";
             QuiJoue = ColorPiece.Blanc;
             PartieEnCours.White = LabelJoueurBlanc.Text = _nomMoteur;
@@ -891,6 +907,7 @@ namespace BrunoGUI_GenII
         private void HumainContreHumain_Click(object sender, EventArgs e)
         {   // 2 joueurs humains s'affrontent, pas de moteur UCI
             AbandonneReflexion();   // nouvelle partie
+            QuitteParcours(); _partieEnLectureSeule = false;     // nouvelle partie : l'échiquier suit la partie
             PartieEnCours.White = LabelJoueurBlanc.Text = _nomHumain;
             PartieEnCours.Black = "Adversaire";
             LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = _positionChargeeDepuisFen = false;
@@ -1033,29 +1050,24 @@ namespace BrunoGUI_GenII
             HumainContreHumain_Click(sender, e);
         }
         private void AnalysePosition_Click(object sender, EventArgs e)
-        {   // Permet d'analyser la position courante, même si la partie n'est pas terminée
+        {   // Analyse la position affichée : la position courante de la partie, ou le coup passé que l'on regarde (parcours)
             AbandonneReflexion();   // une nouvelle analyse remplace la réflexion en cours
+            Position position = _positionAffichee ?? LogiqueMouvements.PositionActuelle;
+            if (LogiqueMouvements.CalculerSur(position, () => !LogiqueMouvements.ResteCoupsValidesJouables()))
+            {   // Plus aucun coup jouable : mat ou pat, rien à analyser
+                bool mat = LogiqueMouvements.CalculerSur(position, LogiqueMouvements.CampAuTraitEnEchec);
+                MiseaZeroVariantes();
+                InformationPourJoueur.Text = "Analyse inutile ...";
+                InformationsPartie.Text = "La position est terminée ...";
+                KryptonMessageBox.Show(mat ? "La position est un mat." : "La position est un pat.", "Analyse inutile");
+                return;
+            }
             InformationPourJoueur.Text = StatusProgramme.Text = "Analyse de la position ...";
             _analyseEnCours = true;
-            if (NumeroDemiCoup <= LogiqueMouvements.ListeCoupsFen.Count - 1)    // on empêche d'analyser au-delà de la partie ...
-            {   // Si la partie se termine par MAT ou PAT, inutile de lancer l'analyse sur le dernier coup
-                bool dernierCoup = NumeroDemiCoup == LogiqueMouvements.ListeCoupsFen.Count - 1;
-                if (dernierCoup && (LogiqueMouvements.PartieEnCoursMat || LogiqueMouvements.PartieEnCoursPat))
-                {
-                    MiseaZeroVariantes();
-                    InformationPourJoueur.Text = "Analyse inutile ...";
-                    InformationsPartie.Text = "La partie est déjà terminée ...";
-                    if (LogiqueMouvements.PartieEnCoursMat)
-                        KryptonMessageBox.Show("La partie est terminée par un mat.", "Analyse inutile");
-                    else
-                        KryptonMessageBox.Show("La partie est terminée par un pat.", "Analyse inutile");
-                    return;
-                }
-                string Fenaenvoyer = LogiqueMouvements.ListeCoupsFen[NumeroDemiCoup];   // Récupère le FEN (position)
-                groupParcoursPartie.Enabled = false;    // parcourir modifie encore la position (voir NePasDérangerMoteur)
-                LancerReflexion();  // Décompte le temps de réflexion
-                MoteurUci.JeuMoteurUci(Fenaenvoyer, _dureeReflexionMilliSeconde);     // On fait jouer le moteur, avec le temps de réflexion choisi
-            }
+            _positionAnalysee = position.Copier();      // les variantes du moteur seront converties sur cette position
+            string Fenaenvoyer = LogiqueMouvements.CalculerSur(position, LogiqueMouvements.RetourneChaineFenActuel);
+            LancerReflexion();  // Décompte le temps de réflexion
+            MoteurUci.JeuMoteurUci(Fenaenvoyer, _dureeReflexionMilliSeconde);     // On fait analyser le moteur, avec le temps de réflexion choisi
         }
         private void InverseEchiquier_Click(object sender, EventArgs e)
         {   // Permet d'inverser la vue de l'échiquier (côté Blanc ou côté Noir)
@@ -1091,6 +1103,7 @@ namespace BrunoGUI_GenII
         private void RetourArriere_Click(object sender, EventArgs e)
         {   // Permet de revenir en arrière d'un demi-coup (coup des blancs ou des noirs)
             AbandonneReflexion();   // retour arrière : le moteur ne doit pas jouer sur la position annulée
+            QuitteParcours();       // la partie change : l'échiquier la suit de nouveau (redessinée ci-dessous)
             EffaceDernierCoup();
             if (!LogiqueMouvements.RetireDernierCoup())     // On supprime le dernier 1/2 coup (toutes ses notations), jamais la position de départ
                 _ = KryptonMessageBox.Show("Pas assez de coups joués \nPas de retour arrière possible", "Retour impossible", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
@@ -1124,8 +1137,7 @@ namespace BrunoGUI_GenII
             string numeroCoup = "";
             string blancs = "";
             string noirs;
-            PlateauEnable(false);   // Blocage du plateau car je ne veux pas autoriser de jouer pendant le parcours de la partie ....
-            RetourArriere.Enabled = groupParcoursPartie.Enabled = false;
+            // Plus de blocage : parcourir la liste ne modifie que la position affichée (voir AfficheCoupDeLaPartie)
             // Si la fenêtre n'existe pas ou est déjà fermée, la créer
             if (mafenetrePartie == null || mafenetrePartie.IsDisposed)
             {
@@ -1384,131 +1396,35 @@ namespace BrunoGUI_GenII
         // Gestion des boutons et flèches pour parcours de partie
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void BoutonPrecedent_Click(object sender, EventArgs e)
-        {   // On recule d'un demi-coup (si possible), en affichant le FEN correspondant
-            AbandonneReflexion();   // changement de la position affichée
-            if (ListeCoupsFen == null || ListeCoupsFen.Count == 0)
+        {   // On recule d'un demi-coup dans l'affichage (la partie n'est pas modifiée)
+            if (LogiqueMouvements.ListeCoups.Count == 0)
             {
                 KryptonMessageBox.Show("Aucun coup à afficher.", "Info", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                 return;
             }
-            if (_indexFenCoupActuel > 0)
-            {   // On recule seulement si on n'est pas déjà au tout début
-                NumeroDemiCoup--;
-                _indexFenCoupActuel--;  // On recule les index
-                string fen = ListeCoupsFen[_indexFenCoupActuel];
-                LogiqueMouvements.MiseenplaceFen(fen);
-                _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(fen));
-                if (_indexFenCoupActuel > 0)
-                {   // 1. Analyse du FEN
-                    string[] partiesFen = fen.Split(' ');
-                    string couleurQuiJoue = partiesFen[1];
-                    string numCoupFen = partiesFen[5];
-                    // 2. Nettoyage du coup (pour enlever le "x." si présent)
-                    string coupBrut = LogiqueMouvements.ListeCoupsNal[_indexFenCoupActuel];
-                    string coupNettoye = coupBrut.Contains('.')
-                                         ? coupBrut.Split('.').Last().Trim()
-                                         : coupBrut;
-                    // 3. Formatage selon le trait
-                    string texteAffiche;
-                    if (couleurQuiJoue == "w")
-                    {   // Au tour des blancs, donc on affiche le dernier coup NOIR
-                        texteAffiche = $"Coup noir : {numCoupFen}... {coupNettoye}";
-                        InformationPourJoueur.Text = "Trait aux Blancs";
-                    }
-                    else
-                    {   // Au tour des noirs, donc on affiche le dernier coup BLANC
-                        texteAffiche = $"Coup blanc : {numCoupFen}. {coupNettoye}";
-                        InformationPourJoueur.Text = "Trait aux Noirs";
-                    }
-                    VarianteMoteurUci1.Text = $"   [ {texteAffiche} ]";
-                }
-                else
-                {
-                    VarianteMoteurUci1.Text = "   [ Position initiale ]";
-                }
-                MiseaZeroParcours();
-            }
-            else
-            {
+            int indexActuel = ParcoursEnCours ? _indexAffiche : LogiqueMouvements.ListeCoups.Count - 1;
+            if (indexActuel <= IndexPremierePosition)
                 KryptonMessageBox.Show("Vous êtes au début de la partie.", "Début de partie", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
-            }
-            AnalysePosition.Enabled = true;    // On réactive le bouton d'analyse de la position    
+            else
+                AfficheCoupDeLaPartie(indexActuel - 1);
         }
         private void BoutonSuivant_Click(object sender, EventArgs e)
-        {   // On avance d'un coup dans la partie
-            AbandonneReflexion();   // changement de la position affichée
-            if (ListeCoupsFen == null || ListeCoupsFen.Count == 0)
-            {
-                KryptonMessageBox.Show("Aucun coup à afficher.", "Info", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
-                return;
-            }
-            if (_indexFenCoupActuel < ListeCoupsFen.Count - 1)
-            {   // On avance seulement si on n'est pas déjà au dernier coup
-                NumeroDemiCoup++;
-                _indexFenCoupActuel++;
-                string fen = ListeCoupsFen[_indexFenCoupActuel];
-                LogiqueMouvements.MiseenplaceFen(fen);
-                string[] partiesFen = fen.Split(' ');
-                string couleurQuiJoue = partiesFen[1];
-                string numCoupFen = partiesFen[5];
-                // --- NETTOYAGE DU COUP ---
-                // On récupère "x. Bc1xf4"
-                string coupBrut = LogiqueMouvements.ListeCoupsNal[_indexFenCoupActuel];
-                // On ne garde que ce qui est APRÈS le point. Si pas de point, on garde tout.
-                string coupNettoye = coupBrut.Contains('.')
-                                     ? coupBrut.Split('.').Last().Trim()
-                                     : coupBrut;
-                string texteFinal;
-                if (couleurQuiJoue == "w")
-                {   // On vient de jouer NOIR -> format "1... e5"
-                    texteFinal = $"Coup noir : {numCoupFen}... {coupNettoye}";
-                    InformationPourJoueur.Text = "Trait aux Blancs";
-                }
-                else
-                {   // On vient de jouer BLANC -> format "1. e4"
-                    texteFinal = $"Coup blanc : {numCoupFen}. {coupNettoye}";
-                    InformationPourJoueur.Text = "Trait aux Noirs";
-                }
-                VarianteMoteurUci1.Text = $"   [ {texteFinal} ]";
-                MiseaZeroParcours();
-            }
+        {   // On avance d'un demi-coup dans l'affichage ; après le dernier coup, on revient à la position courante de la partie
+            if (ParcoursEnCours)
+                AfficheCoupDeLaPartie(_indexAffiche + 1);
+            else if (LogiqueMouvements.EchecetMat)
+                KryptonMessageBox.Show("Il y a échec et mat.", "Terminé : échec et mat", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
             else
-            {
-                if (LogiqueMouvements.EchecetMat)
-                {
-                    KryptonMessageBox.Show("Il y a échec et mat.", "Terminé : échec et mat", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
-                }
-                else
-                    KryptonMessageBox.Show("Vous êtes à la fin de la partie.", "Fin de partie", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
-            }
+                KryptonMessageBox.Show("Vous êtes à la fin de la partie.", "Fin de partie", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
         }
         private void BoutonDebut_Click(object sender, EventArgs e)
-        {   // On va au premier coup joué (premier FEN de la liste)
-            AbandonneReflexion();   // changement de la position affichée
-            if (ListeCoupsFen == null || ListeCoupsFen.Count == 0)
-                return;
-            LogiqueMouvements.MiseenplaceFen(LogiqueMouvements.ListeCoupsFen[0]);
-            _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(FenDepart));
-            NumeroDemiCoup = 0;
-            _indexFenCoupActuel = 0;
-            VarianteMoteurUci1.Text = "Début de partie";
-            MiseaZeroParcours();
+        {   // On affiche la position initiale de la partie (ou la position FEN de départ)
+            if (LogiqueMouvements.ListeCoups.Count > 0)
+                AfficheCoupDeLaPartie(IndexPremierePosition);
         }
         private void BoutonFin_Click(object sender, EventArgs e)
-        {   // On va au dernier coup joué (dernier FEN de la liste)
-            AbandonneReflexion();   // changement de la position affichée
-            if (ListeCoupsFen == null || ListeCoupsFen.Count == 0)
-                return;
-            NumeroDemiCoup = ListeCoupsFen.Count - 1;
-            _indexFenCoupActuel = ListeCoupsFen.Count - 1;
-            string fen = ListeCoupsFen[_indexFenCoupActuel];
-            LogiqueMouvements.MiseenplaceFen(fen);
-            _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(fen));
-            string couleurQuiJoue = fen.Split(' ')[1];
-            string texteCouleur = couleurQuiJoue == "w" ? "Coup noir" : "Coup blanc";
-            InformationPourJoueur.Text = couleurQuiJoue == "w" ? "Trait aux Blancs" : "Trait aux Noirs";
-            VarianteMoteurUci1.Text = ($"   [ {texteCouleur} : {LogiqueMouvements.ListeCoupsNal[_indexFenCoupActuel]} ]");
-            MiseaZeroParcours();
+        {   // On revient à la position courante de la partie
+            RetourPositionCourante();
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -1608,6 +1524,7 @@ namespace BrunoGUI_GenII
         private void ChargePositionFen_Click(object sender, EventArgs e)
         {
             AbandonneReflexion();   // chargement d'une position
+            QuitteParcours(); _partieEnLectureSeule = false;     // nouvelle partie : l'échiquier suit la partie
             string contenuFen = "";
             _positionChargeeDepuisFen = true;
             ListeParties.Clear();    // On vide la liste des parties 
@@ -1629,7 +1546,7 @@ namespace BrunoGUI_GenII
                     VarianteMoteurUci1.Text = "Fen chargé : " + contenuFen;
                     LogiqueMouvements.MiseenplaceFen(contenuFen);  // Affiche la position FEN sur l'échiquier
                     AjoutePositionDeDepart(contenuFen);  // La partie commence à cette position (élément sans coup, en tête de liste)
-                    RetourArriere.Enabled = false;    // On ne peut PAS faire un retour arrière sur la position chargée
+                    // Le retour arrière reste possible : RetireDernierCoup ne remonte jamais avant cette position de départ
                 }
                 catch (Exception ex)
                 {
@@ -1751,6 +1668,8 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         public void ChargerPartieDepuisPgn(PartieEchecsPGN partie)
         {   // --- Charge UNE partie depuis un fichier PGN lorsque'on double-clique ---
+            AbandonneReflexion();
+            QuitteParcours(); _partieEnLectureSeule = false;     // nouvelle partie : l'échiquier suit la partie
             Outils.MiseaZeroListes();
             Debug.WriteLine("ChargerPartieDepuisPgn / :  " + partie.White + " vs " + partie.Black + "   Résultat : " + partie.Result);
             PartieEnCours.Tournoi = partie.Tournoi;
@@ -1820,12 +1739,14 @@ namespace BrunoGUI_GenII
                     break;
             }
             Thread.Sleep(200);  // pause 0,2 seconde
-            LogiqueMouvements.MiseenplaceFen(FenDepart);
-            NumeroDemiCoup = _indexFenCoupActuel = 0;       // Remise à zéro des indices de parcours
-            BoutonBalises.Enabled = OrdinateurJoue.Enabled = false;
+            // La partie reste sur sa position finale ; elle est en lecture seule (parcours et analyse), et on l'affiche depuis le début
+            _partieEnLectureSeule = true;
+            PlateauEnable(false);
+            BoutonBalises.Enabled = OrdinateurJoue.Enabled = RetourArriere.Enabled = false;   // (le rejeu des coups avait réactivé Retour arrière)
             AnalysePosition.Enabled = true;
-            InformationPourJoueur.Text = "Trait aux " + QuiJoue + "s";
-            MiseaZeroParcours();
+            string resultat = InformationsPartie.Text;
+            AfficheCoupDeLaPartie(IndexPremierePosition);
+            InformationsPartie.Text = resultat;     // on garde le résultat de la partie affiché
         }
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         //  Bibliothèque d'ouvertures
@@ -1857,7 +1778,6 @@ namespace BrunoGUI_GenII
             if (!LogiqueMouvements.EchecetMat)
             {
                 InformationPourJoueur.Text = StatusProgramme.Text = _nomMoteur + " réfléchit ...";
-                groupParcoursPartie.Enabled = false;    // parcourir modifie encore la position de la partie (voir NePasDérangerMoteur)
             }
             if (LogiqueMouvements.RenvoieCaseIndex120(_caseDestination) == _dernierCoupMoteurUci)
                 _dernierCoupMoteurUci = -1;
@@ -2031,7 +1951,10 @@ namespace BrunoGUI_GenII
             PictJeux.Reverse();             // On inverse les liste des PictureBox ce qui revient à faire une rotation à 180°
             Plateau.Image.RotateFlip(RotateFlipType.Rotate180FlipNone);
             Plateau.Refresh();              // On inverse le plateau
-            LogiqueMouvements.DessinPieces();       // On dessine les pièces
+            if (ParcoursEnCours)
+                DessineEchiquierDe(_positionAffichee);  // pendant le parcours : la position affichée
+            else
+                LogiqueMouvements.DessinPieces();       // On dessine les pièces de la partie
             _visuCoteNoir = !_visuCoteNoir;   // On inverse le flag de côté de visualisation
         }
         private void ParametresJoueurHumain(string Couleur, string Affichage)
@@ -2078,11 +2001,80 @@ namespace BrunoGUI_GenII
             StatusProgramme.Text = InformationsPartie.Text = "Parcours partie";
         }
         private void NePasDérangerMoteur()
-        {   // Pendant la réflexion du moteur, les actions restent possibles : celles qui rendent la réflexion inutile l'abandonnent
-            // (AbandonneReflexion, la réponse du moteur est alors ignorée). Seule la liste des coups reste bloquée : la parcourir
-            // modifie encore la position de la partie (à lever avec la séparation position affichée / position de la partie)
-            ListeCoupsBouton.Enabled = false;
+        {   // Pendant la réflexion du moteur, tout reste possible : les actions qui rendent la réflexion inutile l'abandonnent
+            // (AbandonneReflexion, la réponse du moteur est alors ignorée), et parcourir la partie ne modifie que l'affichage
         }
+        // ═══ Position affichée (parcours de la partie) ═══
+        // L'échiquier montre soit la partie (LogiqueMouvements.PositionActuelle), soit une position passée (_positionAffichee).
+        // Parcourir ne modifie jamais la partie : le moteur peut jouer pendant le parcours, et l'humain rejoue après être revenu
+        // à la position courante (clic sur l'échiquier ou "Fin").
+        private Position _positionAffichee;     // null : l'échiquier montre la partie
+        private int _indexAffiche;              // index dans ListeCoups de la position affichée (-1 : position initiale FenDepart)
+        private bool _partieEnLectureSeule;     // partie PGN chargée : parcours et analyse seulement
+        private Position _positionAnalysee;     // position analysée (celle affichée au lancement de l'analyse)
+        private bool ParcoursEnCours => _positionAffichee != null;
+        private static int IndexPremierePosition =>     // -1 : position initiale ; 0 : partie commencée depuis un FEN
+            LogiqueMouvements.ListeCoups.Count > 0 && LogiqueMouvements.ListeCoups[0].EstPositionDeDepart ? 0 : -1;
+        private Position PositionDesVariantes =>        // position sur laquelle sont convertis les coups du moteur (variantes, conseil)
+            _analyseEnCours && _positionAnalysee != null ? _positionAnalysee : LogiqueMouvements.PositionActuelle;
+
+        public void AfficheCoupDeLaPartie(int index)
+        {   // Affiche la position après le coup n° index de ListeCoups (-1 : position initiale), sans modifier la partie.
+            // Au-delà du dernier coup : retour à la position courante
+            int dernier = LogiqueMouvements.ListeCoups.Count - 1;
+            if (index >= dernier)
+            {
+                RetourPositionCourante();
+                return;
+            }
+            index = Math.Max(index, IndexPremierePosition);
+            if (_analyseEnCours)
+                AbandonneReflexion();       // l'analyse portait sur la position affichée jusqu'ici (la réflexion du moteur pour son coup continue)
+            string fen = index < 0 ? FenDepart : LogiqueMouvements.ListeCoups[index].Fen;
+            _positionAffichee = LogiqueMouvements.PositionDepuisFen(fen);
+            _indexAffiche = index;
+            DessineEchiquierDe(_positionAffichee);
+            _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(fen));
+            InformationPourJoueur.Text = "Trait aux " + (_positionAffichee.QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
+            VarianteMoteurUci1.Text = index < 0 || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart
+                ? "   [ Position initiale ]" : $"   [ {TexteCoupJoue(index, _positionAffichee)} ]";
+            MiseaZeroParcours();
+            if (!_partieEnLectureSeule)
+                InformationsPartie.Text = "Parcours : cliquez sur l'échiquier ou sur Fin pour revenir à la partie";
+        }
+        private static string TexteCoupJoue(int index, Position positionApres)
+        {   // Ex : "Coup blanc : 12. Cf3" ou "Coup noir : 12... Fe7" (coup n° index, qui a mené à positionApres)
+            string coup = LogiqueMouvements.ListeCoupsNal[index];
+            coup = coup.Contains('.') ? coup.Split('.').Last().Trim() : coup.Trim();
+            int numero = (int)Math.Floor(positionApres.NombreCoupsJoues - 0.5f);   // numéro du coup qui vient d'être joué
+            return positionApres.QuiJoue == ColorPiece.Blanc ? $"Coup noir : {numero}... {coup}" : $"Coup blanc : {numero}. {coup}";
+        }
+        public void RetourPositionCourante()
+        {   // Fin du parcours : l'échiquier montre de nouveau la partie
+            if (!ParcoursEnCours)
+                return;
+            _positionAffichee = null;
+            LogiqueMouvements.DessinPieces();
+            _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(LogiqueMouvements.RetourneChaineFenActuel()));
+            InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + (QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
+            InformationsPartie.Text = _partieEnLectureSeule ? "Fin de la partie" : "";
+        }
+        private void QuitteParcours()
+        {   // La partie va être remplacée ou modifiée (nouvelle partie, chargement, retour arrière) : l'échiquier suivra la partie
+            _positionAffichee = null;
+        }
+        private void DessineEchiquierDe(Position position)
+        {   // Dessine directement les 64 cases d'une position (sans passer par l'événement de la partie, ignoré pendant le parcours)
+            for (int ligne = 2; ligne <= 9; ligne++)
+                for (int colonne = 1; colonne <= 8; colonne++)
+                    DessinePiece((ligne * 10) + colonne, position.Pieces[(ligne * 10) + colonne]);
+        }
+        private void DessinePieceDeLaPartie(int IndexCase, LogiqueMouvements.TypePiece Piece)
+        {   // Dessins demandés par la partie (coups joués...) : ignorés pendant le parcours, l'échiquier est redessiné au retour
+            if (!ParcoursEnCours)
+                DessinePiece(IndexCase, Piece);
+        }
+
         private void AbandonneReflexion()
         {   // Rend périmée la réflexion en cours (partie ou analyse) : le moteur s'arrête et sa réponse sera ignorée.
             // A appeler avant toute action qui change la partie ou la position (retour arrière, résultat, nouvelle partie, chargement...)
