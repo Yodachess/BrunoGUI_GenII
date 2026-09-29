@@ -1099,8 +1099,15 @@ namespace BrunoGUI_GenII
         }
         private void RetourArriere_Click(object sender, EventArgs e)
         {   // Permet de revenir en arrière d'un demi-coup (coup des blancs ou des noirs)
+            if (ParcoursEnCours)
+            {   // Le retour arrière annule le dernier coup de la partie, pas la position affichée : on montre d'abord la partie,
+                // l'utilisateur voit ainsi quel coup sera annulé (même règle que le clic sur l'échiquier)
+                RetourPositionCourante();
+                InformationsPartie.Text = "Retour à la partie : cliquez de nouveau sur Retour arrière pour annuler le dernier coup";
+                return;
+            }
             AbandonneReflexion();   // retour arrière : le moteur ne doit pas jouer sur la position annulée
-            QuitteParcours();       // la partie change : l'échiquier la suit de nouveau (redessinée ci-dessous)
+            QuitteParcours();       // la partie change : l'échiquier la suit (redessinée ci-dessous)
             EffaceDernierCoup();
             if (!LogiqueMouvements.RetireDernierCoup())     // On supprime le dernier 1/2 coup (toutes ses notations), jamais la position de départ
                 _ = KryptonMessageBox.Show("Pas assez de coups joués \nPas de retour arrière possible", "Retour impossible", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
