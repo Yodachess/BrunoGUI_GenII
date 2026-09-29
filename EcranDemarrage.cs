@@ -18,6 +18,7 @@ namespace BrunoGUI_GenII
         bool disparition = false;            // Indique si on est en train de disparaître
         ProgressBar barreProgression;
         int valeurProgression = 0;
+        const double PasFondu = 0.15;        // 7 pas de 30 ms, soit environ 0,2 s par fondu
 
         public EcranDemarrage()
         {   // Style général de la fenètre
@@ -39,7 +40,7 @@ namespace BrunoGUI_GenII
                 ForeColor = Color.LimeGreen
             };
             this.Controls.Add(barreProgression);
-            // Configuration des timers
+            // Configuration des timers : environ 1 s au total (fondu entrant 0,2 s + progression 0,5 s + fondu sortant 0,2 s)
             horlogeDeFondu.Interval = 30;               // Vitesse du fondu
             horlogeDeFondu.Tick += HorlogeDeFondu_Tick;
             horlogeDeProgression.Interval = 50;           // Vitesse de progression
@@ -50,14 +51,14 @@ namespace BrunoGUI_GenII
             if (!disparition)
             {   // Effet de fondu entrant
                 if (this.Opacity < 1)
-                    this.Opacity += 0.05;
+                    this.Opacity = Math.Min(1, this.Opacity + PasFondu);
                 else
                     horlogeDeProgression.Start(); // Lance la progression quand visible
             }
             else
             {   // Effet de fondu sortant
                 if (this.Opacity > 0)
-                    this.Opacity -= 0.05;
+                    this.Opacity = Math.Max(0, this.Opacity - PasFondu);
                 else
                 {
                     horlogeDeFondu.Stop();
@@ -67,13 +68,13 @@ namespace BrunoGUI_GenII
         }
         private void HorlogeDeProgression_Tick(object sender, EventArgs e)
         {
-            valeurProgression += 2;
+            valeurProgression += 10;    // 10 pas de 50 ms
             if (valeurProgression <= 100)
                 barreProgression.Value = valeurProgression;
             else
             {
                 horlogeDeProgression.Stop();
-                disparition = true; // Quand fini â†’ lance la disparition
+                disparition = true; // Quand fini => lance la disparition
             }
         }
         public void Demarrer()
