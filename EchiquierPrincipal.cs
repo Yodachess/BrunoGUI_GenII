@@ -1229,7 +1229,10 @@ namespace BrunoGUI_GenII
             // Version 1.04 = préférences enregistrées (BrunoGUI.preferences.ini), liste unique des coups, nulles automatiques
             //                (50 coups, matériel insuffisant, répétition FIDE), mise à jour de Stockfish tous les 30 jours avec accord,
             //                Krypton 95 seul (boutons en français, palette choisie dans le .ini), corrections de fiabilité
-            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.04\n--  Bruno COURTOIS  -- " +
+            // Version 1.05 = boutons actifs pendant la réflexion du moteur (demandes numérotées), parcours de la partie pendant le jeu
+            //                (position affichée séparée), retour arrière après la fin de partie, scores du point de vue des Blancs,
+            //                classe Partie et commandes actives calculées en un seul endroit, écran de démarrage de 1 s
+            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.05\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", "A propos de",
                 KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
         }
