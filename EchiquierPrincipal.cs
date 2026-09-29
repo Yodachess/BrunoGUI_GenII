@@ -70,6 +70,7 @@ namespace BrunoGUI_GenII
         private int _dernierCoupMoteurUci;   // dernière case jouée par le moteur UCI
         private int _numeroLigne;       // Indices dans la DataGrid FeuillePartie
         private int _indexCaseSourceDernierMouvement, _indexCaseDestinationDernierMouvement;
+        private bool _plateauAutorise = true;   // (true : état des cases à leur création) le joueur peut bouger les pièces (le plateau reste cliquable pendant le parcours)
         private bool _retourArriereAutorise;    // la partie permet le retour arrière (le bouton reste grisé pendant le parcours)
         private bool _dernierCoupColore;        // les cases du dernier coup du moteur sont à montrer (masquées pendant le parcours)
         private string _caseSource, _caseDestination, _couleurHumain;
@@ -1945,13 +1946,23 @@ namespace BrunoGUI_GenII
             Debug.WriteLine($"[Promo0_Click] Promotion choisie : {_selectionPromotion} (PromotionPiece =  {LogiqueMouvements.PromotionPiece})");
         }
         public void PlateauEnable(bool statut)
-        {   // Active ou désactive les cases du plateau de jeu
+        {   // Autorise ou non le joueur à bouger les pièces (jamais après la fin de la partie)
             if (!(statut && _partieTerminee))
-            {
-                for (int i = 0; i <= 119; i++)
-                    if (PictJeux[i].Visible)
-                        PictJeux[i].Enabled = statut;
-            }
+                _plateauAutorise = statut;
+            MetAJourPlateau();
+        }
+        private void MetAJourPlateau()
+        {   // Pendant le parcours, les cases restent cliquables : le clic ramène à la partie (voir CaseMouseDown), sans jouer de coup.
+            // Exception : partie PGN en lecture seule, où l'échiquier n'est jamais cliquable
+            bool actif = _plateauAutorise || (ParcoursEnCours && !_partieEnLectureSeule);
+            for (int i = 0; i <= 119; i++)
+                if (PictJeux[i].Visible)
+                    PictJeux[i].Enabled = actif;
+        }
+        private void MetAJourSelonParcours()
+        {   // Entrée ou sortie du parcours : état du plateau et du bouton Retour arrière
+            MetAJourRetourArriere();
+            MetAJourPlateau();
         }
         private void TourneEchiquier()
         {   // Tourne l'échiquier de 180° pour changer le côté de visualisation
@@ -2043,7 +2054,7 @@ namespace BrunoGUI_GenII
                 CouleursNormalesDernierCoup();  // le dernier coup de la partie n'a pas de sens sur une position passée
             _positionAffichee = LogiqueMouvements.PositionDepuisFen(fen);
             _indexAffiche = index;
-            MetAJourRetourArriere();
+            MetAJourSelonParcours();
             DessineEchiquierDe(_positionAffichee);
             _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(fen));
             InformationPourJoueur.Text = "Trait aux " + (_positionAffichee.QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
@@ -2065,7 +2076,7 @@ namespace BrunoGUI_GenII
             if (!ParcoursEnCours)
                 return;
             _positionAffichee = null;
-            MetAJourRetourArriere();
+            MetAJourSelonParcours();
             LogiqueMouvements.DessinPieces();
             ColoreDernierCoup();
             _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(LogiqueMouvements.RetourneChaineFenActuel()));
@@ -2075,7 +2086,7 @@ namespace BrunoGUI_GenII
         private void QuitteParcours()
         {   // La partie va être remplacée (nouvelle partie, chargement) : l'échiquier suivra la partie
             _positionAffichee = null;
-            MetAJourRetourArriere();
+            MetAJourSelonParcours();
         }
         private void AutoriseRetourArriere(bool autorise)
         {   // Seul point d'entrée pour le bouton Retour arrière : la partie l'autorise ou non,
