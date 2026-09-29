@@ -756,7 +756,6 @@ namespace BrunoGUI_GenII
                 GestionResultat("1-0", " Gain Blanc");
             }
             BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = false;     // Le résultat est déjà défini
-            RetourArriere.Visible = false;
             InformationPourJoueur.Text = VarianteMoteurCourante.Text = "Le Roi " + couleurRoiMat + " est échec et mat";
             StatusProgramme.Text = "Partie terminée";
             // AnalysePosition.Enabled = false;
