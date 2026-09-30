@@ -85,9 +85,9 @@ namespace BrunoGUI_GenII
             int supprimes = 0;
             while (ListeCoups.Count - 1 > index && RetireDernierCoup())     // jamais la position de départ d'une partie FEN
                 supprimes++;
-            if (supprimes == 0)
-                return 0;
             bool etaitLectureSeule = Mode == ModePartie.LectureSeule;
+            if (supprimes == 0 && !etaitLectureSeule)
+                return 0;       // (une partie PGN reprise à sa position finale devient jouable sans rien supprimer)
             Reprendre();
             RejeuPgn = false;
             MiseenplaceFen(ListeCoupsFen.Count == 0 ? FenDepart : ListeCoupsFen[^1]);

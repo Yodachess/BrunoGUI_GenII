@@ -518,6 +518,18 @@ Verifie("Reprendre ici une partie PGN : jouable, l'humain a le camp au trait, pl
     supprimesPgn == 2 && partie.EnCours && partie.Blancs == Joueur.Humain && partie.Noirs == Joueur.Moteur && partie.HumainAuTrait && !L.EchecetMat && !L.PartieEnCoursMat,
     $"{supprimesPgn} supprimé(s), Blancs {partie.Blancs}, Noirs {partie.Noirs}");
 
+// Partie PGN reprise à sa position finale : rien n'est supprimé, mais elle devient jouable (humain au camp au trait)
+Charger(L.FenDepart);
+partie.Commencer(Joueur.Humain, Joueur.Humain);
+L.ExecutionCoup("e2", "e4"); L.ExecutionCoup("e7", "e5"); L.ExecutionCoup("g1", "f3");
+partie.PasserEnLectureSeule();
+int supprimesFin = partie.ReprendreDepuis(L.ListeCoups.Count - 1);
+Verifie("Reprendre une partie PGN à sa position finale : jouable, rien de supprimé, humain aux Noirs",
+    supprimesFin == 0 && partie.EnCours && L.ListeCoups.Count == 3 && partie.Noirs == Joueur.Humain && partie.Blancs == Joueur.Moteur && partie.HumainAuTrait,
+    $"{supprimesFin} supprimé(s), mode {partie.Mode}, Blancs {partie.Blancs}, Noirs {partie.Noirs}");
+Verifie("Reprendre à la position finale d'une partie qui n'est pas en lecture seule : rien ne change",
+    partie.ReprendreDepuis(L.ListeCoups.Count - 1) == 0 && L.ListeCoups.Count == 3, $"{L.ListeCoups.Count} coup(s)");
+
 // Partie depuis un FEN : on ne remonte jamais avant la position de départ
 Charger(fenNoirsAuTrait);
 L.AjoutePositionDeDepart(fenNoirsAuTrait);
