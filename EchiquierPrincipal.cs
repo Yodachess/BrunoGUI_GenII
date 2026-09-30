@@ -75,7 +75,7 @@ namespace BrunoGUI_GenII
         private bool _dernierCoupColore;        // les cases du dernier coup du moteur sont à montrer (masquées pendant le parcours)
         private string _caseSource, _caseDestination;
         private string _nomHumain, _joueurElo, _nomMoteur, _moteurElo, _joueurBlanc, _joueurNoir;
-        private string _cheminMoteur, _nomMoteurChoisi, _variationMoteur, _meilleureSuite, _scoreCourant, _evaluationCourante;
+        private string _cheminMoteur, _nomMoteurChoisi;
         private string _bibliotheque = "rodent.bin";
         private bool _clickCaseSource, _visuSymbole, _montreDonneesBrutesUci, _montre3VariantesUci, _montreListeParties;
         private bool _visuCoteNoir;     // True quand les Noirs sont en bas de l'écran
@@ -454,39 +454,30 @@ namespace BrunoGUI_GenII
         }
 
         private void AfficheInfoMoteur(LigneUci ligne)
-        {   // Affiche le score et la variante d'une ligne "info" du moteur
+        {   // Affiche le score et la variante d'une ligne "info" du moteur (décodées par _pilote.Lignes, du point de vue des Blancs)
             if (ligne.DansBibliotheque)
                 VarianteMoteurUci1.Text = "    Le moteur est dans sa bibliothèque d'ouvertures";
 
-            // Un moteur sans MultiPV (Sargon, ...) n'envoie pas de numéro de variante : sa variante unique est la meilleure
-            bool meilleureVariante = (ligne.NumeroVariante ?? 1) == 1;
-            // Le moteur donne ses scores du point de vue du camp au trait : on les affiche tous du point de vue des Blancs (+ = avantage blanc)
-            int sens = PositionDesVariantes.QuiJoue == ColorPiece.Blanc ? 1 : -1;
-            if (ligne.ScoreCentipions is int centipions)
+            LigneAnalyse ligneAnalyse = _pilote.Lignes.Ajouter(ligne, PositionDesVariantes);
+            if (ligneAnalyse == null)
+                return;     // ni score ni variante (ex : "info depth 12")
+            // On affiche seulement le score de la meilleure variante (un moteur sans MultiPV, comme Sargon, n'a que celle-là)
+            if (ligneAnalyse.Numero == 1 && ligneAnalyse.Evaluation is Evaluation evaluation)
             {
-                _scoreCourant = (sens * centipions / 100m).ToString("N2", CultureInfo.InvariantCulture);
-                if (meilleureVariante)
-                {   // On affiche seulement le score de la meilleure variante
-                    ScoreMoteur.Text = "Score : " + _scoreCourant;
-                    AfficheEvaluation(_scoreCourant);
+                EvaluationUci.Text = evaluation.Appreciation;
+                if (evaluation.EstUnMat)
+                {
+                    ScoreMoteur.Text = "MAT en " + Math.Abs(evaluation.MatEn.Value);
+                    InformationPourJoueur.Text = evaluation.TexteMat;      // "MAT en 3 pour les Blancs"
                 }
-            }
-            if (ligne.MatEn is int matEn)
-            {   // Du point de vue des Blancs : "M3" = les Blancs matent, "-M3" = les Noirs matent (voir AfficheEvalSymbole)
-                _scoreCourant = (sens * matEn < 0 ? "-M" : "M") + Math.Abs(matEn);
-                if (meilleureVariante)
-                    InformationPourJoueur.Text = ScoreMoteur.Text = "MAT en " + Math.Abs(matEn);
+                else
+                    ScoreMoteur.Text = "Score : " + evaluation.Texte;
             }
             if (ligne.Variante == null)
                 return;
 
-            // Affichage de la variation principale
-            _variationMoteur = ligne.Variante;
-            if (_variationMoteur.Length > 60)
-                _variationMoteur = _variationMoteur[..60];     // On limite la longueur de la variation, pour rester dans le label
-            _variationMoteur = Outils.VarianteUciVersPgn(_variationMoteur, LogiqueMouvements.DemiCoupAvant(PositionDesVariantes), false, PositionDesVariantes);  // Elle est en Uci, il la faut en PGN Fr ...
-            string varianteExaminee = string.Join(" ", _variationMoteur.Split(' ').Take(3));
-            string texteVariante = AfficheEvalSymbole(_scoreCourant) + " (" + varianteExaminee + ") █[ " + _scoreCourant + " ]█  " + "[ " + _variationMoteur + " ]";
+            // Affichage de la variante
+            string texteVariante = ligneAnalyse.Symbole + " (" + ligneAnalyse.Debut + ") █[ " + ligneAnalyse.TexteScore + " ]█  " + "[ " + ligneAnalyse.VariantePgn + " ]";
             if (ligne.NumeroVariante is int numeroVariante)
             {   // Une zone d'affichage par variante (VarianteMoteurUci1, 2, 3) ; les variantes au-delà ne sont pas affichées
                 if (Controls.Find("VarianteMoteurUci" + numeroVariante, true).FirstOrDefault() is RichTextBox zoneVariante)
@@ -497,65 +488,6 @@ namespace BrunoGUI_GenII
                 VarianteMoteurUci1.Text = texteVariante;
                 VarianteMoteurUci2.Text = "... " + _nomMoteurChoisi + " n'affiche qu'une variante ..."; VarianteMoteurUci3.Text = "...";
             }
-        }
-
-        private string AfficheEvaluation(string _scoreCourant)
-        {   /*
-            Le score reçu est déjà du point de vue des Blancs (converti dans AfficheInfoMoteur) :
-            positif (+) = avantage blanc, négatif (-) = avantage noir, quel que soit le camp au trait.
-            (Le moteur UCI, lui, donne ses scores du point de vue du camp au trait.)
-            */
-            string resultat;
-            _scoreCourant = _scoreCourant?.Trim();
-            if (string.IsNullOrEmpty(_scoreCourant))
-            {
-                EvaluationUci.Text = _evaluationCourante = "Éval indisponible";
-                return _evaluationCourante;
-            }
-            // 1. CAS DU MAT (ex: "M3" = les Blancs matent, "-M2" = les Noirs matent)
-            if (_scoreCourant.Contains('M', StringComparison.OrdinalIgnoreCase))
-            {
-                resultat = _scoreCourant.Contains('-') ? "Gain Noir" : "Gain Blanc";
-                EvaluationUci.Text = _evaluationCourante = resultat;
-            }
-            else
-            {   // 2. CAS DU SCORE CP
-                if (!decimal.TryParse(_scoreCourant, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal score))
-                {
-                    EvaluationUci.Text = _evaluationCourante = "Éval indisponible";
-                    return _evaluationCourante;
-                }
-                resultat = score switch
-                {
-                    >= 2.5m => "Gain Blanc (+-)",
-                    > 0.5m => "Avantage Blanc (±)",
-                    <= -2.5m => "Gain Noir (-+)",
-                    < -0.5m => "Avantage Noir (∓)",
-                    _ => "Égal (=)"
-                };
-            }
-            EvaluationUci.Text = _evaluationCourante = resultat;
-            return resultat;
-        }
-        private string AfficheEvalSymbole(string scoreCourant)
-        {   // Symbole d'évaluation ; le score est déjà du point de vue des Blancs (voir AfficheEvaluation)
-            scoreCourant = scoreCourant?.Trim();
-            if (string.IsNullOrEmpty(scoreCourant))
-                return "?";
-            if (scoreCourant.Contains('M', StringComparison.OrdinalIgnoreCase))
-                return scoreCourant.Contains('-') ? "#-" : "#+";     // CAS MAT
-            // CAS CP
-            if (!decimal.TryParse(scoreCourant, NumberStyles.Any,
-                CultureInfo.InvariantCulture, out decimal score))
-                return "?";
-            return score switch
-            {
-                >= 2.5m => "+-",
-                > 0.5m => "±",
-                <= -2.5m => "-+",
-                < -0.5m => "∓",
-                _ => "="
-            };
         }
 
         private void AfficheDonneesBrutes()
@@ -625,19 +557,21 @@ namespace BrunoGUI_GenII
                     }
                 }
                 else if (demande == TypeDemande.Analyse)
-                {   // c'est une analyse, on affiche la meilleure variante
+                {   // c'est une analyse : on affiche la meilleure variante (mémorisée par _pilote.Lignes, pas relue dans le texte affiché)
+                    LigneAnalyse meilleure = _pilote.Lignes.Meilleure;
+                    InformationPourJoueur.Text = StatusProgramme.Text = "Analyse terminée ... ";
+                    string titre = "Analyse Moteur (" + _dureeReflexionMilliSeconde / 1000 + " sec.) par " + _nomMoteur;
+                    if (meilleure?.VariantePgn == null)
+                        _ = KryptonMessageBox.Show("Le moteur n'a donné aucune variante.", titre, KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                    else
                     {
-                        string[] meilleureVariante = VarianteMoteurUci1.Text.Split(['[', ']'], StringSplitOptions.RemoveEmptyEntries);
-                        string debutVariante = Regex.Match(meilleureVariante[0], @"\((.*?)\)").Groups[1].Value;
-                        _meilleureSuite = debutVariante + " Evaluation --- " + meilleureVariante[1] + "(" + _evaluationCourante + ")" + " ---\n" + meilleureVariante[3];
-                        ScoreMoteur.Text = _evaluationCourante = "Score = " + meilleureVariante[1];
-                        AfficheEvaluation(meilleureVariante[1]);
-                        VarianteMoteurCourante.Text = InformationsPartie.Text = "Coup suggéré : " + debutVariante;
-                        InformationPourJoueur.Text = StatusProgramme.Text = "Analyse terminée ... ";
-                        _ = KryptonMessageBox.Show("La meilleure suite est : " + debutVariante +
-                                            "\n Evaluation --- " + meilleureVariante[1] + " --- " + "(" + AfficheEvaluation(meilleureVariante[1]) + ")" +
-                                            "\n" + meilleureVariante[3], "Analyse Moteur " + " (" + _dureeReflexionMilliSeconde / 1000 + " sec.)"
-                                            + " par " + _nomMoteur, KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                        string appreciation = meilleure.Evaluation?.Appreciation ?? "évaluation inconnue";
+                        ScoreMoteur.Text = "Score = " + meilleure.TexteScore;
+                        EvaluationUci.Text = appreciation;
+                        VarianteMoteurCourante.Text = InformationsPartie.Text = "Coup suggéré : " + meilleure.Debut;
+                        _ = KryptonMessageBox.Show("La meilleure suite est : " + meilleure.Debut +
+                                            "\n Evaluation --- " + meilleure.TexteScore + " --- (" + appreciation + ")" +
+                                            "\n" + meilleure.VariantePgn, titre, KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                     }
                     MetAJourCommandes();
                 }
