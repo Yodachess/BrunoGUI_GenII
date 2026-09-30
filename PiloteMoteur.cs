@@ -44,6 +44,7 @@ namespace BrunoGUI_GenII
         public Position PositionAnalysee { get; private set; }                      // position de l'analyse en cours (copie)
         public bool AnalyseEnCours => Demande == TypeDemande.Analyse;
         public string DernierCoupBibliotheque { get; private set; }                 // dernier coup joué depuis la bibliothèque
+        public SuiviAnalyse Lignes { get; } = new();    // variantes et scores reçus pour la demande en cours (voir AnalyseMoteur.cs)
 
         // Choix dans la bibliothèque d'ouvertures : FEN -> coup UCI, ou null/vide s'il n'y en a pas (null : pas de bibliothèque)
         public Func<string, string> ChoixBibliotheque { get; set; }
@@ -59,6 +60,7 @@ namespace BrunoGUI_GenII
                 return ResultatDemandeCoup.CoupBibliotheque;
             }
             Demande = TypeDemande.CoupDePartie;
+            Lignes.Reinitialiser();
             _moteur.Chercher(fen, dureeMilliSecondes);
             return ResultatDemandeCoup.EnvoyeAuMoteur;
         }
@@ -68,6 +70,7 @@ namespace BrunoGUI_GenII
             Abandonner();
             PositionAnalysee = position.Copier();
             Demande = TypeDemande.Analyse;
+            Lignes.Reinitialiser();
             _moteur.Chercher(CalculerSur(position, RetourneChaineFenActuel), dureeMilliSecondes);
         }
 

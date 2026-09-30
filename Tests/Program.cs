@@ -533,6 +533,39 @@ Verifie("Coup UCI avec promotion : la pièce demandée est posée (cavalier)",
     L.RetourneChaineFenActuel());
 Verifie("Coup UCI illégal ou mal formé : refusé", !PiloteMoteur.JouerCoupUci("e1e5") && !PiloteMoteur.JouerCoupUci("e1") && !PiloteMoteur.JouerCoupUci(null), L.RetourneChaineFenActuel());
 
+// ═══════════════ Evaluations et variantes du moteur ═══════════════
+Console.WriteLine("── Analyse du moteur ──");
+
+var evalNoirs = Evaluation.Depuis(LigneUci.Analyser("info depth 20 multipv 1 score cp -87 pv g4f3"), L.ColorPiece.Noir);
+Verifie("Score converti du point de vue des Blancs (Noirs au trait, -0.87 pour eux)",
+    evalNoirs is Evaluation e1 && e1.Texte == "0.87" && e1.Symbole == "±" && e1.Appreciation == "Avantage Blanc (±)",
+    $"{evalNoirs?.Texte} {evalNoirs?.Symbole} {evalNoirs?.Appreciation}");
+var matNoirsAuTrait = Evaluation.Depuis(LigneUci.Analyser("info score mate -3 pv h7h8"), L.ColorPiece.Noir);
+var matBlancsAuTrait = Evaluation.Depuis(LigneUci.Analyser("info score mate -3 pv h7h8"), L.ColorPiece.Blanc);
+Verifie("Mat : qui mate, du point de vue des Blancs (mate -3 = le camp au trait est maté)",
+    matNoirsAuTrait?.Texte == "M3" && matNoirsAuTrait?.Symbole == "#+" && matNoirsAuTrait?.TexteMat == "MAT en 3 pour les Blancs"
+    && matBlancsAuTrait?.Texte == "-M3" && matBlancsAuTrait?.Appreciation == "Gain Noir (mat)",
+    $"{matNoirsAuTrait?.TexteMat} / {matBlancsAuTrait?.Appreciation}");
+Verifie("Ligne sans score : pas d'évaluation", Evaluation.Depuis(LigneUci.Analyser("info depth 12 pv e2e4"), L.ColorPiece.Blanc) == null, "null");
+
+SuiviAnalyse suiviAnalyse = new();
+Position depart = L.PositionDepuisFen(L.FenDepart);
+Verifie("Ligne sans score ni variante ignorée", suiviAnalyse.Ajouter(LigneUci.Analyser("info depth 12 nodes 1000"), depart) == null && suiviAnalyse.Meilleure == null, "null");
+suiviAnalyse.Ajouter(LigneUci.Analyser("info depth 10 multipv 2 score cp 10 pv d2d4"), depart);
+LigneAnalyse l1 = suiviAnalyse.Ajouter(LigneUci.Analyser("info depth 10 multipv 1 score cp 30 pv e2e4 e7e5 g1f3"), depart);
+Verifie("Variante convertie en notation, début = 3 premiers éléments",
+    l1.VariantePgn == "1. e4 e5 2. Cf3" && l1.Debut == "1. e4 e5" && suiviAnalyse.Meilleure == l1 && l1.TexteScore == "0.30", $"'{l1.VariantePgn}' / '{l1.Debut}'");
+LigneAnalyse l2 = suiviAnalyse.Ajouter(LigneUci.Analyser("info depth 11 multipv 2 pv d2d4 d7d5"), depart);
+Verifie("Ligne sans score : garde le score de SA variante (pas celui d'une autre)", l2.TexteScore == "0.10" && l2.VariantePgn == "1. d4 d5", $"{l2.TexteScore} '{l2.VariantePgn}'");
+string quatorzeCoups = "g1f3 g8f6 f3g1 f6g8 g1f3 g8f6 f3g1 f6g8 g1f3 g8f6 f3g1 f6g8 g1f3 g8f6";
+LigneAnalyse longue = suiviAnalyse.Ajouter(LigneUci.Analyser("info multipv 1 score cp 0 pv " + quatorzeCoups), depart);
+Verifie($"Variante limitée à {SuiviAnalyse.CoupsAffiches} coups entiers",
+    longue.VariantePgn.Split(' ').Count(c => !c.EndsWith('.')) == SuiviAnalyse.CoupsAffiches, longue.VariantePgn);
+LigneAnalyse promo = suiviAnalyse.Ajouter(LigneUci.Analyser("info multipv 1 score cp 900 pv e7e8q h7g6"), L.PositionDepuisFen("8/4P2k/8/8/8/8/8/4K3 w - - 0 1"));
+Verifie("Variante avec promotion : la pièce est conservée", promo.VariantePgn.StartsWith("1. e8=D"), promo.VariantePgn);
+suiviAnalyse.Reinitialiser();
+Verifie("Nouvelle demande : plus de variante mémorisée", suiviAnalyse.Meilleure == null, "null");
+
 // ═══════════════ Perft ═══════════════
 Console.WriteLine("── Perft ──");
 
