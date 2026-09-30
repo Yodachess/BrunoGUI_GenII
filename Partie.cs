@@ -44,11 +44,12 @@ namespace BrunoGUI_GenII
         public bool MoteurAuTrait => EnCours && JoueurAuTrait == Joueur.Moteur;
         public bool HumainAuTrait => EnCours && JoueurAuTrait == Joueur.Humain;
 
-        public void Commencer(Joueur blancs, Joueur noirs)
-        {   // Nouvelle partie depuis la position initiale (la position et la liste des coups sont remises à zéro par l'appelant)
+        public void Commencer(Joueur blancs, Joueur noirs, bool depuisPosition = false)
+        {   // Nouvelle partie (la position et la liste des coups sont mises en place par l'appelant) ;
+            // depuisPosition : elle commence à une position FEN (ex : partie PGN avec une balise FEN)
             Blancs = blancs;
             Noirs = noirs;
-            DepuisPosition = false;
+            DepuisPosition = depuisPosition;
             Reprendre();
         }
         public void CommencerDepuisPosition()

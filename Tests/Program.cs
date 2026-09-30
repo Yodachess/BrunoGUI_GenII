@@ -14,6 +14,7 @@
 //            (https://www.chessprogramming.org/Perft_Results)
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using BrunoGUI_GenII;
@@ -217,8 +218,8 @@ void TestNotation(string nom, string fen, string source, string destination, str
     Verifie(nom, coup == attendu, $"{coup} (attendu {attendu})");
 
     Charger(fen);
-    GestionPartiePgn.DecodeCoupPartie(coup, L.QuiJoue == L.ColorPiece.Blanc);
-    Verifie(nom + " : relecture PGN", L.RetourneChaineFenActuel() == fenApresCoup, L.RetourneChaineFenActuel());
+    bool relu = GestionPartiePgn.DecodeCoupPartie(coup);
+    Verifie(nom + " : relecture PGN", relu && L.RetourneChaineFenActuel() == fenApresCoup, L.RetourneChaineFenActuel());
 }
 
 TestNotation("Deux tours sur la même rangée", "4k3/8/8/8/8/8/4K3/R6R w - - 0 1", "a1", "d1", "Rad1");
@@ -524,6 +525,56 @@ partie.CommencerDepuisPosition();
 L.ExecutionCoup("g8", "f6"); L.ExecutionCoup("f1", "c4");
 Verifie("Reprendre ici une partie FEN à sa position de départ (index 0)",
     partie.ReprendreDepuis(0) == 2 && L.ListeCoups.Count == 1 && L.RetourneChaineFenActuel() == fenNoirsAuTrait, L.RetourneChaineFenActuel());
+
+// ═══════════════ Parties PGN (lecture et écriture) ═══════════════
+Console.WriteLine("── PGN ──");
+
+string coupsExtraits = ParseurPgn.ExtraireCoups("[Event \"x\"]\n1. e4 (1. d4 d5 (1... Nf6 2. c4) 2. c4) e5 2. Nf3 {commentaire [%clk 0:01:00]} Nc6 ; fin de ligne\n3. Bb5 *");
+string[] elementsExtraits = coupsExtraits.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);     // espaces et fins de ligne
+Verifie("Variantes imbriquées, commentaires {} et ; ignorés",
+    elementsExtraits.SequenceEqual(new[] { "1.", "e4", "e5", "2.", "Nf3", "Nc6", "3.", "Bb5", "*" }), string.Join(" ", elementsExtraits));
+
+Charger("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1");
+bool roqueZeros = GestionPartiePgn.DecodeCoupPartie("0-0");
+bool grandRoqueZeros = GestionPartiePgn.DecodeCoupPartie("0-0-0+");
+Verifie("Roque noté avec des zéros (0-0, 0-0-0)",
+    roqueZeros && grandRoqueZeros && L.PiecesEchiquier[L.RenvoieCaseIndex120("g1")] == L.TypePiece.RoiBlanc && L.PiecesEchiquier[L.RenvoieCaseIndex120("c8")] == L.TypePiece.RoiNoir,
+    L.RetourneChaineFenActuel());
+
+Charger(L.FenDepart);
+bool illegal = GestionPartiePgn.DecodeCoupPartie("Nf6");
+bool malForme = GestionPartiePgn.DecodeCoupPartie("e9");
+bool inconnu = GestionPartiePgn.DecodeCoupPartie("Zz9");
+Verifie("Coup illégal ou mal formé : refusé sans exception, rien n'est joué",
+    !illegal && !malForme && !inconnu && L.ListeCoups.Count == 0 && L.RetourneChaineFenActuel() == L.FenDepart && !L.EchecetMat,
+    $"{illegal} {malForme} {inconnu}, {L.RetourneChaineFenActuel()}");
+Verifie("Numéros de coups et résultat ignorés", GestionPartiePgn.DecodeCoupPartie("12.") && GestionPartiePgn.DecodeCoupPartie("1-0") && L.ListeCoups.Count == 0, "");
+
+// Partie FEN commençant par les Noirs : relecture, feuille de partie et écriture PGN (balises SetUp/FEN, "n... coup", "*")
+Charger(fenNoirsAuTrait);
+L.AjoutePositionDeDepart(fenNoirsAuTrait);
+bool noirJoue = GestionPartiePgn.DecodeCoupPartie("Nf6");
+bool blancJoue = GestionPartiePgn.DecodeCoupPartie("Bc4");
+List<string[]> feuille = FeuilleDePartie.Lignes(L.ListeCoups);
+Verifie("Feuille de partie commençant par un coup noir : 3. | ... | Cf6, puis 4. | Fc4",
+    noirJoue && blancJoue && feuille.Count == 2 && feuille[0].SequenceEqual(new[] { "3.", "...", "Cf6" }) && feuille[1].SequenceEqual(new[] { "4.", "Fc4", "" })
+    && FeuilleDePartie.CommenceParLesNoirs(L.ListeCoups),
+    string.Join(" / ", feuille.Select(l => string.Join("|", l))));
+string pgnEcrit = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "" }, "Intl");
+Verifie("PGN écrit : balises SetUp et FEN, premier coup noir numéroté, résultat * pour une partie en cours",
+    pgnEcrit.Contains("[SetUp \"1\"]") && pgnEcrit.Contains("[FEN \"" + fenNoirsAuTrait + "\"]") && pgnEcrit.Contains("3... Nf6 4. Bc4") && pgnEcrit.TrimEnd().EndsWith("*")
+    && pgnEcrit.Contains("[Result \"*\"]"),
+    pgnEcrit.Replace("\n", " "));
+PartieEchecsPGN partieRelue = FichierPartiePgn.DecodePartiePGN(pgnEcrit);
+Verifie("PGN relu : la balise FEN est retrouvée", partieRelue.Fen == fenNoirsAuTrait, partieRelue.Fen ?? "(aucune)");
+
+// Bibliothèque d'ouvertures introuvable : exception claire au chargement, puis aucun coup (et plus d'exception) à la recherche
+bool introuvableSignalee = false;
+try { new PolyglotBibliothèque().PolyglotBibliothèqueLecture("bibliotheque_introuvable.bin"); }
+catch (System.IO.FileNotFoundException) { introuvableSignalee = true; }
+Verifie("Bibliothèque introuvable : signalée au chargement, aucun coup et pas d'exception à la recherche",
+    introuvableSignalee && !PolyglotBibliothèque.Disponible && !PolyglotBibliothèque.TrouverLesEntrées(0x463b96181691fc9c).Any(),
+    $"signalée : {introuvableSignalee}, disponible : {PolyglotBibliothèque.Disponible}");
 
 // ═══════════════ Pilotage du moteur (avec un faux moteur) ═══════════════
 Console.WriteLine("── Pilote du moteur ──");

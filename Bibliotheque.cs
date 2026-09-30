@@ -74,17 +74,18 @@ namespace BrunoGUI_GenII
     public class PolyglotBibliothèque
     {   // Classe pour gérer la bibliothèque d'ouvertures Polyglot
         private static string _cheminBibliothèque;
+        public static bool Disponible => !string.IsNullOrEmpty(_cheminBibliothèque) && File.Exists(_cheminBibliothèque);
         public event Action<string> MessageLog;
         public void PolyglotBibliothèqueLecture(string fichier)
         {
             if (string.IsNullOrWhiteSpace(fichier))
                 throw new ArgumentNullException(nameof(fichier));
 
-            // → Chemin complet portable
-            _cheminBibliothèque = Path.Combine(Chemins.BibliothèquesPolyglot, fichier);
-
-            if (!File.Exists(_cheminBibliothèque))
-                throw new FileNotFoundException("Le fichier n'existe pas.", _cheminBibliothèque);
+            // → Chemin complet portable (un chemin complet, choisi par l'utilisateur, est gardé tel quel par Path.Combine)
+            string chemin = Path.Combine(Chemins.BibliothèquesPolyglot, fichier);
+            if (!File.Exists(chemin))       // la bibliothèque précédente (s'il y en a une) reste active
+                throw new FileNotFoundException("Bibliothèque d'ouvertures introuvable : " + chemin, chemin);
+            _cheminBibliothèque = chemin;
 
             LireLeFichier();
 
@@ -122,10 +123,8 @@ namespace BrunoGUI_GenII
         public static IEnumerable<EntréePolyglot> TrouverLesEntrées(ulong clefPolyglot)
         {   // Trouve toutes les entrées dans le fichier Polyglot correspondant à la clé donnée
 
-            if (string.IsNullOrEmpty(_cheminBibliothèque))
-            {   // Vérifie si _cheminBibliothèque est null avant d'utiliser FileStream, évite un crash ...
-                throw new InvalidOperationException("Le chemin du fichier n'a pas été initialisé.");
-            }
+            if (!Disponible)
+                yield break;    // pas de bibliothèque (introuvable ou jamais chargée) : aucun coup, sans exception
 
             byte[] buffer = new byte[16];
             // Debug.WriteLine($"[TrouverLesEntrées] Le chemin est : {_cheminBibliothèque}");

@@ -838,8 +838,10 @@ namespace BrunoGUI_GenII
             DialogResult Reponse = OuvertureChoixBibliothèque.ShowDialog();
             if (Reponse == DialogResult.OK)     // l'utilisateur doit sélectionner le répertoire et fichier
             {
+                string precedente = _bibliotheque;
                 _bibliotheque = OuvertureChoixBibliothèque.FileName;
-                RécupèreBibliothèque();
+                if (!RécupèreBibliothèque())
+                    _bibliotheque = precedente;     // fichier illisible : on garde la bibliothèque précédente (et son nom dans les préférences)
             }
         }
         private void RodentIV_Click(object sender, EventArgs e)
@@ -1013,9 +1015,6 @@ namespace BrunoGUI_GenII
         }
         private void ListeCoupsBouton_Click(object sender, EventArgs e)
         {   // Affiche la liste des coups joués dans une fenêtre dédiée
-            string numeroCoup = "";
-            string blancs = "";
-            string noirs;
             // Plus de blocage : parcourir la liste ne modifie que la position affichée (voir AfficheCoupDeLaPartie)
             // Si la fenêtre n'existe pas ou est déjà fermée, la créer
             if (mafenetrePartie == null || mafenetrePartie.IsDisposed)
@@ -1033,50 +1032,16 @@ namespace BrunoGUI_GenII
             mafenetrePartie.LblJoueurNoir.Text = PartieEnCours.Black;
             mafenetrePartie.LblEloBlanc.Text = PartieEnCours.WhiteElo;
             mafenetrePartie.LblEloNoir.Text = PartieEnCours.BlackElo;
-            // Les coups joués en PGN français (sans l'éventuelle position de départ d'une partie chargée depuis un FEN)
-            List<string> coupsPgnFr = LogiqueMouvements.ListeCoups.Where(c => !c.EstPositionDeDepart).Select(c => c.PgnFr).ToList();
-            // Nombre de coups à traiter (sans compter le résultat s'il est à la fin)
-            int nombreCoups = coupsPgnFr.Count;
-            if (nombreCoups != 0)
+            // Une ligne par coup complet (une partie FEN peut commencer par un coup noir : "n. | ... | coup")
+            List<string[]> lignes = FeuilleDePartie.Lignes(LogiqueMouvements.ListeCoups);
+            if (lignes.Count != 0)
             {
-                // Vérifier si la dernière ligne est un résultat (1-0, 0-1, 1/2-1/2)
-                string dernierElement = coupsPgnFr[^1].Trim();
-                bool dernierElementEstResultat = (dernierElement == "1-0" || dernierElement == "0-1" || dernierElement == "1/2-1/2");
-                // Si le dernier élément est un résultat, on ne le traite pas comme un coup
-                if (dernierElementEstResultat)
-                    nombreCoups--;  // Exclure le résultat du traitement des coups
-
-                // Traitement des coups
-                for (int i = 0; i < nombreCoups; i++)
-                {
-                    string coup = coupsPgnFr[i].Trim();
-
-                    if (i % 2 == 0) // Lignes paires : coups des Blancs avec numéro
-                    {
-                        string[] coupBlancs = coup.Split([' '], 2);
-                        numeroCoup = coupBlancs[0]; // Numéro du coup
-                        blancs = coupBlancs[1].Trim(); // Coup des Blancs
-                    }
-                    else // Lignes impaires : coups des Noirs
-                    {
-                        noirs = coup; // Coup des Noirs
-                        mafenetrePartie.FeuillePartie.Rows.Add(numeroCoup, blancs, noirs);
-                    }
-                }
-                // Si la liste contient un nombre impair de coups (dernier coup blanc sans noir)
-                if (nombreCoups % 2 != 0)
-                {
-                    mafenetrePartie.FeuillePartie.Rows.Add(numeroCoup, blancs, "");
-                }
-                // Ajouter le résultat de la partie s'il existe
-                if (dernierElementEstResultat)
-                {
-                    // Ajouter une ligne avec le résultat dans la colonne des Noirs
-                    mafenetrePartie.FeuillePartie.Rows.Add("", "", dernierElement);
-                }
+                foreach (string[] ligne in lignes)
+                    mafenetrePartie.FeuillePartie.Rows.Add(ligne[0], ligne[1], ligne[2]);
                 if (mafenetrePartie.FeuillePartie.Rows.Count > 0)
-                {   // Sélectionner la cellule du premier coup blanc (colonne 1, première ligne)
-                    mafenetrePartie.FeuillePartie.CurrentCell = mafenetrePartie.FeuillePartie.Rows[0].Cells[1];
+                {   // Sélectionner la cellule du premier coup (colonne des Blancs, ou des Noirs si la partie commence par un coup noir)
+                    int colonne = FeuilleDePartie.CommenceParLesNoirs(LogiqueMouvements.ListeCoups) ? 2 : 1;
+                    mafenetrePartie.FeuillePartie.CurrentCell = mafenetrePartie.FeuillePartie.Rows[0].Cells[colonne];
                     mafenetrePartie.FeuillePartie.Focus(); // Met le focus sur la DataGridView
                 }
             }
@@ -1586,38 +1551,55 @@ namespace BrunoGUI_GenII
             InformationPourJoueur.Text = partie.Tournoi + " / ronde " + partie.Ronde;
             StatusProgramme.Text = $"{partie.White} vs {partie.Black}";
             ScoreMoteur.Text = InformationsPartie.Text = "Résultat : " + partie.Result;
+            // Partie commençant à une position ([SetUp "1"] [FEN "..."]) : les coups sont joués depuis cette position
+            if (!string.IsNullOrWhiteSpace(partie.Fen))
+            {
+                if (partie.Fen.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length >= 6)
+                {
+                    LogiqueMouvements.MiseenplaceFen(partie.Fen.Trim());
+                    AjoutePositionDeDepart(partie.Fen.Trim());      // la partie commence à cette position (retour arrière et parcours s'y arrêtent)
+                }
+                else
+                    KryptonMessageBox.Show("La position de départ de cette partie (balise FEN) est incomplète : les coups sont joués depuis la position initiale.",
+                        "Partie PGN", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+            }
             // Certains fichiers PGN n'ont pas d'espace entre le numéro et le coup, il faut l'ajouter :
-            PartieEnCours.CoupsPartiePGN = PartieEnCours.CoupsPartiePGN.Replace(".", ". ");
+            PartieEnCours.CoupsPartiePGN = (PartieEnCours.CoupsPartiePGN ?? "").Replace(".", ". ");
             // On decoupe la liste de coups recue :
             string[] coupsPartie = PartieEnCours.CoupsPartiePGN.Split([' ', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
             Debug.WriteLine($"Partie en PGN : {PartieEnCours.CoupsPartiePGN}");
-            if (coupsPartie[0] != "1.")     // Tester si CoupsPartie[0] = "1." pour vérifier que c'est bien le début d'une partie ?
-                _ = KryptonMessageBox.Show("Problème avec la partie \n Elle ne débute pas avec 1. ", "Problème de partie",
-                    KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
             ParcoursPartie(coupsPartie);
         }
         private void ParcoursPartie(string[] suiteCoups)
-        {   // Parcourt la partie coup par coup pour l'afficher sur l'échiquier et afficher le résultat à la fin
-            bool _couleurTraitBlanc = true;        // Pour commencer avec les Blancs
-            _partie.Commencer(Joueur.Humain, Joueur.Humain);    // rejeu des coups de la partie ; lecture seule à la fin
+        {   // Parcourt la partie coup par coup pour l'afficher sur l'échiquier et afficher le résultat à la fin.
+            // Chaque coup est joué pour le camp au trait de la position ; au premier coup illisible ou illégal, le rejeu s'arrête
+            bool depuisPosition = LogiqueMouvements.ListeCoups.Count > 0 && LogiqueMouvements.ListeCoups[0].EstPositionDeDepart;
+            _partie.Commencer(Joueur.Humain, Joueur.Humain, depuisPosition);    // rejeu des coups de la partie ; lecture seule à la fin
             VarianteMoteurCourante.Text = "";
             PartieEnCoursMat = PartieEnCoursPat = false;     // On réinitialise les indicateurs de fin de partie
             _partie.RejeuPgn = true;    // pas de nulle automatique pendant le rejeu : c'est le résultat du PGN qui compte
+            string coupIllisible = null;
+            int demiCoupsJoues = 0;
             try
             {
-                for (int indicecoup = 0; indicecoup < suiteCoups.Length - 1; indicecoup++)  // Parcourir tous les coups de la partie
+                foreach (string element in suiteCoups)      // numéros de coups et résultat compris (ignorés par DecodeCoupPartie)
                 {
-                    GestionPartiePgn.DecodeCoupPartie(suiteCoups[indicecoup], _couleurTraitBlanc);
-                    if (!suiteCoups[indicecoup].Contains('.'))
+                    if (!GestionPartiePgn.DecodeCoupPartie(element))     // coup illisible ou illégal : rien n'est joué
                     {
-                        _couleurTraitBlanc = !_couleurTraitBlanc;
+                        coupIllisible = element;
+                        break;
                     }
+                    if (!GestionPartiePgn.EstNumeroOuResultat(element))
+                        demiCoupsJoues++;
                 }
             }
             finally
             {
                 _partie.RejeuPgn = false;
             }
+            if (coupIllisible != null)
+                KryptonMessageBox.Show($"Coup illisible ou illégal : « {coupIllisible} » (demi-coup n° {demiCoupsJoues + 1}).\n" +
+                    "La partie est chargée jusqu'au coup précédent.", "Partie PGN", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
             switch (PartieEnCours.Result)       // Et on ajoute le résultat
             {
                 case "1-0":
@@ -1880,17 +1862,32 @@ namespace BrunoGUI_GenII
             InformationPourJoueur.Visible = true;
             InformationPourJoueur.Text = StatusProgramme.Text = Affichage;
         }
-        private void RécupèreBibliothèque()
-        {   // Récupère les informations de la bibliothèque
+        private bool RécupèreBibliothèque()
+        {   // Charge la bibliothèque _bibliotheque ; false (avec un message) si elle est introuvable ou illisible :
+            // la précédente reste alors active, ou, au démarrage, le moteur joue sans bibliothèque
             var polyglot = new PolyglotBibliothèque();
             polyglot.MessageLog += msg => CoupsBibliothèque.Text = msg;
-            polyglot.PolyglotBibliothèqueLecture(_bibliotheque);
+            try
+            {
+                polyglot.PolyglotBibliothèqueLecture(_bibliotheque);
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException)
+            {
+                Debug.WriteLine("[Bibliothèque] " + ex.Message);
+                if (!PolyglotBibliothèque.Disponible)
+                    CoupsBibliothèque.Text = "Aucune bibliothèque d'ouvertures";
+                KryptonMessageBox.Show(ex.Message + (PolyglotBibliothèque.Disponible ? "\n\nLa bibliothèque précédente reste utilisée."
+                                                                                     : "\n\nLe moteur jouera sans bibliothèque d'ouvertures."),
+                    "Bibliothèque d'ouvertures", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+                return false;
+            }
             CoupsBibliothèque.SelectAll();
             CoupsBibliothèque.SelectionAlignment = HorizontalAlignment.Center;
             CoupsBibliothèque.DeselectAll();
             // Recherche de la position dans la bibliothèque à partir du FEN
             ulong clePosition = PolyglotBibliothèque.CalculeClefPolyglot(LogiqueMouvements.RetourneChaineFenActuel());
-            string coupChoisiTxt = AfficherCoupsBibliotheque(clePosition);
+            _ = AfficherCoupsBibliotheque(clePosition);
+            return true;
         }
         private void MiseaZeroAffichages()
         {   // Réinitialise les affichages de la partie et du moteur

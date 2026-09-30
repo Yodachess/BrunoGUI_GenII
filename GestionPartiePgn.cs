@@ -43,6 +43,7 @@ namespace BrunoGUI_GenII
         public string BlackElo { get; set; }
         public string CompteDePLy { get; set; }
         public string CoupsPartiePGN { get; set; }
+        public string Fen { get; set; }             // position de départ ([SetUp "1"] [FEN "..."]) ; vide : position initiale
     }
 
     public class GestionPartiePgn
@@ -51,6 +52,10 @@ namespace BrunoGUI_GenII
         {   // Met au format Pgn la partieEnCours pour visualisation et sauvegarde ... 
             int comptepartiel = 0;
             string contenuPgn = "";
+            // Partie commençant par un coup noir (départ FEN, Noirs au trait) : le PGN exige "n... coup"
+            Coup premier = ListeCoups.FirstOrDefault(c => !c.EstPositionDeDepart);
+            if (premier != null && !premier.EstCoupBlanc)
+                contenuPgn = premier.NumeroDuCoup + "... ";
             for (int i = 0; i < ListeCoupsPgnIntl.Count; i++)   // Création du contenu du fichier en lignes de 80 caractères
             {   // Il faut des lignes <= 80 caractères, mais n'aller à la ligne que si c'est un espace
                 comptepartiel += ListeCoupsPgnIntl[i].Length;
@@ -64,10 +69,12 @@ namespace BrunoGUI_GenII
                     comptepartiel = 0;          // Ligne suivante
                 }
             }
-            contenuPgn = contenuPgn + " " + partieEnCours.Result;   // Rajout du résultat à la fin de la partie
+            contenuPgn = contenuPgn + " " + ResultatPgn(partieEnCours);   // Rajout du résultat à la fin de la partie
             contenuPgn = RetourneEntetePgn(partieEnCours) + contenuPgn;
             return contenuPgn;
         }
+        private static string ResultatPgn(PartieEchecsPGN partie) =>
+            string.IsNullOrWhiteSpace(partie.Result) ? "*" : partie.Result;     // partie en cours : "*" (exigé par le format PGN)
         public static string RetourneEntetePgn(PartieEchecsPGN partieEnCours)
         {   // Retourne l'en-tête de la partie au format PGN, avec les balises obligatoires et optionnelles
             string enTetePgn = "";
@@ -75,10 +82,13 @@ namespace BrunoGUI_GenII
             enTetePgn = "[PlyCount \"" + partieEnCours.CompteDePLy + "\"]\n\n" + enTetePgn;  // Nombre de 1/2 coups
             enTetePgn = "[BlackElo \"" + partieEnCours.BlackElo + "\"]\n" + enTetePgn;    // Elo Noirs
             enTetePgn = "[WhiteElo \"" + partieEnCours.WhiteElo + "\"]\n" + enTetePgn;    // Elo Blancs
-            enTetePgn = "[ECO \"" + partieEnCours.ECO + "\"]\n" + enTetePgn;              // Code ECO (ouverture) de la partie 
+            enTetePgn = "[ECO \"" + partieEnCours.ECO + "\"]\n" + enTetePgn;              // Code ECO (ouverture) de la partie
+            // Partie commençant à une position (chargée depuis un FEN) : balises SetUp et FEN, sinon le fichier serait illisible
+            if (ListeCoups.Count > 0 && ListeCoups[0].EstPositionDeDepart)
+                enTetePgn = "[SetUp \"1\"]\n[FEN \"" + ListeCoups[0].Fen + "\"]\n" + enTetePgn;
 
             // Ajout de l'en-tête complet respectant le format PGN (Balises obligatoires)
-            enTetePgn = "[Result \"" + partieEnCours.Result + "\"]\n" + enTetePgn;        // Résultat Partie
+            enTetePgn = "[Result \"" + ResultatPgn(partieEnCours) + "\"]\n" + enTetePgn;        // Résultat Partie
             enTetePgn = "[Black \"" + partieEnCours.Black + "\"]\n" + enTetePgn;          // Joueur noir
             enTetePgn = "[White \"" + partieEnCours.White + "\"]\n" + enTetePgn;          // Joueur blanc
             enTetePgn = "[Date \"" + partieEnCours.Date + "\"]\n" + enTetePgn;            // Date
@@ -88,8 +98,27 @@ namespace BrunoGUI_GenII
             return enTetePgn;
         }
 
-        public static void DecodeCoupPartie(string coupPartie, bool couleurTraitBlanc)
-        {   // Décode UN coup au format Pgn en case source / destination et execute le coup
+        public static bool EstNumeroOuResultat(string element) =>
+            element.EndsWith('.') || element is "1-0" or "0-1" or "1/2-1/2" or "*";
+
+        public static bool DecodeCoupPartie(string coupPartie)
+        {   // Décode UN coup au format Pgn en case source / destination et execute le coup, pour le camp au trait de la partie.
+            // Renvoie false si le coup est illisible ou illégal (rien n'est joué) ; un numéro de coup ou un résultat est ignoré (true)
+            if (string.IsNullOrWhiteSpace(coupPartie) || EstNumeroOuResultat(coupPartie))
+                return true;
+            try
+            {
+                return DecodeEtJoueCoup(coupPartie);
+            }
+            catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentOutOfRangeException || ex is FormatException)
+            {   // coup trop mal formé pour être décodé (ex : "e9") : rien n'est joué
+                BloquerChoixPromo = false;
+                PromotionPiece = TypePiece.Vide;
+                return false;
+            }
+        }
+        private static bool DecodeEtJoueCoup(string coupPartie)
+        {
             char dernierCaractereCoup;
             BloquerChoixPromo = false;
             ColorPiece couleurQuiJoue;
@@ -97,20 +126,18 @@ namespace BrunoGUI_GenII
             CaseSource = CaseDestination = "";
             TypePiece pieceQuiJoue = TypePiece.Vide;
             string CoupPGN = coupPartie;       // On récupère le coup pour pouvoir le traiter
+            if (CoupPGN.StartsWith("0-0"))
+                CoupPGN = CoupPGN.Replace('0', 'O');    // roque noté avec des zéros (0-0, 0-0-0) : forme officielle O-O
             if (CoupPGN.Length > 0)     // Il faut s'assurer qu'il y a au moins un coup, sinon erreur "L'index se trouve en dehors des limites du tableau."
             {
-                couleurQuiJoue = couleurTraitBlanc ? ColorPiece.Blanc : ColorPiece.Noir;
+                couleurQuiJoue = QuiJoue;   // camp au trait de la partie (une partie FEN peut commencer par les Noirs)
                 dernierCaractereCoup = CoupPGN[CoupPGN.Length - 1];    // Nettoyage des signes "+" et "#" à la fin du coup qui signalent les echecs
-                if (dernierCaractereCoup == '+')
-                {
-                    CoupPGN = CoupPGN.TrimEnd('+');     // Enlève le + dans CoupPGN pour permettre d'avoir les 2 derniers caractères comme CaseDestination
-                    Echec = true;
-                }
-                if (dernierCaractereCoup == '#')
-                {
-                    CoupPGN = CoupPGN.TrimEnd('#');     // Enlève le # dans CoupPGN pour permettre d'avoir les 2 derniers caractères comme CaseDestination
-                    EchecetMat = true;
-                }
+                // Enlève le "+" ou le "#" final pour avoir la case de destination dans les 2 derniers caractères
+                // (l'échec et le mat sont calculés par ExecutionCoup : rien n'est forcé ici sur la position d'avant le coup)
+                if (dernierCaractereCoup == '+' || dernierCaractereCoup == '#')
+                    CoupPGN = CoupPGN.TrimEnd('+', '#');
+                if (CoupPGN.Length < 2)
+                    return false;
                 // Début du traitement du coup, il faut trouver la case de départ et de destination pour pouvoir executer le coup sur l'échiquier-
                 switch (CoupPGN[0])                         // Coup de PIECE, car la 1ère lettre est une majuscule
                 {                                           // On traite d'abord le Roi et le Roque, car plus simple
@@ -247,20 +274,18 @@ namespace BrunoGUI_GenII
                         }
                     }
                 }
-                if (dernierCaractereCoup != '.')
-                {   // On change de couleur si c'est pas le numéro du coup
-                    _ = couleurQuiJoue == ColorPiece.Noir ? ColorPiece.Blanc : ColorPiece.Noir;
-                    string CoupNal = (CaseSource + "-" + CaseDestination);
-                    CoupNal = pieceQuiJoue + "  " + CoupNal;
-
-                    if (string.IsNullOrWhiteSpace(CaseSource) || string.IsNullOrWhiteSpace(CaseDestination))
-                    {   // Garde : s'assurer que les cases ont été déterminées correctement avant d'exécuter le coup
-                        return; // interrompre l'exécution du coup, éviter index hors bornes
-                    }
-
-                    LogiqueMouvements.ExecutionCoup(CaseSource, CaseDestination);
+                if (string.IsNullOrWhiteSpace(CaseSource) || string.IsNullOrWhiteSpace(CaseDestination)
+                    || RenvoieCaseIndex120(CaseSource) < 0 || RenvoieCaseIndex120(CaseDestination) < 0)
+                {   // Coup illisible (cases non déterminées) : rien n'est joué
+                    BloquerChoixPromo = false;
+                    PromotionPiece = TypePiece.Vide;
+                    return false;
                 }
+                LogiqueMouvements.ExecutionCoup(CaseSource, CaseDestination);
+                BloquerChoixPromo = false;
+                return LogiqueMouvements.CoupValide;    // false : coup illégal dans cette position
             }
+            return false;
         }
 
     public class SaisieBalises : KryptonForm
