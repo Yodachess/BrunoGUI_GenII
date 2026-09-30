@@ -111,6 +111,7 @@ namespace BrunoGUI_GenII
             MontrePartiesPGN = new Krypton.Toolkit.KryptonButton();
             ChargerPartiesPgn = new System.Windows.Forms.OpenFileDialog();
             groupParcoursPartie = new System.Windows.Forms.GroupBox();
+            BoutonReprendreIci = new Krypton.Toolkit.KryptonButton();
             BoutonFin = new Krypton.Toolkit.KryptonButton();
             BoutonDebut = new Krypton.Toolkit.KryptonButton();
             BoutonSuivant = new Krypton.Toolkit.KryptonButton();
@@ -505,7 +506,7 @@ namespace BrunoGUI_GenII
             // 
             // BoutonBalises
             // 
-            BoutonBalises.Location = new System.Drawing.Point(540, 431);
+            BoutonBalises.Location = new System.Drawing.Point(540, 458);
             BoutonBalises.Name = "BoutonBalises";
             BoutonBalises.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             BoutonBalises.Size = new System.Drawing.Size(130, 25);
@@ -543,7 +544,7 @@ namespace BrunoGUI_GenII
             // 
             // VisualisationPgn
             // 
-            VisualisationPgn.Location = new System.Drawing.Point(540, 400);
+            VisualisationPgn.Location = new System.Drawing.Point(540, 427);
             VisualisationPgn.Name = "VisualisationPgn";
             VisualisationPgn.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             VisualisationPgn.Size = new System.Drawing.Size(130, 25);
@@ -862,9 +863,9 @@ namespace BrunoGUI_GenII
             // CoupsBibliothèqueBox
             // 
             CoupsBibliothèqueBox.BackColor = System.Drawing.Color.WhiteSmoke;
-            CoupsBibliothèqueBox.Location = new System.Drawing.Point(542, 462);
+            CoupsBibliothèqueBox.Location = new System.Drawing.Point(542, 489);
             CoupsBibliothèqueBox.Name = "CoupsBibliothèqueBox";
-            CoupsBibliothèqueBox.Size = new System.Drawing.Size(120, 164);
+            CoupsBibliothèqueBox.Size = new System.Drawing.Size(120, 137);
             CoupsBibliothèqueBox.TabIndex = 33;
             CoupsBibliothèqueBox.Text = "";
             // 
@@ -936,6 +937,7 @@ namespace BrunoGUI_GenII
             // groupParcoursPartie
             // 
             groupParcoursPartie.BackColor = System.Drawing.Color.Gray;
+            groupParcoursPartie.Controls.Add(BoutonReprendreIci);
             groupParcoursPartie.Controls.Add(BoutonFin);
             groupParcoursPartie.Controls.Add(BoutonDebut);
             groupParcoursPartie.Controls.Add(BoutonSuivant);
@@ -943,11 +945,26 @@ namespace BrunoGUI_GenII
             groupParcoursPartie.ForeColor = System.Drawing.SystemColors.ControlText;
             groupParcoursPartie.Location = new System.Drawing.Point(544, 313);
             groupParcoursPartie.Name = "groupParcoursPartie";
-            groupParcoursPartie.Size = new System.Drawing.Size(128, 81);
+            groupParcoursPartie.Size = new System.Drawing.Size(128, 108);
             groupParcoursPartie.TabIndex = 37;
             groupParcoursPartie.TabStop = false;
             groupParcoursPartie.Text = "Parcours partie PGN";
-            // 
+            //
+            // BoutonReprendreIci
+            //
+            BoutonReprendreIci.Location = new System.Drawing.Point(6, 76);
+            BoutonReprendreIci.Name = "BoutonReprendreIci";
+            BoutonReprendreIci.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
+            BoutonReprendreIci.Size = new System.Drawing.Size(116, 25);
+            BoutonReprendreIci.StateCommon.Back.Color1 = System.Drawing.Color.FromArgb(128, 128, 255);
+            BoutonReprendreIci.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
+            BoutonReprendreIci.StateCommon.Border.Rounding = 20F;
+            BoutonReprendreIci.StateCommon.Border.Width = 3;
+            BoutonReprendreIci.TabIndex = 4;
+            BoutonReprendreIci.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            BoutonReprendreIci.Values.Text = "Reprendre ici";
+            BoutonReprendreIci.Click += BoutonReprendreIci_Click;
+            //
             // BoutonFin
             // 
             BoutonFin.Location = new System.Drawing.Point(64, 49);
@@ -1263,6 +1280,7 @@ namespace BrunoGUI_GenII
         private Krypton.Toolkit.KryptonButton BoutonSuivant;
         private Krypton.Toolkit.KryptonButton BoutonFin;
         private Krypton.Toolkit.KryptonButton BoutonDebut;
+        private Krypton.Toolkit.KryptonButton BoutonReprendreIci;
         private System.Windows.Forms.CheckBox ActiveBibliothèque;
         private System.Windows.Forms.CheckBox ActiveSon;
         private System.Windows.Forms.GroupBox groupBoxTempsReflexion;

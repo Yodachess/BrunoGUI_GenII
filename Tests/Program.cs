@@ -494,6 +494,37 @@ L.ExecutionCoup("g8", "f6");
 partie.PasserEnLectureSeule();
 Verifie("Lecture seule (PGN) : pas de retour arrière", !partie.AnnulerDernierCoup() && L.ListeCoups.Count == 2, $"{L.ListeCoups.Count} élément(s)");
 
+// Reprendre la partie d'ici
+Charger(L.FenDepart);
+partie.Commencer(Joueur.Humain, Joueur.Moteur);
+L.ExecutionCoup("e2", "e4"); L.ExecutionCoup("e7", "e5"); L.ExecutionCoup("g1", "f3"); L.ExecutionCoup("b8", "c6");
+int supprimesIci = partie.ReprendreDepuis(0);      // position après 1. e4
+Verifie("Reprendre ici : coups suivants supprimés, position rétablie, au moteur (Noirs) de jouer",
+    supprimesIci == 3 && L.ListeCoups.Count == 1 && L.QuiJoue == L.ColorPiece.Noir && partie.MoteurAuTrait && L.RetourneChaineFenActuel() == L.ListeCoupsFen[0],
+    $"{supprimesIci} supprimé(s), {L.RetourneChaineFenActuel()}");
+Verifie("Reprendre ici à la dernière position : rien à supprimer", partie.ReprendreDepuis(0) == 0 && L.ListeCoups.Count == 1, $"{L.ListeCoups.Count} coup(s)");
+Verifie("Reprendre ici depuis la position initiale (-1) : plus aucun coup", partie.ReprendreDepuis(-1) == 1 && L.ListeCoups.Count == 0 && L.RetourneChaineFenActuel() == L.FenDepart, L.RetourneChaineFenActuel());
+
+// Partie PGN en lecture seule, terminée par un mat : elle devient jouable, l'humain a le camp au trait
+Charger(L.FenDepart);
+partie.Commencer(Joueur.Humain, Joueur.Humain);
+L.ExecutionCoup("f2", "f3"); L.ExecutionCoup("e7", "e5"); L.ExecutionCoup("g2", "g4"); L.ExecutionCoup("d8", "h4");
+L.PartieEnCoursMat = true;
+partie.Terminer();
+partie.PasserEnLectureSeule();
+int supprimesPgn = partie.ReprendreDepuis(1);      // position après 1... e5 : Blancs au trait
+Verifie("Reprendre ici une partie PGN : jouable, l'humain a le camp au trait, plus de mat",
+    supprimesPgn == 2 && partie.EnCours && partie.Blancs == Joueur.Humain && partie.Noirs == Joueur.Moteur && partie.HumainAuTrait && !L.EchecetMat && !L.PartieEnCoursMat,
+    $"{supprimesPgn} supprimé(s), Blancs {partie.Blancs}, Noirs {partie.Noirs}");
+
+// Partie depuis un FEN : on ne remonte jamais avant la position de départ
+Charger(fenNoirsAuTrait);
+L.AjoutePositionDeDepart(fenNoirsAuTrait);
+partie.CommencerDepuisPosition();
+L.ExecutionCoup("g8", "f6"); L.ExecutionCoup("f1", "c4");
+Verifie("Reprendre ici une partie FEN à sa position de départ (index 0)",
+    partie.ReprendreDepuis(0) == 2 && L.ListeCoups.Count == 1 && L.RetourneChaineFenActuel() == fenNoirsAuTrait, L.RetourneChaineFenActuel());
+
 // ═══════════════ Pilotage du moteur (avec un faux moteur) ═══════════════
 Console.WriteLine("── Pilote du moteur ──");
 
