@@ -77,7 +77,7 @@ namespace BrunoGUI_GenII
         private string _nomHumain, _joueurElo, _nomMoteur, _moteurElo, _joueurBlanc, _joueurNoir;
         private string _cheminMoteur, _nomMoteurChoisi, _variationMoteur, _meilleureSuite, _scoreCourant, _evaluationCourante;
         private string _bibliotheque = "rodent.bin";
-        private bool _clickCaseSource, _visuSymbole, _montreDonneesBrutesUci, _montre3VariantesUci, _analyseEnCours, _montreListeParties;
+        private bool _clickCaseSource, _visuSymbole, _montreDonneesBrutesUci, _montre3VariantesUci, _montreListeParties;
         private bool _visuCoteNoir;     // True quand les Noirs sont en bas de l'écran
         private bool _clavierActif, _emetUnSon, _bibliothèqueAléatoire;
         private bool _bibliothèqueActive = true;
@@ -89,6 +89,7 @@ namespace BrunoGUI_GenII
         // les classes
         public LogiqueMouvements LogiqueMouvements = new();
         public MoteurUci MoteurUci = new();
+        private readonly PiloteMoteur _pilote;      // ce qui est demandé au moteur (coup de partie ou analyse) : voir PiloteMoteur.cs
         public GestionPartiePgn GestionPartiePgn = new();
         public PartieForceModule maNouvellePartieForceModule = new();
         public PartieEchecsPGN PartieEnCours = new();
@@ -142,7 +143,11 @@ namespace BrunoGUI_GenII
 
             DateTime Aujourdhui = DateTime.Today;
             _visuCoteNoir = false;      // On commence avec la vue côté Blanc (par défaut, l'ordinateur a les Noirs : voir Partie)
-            _montreDonneesBrutesUci = _analyseEnCours = _clavierActif = false;
+            _montreDonneesBrutesUci = _clavierActif = false;
+            _pilote = new PiloteMoteur(MoteurUci)
+            {   // Bibliothèque d'ouvertures (si elle est active) : le coup choisi est aussi affiché dans la liste de la bibliothèque
+                ChoixBibliotheque = fen => _bibliothèqueActive ? AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(fen)) : null
+            };
             PartieEnCours.Date = Aujourdhui.ToString("yyyy.MM.dd");
             PartieEnCours.Lieu = "Maison"; PartieEnCours.Tournoi = "Entrainement";
             PartieEnCours.Result = "*";
@@ -249,7 +254,7 @@ namespace BrunoGUI_GenII
         {   // Nouvelle partie contre Stockfish, avec la possibilité de régler la force du moteur et le temps de réflexion
             AbandonneReflexion();   // nouvelle partie
             QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
-            _analyseEnCours = false;
+            _pilote.Abandonner();       // plus aucune demande (analyse ou coup) en cours au moteur
             LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = false;
             QuiJoue = ColorPiece.Blanc;
             NumeroDemiCoup = 0;
@@ -300,7 +305,7 @@ namespace BrunoGUI_GenII
         }
         private void CommencerPartie(Joueur blancs, Joueur noirs)      // POINT D'ENTREE POUR TOUTES LES NOUVELLES PARTIES
         {   // Début d'une nouvelle partie : qui joue les Blancs et les Noirs (humain ou moteur)
-            _analyseEnCours = false;
+            _pilote.Abandonner();       // plus aucune demande (analyse ou coup) en cours au moteur
             _partie.Commencer(blancs, noirs);
             EffaceDernierCoup();        // les cases du dernier coup de la partie précédente
             _dernierCoupMoteurUci = -1;
@@ -427,6 +432,7 @@ namespace BrunoGUI_GenII
                         if (mat)
                             LogiqueMouvements.EchecetMat = true;
                         VarianteMoteurCourante.Text = mat ? "Aucun coup légal : échec et mat" : "Aucun coup légal : pat";
+                        _pilote.ReponseRecue();     // la demande est terminée, sans coup à jouer (AfficheCoupMoteur n'est pas appelé)
                         break;
                     }
                     VarianteMoteurCourante.Text = "Coup joué : " + Outils.VarianteUciVersPgn(ligne.MeilleurCoup, LogiqueMouvements.DemiCoupAvant(PositionDesVariantes), false, PositionDesVariantes) +
@@ -590,37 +596,13 @@ namespace BrunoGUI_GenII
                     SoundPlayer player = new(@"C:\Windows\Media\Windows Notify.wav");
                     player.Play();
                 }
-                if (!_analyseEnCours)
-                {   // Si ce n'est pas une analyse ...
+                TypeDemande demande = _pilote.ReponseRecue();   // à quelle demande répond ce bestmove ?
+                if (demande == TypeDemande.CoupDePartie)
+                {   // Coup de la partie : on le joue (promotion comprise)
                     StatusProgramme.Text = InformationPourJoueur.Text = "A vous de jouer";
                     _caseSource = MoteurUci.CoupAuFormatUci[..2];    // CoupAuFormatUci contient le "best move" sous la forme e2e4
                     _caseDestination = MoteurUci.CoupAuFormatUci.Substring(2, 2);
-
-                    // *******Traitement promotion *********
-                    if (MoteurUci.CoupAuFormatUci.Length >= 5)
-                    {   // Gestion de la promotion : 5ème caractère de l'UCI (index 4)
-                        char promo = char.ToLower(MoteurUci.CoupAuFormatUci[4]);
-                        char rangéeDestination = _caseDestination[1];           // '1'..'8'
-                        bool estPromotionBlanche = rangéeDestination == '8';    // promotion en 8 => blanc
-                        LogiqueMouvements.PromotionPiece = promo switch
-                        {
-                            'q' => estPromotionBlanche ? TypePiece.ReineBlanche : TypePiece.ReineNoire,
-                            'r' => estPromotionBlanche ? TypePiece.TourBlanche : TypePiece.TourNoire,
-                            'b' => estPromotionBlanche ? TypePiece.FouBlanc : TypePiece.FouNoir,
-                            'n' => estPromotionBlanche ? TypePiece.CavalierBlanc : TypePiece.CavalierNoir,
-                            _ => TypePiece.Vide,
-                        };
-                        LogiqueMouvements.BloquerChoixPromo = true;
-                    }
-                    else
-                    {   // Pas de promotion dans le UCI : assurer une valeur neutre
-                        LogiqueMouvements.PromotionPiece = TypePiece.Vide;    //  ???
-                    }
-
-                    if (LogiqueMouvements.EchecetMat == false)  // Note : Si c'est Mat, on n"execute pas de coup
-                    {
-                        LogiqueMouvements.ExecutionCoup(_caseSource, _caseDestination);   // Exécute un coup du moteur UCI
-                    }
+                    PiloteMoteur.JouerCoupUci(MoteurUci.CoupAuFormatUci);      // (rien n'est joué si la position est déjà un mat)
                     if (_dernierCoupMoteurUci != -1)
                     {       // on redessine la case pour effacer le contour du coup précédent du Moteur UCI
                         PictJeux[_dernierCoupMoteurUci].BackColor = CouleurCaseOrigines[_dernierCoupMoteurUci];
@@ -628,8 +610,6 @@ namespace BrunoGUI_GenII
                             DessinePiece(_dernierCoupMoteurUci, LogiqueMouvements.PiecesEchiquier[_dernierCoupMoteurUci]);
                     }
                     _dernierCoupMoteurUci = LogiqueMouvements.RenvoieCaseIndex120(_caseDestination);
-                    LogiqueMouvements.BloquerChoixPromo = false;
-                    // *******Traitement promotion *********
 
                     if (_dernierCoupColore)
                         CouleursNormalesDernierCoup();  // le moteur a déjà joué juste avant (ex : "Ordinateur joue") : on efface son coup précédent
@@ -644,7 +624,7 @@ namespace BrunoGUI_GenII
                         InformationsPartie.Text = "Le moteur a joué : Fin pour revenir";
                     }
                 }
-                else
+                else if (demande == TypeDemande.Analyse)
                 {   // c'est une analyse, on affiche la meilleure variante
                     {
                         string[] meilleureVariante = VarianteMoteurUci1.Text.Split(['[', ']'], StringSplitOptions.RemoveEmptyEntries);
@@ -659,9 +639,9 @@ namespace BrunoGUI_GenII
                                             "\n" + meilleureVariante[3], "Analyse Moteur " + " (" + _dureeReflexionMilliSeconde / 1000 + " sec.)"
                                             + " par " + _nomMoteur, KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                     }
-                    _analyseEnCours = false;
                     MetAJourCommandes();
                 }
+                // (aucune demande en cours : bestmove après un "stop" sans demande, ignoré)
             }
         }
 
@@ -844,7 +824,7 @@ namespace BrunoGUI_GenII
             PartieEnCours.Black = LabelJoueurNoir.Text = _nomMoteur;
             PartieEnCours.WhiteElo = EloBlanc.Text = _joueurElo;
             PartieEnCours.BlackElo = EloNoir.Text = _moteurElo;
-            _analyseEnCours = false;
+            _pilote.Abandonner();       // plus aucune demande (analyse ou coup) en cours au moteur
             // On demande confirmation car la partie est remise à zéro
             string confirmation = "Vous aurez les Blancs contre " + _nomMoteur + ". " + "\nToute position précédente sera effacée,\n confirmez avec Oui, sinon Annuler";
             DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Le joueur a les Blancs, l'ordinateur les Noirs ", KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
@@ -868,7 +848,7 @@ namespace BrunoGUI_GenII
             PartieEnCours.Black = LabelJoueurNoir.Text = _nomHumain;
             PartieEnCours.WhiteElo = EloBlanc.Text = _moteurElo;
             PartieEnCours.BlackElo = EloNoir.Text = _joueurElo;
-            _analyseEnCours = false;
+            _pilote.Abandonner();       // plus aucune demande (analyse ou coup) en cours au moteur
             // On demande confirmation car la partie est remise à zéro
             string confirmation = "Vous aurez les Noirs contre " + _nomMoteur + ". " + "\nToute position précédente sera effacée,\n confirmez avec Oui, sinon Annuler";
             DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Le joueur a les Noirs, l'ordinateur les Blancs ", KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
@@ -1039,11 +1019,8 @@ namespace BrunoGUI_GenII
                 return;
             }
             InformationPourJoueur.Text = StatusProgramme.Text = "Analyse de la position ...";
-            _analyseEnCours = true;
-            _positionAnalysee = position.Copier();      // les variantes du moteur seront converties sur cette position
-            string Fenaenvoyer = LogiqueMouvements.CalculerSur(position, LogiqueMouvements.RetourneChaineFenActuel);
+            _pilote.DemanderAnalyse(position, _dureeReflexionMilliSeconde);   // les variantes du moteur seront converties sur cette position
             LancerReflexion();  // Décompte le temps de réflexion
-            MoteurUci.JeuMoteurUci(Fenaenvoyer, _dureeReflexionMilliSeconde);     // On fait analyser le moteur, avec le temps de réflexion choisi
         }
         private void InverseEchiquier_Click(object sender, EventArgs e)
         {   // Permet d'inverser la vue de l'échiquier (côté Blanc ou côté Noir) : ne change pas le droit de jouer
@@ -1519,7 +1496,7 @@ namespace BrunoGUI_GenII
                                                  // le retour arrière ne remonte jamais avant
             _partie.CommencerDepuisPosition();  // l'humain joue le camp au trait, le moteur lui répond
             EffaceDernierCoup();                // les cases du dernier coup de la partie précédente
-            _analyseEnCours = false;
+            _pilote.Abandonner();       // plus aucune demande (analyse ou coup) en cours au moteur
             _dernierCoupMoteurUci = -1;
             _clickCaseSource = _visuSymbole = true;
             PartieEnCours.CoupsPartiePGN = PartieEnCours.Result = PartieEnCours.CompteDePLy = PartieEnCours.Ronde = "";
@@ -1684,29 +1661,18 @@ namespace BrunoGUI_GenII
         //  Bibliothèque d'ouvertures
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void JeuMoteurAvecBibliothèque(string chaineFen)
-        {   // Lancement moteur avec recherche préalable dans la bibliothèque
-            if (_bibliothèqueActive)
-            {   // Recherche de la position dans la bibliothèque à partir du FEN
-                ulong clePosition = PolyglotBibliothèque.CalculeClefPolyglot(chaineFen);
-                string coupChoisiTxt = AfficherCoupsBibliotheque(clePosition);
-
-                if (!string.IsNullOrEmpty(coupChoisiTxt))
-                {   // Coup trouvé dans la bibliothèque → on le joue directement
-                    string nomBiblio = Path.GetFileName(_bibliotheque);   // Evite d'afficher le chemin complet
-                    string caseSource = coupChoisiTxt[..2];
-                    string caseDestination = coupChoisiTxt.Substring(2, 2);
-                    ExecutionCoup(caseSource, caseDestination);
-                    VarianteMoteurUci1.Text = "Coup bibliothèque " + nomBiblio + " exécuté par le moteur -> " + coupChoisiTxt;
-                    VarianteMoteurUci2.Text = VarianteMoteurUci3.Text = ".....";
-                    Debug.WriteLine($"Coup bibliothèque exécuté (CaseMoveDown) : {coupChoisiTxt}");
-                    _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(LogiqueMouvements.RetourneChaineFenActuel()));
-                    return; // On sort ici pour ne pas lancer le moteur après
-                }
+        {   // Coup du moteur pour la partie : bibliothèque d'ouvertures d'abord (voir _pilote.ChoixBibliotheque), sinon réflexion du moteur
+            if (_pilote.DemanderCoup(chaineFen, _dureeReflexionMilliSeconde) == ResultatDemandeCoup.CoupBibliotheque)
+            {   // Coup trouvé dans la bibliothèque : il est déjà joué
+                string coupChoisiTxt = _pilote.DernierCoupBibliotheque;
+                VarianteMoteurUci1.Text = "Coup bibliothèque " + Path.GetFileName(_bibliotheque) + " exécuté par le moteur -> " + coupChoisiTxt;
+                VarianteMoteurUci2.Text = VarianteMoteurUci3.Text = ".....";
+                Debug.WriteLine($"Coup bibliothèque exécuté : {coupChoisiTxt}");
+                _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(LogiqueMouvements.RetourneChaineFenActuel()));
+                return;
             }
-
-            // Aucun coup dans la bibliothèque ou bibliothèque inactive → on lance le moteur UCI
+            // Aucun coup dans la bibliothèque ou bibliothèque inactive : le moteur réfléchit
             LancerReflexion();  // Décompte le temps de réflexion
-            MoteurUci.JeuMoteurUci(chaineFen, _dureeReflexionMilliSeconde);
             if (!LogiqueMouvements.EchecetMat)
             {
                 InformationPourJoueur.Text = StatusProgramme.Text = _nomMoteur + " réfléchit ...";
@@ -1963,12 +1929,11 @@ namespace BrunoGUI_GenII
         // à la position courante (clic sur l'échiquier ou "Fin").
         private Position _positionAffichee;     // null : l'échiquier montre la partie
         private int _indexAffiche;              // index dans ListeCoups de la position affichée (-1 : position initiale FenDepart)
-        private Position _positionAnalysee;     // position analysée (celle affichée au lancement de l'analyse)
         private bool ParcoursEnCours => _positionAffichee != null;
         private static int IndexPremierePosition =>     // -1 : position initiale ; 0 : partie commencée depuis un FEN
             LogiqueMouvements.ListeCoups.Count > 0 && LogiqueMouvements.ListeCoups[0].EstPositionDeDepart ? 0 : -1;
         private Position PositionDesVariantes =>        // position sur laquelle sont convertis les coups du moteur (variantes, conseil)
-            _analyseEnCours && _positionAnalysee != null ? _positionAnalysee : LogiqueMouvements.PositionActuelle;
+            _pilote.AnalyseEnCours ? _pilote.PositionAnalysee : LogiqueMouvements.PositionActuelle;
 
         public void AfficheCoupDeLaPartie(int index)
         {   // Affiche la position après le coup n° index de ListeCoups (-1 : position initiale), sans modifier la partie.
@@ -1980,7 +1945,7 @@ namespace BrunoGUI_GenII
                 return;
             }
             index = Math.Max(index, IndexPremierePosition);
-            if (_analyseEnCours)
+            if (_pilote.AnalyseEnCours)
                 AbandonneReflexion();       // l'analyse portait sur la position affichée jusqu'ici (la réflexion du moteur pour son coup continue)
             string fen = index < 0 ? FenDepart : LogiqueMouvements.ListeCoups[index].Fen;
             if (_dernierCoupColore)
@@ -2036,12 +2001,10 @@ namespace BrunoGUI_GenII
         private void AbandonneReflexion()
         {   // Rend périmée la réflexion en cours (partie ou analyse) : le moteur s'arrête et sa réponse sera ignorée.
             // A appeler avant toute action qui change la partie ou la position (retour arrière, résultat, nouvelle partie, chargement...)
-            if (!MoteurUci.EnReflexion)
-                return;
-            MoteurUci.AbandonneDemandeEnCours();
+            if (!_pilote.Abandonner())
+                return;     // le moteur ne réfléchissait pas : rien à signaler
             MiseaZéroTimer();
             TrackBarTempsReflexion.Enabled = true;
-            _analyseEnCours = false;
             LeMoteurARépondu();
             InformationPourJoueur.Text = StatusProgramme.Text = "Réflexion du moteur interrompue";
         }

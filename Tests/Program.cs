@@ -494,6 +494,45 @@ L.ExecutionCoup("g8", "f6");
 partie.PasserEnLectureSeule();
 Verifie("Lecture seule (PGN) : pas de retour arrière", !partie.AnnulerDernierCoup() && L.ListeCoups.Count == 2, $"{L.ListeCoups.Count} élément(s)");
 
+// ═══════════════ Pilotage du moteur (avec un faux moteur) ═══════════════
+Console.WriteLine("── Pilote du moteur ──");
+
+FauxMoteur faux = new();
+PiloteMoteur pilote = new(faux);
+Charger(L.FenDepart);
+var resultatSansBiblio = pilote.DemanderCoup(L.FenDepart, 1000);
+Verifie("Sans bibliothèque : la demande part au moteur",
+    resultatSansBiblio == ResultatDemandeCoup.EnvoyeAuMoteur && faux.Recherches == 1 && faux.DerniereFen == L.FenDepart && pilote.Demande == TypeDemande.CoupDePartie,
+    $"{resultatSansBiblio}, {faux.Recherches} recherche(s)");
+faux.Repond();      // le bestmove arrive : le moteur ne réfléchit plus
+Verifie("Réponse reçue : c'était un coup de partie, plus rien en cours",
+    pilote.ReponseRecue() == TypeDemande.CoupDePartie && pilote.Demande == TypeDemande.Aucune, pilote.Demande.ToString());
+
+pilote.ChoixBibliotheque = fen => "e2e4";
+var resultatBiblio = pilote.DemanderCoup(L.FenDepart, 1000);
+Verifie("Coup de bibliothèque : joué tout de suite, sans solliciter le moteur",
+    resultatBiblio == ResultatDemandeCoup.CoupBibliotheque && faux.Recherches == 1 && L.ListeCoupsUci.LastOrDefault()?.Trim() == "e2e4" && pilote.Demande == TypeDemande.Aucune,
+    $"{resultatBiblio}, dernier coup {L.ListeCoupsUci.LastOrDefault()}");
+pilote.ChoixBibliotheque = fen => "e2e4";      // illégal : c'est aux Noirs, et e2 est vide
+var resultatBiblioIllegal = pilote.DemanderCoup(L.RetourneChaineFenActuel(), 1000);
+Verifie("Coup de bibliothèque illégal : la main passe au moteur",
+    resultatBiblioIllegal == ResultatDemandeCoup.EnvoyeAuMoteur && faux.Recherches == 2 && L.ListeCoups.Count == 1, $"{resultatBiblioIllegal}, {L.ListeCoups.Count} coup(s)");
+
+Position positionAnalysee = L.PositionDepuisFen(L.FenDepart);
+pilote.DemanderAnalyse(positionAnalysee, 2000);
+Verifie("Analyse : la demande précédente est abandonnée, la position analysée est une copie",
+    faux.Abandons == 1 && pilote.AnalyseEnCours && pilote.PositionAnalysee != positionAnalysee && faux.DerniereFen == L.FenDepart && faux.DerniereDuree == 2000,
+    $"{faux.Abandons} abandon(s), FEN envoyée {faux.DerniereFen}");
+bool reflechissait = pilote.Abandonner();
+Verifie("Abandon : signalé si le moteur réfléchissait, plus d'analyse en cours",
+    reflechissait && !pilote.AnalyseEnCours && faux.Abandons == 2 && !pilote.Abandonner() && faux.Abandons == 2, $"{faux.Abandons} abandon(s)");
+
+Charger("8/4P2k/8/8/8/8/8/4K3 w - - 0 1");
+Verifie("Coup UCI avec promotion : la pièce demandée est posée (cavalier)",
+    PiloteMoteur.JouerCoupUci("e7e8n") && L.PiecesEchiquier[L.RenvoieCaseIndex120("e8")] == L.TypePiece.CavalierBlanc && !L.BloquerChoixPromo,
+    L.RetourneChaineFenActuel());
+Verifie("Coup UCI illégal ou mal formé : refusé", !PiloteMoteur.JouerCoupUci("e1e5") && !PiloteMoteur.JouerCoupUci("e1") && !PiloteMoteur.JouerCoupUci(null), L.RetourneChaineFenActuel());
+
 // ═══════════════ Perft ═══════════════
 Console.WriteLine("── Perft ──");
 
@@ -564,3 +603,15 @@ if (complet)
 
 Console.WriteLine(nombreEchecs == 0 ? "\nTous les tests passent." : $"\n{nombreEchecs} test(s) en échec.");
 return nombreEchecs == 0 ? 0 : 1;
+
+// Faux moteur pour tester PiloteMoteur sans lancer de processus : il enregistre les demandes
+class FauxMoteur : IMoteur
+{
+    public int Recherches, Abandons;
+    public string DerniereFen;
+    public int DerniereDuree;
+    public bool EnReflexion { get; private set; }
+    public void Chercher(string fen, int dureeMilliSecondes) { Recherches++; DerniereFen = fen; DerniereDuree = dureeMilliSecondes; EnReflexion = true; }
+    public void Abandonner() { Abandons++; EnReflexion = false; }
+    public void Repond() => EnReflexion = false;     // simule l'arrivée du bestmove
+}
