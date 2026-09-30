@@ -31,8 +31,13 @@ namespace BrunoGUI_GenII
     public delegate void AfficheMoteurUci();
     public delegate void AfficheCoupMoteurUci();
     public delegate void AfficheDonneesBrutesUci();
-    public class MoteurUci
+    public class MoteurUci : IMoteur
     {
+        // Le moteur vu par PiloteMoteur (qui ne connaît que IMoteur : un faux moteur le remplace dans les tests)
+        void IMoteur.Chercher(string fen, int dureeMilliSecondes) => JeuMoteurUci(fen, dureeMilliSecondes);
+        void IMoteur.Abandonner() => AbandonneDemandeEnCours();
+        bool IMoteur.EnReflexion => EnReflexion;
+
         public static event AfficheMoteurUci AfficheUci;
         public static event AfficheDonneesBrutesUci  AfficheDonneesBrutes;
         public static event AfficheCoupMoteurUci AfficheCoupMoteur;
