@@ -363,11 +363,7 @@ namespace BrunoGUI_GenII
                             _pieceSource = LogiqueMouvements.PiecesEchiquier[_indexSource120];
                             if (PictJeux[IndexCase120].Image != null)
                             {   // Si la case cliquée contient bien une pièce ou un pion, on va utiliser le thumbnail de la pièce comme curseur :-)
-                                using (Bitmap Piece = new(PictJeux[IndexCase120].Image))
-                                {   // Quand on bouge la souris, on bouge le thumbnail de la pièce comme un curseur :-)
-                                    Bitmap thumbnail = (Bitmap)Piece.GetThumbnailImage(88, 88, null, IntPtr.Zero);
-                                    Cursor = new Cursor(thumbnail.GetHicon());
-                                }
+                                MetCurseurPiece(PictJeux[IndexCase120].Image);     // la pièce suit la souris
                                 DessinePiece(IndexCase120, LogiqueMouvements.TypePiece.Vide);   // On vide la case d'origine car le joueur bouge la pièce ...
                                 LogiqueMouvements.DessineMouvements(_caseSource, true);
                                 _clickCaseSource = false;
@@ -376,7 +372,7 @@ namespace BrunoGUI_GenII
                         else
                         {       // Déplacement d'une pièce
                             LogiqueMouvements.Echec = false;
-                            Cursor = Cursors.Default;       // On revient au curseur "normal"
+                            LibereCurseurPiece();           // On revient au curseur "normal"
                             LogiqueMouvements.EffaceSymboles(true);
                             _caseDestination = LogiqueMouvements.NomCaseAlgebrique(IndexCase120);
                             AbandonneReflexion();   // une analyse en cours porterait sur la position d'avant ce coup
@@ -704,13 +700,35 @@ namespace BrunoGUI_GenII
             Promo2.Image = Couleur == "Noir" ? FouNoir : FouBlanc;
             Promo3.Image = Couleur == "Noir" ? CavalierNoir : CavalierBlanc;
             GroupPromo.Visible = true;
-            while (_selectionPromotion == LogiqueMouvements.TypePiece.Vide && !IsDisposed)
-            {   // Attente du clic sur une pièce : la courte pause évite d'occuper le processeur à 100 % pendant l'attente
-                Application.DoEvents();
-                Thread.Sleep(15);
+            // Pendant le choix, tout le reste est inactif (menus, boutons, échiquier, flèches du clavier) : une nouvelle partie,
+            // un chargement... lancés au milieu de ce coup corromperaient la partie. L'état de chaque contrôle est rétabli ensuite
+            Dictionary<Control, bool> etatsAvantChoix = [];
+            foreach (Control controle in Controls)
+                if (controle != GroupPromo)
+                {
+                    etatsAvantChoix[controle] = controle.Enabled;
+                    controle.Enabled = false;
+                }
+            bool clavierAvantChoix = _clavierActif;
+            _clavierActif = false;
+            try
+            {
+                while (_selectionPromotion == LogiqueMouvements.TypePiece.Vide && !IsDisposed)
+                {   // Attente du clic sur une pièce : la courte pause évite d'occuper le processeur à 100 % pendant l'attente
+                    Application.DoEvents();
+                    Thread.Sleep(15);
+                }
             }
-            if (!IsDisposed)
-                GroupPromo.Visible = false;
+            finally
+            {
+                if (!IsDisposed)
+                {
+                    GroupPromo.Visible = false;
+                    foreach (var (controle, actif) in etatsAvantChoix)
+                        controle.Enabled = actif;
+                    _clavierActif = clavierAvantChoix;
+                }
+            }
         }
         private void EffaceDernierCoup()
         {   // Efface les couleurs de la case source et destination du dernier coup joué
@@ -1174,12 +1192,16 @@ namespace BrunoGUI_GenII
                     return;
                 }
                 VarianteMoteurUci2.Text = "Téléchargement et installation de Stockfish...";
-                await maj.Installer(version);       // arrête le Stockfish en cours
                 bool stockfishEnCours = string.Equals(Path.GetFullPath(_cheminMoteur), CheminStockfish, StringComparison.OrdinalIgnoreCase);
+                if (stockfishEnCours)
+                    AbandonneReflexion();   // l'installation arrête Stockfish : sa réflexion en cours n'aurait jamais de réponse
+                await maj.Installer(version);       // arrête le Stockfish en cours
                 if (stockfishEnCours)
                 {   // Le moteur arrêté par l'installation est redémarré avec la nouvelle version
                     MoteurUci.Quitte();
                     MoteurUci.Start(CheminStockfish);
+                    if (_partie.MoteurAuTrait)      // il devait jouer : on lui redemande son coup
+                        JeuMoteurAvecBibliothèque(LogiqueMouvements.RetourneChaineFenActuel());
                 }
                 VarianteMoteurUci2.Text = "Stockfish est à jour !";
                 KryptonMessageBox.Show($"{version.Tag.Replace("sf_", "Stockfish ")} est installé." +
@@ -1740,7 +1762,7 @@ namespace BrunoGUI_GenII
                 }
                 else
                 {
-                    PictJeux[IndexCase].Image = ListeBitmapsPiece[Piece];
+                    RemplaceImage(IndexCase, ListeBitmapsPiece[Piece]);    // (libère l'éventuelle image pièce + symbole)
                     Application.DoEvents();
                 }
             }
@@ -1755,15 +1777,49 @@ namespace BrunoGUI_GenII
             if (_visuSymbole == true)
             {
                 if (PictJeux[IndexCase].Image == null)                          // Si la case est vide,
-                    PictJeux[IndexCase].Image = ListeBitmapsSymbole[Symbole];   // On dessine le symbole passé en paramètre
+                    RemplaceImage(IndexCase, ListeBitmapsSymbole[Symbole]);     // On dessine le symbole passé en paramètre
                 else
-                {                                                               // Si la case n'est pas vide
+                {   // Si la case n'est pas vide : image composée (pièce + symbole), libérée quand elle est remplacée
                     Bitmap CaseJeu = new(PictJeux[IndexCase].Image);
-                    Graphics g = Graphics.FromImage(CaseJeu);
-                    g.DrawImage(ListeBitmapsSymbole[Symbole], 0, 0, 100, 100);
-                    PictJeux[IndexCase].Image = CaseJeu;
+                    using (Graphics g = Graphics.FromImage(CaseJeu))
+                        g.DrawImage(ListeBitmapsSymbole[Symbole], 0, 0, 100, 100);
+                    _imagesComposees.Add(CaseJeu);
+                    RemplaceImage(IndexCase, CaseJeu);
                 }
             }
+        }
+        // Images composées (pièce + symbole) créées par DessineSymbole : à libérer quand une case change d'image
+        // (les images des pièces et des symboles, partagées par toutes les cases, ne sont jamais libérées)
+        private readonly HashSet<Image> _imagesComposees = [];
+        private void RemplaceImage(int indexCase, Image nouvelle)
+        {
+            Image ancienne = PictJeux[indexCase].Image;
+            PictJeux[indexCase].Image = nouvelle;
+            if (ancienne != null && ancienne != nouvelle && _imagesComposees.Remove(ancienne))
+                ancienne.Dispose();
+        }
+        // Curseur "pièce" pendant un déplacement : l'icône Windows et le curseur sont libérés quand on en change
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool DestroyIcon(IntPtr icone);
+        private Cursor _curseurPiece;
+        private IntPtr _iconeCurseurPiece;
+        private void MetCurseurPiece(Image piece)
+        {
+            LibereCurseurPiece();
+            using Bitmap copie = new(piece);
+            using Bitmap vignette = (Bitmap)copie.GetThumbnailImage(88, 88, null, IntPtr.Zero);
+            _iconeCurseurPiece = vignette.GetHicon();
+            _curseurPiece = new Cursor(_iconeCurseurPiece);
+            Cursor = _curseurPiece;
+        }
+        private void LibereCurseurPiece()
+        {
+            Cursor = Cursors.Default;
+            _curseurPiece?.Dispose();
+            _curseurPiece = null;
+            if (_iconeCurseurPiece != IntPtr.Zero)
+                DestroyIcon(_iconeCurseurPiece);
+            _iconeCurseurPiece = IntPtr.Zero;
         }
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         //  Diverses méthodes
@@ -1847,7 +1903,9 @@ namespace BrunoGUI_GenII
         }
         private void TourneEchiquier()
         {   // Tourne l'échiquier de 180° pour changer le côté de visualisation
-            EffaceDernierCoup();
+            // Les couleurs du dernier coup sont sur les cases physiques : on les retire avant l'inversion, et on les remet après
+            if (_dernierCoupColore)
+                CouleursNormalesDernierCoup();
             PictJeux.Reverse();             // On inverse les liste des PictureBox ce qui revient à faire une rotation à 180°
             Plateau.Image.RotateFlip(RotateFlipType.Rotate180FlipNone);
             Plateau.Refresh();              // On inverse le plateau
@@ -1856,6 +1914,7 @@ namespace BrunoGUI_GenII
             else
                 LogiqueMouvements.DessinPieces();       // On dessine les pièces de la partie
             _visuCoteNoir = !_visuCoteNoir;   // On inverse le flag de côté de visualisation
+            ColoreDernierCoup();              // (rien pendant le parcours, ni si aucun coup du moteur n'est à montrer)
         }
         private void ParametresJoueurHumain(string Couleur, string Affichage)
         {   // Message au joueur humain en début de partie (sa couleur est fixée par CommencerPartie)

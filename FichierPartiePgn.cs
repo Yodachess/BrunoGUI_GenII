@@ -94,18 +94,37 @@ namespace BrunoGUI_GenII
                 }
             };
         }
+        public static string LireTextePgn(string fichierPgn)
+        {   // Beaucoup de fichiers PGN sont en Latin-1 (ISO-8859-1), pas en UTF-8 : on essaie l'UTF-8 strict (avec ou sans BOM),
+            // et si le fichier n'est pas de l'UTF-8 valide, on le relit en Latin-1 (sinon les accents deviendraient "�")
+            byte[] octets = File.ReadAllBytes(fichierPgn);
+            try
+            {
+                string texte = new UTF8Encoding(false, true).GetString(octets);
+                return texte.Length > 0 && texte[0] == '﻿' ? texte[1..] : texte;
+            }
+            catch (DecoderFallbackException)
+            {
+                return Encoding.Latin1.GetString(octets);
+            }
+        }
         public static List<string> DecodeFichierPGN(string fichierPgn)
         {   // --- On découpe le fichier PGN pour obtenir la liste des parties contenues dans le fichier. ---
             List<string> listeParties = [];
 
-            using (StreamReader lecteur = new(fichierPgn, Encoding.UTF8))
-            {   // Note : StreamReader attend le chemin d'accès au fichier, pas le contenu du fichier.
+            using (StringReader lecteur = new(LireTextePgn(fichierPgn)))
+            {
                 string ligne;
                 StringBuilder partieCourante = new();
 
                 while ((ligne = lecteur.ReadLine()) != null)
                 {
-                    ligne = ligne.Replace("\r", "").Replace("?", "").Replace("!", "").Replace("..", "");    // Tentaive de nettoyage
+                    ligne = ligne.Replace("\r", "");
+                    if (!ligne.TrimStart().StartsWith('['))
+                    {   // Lignes de coups seulement : on retire les annotations (!, ?, !?...) et les ".." de "12..." ;
+                        // les en-têtes restent intacts (ex : date "2024.??.??", nom avec un point d'exclamation)
+                        ligne = ligne.Replace("?", "").Replace("!", "").Replace("..", "");
+                    }
                     if (ligne.StartsWith("[Event ")) // Avec un espace à la fin de Event, pour ne pas confondre avec le Tag EventDate ...
                     {
                         // Commencer une nouvelle partie
