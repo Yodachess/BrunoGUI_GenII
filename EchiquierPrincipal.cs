@@ -1302,6 +1302,63 @@ namespace BrunoGUI_GenII
         {   // On revient à la position courante de la partie
             RetourPositionCourante();
         }
+        private void BoutonReprendreIci_Click(object sender, EventArgs e)
+        {   // "Reprendre la partie d'ici" : la partie est coupée à la position affichée (parcours) et reprend depuis cette position
+            if (!ParcoursEnCours)
+                return;     // sécurité : le bouton n'est actif que pendant le parcours (voir MetAJourCommandes)
+            int index = _indexAffiche;
+            int aSupprimer = LogiqueMouvements.ListeCoups.Count - 1 - index;
+            bool etaitLectureSeule = PartieEnLectureSeule;
+            string message = etaitLectureSeule
+                ? $"La partie chargée devient votre partie à partir de la position affichée :\nvous jouez le camp au trait, {_nomMoteur} l'autre camp.\n\nLes {aSupprimer} demi-coup(s) suivant(s) seront supprimés. Continuer ?"
+                : $"La partie reprend à la position affichée.\n\nLes {aSupprimer} demi-coup(s) suivant(s) seront supprimés. Continuer ?";
+            if (KryptonMessageBox.Show(message, "Reprendre la partie d'ici", KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Question) != DialogResult.OK)
+                return;
+            AbandonneReflexion();   // la partie change
+            bool etaitTerminee = _partie.Mode == ModePartie.Terminee;
+            if (mafenetrePartie != null && !mafenetrePartie.IsDisposed)
+                mafenetrePartie.Close();    // sa liste de coups ne correspond plus à la partie
+            QuitteParcours();
+            EffaceDernierCoup();
+            if (_partie.ReprendreDepuis(index) == 0)
+            {   // rien à supprimer : l'échiquier revient simplement à la partie
+                LogiqueMouvements.DessinPieces();
+                MetAJourCommandes();
+                return;
+            }
+            _dernierCoupMoteurUci = -1;
+            if (etaitTerminee || etaitLectureSeule)
+                EffaceResultat();       // la partie n'a plus de résultat
+            if (etaitLectureSeule)
+            {   // La partie chargée devient une partie d'entraînement contre le moteur (l'humain a le camp au trait)
+                bool humainBlancs = _partie.Blancs == Joueur.Humain;
+                PartieEnCours.White = LabelJoueurBlanc.Text = humainBlancs ? _nomHumain : _nomMoteur;
+                PartieEnCours.Black = LabelJoueurNoir.Text = humainBlancs ? _nomMoteur : _nomHumain;
+                PartieEnCours.WhiteElo = EloBlanc.Text = humainBlancs ? _joueurElo : _moteurElo;
+                PartieEnCours.BlackElo = EloNoir.Text = humainBlancs ? _moteurElo : _joueurElo;
+                PartieEnCours.Tournoi = "Entrainement";
+                PartieEnCours.Lieu = "Maison";
+                PartieEnCours.Date = DateTime.Today.ToString("yyyy.MM.dd");
+                PartieEnCours.Ronde = "";
+            }
+            PartieEnCours.CompteDePLy = LogiqueMouvements.ListeCoupsFen.Count.ToString();
+            NumeroDemiCoup = _partie.DepuisPosition ? (int)Math.Round((NombreCoupsJoues - 1) * 2) : Math.Max(0, LogiqueMouvements.ListeCoupsFen.Count - 1);
+            string fen = LogiqueMouvements.RetourneChaineFenActuel();
+            _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(fen));
+            InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + (QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
+            InformationsPartie.Text = "Partie reprise";
+            if (_partie.MoteurAuTrait)
+            {   // C'est au moteur de jouer à partir de cette position
+                PlateauEnable(false);
+                MetAJourCommandes();
+                JeuMoteurAvecBibliothèque(fen);
+            }
+            else
+            {
+                PlateauEnable(true);
+                MetAJourCommandes();
+            }
+        }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {   // Gestion des flèches pour parcourir la partie
@@ -1800,6 +1857,8 @@ namespace BrunoGUI_GenII
             // Retour arrière : annule le dernier coup de la partie, donc jamais pendant le parcours (il annulerait un coup autre que celui affiché)
             RetourArriere.Enabled = (enCours || _partie.Mode == ModePartie.Terminee) && coupsJoues && !ParcoursEnCours;
             groupParcoursPartie.Enabled = ListeCoupsBouton.Enabled = coupsJoues;
+            // Reprendre ici : seulement pendant le parcours (la position affichée est une position passée)
+            BoutonReprendreIci.Enabled = ParcoursEnCours && _partie.Mode != ModePartie.AucunePartie;
             _clavierActif = coupsJoues;     // flèches du clavier (Echap les coupe jusqu'au prochain calcul)
             AnalysePosition.Enabled = _partie.Mode != ModePartie.AucunePartie;
             BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = enCours;

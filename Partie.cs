@@ -10,7 +10,8 @@
 //              ├─ "Commencer", "CommencerDepuisPosition"
 //              ├─ "Terminer", "Reprendre", "PasserEnLectureSeule"
 //              ├─ "MoteurPrendLeTrait"
-//              └─ "AnnulerDernierCoup"
+//              ├─ "AnnulerDernierCoup"
+//              └─ "ReprendreDepuis"    "Reprendre la partie d'ici" (depuis une position du parcours)
 // La position et la liste des coups restent dans LogiqueMouvements (PositionActuelle, ListeCoups) ;
 // l'interface (EchiquierPrincipal) lit l'état de la partie pour afficher et décider des commandes actives.
 
@@ -52,8 +53,7 @@ namespace BrunoGUI_GenII
         }
         public void CommencerDepuisPosition()
         {   // Partie depuis une position FEN : l'humain joue le camp au trait, le moteur lui répond
-            Blancs = QuiJoue == ColorPiece.Blanc ? Joueur.Humain : Joueur.Moteur;
-            Noirs = QuiJoue == ColorPiece.Noir ? Joueur.Humain : Joueur.Moteur;
+            HumainPrendLeTrait();
             DepuisPosition = true;
             Reprendre();
         }
@@ -68,6 +68,33 @@ namespace BrunoGUI_GenII
         {   // "Ordinateur joue" : le moteur prend le camp au trait, l'humain l'autre camp
             Blancs = QuiJoue == ColorPiece.Blanc ? Joueur.Moteur : Joueur.Humain;
             Noirs = QuiJoue == ColorPiece.Noir ? Joueur.Moteur : Joueur.Humain;
+        }
+        private void HumainPrendLeTrait()
+        {   // L'humain joue le camp au trait, le moteur l'autre camp
+            Blancs = QuiJoue == ColorPiece.Blanc ? Joueur.Humain : Joueur.Moteur;
+            Noirs = QuiJoue == ColorPiece.Noir ? Joueur.Humain : Joueur.Moteur;
+        }
+
+        public int ReprendreDepuis(int index)
+        {   // "Reprendre la partie d'ici" : supprime les coups après le coup n° index de ListeCoups (-1 : position initiale)
+            // et reprend la partie depuis cette position (une partie terminée reprend ; une partie PGN en lecture seule devient
+            // jouable, l'humain ayant le camp au trait). Renvoie le nombre de demi-coups supprimés (0 : rien n'a changé)
+            if (Mode == ModePartie.AucunePartie)
+                return 0;
+            int supprimes = 0;
+            while (ListeCoups.Count - 1 > index && RetireDernierCoup())     // jamais la position de départ d'une partie FEN
+                supprimes++;
+            if (supprimes == 0)
+                return 0;
+            bool etaitLectureSeule = Mode == ModePartie.LectureSeule;
+            Reprendre();
+            RejeuPgn = false;
+            MiseenplaceFen(ListeCoupsFen.Count == 0 ? FenDepart : ListeCoupsFen[^1]);
+            EchecetMat = false;             // absent de la FEN : la position rétablie n'est pas un mat
+            Echec = CampAuTraitEnEchec();
+            if (etaitLectureSeule)
+                HumainPrendLeTrait();
+            return supprimes;
         }
 
         public bool AnnulerDernierCoup()
