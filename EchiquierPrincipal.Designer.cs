@@ -1080,6 +1080,7 @@ namespace BrunoGUI_GenII
             TrackBarTempsReflexion.BackColor = System.Drawing.Color.Gray;
             TrackBarTempsReflexion.Location = new System.Drawing.Point(6, 16);
             TrackBarTempsReflexion.Maximum = 600;
+            TrackBarTempsReflexion.Minimum = 1;
             TrackBarTempsReflexion.Name = "TrackBarTempsReflexion";
             TrackBarTempsReflexion.Size = new System.Drawing.Size(278, 25);
             TrackBarTempsReflexion.TabIndex = 0;
