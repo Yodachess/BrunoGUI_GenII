@@ -43,27 +43,37 @@ namespace BrunoGUI_GenII
         public static string ExtraireCoups(string pgn)
         {   // Cette méthode parcourt le PGN caractère par caractère et utilise une machine à états
             // pour déterminer si elle se trouve dans les en-têtes, les coups, les commentaires ou les variantes.
+            // Les variantes peuvent être imbriquées "( ... ( ... ) ... )" : on compte la profondeur, sinon la fin d'une variante
+            // intérieure ferait reprendre la variante extérieure comme si c'étaient des coups de la partie
             StringBuilder sb = new();
-            bool dansCommentaires = false;
-            bool dansVariante = false;
+            bool dansCommentaire = false;       // { ... }
+            bool dansCommentaireLigne = false;  // ; ... jusqu'à la fin de la ligne
+            int profondeurVariante = 0;
             for (int i = 0; i < pgn.Length; i++)
             {
                 char c = pgn[i];
-                // "enlève" les crochets des balises
-                if (c == '[')
+                if (dansCommentaire)
                 {
+                    if (c == '}') dansCommentaire = false;
+                    continue;
+                }
+                if (dansCommentaireLigne)
+                {
+                    if (c == '\n') { dansCommentaireLigne = false; sb.Append(' '); }
+                    continue;
+                }
+                if (c == '{') { dansCommentaire = true; sb.Append(' '); continue; }   // espace : les coups de part et d'autre restent séparés
+                if (c == ';') { dansCommentaireLigne = true; continue; }
+                if (c == '(') { profondeurVariante++; sb.Append(' '); continue; }
+                if (c == ')') { if (profondeurVariante > 0) profondeurVariante--; continue; }
+                if (profondeurVariante > 0)
+                    continue;
+                if (c == '[')
+                {   // "enlève" les balises [Nom "valeur"]
                     while (i < pgn.Length && pgn[i] != ']')
                         i++;
                     continue;
                 }
-                // commentaires
-                if (c == '{') { dansCommentaires = true; continue; }
-                if (c == '}') { dansCommentaires = false; continue; }
-                if (dansCommentaires) continue;
-                // variantes
-                if (c == '(') { dansVariante = true; continue; }
-                if (c == ')') { dansVariante = false; continue; }
-                if (dansVariante) continue;
                 sb.Append(c);
             }
             return sb.ToString();
@@ -176,6 +186,9 @@ namespace BrunoGUI_GenII
                         break;
                     case "PlyCount":   //  Balise qui m'intéresse
                         PartiePGN.CompteDePLy = ValeurBalise;
+                        break;
+                    case "FEN":         // partie qui commence à une position (avec [SetUp "1"])
+                        PartiePGN.Fen = ValeurBalise;
                         break;
                     default:
                         break;

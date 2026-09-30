@@ -39,6 +39,8 @@ namespace BrunoGUI_GenII
         // Une partie commencée depuis un FEN a en tête de ListeCoups un élément "position de départ" (sans coup) : on le saute
         private static int Decalage => LogiqueMouvements.ListeCoups.Count > 0 && LogiqueMouvements.ListeCoups[0].EstPositionDeDepart ? 1 : 0;
         private static int NombreCoupsJoues => LogiqueMouvements.ListeCoups.Count - Decalage;
+        // Partie commençant par un coup noir (FEN avec les Noirs au trait) : la 1re cellule des Blancs est "..." (pas un coup)
+        private static int CelluleVide => FeuilleDePartie.CommenceParLesNoirs(LogiqueMouvements.ListeCoups) ? 1 : 0;
         private void MettreAJourSelection()
         {
             if (ligneActuelle >= 0 && ligneActuelle < FeuillePartie.Rows.Count)
@@ -49,20 +51,22 @@ namespace BrunoGUI_GenII
         }
         private void AfficherPositionActuelle()
         {   // Affiche sur l'échiquier la position après le coup sélectionné (la partie n'est pas modifiée)
-            int demiCoup = ligneActuelle * 2 + (colonneActuelle - 1);     // n° du coup sélectionné parmi les coups joués (à partir de 0)
+            int demiCoup = ligneActuelle * 2 + (colonneActuelle - 1) - CelluleVide;     // n° du coup sélectionné parmi les coups joués (à partir de 0)
             if (demiCoup >= 0 && demiCoup < NombreCoupsJoues)
                 _brunoInterfaceGraphique.AfficheCoupDeLaPartie(Decalage + demiCoup);
         }
         private void BoutonDebut_Click(object sender, EventArgs e)
         {
             ligneActuelle = 0;      // Aller à la première ligne
-            colonneActuelle = 1;    // Commencer avec le coup Blancs
+            colonneActuelle = 1 + CelluleVide;      // Premier coup : celui des Blancs, ou des Noirs si la partie commence par eux
             MettreAJourSelection();
             BoutonGauche.Enabled = BoutonDebut.Enabled = false;
             BoutonDroit.Enabled = BoutonFin.Enabled = true;
         }
         private void BoutonGauche_Click(object sender, EventArgs e)
         {
+            if (ligneActuelle == 0 && colonneActuelle == 1 + CelluleVide)
+                return;                // déjà sur le premier coup
             if (colonneActuelle == 1)  // Si on est sur Blancs
             {
                 if (ligneActuelle > 0)
@@ -103,7 +107,7 @@ namespace BrunoGUI_GenII
         {
             if (NombreCoupsJoues == 0)
                 return;
-            int dernier = NombreCoupsJoues - 1;     // n° du dernier coup joué (à partir de 0)
+            int dernier = NombreCoupsJoues - 1 + CelluleVide;     // n° de la cellule du dernier coup joué (à partir de 0)
             ligneActuelle = dernier / 2;
             colonneActuelle = dernier % 2 + 1;      // 1 : coup blanc, 2 : coup noir
             MettreAJourSelection();
