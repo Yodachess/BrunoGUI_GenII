@@ -231,12 +231,23 @@ namespace BrunoGUI_GenII
             StandardInputDataToUci("setoption name FixedDepth value 6");       
         }
         public static void Quitte()
-        {   // On ferme le moteur UCI (sans erreur s'il n'a jamais démarré ou s'il a déjà été arrêté, ex : par une mise à jour)
+        {   // On ferme le moteur UCI (sans erreur s'il n'a jamais démarré ou s'il a déjà été arrêté, ex : par une mise à jour).
+            // Certains moteurs (ex : Sargon 1978) ignorent "quit" : après une seconde d'attente, le processus est arrêté de force,
+            // sinon il resterait en mémoire et verrouillerait son .exe
             LogiqueMouvements.StatutMoteurUci = false;
             LimiteElo = false;
             if (Proc == null)
                 return;
             StandardInputDataToUci("quit");
+            try
+            {
+                if (!Proc.WaitForExit(1000))
+                    Proc.Kill();
+            }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
+            {   // processus déjà terminé ou inaccessible : rien à faire
+                Debug.WriteLine($"[App] Arrêt du moteur : {ex.Message}");
+            }
             Proc.Dispose();
             Proc = null;
         }

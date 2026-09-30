@@ -1234,6 +1234,7 @@ namespace BrunoGUI_GenII
             }
             StopMoteur_Click(sender, e);
             SauvePreferences();
+            MoteurUci.Quitte();     // arrête le processus du moteur (de force s'il ignore "quit", comme Sargon)
         }
         private void SauvePreferences()
         {   // Enregistre les réglages faits dans l'interface dans BrunoGUI.preferences.ini (à côté de l'exécutable)
