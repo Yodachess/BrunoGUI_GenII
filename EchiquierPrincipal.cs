@@ -1143,7 +1143,10 @@ namespace BrunoGUI_GenII
             // Version 1.05 = boutons actifs pendant la réflexion du moteur (demandes numérotées), parcours de la partie pendant le jeu
             //                (position affichée séparée), retour arrière après la fin de partie, scores du point de vue des Blancs,
             //                classe Partie et commandes actives calculées en un seul endroit, écran de démarrage de 1 s
-            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.05\n--  Bruno COURTOIS  -- " +
+            // Version 1.06 = "Reprendre ici" (reprendre une partie, même terminée ou chargée en PGN, depuis une position passée),
+            //                pilotage du moteur et calcul des évaluations/variantes hors du formulaire (testés), mat affiché avec
+            //                le camp qui mate, variantes en coups entiers, arrêt garanti du moteur (Sargon), fin d'analyse fiabilisée
+            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.06\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", "A propos de",
                 KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
         }
