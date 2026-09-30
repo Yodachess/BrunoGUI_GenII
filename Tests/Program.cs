@@ -568,6 +568,16 @@ Verifie("PGN écrit : balises SetUp et FEN, premier coup noir numéroté, résul
 PartieEchecsPGN partieRelue = FichierPartiePgn.DecodePartiePGN(pgnEcrit);
 Verifie("PGN relu : la balise FEN est retrouvée", partieRelue.Fen == fenNoirsAuTrait, partieRelue.Fen ?? "(aucune)");
 
+// Fichier PGN en Latin-1 (accents) avec une date incomplète "2024.??.??" et des annotations dans les coups
+string fichierLatin1 = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "test_brunogui_latin1.pgn");
+System.IO.File.WriteAllText(fichierLatin1,
+    "[Event \"Test\"]\n[Date \"2024.??.??\"]\n[White \"Müller\"]\n[Black \"Gaël\"]\n[Result \"*\"]\n\n1. e4! e5?! 2. Nf3 *\n", System.Text.Encoding.Latin1);
+PartieEchecsPGN partieLatin1 = FichierPartiePgn.DecodePartiePGN(FichierPartiePgn.DecodeFichierPGN(fichierLatin1)[0]);
+System.IO.File.Delete(fichierLatin1);
+Verifie("PGN en Latin-1 : accents lus, date '??' conservée, annotations retirées des coups",
+    partieLatin1.White == "Müller" && partieLatin1.Black == "Gaël" && partieLatin1.Date == "2024.??.??" && partieLatin1.CoupsPartiePGN.StartsWith("1. e4 e5 2. Nf3"),
+    $"{partieLatin1.White} / {partieLatin1.Black} / {partieLatin1.Date} / {partieLatin1.CoupsPartiePGN}");
+
 // Bibliothèque d'ouvertures introuvable : exception claire au chargement, puis aucun coup (et plus d'exception) à la recherche
 bool introuvableSignalee = false;
 try { new PolyglotBibliothèque().PolyglotBibliothèqueLecture("bibliotheque_introuvable.bin"); }
