@@ -75,6 +75,14 @@ namespace BrunoGUI_GenII
         public FichierPartiePgn()
         {
             InitializeComponent();
+            FormClosing += (s, e) =>
+            {   // Croix rouge : la fenêtre est seulement masquée (la fenêtre principale la réaffiche avec "Affiche liste parties")
+                if (e.CloseReason == CloseReason.UserClosing)
+                {
+                    e.Cancel = true;
+                    Hide();
+                }
+            };
         }
         public static List<string> DecodeFichierPGN(string fichierPgn)
         {   // --- On découpe le fichier PGN pour obtenir la liste des parties contenues dans le fichier. ---

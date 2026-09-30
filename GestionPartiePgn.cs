@@ -289,17 +289,18 @@ namespace BrunoGUI_GenII
             private void InitializeComponents()
             {
                 // Création des champs de saisie
-                tournamentCase = CreationBalisesTextBox("Tournoi :", 20, 10, value => partieBalises.Tournoi = value);
-                lieuCase = CreationBalisesTextBox("Lieu :     ", 20, 40, value => partieBalises.Lieu = value);
-                dateCase = CreationBalisesTextBox("Date :     ", 20, 70, value => partieBalises.Date = value);
-                rondeCase = CreationBalisesTextBox("Ronde :    ", 20, 100, value => partieBalises.Ronde = value);
-                blancsCase = CreationBalisesTextBox("Blancs :   ", 20, 130, value => partieBalises.White = value);
-                noirsCase = CreationBalisesTextBox("Noirs :    ", 20, 160, value => partieBalises.Black = value);
-                resultCase = CreationBalisesTextBox("Résultat :", 20, 190, value => partieBalises.Result = value);
-                ecoCase = CreationBalisesTextBox("ECO :     ", 20, 220, value => partieBalises.ECO = value);
-                whiteeloCase = CreationBalisesTextBox("ELO Blancs :", 20, 250, value => partieBalises.WhiteElo = value);
-                blackeloCase = CreationBalisesTextBox("ELO Noirs :", 20, 280, value => partieBalises.BlackElo = value);
-                plycountCase = CreationBalisesTextBox("Demi coups :", 20, 310, value => partieBalises.CompteDePLy = value);
+                // Les valeurs ne sont recopiées dans la partie qu'à l'enregistrement (SauveBalises_Click) : "Quitter" n'en garde aucune
+                tournamentCase = CreationBalisesTextBox("Tournoi :", 20, 10);
+                lieuCase = CreationBalisesTextBox("Lieu :     ", 20, 40);
+                dateCase = CreationBalisesTextBox("Date :     ", 20, 70);
+                rondeCase = CreationBalisesTextBox("Ronde :    ", 20, 100);
+                blancsCase = CreationBalisesTextBox("Blancs :   ", 20, 130);
+                noirsCase = CreationBalisesTextBox("Noirs :    ", 20, 160);
+                resultCase = CreationBalisesTextBox("Résultat :", 20, 190);
+                ecoCase = CreationBalisesTextBox("ECO :     ", 20, 220);
+                whiteeloCase = CreationBalisesTextBox("ELO Blancs :", 20, 250);
+                blackeloCase = CreationBalisesTextBox("ELO Noirs :", 20, 280);
+                plycountCase = CreationBalisesTextBox("Demi coups :", 20, 310);
                 // Pré-remplir les champs
                 tournamentCase.Text = partieBalises.Tournoi;
                 lieuCase.Text = partieBalises.Lieu;
@@ -335,7 +336,7 @@ namespace BrunoGUI_GenII
                 this.Text = "Saisie des en-têtes de parties";
                 this.Size = new Size(280, 420);
             }
-            private KryptonTextBox CreationBalisesTextBox(string labelText, int x, int y, Action<string> updateProperty)
+            private KryptonTextBox CreationBalisesTextBox(string labelText, int x, int y)
             {
                 KryptonLabel label = new()
                 {
@@ -352,7 +353,6 @@ namespace BrunoGUI_GenII
                 };
                 textBox.StateCommon.Border.DrawBorders = PaletteDrawBorders.All; // ✅ Bordure
                 textBox.StateCommon.Content.Font = new Font("Arial", 10, FontStyle.Bold | FontStyle.Italic); // ✅ Police du texte
-                textBox.TextChanged += (sender, e) => updateProperty(textBox.Text);
                 this.Controls.Add(textBox);
 
                 return textBox;

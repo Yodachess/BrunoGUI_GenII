@@ -77,7 +77,7 @@ namespace BrunoGUI_GenII
         private string _nomHumain, _joueurElo, _nomMoteur, _moteurElo, _joueurBlanc, _joueurNoir;
         private string _cheminMoteur, _nomMoteurChoisi;
         private string _bibliotheque = "rodent.bin";
-        private bool _clickCaseSource, _visuSymbole, _montreDonneesBrutesUci, _montre3VariantesUci, _montreListeParties;
+        private bool _clickCaseSource, _visuSymbole, _montreDonneesBrutesUci, _montre3VariantesUci;
         private bool _visuCoteNoir;     // True quand les Noirs sont en bas de l'écran
         private bool _clavierActif, _emetUnSon, _bibliothèqueAléatoire;
         private bool _bibliothèqueActive = true;
@@ -97,7 +97,7 @@ namespace BrunoGUI_GenII
         public ParametresDeBase mesparametresDeBase;        // mesparametresDeBase est déclarée, mais elle n’est instanciée qu'après "InitializeComponent();"
         private FenetrePartie mafenetrePartie;              // mafenetrePartie est déclarée, mais elle n’est pas encore instanciée. A instancier dans une méthode
         private AffichePgn affichePgn = new();   // affichePgn est à la fois déclarée et instanciée. Prêt à être utilisé dès le début
-        private FichierPartiePgn fichierPartiePgn = new();     // idem pour fichierPartiePgn
+        private readonly FichierPartiePgn fichierPartiePgn = new();     // liste des parties d'un fichier PGN (masquée, jamais détruite)
         private readonly DonneesBrutesUci donneesBrutesUci = new();
         private readonly Parametres parametres;
         private static readonly System.Windows.Forms.Timer timer1 = new();
@@ -157,6 +157,11 @@ namespace BrunoGUI_GenII
             PartieEnCours.Black = parametres.Moteur;
             PartieEnCours.BlackElo = _forceMoteurElo.ToString();
             mesparametresDeBase = new ParametresDeBase(this);
+            fichierPartiePgn.VisibleChanged += (s, e) => MetAJourBoutonListeParties();   // bouton "Affiche/Masque liste parties"
+            // Les options suivent l'état initial des cases à cocher du designer (le son était inversé : case cochée, son coupé)
+            _emetUnSon = ActiveSon.Checked;
+            _bibliothèqueActive = ActiveBibliothèque.Checked;
+            _bibliothèqueAléatoire = ActiveAléatoire.Checked;
         }
 
         private void BrunoInterfaceGraphique_Load(object sender, EventArgs e)
@@ -251,16 +256,13 @@ namespace BrunoGUI_GenII
         }
 
         private void NouvellePartieStockfish_Click(object sender, EventArgs e)
-        {   // Nouvelle partie contre Stockfish, avec la possibilité de régler la force du moteur et le temps de réflexion
-            AbandonneReflexion();   // nouvelle partie
-            QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
-            _pilote.Abandonner();       // plus aucune demande (analyse ou coup) en cours au moteur
-            LogiqueMouvements.PartieEnCoursMat = LogiqueMouvements.PartieEnCoursPat = false;
-            QuiJoue = ColorPiece.Blanc;
-            NumeroDemiCoup = 0;
-            DémarreStockfish();
+        {   // Nouvelle partie contre Stockfish, avec la possibilité de régler la force du moteur et le temps de réflexion.
+            // Rien ne change avant la validation : "Annuler" laisse la partie en cours intacte (et le moteur continue à réfléchir)
             if (maNouvellePartieForceModule.ShowDialog() == DialogResult.OK)
             {   // Utilise les sélections faites par l'utilisateur
+                AbandonneReflexion();   // nouvelle partie
+                QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
+                DémarreStockfish();
                 string couleurMoteur = maNouvellePartieForceModule.ChoixCouleur;
                 bool forceMaximale = maNouvellePartieForceModule.ForceMaximale;
                 _forceMoteurElo = maNouvellePartieForceModule.ForceModule;
@@ -524,9 +526,16 @@ namespace BrunoGUI_GenII
                 MiseaZéroTimer();
                 TrackBarTempsReflexion.Enabled = true;
                 if (_emetUnSon)
-                {   // Son pour dire que le coup est joué
-                    SoundPlayer player = new(@"C:\Windows\Media\Windows Notify.wav");
-                    player.Play();
+                {   // Son pour dire que le coup est joué (son système par défaut si le fichier de Windows est absent)
+                    try
+                    {
+                        SoundPlayer player = new(@"C:\Windows\Media\Windows Notify.wav");
+                        player.Play();
+                    }
+                    catch (Exception ex) when (ex is FileNotFoundException || ex is InvalidOperationException)
+                    {
+                        SystemSounds.Asterisk.Play();
+                    }
                 }
                 TypeDemande demande = _pilote.ReponseRecue();   // à quelle demande répond ce bestmove ?
                 if (demande == TypeDemande.CoupDePartie)
@@ -750,20 +759,18 @@ namespace BrunoGUI_GenII
         // Gestion des menus
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void HumainOrdinateur_Click(object sender, EventArgs e)
-        {   // L'humain joue les blancs, l'ordinateur les noirs
-            AbandonneReflexion();   // nouvelle partie
-            QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
-            QuiJoue = ColorPiece.Blanc;
-            PartieEnCours.White = LabelJoueurBlanc.Text = _nomHumain;
-            PartieEnCours.Black = LabelJoueurNoir.Text = _nomMoteur;
-            PartieEnCours.WhiteElo = EloBlanc.Text = _joueurElo;
-            PartieEnCours.BlackElo = EloNoir.Text = _moteurElo;
-            _pilote.Abandonner();       // plus aucune demande (analyse ou coup) en cours au moteur
-            // On demande confirmation car la partie est remise à zéro
-            string confirmation = "Vous aurez les Blancs contre " + _nomMoteur + ". " + "\nToute position précédente sera effacée,\n confirmez avec Oui, sinon Annuler";
+        {   // L'humain joue les blancs, l'ordinateur les noirs.
+            // On demande d'abord confirmation (la partie est remise à zéro) : "Annuler" laisse la partie en cours intacte
+            string confirmation = "Vous aurez les Blancs contre " + _nomMoteur + ". " + "\nToute position précédente sera effacée,\n confirmez avec OK, sinon Annuler";
             DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Le joueur a les Blancs, l'ordinateur les Noirs ", KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
             if (Resultat == DialogResult.OK)
             {
+                AbandonneReflexion();   // nouvelle partie
+                QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
+                PartieEnCours.White = LabelJoueurBlanc.Text = _nomHumain;
+                PartieEnCours.Black = LabelJoueurNoir.Text = _nomMoteur;
+                PartieEnCours.WhiteElo = EloBlanc.Text = _joueurElo;
+                PartieEnCours.BlackElo = EloNoir.Text = _moteurElo;
                 StatusProgramme.Text = ScoreMoteur.Text = EvaluationUci.Text = VarianteMoteurCourante.Text = "";    // On efface les données de la partie précédente
                 CommencerPartie(Joueur.Humain, Joueur.Moteur);
                 if (_visuCoteNoir)
@@ -774,20 +781,18 @@ namespace BrunoGUI_GenII
             }
         }
         private void OrdinateurHumain_Click(object sender, EventArgs e)
-        {   // L'ordinateur joue les blancs, l'humain les noirs
-            AbandonneReflexion();   // nouvelle partie
-            QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
-            QuiJoue = ColorPiece.Blanc;
-            PartieEnCours.White = LabelJoueurBlanc.Text = _nomMoteur;
-            PartieEnCours.Black = LabelJoueurNoir.Text = _nomHumain;
-            PartieEnCours.WhiteElo = EloBlanc.Text = _moteurElo;
-            PartieEnCours.BlackElo = EloNoir.Text = _joueurElo;
-            _pilote.Abandonner();       // plus aucune demande (analyse ou coup) en cours au moteur
-            // On demande confirmation car la partie est remise à zéro
-            string confirmation = "Vous aurez les Noirs contre " + _nomMoteur + ". " + "\nToute position précédente sera effacée,\n confirmez avec Oui, sinon Annuler";
+        {   // L'ordinateur joue les blancs, l'humain les noirs.
+            // On demande d'abord confirmation (la partie est remise à zéro) : "Annuler" laisse la partie en cours intacte
+            string confirmation = "Vous aurez les Noirs contre " + _nomMoteur + ". " + "\nToute position précédente sera effacée,\n confirmez avec OK, sinon Annuler";
             DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Le joueur a les Noirs, l'ordinateur les Blancs ", KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
             if (Resultat == DialogResult.OK)
             {
+                AbandonneReflexion();   // nouvelle partie
+                QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
+                PartieEnCours.White = LabelJoueurBlanc.Text = _nomMoteur;
+                PartieEnCours.Black = LabelJoueurNoir.Text = _nomHumain;
+                PartieEnCours.WhiteElo = EloBlanc.Text = _moteurElo;
+                PartieEnCours.BlackElo = EloNoir.Text = _joueurElo;
                 StatusProgramme.Text = ScoreMoteur.Text = EvaluationUci.Text = VarianteMoteurCourante.Text = "";     // On efface les données de la partie précédente
                 CommencerPartie(Joueur.Moteur, Joueur.Humain);
                 if (_visuCoteNoir == false)
@@ -798,17 +803,17 @@ namespace BrunoGUI_GenII
             }
         }
         private void HumainContreHumain_Click(object sender, EventArgs e)
-        {   // 2 joueurs humains s'affrontent, pas de moteur UCI
-            AbandonneReflexion();   // nouvelle partie
-            QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
-            PartieEnCours.White = LabelJoueurBlanc.Text = _nomHumain;
-            PartieEnCours.Black = LabelJoueurNoir.Text = "Adversaire";
-            // On demande confirmation car la partie est remise à zéro
+        {   // 2 joueurs humains s'affrontent, pas de moteur UCI.
+            // On demande d'abord confirmation (la partie est remise à zéro) : "Annuler" laisse la partie en cours intacte
             string confirmation = "Vous jouez contre votre ami/partenaire,\n" + "ou vous saisissez une partie ...\n" +
-                "Toute position précédente sera effacée,\n confirmez avec Oui, sinon Annuler";
+                "Toute position précédente sera effacée,\n confirmez avec OK, sinon Annuler";
             DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Jeu entre amis, ou saisie de partie", KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
             if (Resultat == DialogResult.OK)
             {
+                AbandonneReflexion();   // nouvelle partie
+                QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
+                PartieEnCours.White = LabelJoueurBlanc.Text = _nomHumain;
+                PartieEnCours.Black = LabelJoueurNoir.Text = "Adversaire";
                 StatusProgramme.Text = "Humain contre humain";
                 InformationsPartie.Text = " Bruno vous souhaite une bonne partie !";
                 MoteurUci.ActiveLimiteElo();        // Préparation du moteur en cas de demande d'analyse
@@ -973,7 +978,8 @@ namespace BrunoGUI_GenII
                 Fenaenvoyer = FenDepart; // position initiale
             }
             JeuMoteurAvecBibliothèque(Fenaenvoyer);
-            PlateauEnable(true);
+            // Plateau bloqué tant que le moteur réfléchit ; libre si son coup de bibliothèque est déjà joué
+            PlateauEnable(!_partie.MoteurAuTrait);
             _clickCaseSource = _visuSymbole = true;    // L'ordinateur ayant joué, c'est indispensable !
         }
         private void RetourArriere_Click(object sender, EventArgs e)
@@ -1076,12 +1082,15 @@ namespace BrunoGUI_GenII
             }
         }
         public void MontrePartiesPGN_Click(object sender, EventArgs e)
-        {   // Affiche ou masque la liste des parties
-            _montreListeParties = !_montreListeParties;
-            MontrePartiesPGN.Text = _montreListeParties ? "Masque liste parties" : "Affiche liste parties";
-            if (_montreListeParties) fichierPartiePgn.Show();   // On affiche la liste des parties
-            else fichierPartiePgn.Hide();                       // ou on masque la liste des parties
+        {   // Affiche ou masque la liste des parties (la fenêtre n'est jamais détruite : voir FichierPartiePgn_FormClosing).
+            // Le texte du bouton suit l'état réel de la fenêtre (MetAJourBoutonListeParties, sur VisibleChanged)
+            if (fichierPartiePgn.Visible)
+                fichierPartiePgn.Hide();
+            else
+                fichierPartiePgn.Show();
         }
+        private void MetAJourBoutonListeParties() =>
+            MontrePartiesPGN.Text = fichierPartiePgn.Visible ? "Masque liste parties" : "Affiche liste parties";
         private void VisualisationPgn_Click(object sender, EventArgs e)
         {   // Bouton pour voir la partie en PGN
             if (affichePgn == null || affichePgn.IsDisposed)
@@ -1414,48 +1423,32 @@ namespace BrunoGUI_GenII
         */
         private void ChargePartiesPgn_Click(object sender, EventArgs e)
         {   // --- Affiche la boîte de dialogue et traite le fichier PGN sélectionné  ---
-            AbandonneReflexion();   // chargement d'une partie
-            EffaceDernierCoup();
-            ListeParties.Clear();    // On vide la liste des parties 
-            ListePartiesPGN.Clear(); // On vide la liste des parties PGN
-            if (ChargerPartiesPgn.ShowDialog() == DialogResult.OK)
+            // Ouvrir un fichier ne change pas la partie en cours (ni la réflexion du moteur) : seul le choix d'une partie
+            // dans la liste la remplace (ChargerPartieDepuisPgn). "Annuler" ne change donc rien
+            if (ChargerPartiesPgn.ShowDialog() != DialogResult.OK)
+                return;
+            string cheminFichier = ChargerPartiesPgn.FileName;
+            try
             {
-                string cheminFichier = ChargerPartiesPgn.FileName;
-                try
-                {   // Vérifie et obtient le chemin complet
-                    string fullPath = Path.GetFullPath(cheminFichier);
-                    Debug.WriteLine("Chemin complet du fichier : " + fullPath);
-
-                    // Lire le contenu du fichier et l'afficher dans la console
-                    string contenuFichier = File.ReadAllText(fullPath);
-                    // NettoyageRapide();
-                    if (fichierPartiePgn == null || fichierPartiePgn.IsDisposed)
-                    {   // Traitement pour prendre en compte la fermeture par croix rouge en haut à droite ...
-                        fichierPartiePgn = new FichierPartiePgn();
-                        fichierPartiePgn.FormClosed += (s, args) =>
-                        {   // On évite que la référence de affichePgn pointe vers un objet supprimé.
-                            fichierPartiePgn = null;
-                        };
-                    }
-                    ListeParties = FichierPartiePgn.DecodeFichierPGN(fullPath); // Récupère les parties PGN
-                    foreach (string partie in ListeParties)                     // On parcourt la liste de parties, et
-                    {                                                           // On met chaque partie au format PartieEchecsPGN dans ListePartiePGN
-                        ListePartiesPGN.Add(FichierPartiePgn.DecodePartiePGN(partie));
-                    }
-                    fichierPartiePgn.NombrePartiesFichier.Text = ListePartiesPGN.Count.ToString()
-                        + " partie(s) dans le fichier  " + cheminFichier[(cheminFichier.LastIndexOf('\\') + 1)..];
-                    fichierPartiePgn.AfficherListeParties(ListePartiesPGN);
-                    fichierPartiePgn.Show();
-                    MontrePartiesPGN.Enabled = true; // Active le bouton pour masquer/afficher la liste
-                    MontrePartiesPGN_Click(this, EventArgs.Empty);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine("Chargement Pgn : Erreur lors de la lecture du fichier : " + ex.Message);
-                }
+                string fullPath = Path.GetFullPath(cheminFichier);
+                Debug.WriteLine("Chemin complet du fichier : " + fullPath);
+                ListeParties = FichierPartiePgn.DecodeFichierPGN(fullPath); // Récupère les parties PGN
+                ListePartiesPGN.Clear();
+                foreach (string partie in ListeParties)                     // On met chaque partie au format PartieEchecsPGN dans ListePartiePGN
+                    ListePartiesPGN.Add(FichierPartiePgn.DecodePartiePGN(partie));
+                fichierPartiePgn.NombrePartiesFichier.Text = ListePartiesPGN.Count.ToString()
+                    + " partie(s) dans le fichier  " + Path.GetFileName(cheminFichier);
+                fichierPartiePgn.AfficherListeParties(ListePartiesPGN);
+                fichierPartiePgn.Show();
+                fichierPartiePgn.BringToFront();
+                MontrePartiesPGN.Enabled = true; // Active le bouton pour masquer/afficher la liste
             }
-            VarianteMoteurUci1.Text = VarianteMoteurUci2.Text = VarianteMoteurUci3.Text = InformationPourJoueur.Text = "...";
-            VarianteMoteurCourante.Text = ScoreMoteur.Text = EvaluationUci.Text = "...";
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Chargement Pgn : Erreur lors de la lecture du fichier : " + ex.Message);
+                KryptonMessageBox.Show("Impossible de lire ce fichier PGN :\n" + ex.Message, "Ouvrir fichier PGN",
+                    KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+            }
         }
         private void ChargePositionFen_Click(object sender, EventArgs e)
         {
@@ -1801,16 +1794,16 @@ namespace BrunoGUI_GenII
             Debug.WriteLine($" 3. _dureeReflexionMilliSeconde = {_dureeReflexionMilliSeconde}");
         }
         private void ActiveBibliothèque_CheckedChanged(object sender, EventArgs e)
-        {   // Bascule pour activer ou non la bibliothèque
-            _bibliothèqueActive = !_bibliothèqueActive;
+        {   // Activer ou non la bibliothèque (on lit la case : une bascule se décalerait si l'état initial différait)
+            _bibliothèqueActive = ActiveBibliothèque.Checked;
         }
         private void ActiveAléatoire_CheckedChanged(object sender, EventArgs e)
         {   // Choisir un coup aléatoire ou le meilleur coup dans la bibliothèque
-            _bibliothèqueAléatoire = !_bibliothèqueAléatoire;
+            _bibliothèqueAléatoire = ActiveAléatoire.Checked;
         }
         private void ActiveSon_CheckedChanged(object sender, EventArgs e)
-        {   // Bascule pour mettre ou enlever le son
-            _emetUnSon = !_emetUnSon;
+        {   // Mettre ou enlever le son
+            _emetUnSon = ActiveSon.Checked;
         }
         public void ActiverMenus(bool actif)
         {
