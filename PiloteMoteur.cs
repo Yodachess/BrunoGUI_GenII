@@ -94,31 +94,10 @@ namespace BrunoGUI_GenII
         {   // Joue un coup au format UCI ("e2e4", "e7e8q" : le 5e caractère est la pièce de promotion) ; renvoie false s'il est illégal
             if (string.IsNullOrEmpty(coupUci) || coupUci.Length < 4 || EchecetMat)
                 return false;
-            string source = coupUci[..2];
-            string destination = coupUci.Substring(2, 2);
-            if (coupUci.Length >= 5)
-            {   // Promotion : la pièce est imposée, on ne propose pas le choix au joueur
-                bool blanche = destination[1] == '8';
-                PromotionPiece = char.ToLower(coupUci[4]) switch
-                {
-                    'q' => blanche ? TypePiece.ReineBlanche : TypePiece.ReineNoire,
-                    'r' => blanche ? TypePiece.TourBlanche : TypePiece.TourNoire,
-                    'b' => blanche ? TypePiece.FouBlanc : TypePiece.FouNoir,
-                    'n' => blanche ? TypePiece.CavalierBlanc : TypePiece.CavalierNoir,
-                    _ => TypePiece.Vide,
-                };
-                BloquerChoixPromo = true;
-            }
-            else
-                PromotionPiece = TypePiece.Vide;
-            try
-            {
-                ExecutionCoup(source, destination);
-            }
-            finally
-            {
-                BloquerChoixPromo = false;
-            }
+            // Pièce de promotion imposée (le joueur n'a pas à choisir) : celle du 5e caractère, sinon une dame ;
+            // elle ne sert que si le coup est vraiment une promotion, et prend la couleur du pion (PieceDeLaCouleur)
+            TypePiece promotion = coupUci.Length >= 5 ? PieceDePromotion(coupUci[4], ColorPiece.Blanc) : TypePiece.ReineBlanche;
+            ExecutionCoup(coupUci[..2], coupUci.Substring(2, 2), promotion);
             return CoupValide;
         }
     }

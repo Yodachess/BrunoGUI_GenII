@@ -138,7 +138,7 @@ namespace BrunoGUI_GenII
             LogiqueMouvements.AfficheInfoEchec += AfficheInfoEchec;
             LogiqueMouvements.AfficheEchecEtMat += AfficheEchecEtMat;
             LogiqueMouvements.AfficheTour += AfficheTour;
-            LogiqueMouvements.AffichePromotionPion += AffichePromotionPion;
+            LogiqueMouvements.ChoixPromotion = AffichePromotionPion;
             LogiqueMouvements.DessinePiece += DessinePieceDeLaPartie;     // ignoré pendant le parcours de la partie
             LogiqueMouvements.DessineSymbole += DessineSymbole;
             MoteurUci.AfficheUci += AfficheUci;
@@ -562,11 +562,11 @@ namespace BrunoGUI_GenII
                 PlateauEnable(false); // un des joueurs est pat : fin de la partie
             }
         }
-        private void AffichePromotionPion(string Couleur)
-        {   // Affiche la promotion d'un pion : on affiche les pièces disponibles pour la promotion,
-            // et on attend que le joueur clique sur une pièce pour faire son choix
+        private LogiqueMouvements.TypePiece AffichePromotionPion(LogiqueMouvements.ColorPiece couleur)
+        {   // Promotion d'un pion de l'humain : on affiche les pièces disponibles pour la promotion, on attend que le joueur
+            // clique sur une pièce, et on renvoie son choix (Vide si la fenêtre se ferme : la logique promeut alors en dame)
             _selectionPromotion = LogiqueMouvements.TypePiece.Vide;
-            List<LogiqueMouvements.TypePiece> pieces = Couleur == "Noir" ? ListeNoire : ListeBlanche;    // dame, tour, fou, cavalier
+            List<LogiqueMouvements.TypePiece> pieces = couleur == LogiqueMouvements.ColorPiece.Noir ? ListeNoire : ListeBlanche;    // dame, tour, fou, cavalier
             Promo0.Image = _vue.ImagePiece(pieces[0]);
             Promo1.Image = _vue.ImagePiece(pieces[1]);
             Promo2.Image = _vue.ImagePiece(pieces[2]);
@@ -601,6 +601,7 @@ namespace BrunoGUI_GenII
                     _clavierActif = clavierAvantChoix;
                 }
             }
+            return _selectionPromotion;
         }
 
         private void BoutonGainBlanc_Click(object sender, EventArgs e)
@@ -1526,8 +1527,6 @@ namespace BrunoGUI_GenII
             PictureBox Promotion = (PictureBox)sender;
             int indexSelect = Convert.ToInt32(Promotion.Name[5..]);
             _selectionPromotion = LogiqueMouvements.QuiJoue == LogiqueMouvements.ColorPiece.Blanc ? ListeBlanche[indexSelect] : ListeNoire[indexSelect];
-            LogiqueMouvements.PromotionPiece = _selectionPromotion;
-            Debug.WriteLine($"[Promo0_Click] Promotion choisie : {_selectionPromotion} (PromotionPiece =  {LogiqueMouvements.PromotionPiece})");
         }
         public void PlateauEnable(bool statut)
         {   // Est-ce au joueur de bouger les pièces ? (le plateau n'est de toute façon actif que si la partie est en cours : voir MetAJourPlateau)
