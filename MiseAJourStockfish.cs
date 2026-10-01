@@ -1,428 +1,205 @@
-// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
 // █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
 // █ Copyright (C) 2026 Bruno COURTOIS                                      █
 // █ SPDX-License-Identifier: GPL-3.0-or-later                              █
 // █ See the LICENSE file in the project root for full license information. █
 // └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 
+// Mise à jour de Stockfish depuis GitHub (https://github.com/official-stockfish/Stockfish/releases)
+//  └─ Classe "MiseAJourStockfish"
+//              ├─ "RechercherNouvelleVersion"  compare la version installée à la dernière publiée (rien n'est arrêté ni téléchargé)
+//              ├─ "Installer"                  télécharge, remplace stockfish.exe (sauvegarde .old, restaurée en cas d'échec)
+//              └─ "ChoisirArchive"             archive Windows adaptée au processeur (testé)
+// Depuis Stockfish 19, chaque publication ne contient qu'un binaire "universal" par processeur (x86-64, arm64) :
+// il détecte lui-même les instructions disponibles (plus de choix avx2 / bmi2 à faire ici).
+
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
-using System.Runtime.Intrinsics.X86;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Threading;
-using System.Runtime.InteropServices;
-using BrunoGUI_GenII;
 
-public class MiseAJourStockfish
+namespace BrunoGUI_GenII
 {
-    private readonly string _cheminComplet;
-    private readonly string _repertoire;
-    private readonly string _repertoireSauvegarde;
-    private static readonly HttpClient client = new();
+    public class MiseAJourStockfish
+    {
+        private const string UrlDerniereVersion = "https://api.github.com/repos/official-stockfish/Stockfish/releases/latest";
+        private static readonly HttpClient Client = CreerClient();
+        private readonly string _cheminExe;         // stockfish.exe du dossier de sortie (à côté de BrunoGUI)
+        private readonly string _cheminSauvegarde;  // l'ancienne version, gardée jusqu'à ce que la nouvelle ait démarré
 
-    public MiseAJourStockfish(string cheminMoteurOuDossier)
-    {   // Si le chemin passé est un dossier, on ajoute "stockfish.exe" au bout
-        if (Directory.Exists(cheminMoteurOuDossier))
+        public record VersionStockfish(string Tag, string Url, long TailleOctets);  // ex : sf_19, lien du zip, taille du zip
+
+        public MiseAJourStockfish(string cheminExe)
         {
-            _cheminComplet = Path.Combine(cheminMoteurOuDossier, "stockfish.exe");
+            _cheminExe = Path.GetFullPath(cheminExe);
+            _cheminSauvegarde = _cheminExe + ".old";
         }
-        else
+        private static HttpClient CreerClient()
         {
-            _cheminComplet = Path.GetFullPath(cheminMoteurOuDossier);
+            HttpClient client = new();
+            client.DefaultRequestHeaders.Add("User-Agent", "BrunoGUI_GenII");    // exigé par l'API GitHub
+            return client;
         }
-        _repertoire = Path.GetDirectoryName(_cheminComplet);
-        _repertoireSauvegarde = _cheminComplet + ".old";
-        Debug.WriteLine($"[MAJ] Cible corrigée: {_cheminComplet}");
-        if (!client.DefaultRequestHeaders.Contains("User-Agent"))
-            client.DefaultRequestHeaders.Add("User-Agent", "Stockfish-Updater-CSharp");
-    }
-    public record VersionStockfish(string Tag, string Url, long TailleOctets);  // ex : sf_19, lien du zip, taille du zip
 
-    public async Task<VersionStockfish> RechercherNouvelleVersion()
-    {   // Compare la version installée à la dernière version publiée sur GitHub, sans rien arrêter ni télécharger.
-        // Retourne null si Stockfish est déjà à jour (exception en cas d'erreur, ex : pas de connexion)
-        Debug.WriteLine("[MAJ] Récupération de la version locale...");
-        string versionLocale = await ObtenirVersionLocale();
-        Debug.WriteLine($"[MAJ] Version locale détectée: {versionLocale}");
-        var (tag, url, taille) = await VerifierNouvelleVersionGitHub(versionLocale);
-        Debug.WriteLine(tag == null ? "[MAJ] Stockfish est à jour." : $"[MAJ] Nouvelle version disponible: {tag}");
-        return tag == null ? null : new VersionStockfish(tag, url, taille);
-    }
-
-    public async Task Installer(VersionStockfish version)
-    {   // Télécharge et installe la version trouvée par RechercherNouvelleVersion (exception en cas d'erreur, l'ancien moteur est alors restauré).
-        // ATTENTION : arrête d'abord le Stockfish lancé depuis ce fichier (le moteur doit être redémarré ensuite)
-        bool miseAJourReussie = false;
-        Debug.WriteLine($"[MAJ] Installation de {version.Tag}.");
-        try
-        {   // 1. ARRÊT PRÉVENTIF (On évite le verrouillage avant même de commencer)
-            Debug.WriteLine("[MAJ] Étape 0: Arrêt préventif des instances de Stockfish...");
-            ArreterProcessusStockfish();
-            await Task.Delay(1000); // Pause pour laisser l'OS respirer
-
-            // 3. TÉLÉCHARGEMENT
-            Debug.WriteLine("[MAJ] Étape 2: Téléchargement du ZIP...");
-            string tempZip = Path.Combine(Path.GetTempPath(), "sf_update.zip");
-            await TelechargerFichier(version.Url, tempZip);
-            Debug.WriteLine($"[MAJ] ZIP téléchargé dans: {tempZip}");
-
-            // 4. EXTRACTION TEMP
-            Debug.WriteLine("[MAJ] Étape 3: Extraction vers le dossier Temp...");
-            string tempExe = Path.Combine(Path.GetTempPath(), "stockfish_new.exe");
-            ExtraireVersTemp(tempZip, tempExe);
-            Debug.WriteLine($"[MAJ] EXE extrait dans: {tempExe}");
-
-            // 5. REMPLACEMENT (Le moment où ça cassait avant)
-            Debug.WriteLine("[MAJ] Étape 4: Nettoyage final avant remplacement...");
-
-            // On retue le processus (car ObtenirVersionLocale a pu en relancer un !)
-            ArreterProcessusStockfish();
-            Debug.WriteLine("[MAJ] Pause de 1500ms pour libération finale des handles...");
-            await Task.Delay(1500);
-
-            // Diagnostic de verrouillage JUSTE avant l'écriture
-            Debug.WriteLine("[MAJ] Étape 5: Vérification ultime du verrouillage...");
-            VerifierVerrouillageFichier(_cheminComplet);
-
-            // Droits et Backup
-            Debug.WriteLine("[MAJ] Étape 6: Forçage des accès et création du backup...");
-            ForcerAccesFichier(_cheminComplet);
-
-            if (File.Exists(_repertoireSauvegarde))
-            {
-                Debug.WriteLine("[MAJ] Nettoyage de l'ancien backup...");
-                ForcerAccesFichier(_repertoireSauvegarde);
-                File.Delete(_repertoireSauvegarde);
-            }
-
-            if (File.Exists(_cheminComplet))
-            {
-                Debug.WriteLine("[MAJ] Déplacement du fichier actuel vers .old...");
-                // File.Move est souvent plus efficace que CopierAvecRetry pour libérer le nom de fichier
-                File.Move(_cheminComplet, _repertoireSauvegarde);
-                Debug.WriteLine("[MAJ] Backup (.old) créé avec succès.");
-            }
-
-            // Installation
-            Debug.WriteLine("[MAJ] Étape 7: Copie du nouveau binaire vers la cible...");
-            CopierAvecRetry(tempExe, _cheminComplet, true);
-            Debug.WriteLine("[MAJ] Nouveau binaire installé.");
-
-            // 6. SANTÉ
-            Debug.WriteLine("[MAJ] Étape 8: Vérification de santé (UCI)...");
-            if (await VerifierSanteMoteur())
-            {
-                Debug.WriteLine("[MAJ] Santé OK. Nettoyage final...");
-                miseAJourReussie = true;
-                try
-                {
-                    if (File.Exists(tempZip)) File.Delete(tempZip);
-                    if (File.Exists(tempExe)) File.Delete(tempExe);
-                    if (File.Exists(_repertoireSauvegarde)) File.Delete(_repertoireSauvegarde);
-                }
-                catch { /* Optionnel */ }
-                Debug.WriteLine("[MAJ] Mise à jour terminée avec succès !");
-            }
-            else
-            {
-                Debug.WriteLine("[MAJ] ERREUR: Le moteur ne répond pas à UCI.");
-                throw new Exception("Le nouveau moteur ne démarre pas (Erreur UCI).");
-            }
+        public async Task<VersionStockfish> RechercherNouvelleVersion()
+        {   // Compare la version installée à la dernière version publiée sur GitHub, sans rien arrêter ni télécharger.
+            // Retourne null si Stockfish est déjà à jour (exception en cas d'erreur, ex : pas de connexion)
+            string versionLocale = await ObtenirVersionLocale();
+            using JsonDocument document = JsonDocument.Parse(await Client.GetStringAsync(UrlDerniereVersion));
+            JsonElement publication = document.RootElement;
+            string tag = publication.GetProperty("tag_name").GetString();
+            Debug.WriteLine($"[MAJ] Installée : {versionLocale}, publiée : {tag}");
+            if (string.Equals(tag, versionLocale, StringComparison.OrdinalIgnoreCase))
+                return null;
+            var archives = publication.GetProperty("assets").EnumerateArray()
+                .Select(a => (Nom: a.GetProperty("name").GetString(), Url: a.GetProperty("browser_download_url").GetString(), Taille: a.GetProperty("size").GetInt64()))
+                .ToList();
+            string nomChoisi = ChoisirArchive(archives.Select(a => a.Nom), RuntimeInformation.OSArchitecture)
+                ?? throw new Exception("Aucune archive Windows adaptée à ce processeur dans la publication " + tag + ".");
+            var archive = archives.First(a => a.Nom == nomChoisi);
+            return new VersionStockfish(tag, archive.Url, archive.Taille);
         }
-        catch (Exception ex)
-        {   // Si le flag est à vrai, on ignore l'erreur de communication car le fichier est déjà remplacé
-            if (miseAJourReussie)
+
+        public static string ChoisirArchive(IEnumerable<string> nomsArchives, Architecture processeur)
+        {   // Archive Windows à télécharger : la version ARM sur un processeur ARM, sinon la version x86-64 ("universal" de préférence,
+            // en attendant d'éventuelles anciennes publications aux noms plus détaillés) ; null si aucune ne convient
+            List<string> windows = nomsArchives.Where(n => n.Contains("windows", StringComparison.OrdinalIgnoreCase)).ToList();
+            string Premiere(string morceau) =>
+                windows.Where(n => n.Contains(morceau, StringComparison.OrdinalIgnoreCase))
+                       .OrderByDescending(n => n.Contains("universal", StringComparison.OrdinalIgnoreCase))
+                       .FirstOrDefault();
+            if (processeur == Architecture.Arm64 && Premiere("arm64") is string arm)
+                return arm;
+            return Premiere("x86-64");      // (sur ARM sans version ARM : la version x86-64, émulée par Windows)
+        }
+
+        public async Task Installer(VersionStockfish version)
+        {   // Télécharge et installe la version trouvée par RechercherNouvelleVersion ; en cas d'échec, l'ancienne version est remise
+            // et une exception est levée. ATTENTION : arrête le Stockfish lancé depuis ce fichier (le moteur doit être redémarré ensuite)
+            string zip = Path.Combine(Path.GetTempPath(), "brunogui_stockfish.zip");
+            string nouvelExe = Path.Combine(Path.GetTempPath(), "brunogui_stockfish_nouveau.exe");
+            try
             {
-                Debug.WriteLine($"[MAJ] Info : Erreur de flux post-installation ignorée : {ex.Message}");
+                await File.WriteAllBytesAsync(zip, await Client.GetByteArrayAsync(version.Url));
+                ExtraireExe(zip, nouvelExe);
+                await Task.Run(() =>
+                {   // (hors du thread de l'interface : les nouvelles tentatives ne la figent pas)
+                    ArreterProcessusStockfish();    // seulement après le téléchargement : le moteur reste disponible pendant ce temps
+                    if (File.Exists(_cheminExe))
+                        Reessayer(() => File.Move(_cheminExe, _cheminSauvegarde, overwrite: true));
+                    Reessayer(() => File.Copy(nouvelExe, _cheminExe, overwrite: true));
+                });
+                if (!await DemarreCorrectement())
+                    throw new Exception("La nouvelle version de Stockfish ne démarre pas.");
+                Supprimer(_cheminSauvegarde);
             }
-            else
-            {
-                Debug.WriteLine($"[MAJ] CRASH DURANT L'INSTALLATION: {ex.Message}");
-                RestaurerBackup();
+            catch
+            {   // Echec (téléchargement, fichier verrouillé, nouvelle version qui ne démarre pas) : l'ancienne version est remise
+                if (File.Exists(_cheminSauvegarde))
+                    Reessayer(() => File.Copy(_cheminSauvegarde, _cheminExe, overwrite: true));
                 throw;
             }
-        }
-    }
-    private static void VerifierVerrouillageFichier(string chemin)
-    {
-        if (!File.Exists(chemin))
-        {
-            Debug.WriteLine($"[DEBUG] VerifierVerrouillage: Le fichier n'existe pas encore ({chemin}).");
-            return;
-        }
-        try
-        {
-            using (FileStream stream = new(chemin, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            finally
             {
-                Debug.WriteLine($"[DEBUG] VerifierVerrouillage: Succès, le fichier {Path.GetFileName(chemin)} est LIBRE.");
+                Supprimer(zip);
+                Supprimer(nouvelExe);
             }
         }
-        catch (IOException ex)
-        {
-            Debug.WriteLine($"[DEBUG] VerifierVerrouillage: ÉCHEC ! Le fichier est VERROUILLÉ. \nDétail: {ex.Message}");
-            throw new Exception($"Le fichier {Path.GetFileName(chemin)} est verrouillé par un autre processus.");
-        }
-    }
 
-    private static void ForcerAccesFichier(string chemin)
-    {
-        if (!File.Exists(chemin)) return;
-        try
-        {
-            Debug.WriteLine($"[DEBUG] ForcerAcces: Normalisation des attributs pour {chemin}");
-            File.SetAttributes(chemin, FileAttributes.Normal);
+        private async Task<string> ObtenirVersionLocale()
+        {   // "sf_19" d'après la ligne "id name Stockfish 19" ; "sf_0" si Stockfish est absent, "sf_inconnue" s'il ne répond pas
+            if (!File.Exists(_cheminExe))
+                return "sf_0";
+            string sortie = await LireSortieUci(_cheminExe);
+            string ligne = sortie.Split('\n').Select(l => l.Trim()).FirstOrDefault(l => l.StartsWith("id name Stockfish"));
+            return ligne == null ? "sf_inconnue" : "sf_" + ligne.Split(' ').Last();
         }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[DEBUG] ForcerAcces: Impossible de changer les attributs: {ex.Message}");
-        }
-    }
+        private async Task<bool> DemarreCorrectement() => (await LireSortieUci(_cheminExe)).Contains("uciok");
 
-    private static void CopierAvecRetry(string source, string dest, bool overwrite)
-    {
-        Debug.WriteLine($"[DEBUG] CopierAvecRetry: {Path.GetFileName(source)} -> {Path.GetFileName(dest)}");
-        if (Directory.Exists(dest))
-        {
-            Debug.WriteLine("[DEBUG] CopierAvecRetry: La destination est un répertoire ! Suppression...");
-            Directory.Delete(dest, true);
-        }
-
-        int attempts = 5;
-        while (attempts > 0)
-        {
-            try
+        private static async Task<string> LireSortieUci(string exe)
+        {   // Lance "stockfish uci" (il répond par son nom, ses options, puis "uciok" et s'arrête) ; 5 secondes au plus
+            ProcessStartInfo infos = new(exe, "uci")
             {
-                if (File.Exists(dest)) File.SetAttributes(dest, FileAttributes.Normal);
-                File.Copy(source, dest, overwrite);
-                return;
-            }
-            catch (IOException ex)
-            {
-                attempts--;
-                Debug.WriteLine($"[DEBUG] CopierAvecRetry: Échec (Tentatives restantes: {attempts}). Erreur: {ex.Message}");
-                if (attempts == 0) throw;
-                Thread.Sleep(2000);
-            }
-        }
-    }
-
-    public async Task<string> ObtenirVersionLocale()
-    {
-        Debug.WriteLine($"[DEBUG] ObtenirVersionLocale: Vérification du fichier à {_cheminComplet}");
-
-        if (!File.Exists(_cheminComplet))
-        {
-            Debug.WriteLine("[DEBUG] ObtenirVersionLocale: Fichier introuvable.");
-            return "sf_0";
-        }
-
-        try
-        {
-            var info = new ProcessStartInfo
-            {
-                FileName = _cheminComplet,
-                Arguments = "uci",
                 RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            Debug.WriteLine("[DEBUG] ObtenirVersionLocale: Démarrage du processus Stockfish...");
-            using var p = Process.Start(info);
-
-            if (p == null)
-            {
-                Debug.WriteLine("[DEBUG] ObtenirVersionLocale: Échec du démarrage du processus (p est null).");
-                return "sf_unknown";
-            }
-
-            // On lit plusieurs lignes car l'ID n'est pas forcément sur la première
-            string line;
-            while ((line = await p.StandardOutput.ReadLineAsync()) != null)
-            {
-                Debug.WriteLine($"[DEBUG] Stockfish Output: {line}");
-
-                if (line.StartsWith("id name Stockfish"))
-                {
-                    // Extrait juste le nombre à la fin, ex: "id name Stockfish 17" -> "17"
-                    var versionNumber = line.Split(' ').LastOrDefault();
-                    Debug.WriteLine($"[DEBUG] ObtenirVersionLocale: Version trouvée : {versionNumber}");
-
-                    p.Kill();
-                    return "sf_" + versionNumber;
-                }
-            }
-
-            Debug.WriteLine("[DEBUG] ObtenirVersionLocale: Fin de la sortie sans trouver 'id name Stockfish'.");
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[DEBUG] ObtenirVersionLocale: Erreur critique: {ex.Message}");
-            Debug.WriteLine($"[DEBUG] StackTrace: {ex.StackTrace}");
-        }
-
-        return "sf_unknown";
-    }
-    private static void ExtraireVersTemp(string cheminZip, string cheminExeCible)
-    {
-        using (ZipArchive archive = ZipFile.OpenRead(cheminZip))
-        {
-            var exeEntry = archive.Entries.FirstOrDefault(e => e.FullName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
-            if (exeEntry == null) throw new Exception("EXE non trouvé dans le ZIP.");
-
-            if (File.Exists(cheminExeCible))
-            {
-                File.SetAttributes(cheminExeCible, FileAttributes.Normal);
-                File.Delete(cheminExeCible);
-            }
-            exeEntry.ExtractToFile(cheminExeCible);
-        }
-    }
-
-    private void ArreterProcessusStockfish()
-    {
-        string name = Path.GetFileNameWithoutExtension(_cheminComplet);
-        Debug.WriteLine($"[DEBUG] ArreterProcessus: Recherche de '{name}'...");
-        foreach (var p in Process.GetProcessesByName(name))
-        {
-            try
-            {   // On n'arrête que le Stockfish de BrunoGUI (même fichier), pas ceux d'autres logiciels
-                string cheminProcessus = p.MainModule?.FileName;
-                if (!string.Equals(cheminProcessus, _cheminComplet, StringComparison.OrdinalIgnoreCase))
-                    continue;
-                Debug.WriteLine($"[DEBUG] ArreterProcessus: Kill du processus ID {p.Id}");
-                p.Kill();
-                p.WaitForExit(2000); // CRUCIAL : attend que Windows libère le fichier
-                if (!p.WaitForExit(3000))
-                {
-                    Debug.WriteLine("[DEBUG] ArreterProcessus: Le processus résiste, appel à TaskKill...");
-                    Process.Start(new ProcessStartInfo("taskkill", $"/F /PID {p.Id} /T") { CreateNoWindow = true });
-                }
-            }
-            catch (Exception ex) { Debug.WriteLine($"[DEBUG] ArreterProcessus: Exception: {ex.Message}"); }
-        }
-    }
-
-    private void RestaurerBackup()
-    {
-        if (File.Exists(_repertoireSauvegarde))
-        {
-            try
-            {
-                Debug.WriteLine("[DEBUG] RestaurerBackup: Tentative de restauration du fichier .old...");
-                ForcerAccesFichier(_cheminComplet);
-                File.Copy(_repertoireSauvegarde, _cheminComplet, true);
-            }
-            catch (Exception ex) { Debug.WriteLine($"[DEBUG] RestaurerBackup: ÉCHEC: {ex.Message}"); }
-        }
-    }
-
-    private async Task<bool> VerifierSanteMoteur()
-    {
-        try
-        {
-            var info = new ProcessStartInfo
-            {
-                FileName = _cheminComplet,
-                Arguments = "uci",
-                RedirectStandardOutput = true,
-                RedirectStandardInput = true, // Ajouté pour pouvoir envoyer "quit" proprement
                 UseShellExecute = false,
                 CreateNoWindow = true,
-                WorkingDirectory = _repertoire
+                WorkingDirectory = Path.GetDirectoryName(exe)
             };
+            using Process processus = Process.Start(infos);
+            if (processus == null)
+                return "";
+            Task<string> lecture = processus.StandardOutput.ReadToEndAsync();
+            if (await Task.WhenAny(lecture, Task.Delay(5000)) != lecture)
+            {   // pas de réponse : on n'attend pas plus
+                try { processus.Kill(); } catch (InvalidOperationException) { }
+                return "";
+            }
+            return await lecture;
+        }
 
-            using var p = Process.Start(info);
-            if (p == null) return false;
+        private static void ExtraireExe(string zip, string destination)
+        {   // Le zip contient un dossier "stockfish" avec l'exe, les sources et la documentation : on ne garde que l'exe
+            using ZipArchive archive = ZipFile.OpenRead(zip);
+            ZipArchiveEntry exe = archive.Entries.FirstOrDefault(e => e.FullName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                ?? throw new Exception("Aucun fichier .exe dans l'archive téléchargée.");
+            exe.ExtractToFile(destination, overwrite: true);
+        }
 
-            // On lance la lecture de la première ligne
-            var readTask = p.StandardOutput.ReadLineAsync();
-
-            // On attend soit la réponse, soit un timeout de 5 secondes
-            if (await Task.WhenAny(readTask, Task.Delay(5000)) == readTask)
+        private void ArreterProcessusStockfish()
+        {   // Arrête seulement le Stockfish lancé depuis CE fichier (pas celui d'un autre logiciel), pour pouvoir le remplacer
+            foreach (Process processus in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(_cheminExe)))
             {
-                string line = await readTask;
-                Debug.WriteLine($"[DEBUG] VerifierSante: Réponse UCI reçue: {line}");
-
-                // --- FERMETURE PROPRE POUR ÉVITER LE CRASH DU CANAL ---
                 try
                 {
-                    // On tente de dire gentiment à Stockfish de s'arrêter
-                    await p.StandardInput.WriteLineAsync("quit");
-                    await Task.Delay(100);
+                    if (string.Equals(processus.MainModule?.FileName, _cheminExe, StringComparison.OrdinalIgnoreCase))
+                    {
+                        processus.Kill();
+                        processus.WaitForExit(3000);
+                    }
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
+                {   // processus déjà terminé, ou d'un autre utilisateur
+                    Debug.WriteLine("[MAJ] Arrêt de Stockfish : " + ex.Message);
+                }
+                finally
                 {
-                    Debug.WriteLine($"[DEBUG] VerifierSante: Erreur lors du quit (ignorée): {ex.Message}");
+                    processus.Dispose();
                 }
-
-                if (!p.HasExited) p.Kill();
-
-                return line != null && line.Contains("Stockfish");
             }
+        }
 
-            Debug.WriteLine("[DEBUG] VerifierSante: Timeout (5s) sans réponse UCI.");
-            if (!p.HasExited) p.Kill();
-            return false;
-        }
-        catch (IOException ex) when (ex.Message.Contains("canal") || ex.Message.Contains("pipe"))
-        {
-            // On capture l'erreur de canal fermé car elle arrive quand le processus se coupe
-            // mais cela ne veut pas dire que le moteur est "malade".
-            Debug.WriteLine($"[DEBUG] VerifierSante: Canal fermé pendant la lecture (attendu).");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[DEBUG] VerifierSante: Exception critique: {ex.Message}");
-            return false;
-        }
-    }
-    private async Task<(string tag, string url, long taille)> VerifierNouvelleVersionGitHub(string tagCourant)
-    {
-        string apiUrl = "https://api.github.com/repos/official-stockfish/Stockfish/releases/latest";
-        var response = await client.GetStringAsync(apiUrl);
-        using var doc = JsonDocument.Parse(response);
-        var root = doc.RootElement;
-        string latestTag = root.GetProperty("tag_name").GetString();
-
-        if (latestTag.Equals(tagCourant, StringComparison.OrdinalIgnoreCase)) return (null, null, 0);
-        Debug.WriteLine($"[DEBUG] Comparaison: Local={tagCourant} | GitHub={latestTag}");
-        var assetsWindows = root.GetProperty("assets").EnumerateArray()
-            .Where(a => a.GetProperty("name").GetString().ToLower().Contains("windows"))
-            .ToList();
-        foreach (string arch in SuffixesArchitecture())
-        {   // On prend la meilleure version disponible pour ce processeur
-            var asset = assetsWindows.FirstOrDefault(a => a.GetProperty("name").GetString().ToLower().Contains(arch));
-            if (asset.ValueKind != JsonValueKind.Undefined)
+        private static void Reessayer(Action operationFichier)
+        {   // Le fichier peut rester verrouillé quelques instants (antivirus, synchronisation OneDrive...) : 5 essais, 1 s d'écart
+            for (int essai = 1; ; essai++)
             {
-                Debug.WriteLine($"[DEBUG] Architecture retenue = " + arch);
-                return (latestTag, asset.GetProperty("browser_download_url").GetString(), asset.GetProperty("size").GetInt64());
+                try
+                {
+                    operationFichier();
+                    return;
+                }
+                catch (IOException) when (essai < 5)
+                {
+                    System.Threading.Thread.Sleep(1000);
+                }
             }
         }
-        throw new Exception("Architecture non trouvée sur GitHub.");
-    }
-
-    private static string[] SuffixesArchitecture()
-    {   // Suffixes des fichiers de Stockfish, du plus performant au plus générique.
-        // Depuis Stockfish 19, un seul binaire "universal" détecte lui-même les instructions du processeur.
-        System.Collections.Generic.List<string> suffixes = [];
-        if (Bmi2.IsSupported && Avx2.IsSupported) suffixes.Add("x86-64-bmi2");
-        if (Avx2.IsSupported) suffixes.Add("x86-64-avx2");
-        if (Sse42.IsSupported) suffixes.Add("x86-64-modern");
-        suffixes.Add("x86-64-universal");
-        suffixes.Add("x86-64");
-        return [.. suffixes];
-    }
-
-    private static async Task TelechargerFichier(string url, string dest)
-    {
-        var data = await client.GetByteArrayAsync(url);
-        await File.WriteAllBytesAsync(dest, data);
+        private static void Supprimer(string fichier)
+        {
+            try
+            {
+                if (File.Exists(fichier))
+                    File.Delete(fichier);
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {   // fichier temporaire ou sauvegarde : sans importance s'il reste
+                Debug.WriteLine("[MAJ] Non supprimé : " + fichier);
+            }
+        }
     }
 }
