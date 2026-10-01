@@ -271,8 +271,6 @@ namespace BrunoGUI_GenII
                 NombreCoupsJoues = Int32.Parse(ChampsFen[5]) + 0.5f;
             }    //  La lettre f après le nombre 0.5 indique que c'est un nombre à virgule flottante simple précision (un float). 
 
-            // Champ 5 : nombre de demi-coups depuis la dernière capture ou le dernier mouvement de pion. !! Il faudra créer une variable et la mettre àjour !!
-
             // Champ 4 : mettre à jour IndexCaseEnPassant et FlagEnPassant 
             if (ChampsFen[3] == "-")
             {   // si pas de prise en passant
