@@ -13,7 +13,6 @@
 //                      ├─ "StandardInputDataToUci"     Envoi de données de l'interface vers moteur UCI
 //                      ├─ "PositionFenUci"             Position Fen courante envoyée au Moteur UCI
 //                      ├─ "JeuMoteurUci"               Envoie au moteur UCI le Fen actuel
-//                      ├─ "OptionsCourantes"  
 //                      ├─ "ActiveLimiteElo"            Activation de la limitation du ELO
 //                      ├─ "DefinitLimiteElo"           Définition de la force ELO du moteur  
 //                      ├─ "DefinitMultiPV"             Nombre de variantes demandées au moteur
@@ -46,9 +45,6 @@ namespace BrunoGUI_GenII
         public static LigneUci DerniereLigne { get; private set; } = new();   // la même ligne, décodée
         public static string DataVersUci { get; set; }
         public static string CoupAuFormatUci { get; set; }
-        public static string FichierMoteurUci { get; set; }
-        public static string AuteurMoteur { get; set; }
-        public static bool LimiteElo { get; set; }
         public static bool UciVersGui { get; set; }
         public static int NombreLignesPV { get; set; } = 3;     // Nombre de variantes (MultiPV) demandées au moteur
         public static int? NombreThreads { get; set; }          // Threads et Hash (Mo) envoyés au démarrage du moteur (null : valeur du moteur)
@@ -91,7 +87,6 @@ namespace BrunoGUI_GenII
             // commencer à lire les sorties de données
             Proc.BeginOutputReadLine();
             // première interrogation du processus: le moteur UCI est il pret ? 
-            LogiqueMouvements.StatutMoteurUci = true;
             OptionsUci.Clear();
             NomAnnonce = null;
             _optionsDemarrageEnvoyees = false;
@@ -139,10 +134,7 @@ namespace BrunoGUI_GenII
                         if (DerniereLigne.NomOption != null && !OptionsUci.Contains(DerniereLigne.NomOption))
                             OptionsUci.Add(DerniereLigne.NomOption);
                         if (DerniereLigne.NomOption == "UCI_LimitStrength")  // il est possible de régler la force ELO
-                        {
                             ActiveLimiteElo();
-                            LimiteElo = true;
-                        }
                         break;
                 }
             }
@@ -195,14 +187,6 @@ namespace BrunoGUI_GenII
             else
                 StandardInputDataToUci("go movetime " + Duree.ToString());
         }
-        public static void OptionsCourantes()
-        {   // Envoi au moteur UCI les options courantes
-            StandardInputDataToUci("setoption name Ponder value true");     // Réfléchit sur le temps de l'adversaire
-            StandardInputDataToUci("setoption name Verbose value true");
-            StandardInputDataToUci("setoption name Ownbook value true");
-            StandardInputDataToUci("setoption name VerboseBook value true");
-            StandardInputDataToUci("setoption name MultiPV value " + NombreLignesPV);
-        }
         public static void DefinitMultiPV(int nombreLignes)
         {   // Mémorise et envoie au moteur le nombre de variantes (MultiPV)
             NombreLignesPV = nombreLignes;
@@ -234,8 +218,6 @@ namespace BrunoGUI_GenII
         {   // On ferme le moteur UCI (sans erreur s'il n'a jamais démarré ou s'il a déjà été arrêté, ex : par une mise à jour).
             // Certains moteurs (ex : Sargon 1978) ignorent "quit" : après une seconde d'attente, le processus est arrêté de force,
             // sinon il resterait en mémoire et verrouillerait son .exe
-            LogiqueMouvements.StatutMoteurUci = false;
-            LimiteElo = false;
             if (Proc == null)
                 return;
             StandardInputDataToUci("quit");

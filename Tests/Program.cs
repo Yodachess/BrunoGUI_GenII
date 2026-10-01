@@ -474,12 +474,11 @@ Charger(L.FenDepart);
 partie.Commencer(Joueur.Moteur, Joueur.Humain);
 L.ExecutionCoup("f2", "f3"); L.ExecutionCoup("e7", "e5"); L.ExecutionCoup("g2", "g4"); L.ExecutionCoup("d8", "h4");
 bool matAvant = L.EchecetMat;
-L.PartieEnCoursMat = true;      // (posé par l'interface à l'annonce du mat)
 partie.Terminer();
 bool rienAuTrait = !partie.MoteurAuTrait && !partie.HumainAuTrait;
 Verifie("Partie terminée par un mat : personne n'est au trait", matAvant && partie.Mode == ModePartie.Terminee && rienAuTrait, $"mat : {matAvant}");
 Verifie("Retour arrière après le mat : la partie reprend, plus de mat, Noirs au trait",
-    partie.AnnulerDernierCoup() && partie.EnCours && !L.EchecetMat && !L.PartieEnCoursMat && L.QuiJoue == L.ColorPiece.Noir && L.ListeCoups.Count == 3 && partie.HumainAuTrait,
+    partie.AnnulerDernierCoup() && partie.EnCours && !L.EchecetMat && L.QuiJoue == L.ColorPiece.Noir && L.ListeCoups.Count == 3 && partie.HumainAuTrait,
     L.RetourneChaineFenActuel());
 
 // Partie depuis une position FEN (Noirs au trait) : l'humain joue le camp au trait
@@ -517,12 +516,11 @@ Verifie("Reprendre ici depuis la position initiale (-1) : plus aucun coup", part
 Charger(L.FenDepart);
 partie.Commencer(Joueur.Humain, Joueur.Humain);
 L.ExecutionCoup("f2", "f3"); L.ExecutionCoup("e7", "e5"); L.ExecutionCoup("g2", "g4"); L.ExecutionCoup("d8", "h4");
-L.PartieEnCoursMat = true;
 partie.Terminer();
 partie.PasserEnLectureSeule();
 int supprimesPgn = partie.ReprendreDepuis(1);      // position après 1... e5 : Blancs au trait
 Verifie("Reprendre ici une partie PGN : jouable, l'humain a le camp au trait, plus de mat",
-    supprimesPgn == 2 && partie.EnCours && partie.Blancs == Joueur.Humain && partie.Noirs == Joueur.Moteur && partie.HumainAuTrait && !L.EchecetMat && !L.PartieEnCoursMat,
+    supprimesPgn == 2 && partie.EnCours && partie.Blancs == Joueur.Humain && partie.Noirs == Joueur.Moteur && partie.HumainAuTrait && !L.EchecetMat,
     $"{supprimesPgn} supprimé(s), Blancs {partie.Blancs}, Noirs {partie.Noirs}");
 
 // Partie PGN reprise à sa position finale : rien n'est supprimé, mais elle devient jouable (humain au camp au trait)

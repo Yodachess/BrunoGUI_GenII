@@ -221,7 +221,7 @@ namespace BrunoGUI_GenII
                     CommencerPartie(Joueur.Moteur, Joueur.Humain);
                     if (!_vue.CoteNoir)
                         TourneEchiquier();      // On met la vue côté Noir
-                    ParametresJoueurHumain("Noirs", "Le moteur UCI joue");      // On fait jouer le moteur côté blanc
+                    ParametresJoueurHumain("Le moteur UCI joue");      // On fait jouer le moteur côté blanc
                     JeuMoteurAvecBibliothèque(FenDepart);
                 }
                 else
@@ -233,7 +233,7 @@ namespace BrunoGUI_GenII
                     if (_vue.CoteNoir)
                         TourneEchiquier();
                     CommencerPartie(Joueur.Humain, Joueur.Moteur);
-                    ParametresJoueurHumain("Blancs", "A vous de jouer");            // On demande à l'humain de jouer
+                    ParametresJoueurHumain("A vous de jouer");            // On demande à l'humain de jouer
                     PlateauEnable(true);                                            // On lui permet de bouger les pièces
                 }
             }
@@ -538,22 +538,11 @@ namespace BrunoGUI_GenII
 
         private void AfficheEchecEtMat(string couleurRoiMat)   // Affiche l'échec et mat du roi de la couleur en paramètre
         {   // Affiche l'échec et mat du roi de la couleur en paramètre, et gère la fin de partie
-            int indexCouleur = couleurRoiMat == "Blanc" ? 2 : 1;
-            LogiqueMouvements.PartieEnCoursMat = true;      // le "#" du mat est déjà dans les notations du dernier coup (LogiqueMouvements.ExecutionCoup)
-            string coupMat = LogiqueMouvements.ListeCoupsPgnFr[^1];
-            int indexPoint = coupMat.IndexOf('.');  // On enlève le numéro de coup s'il existe
-            if (indexPoint != -1)
-            {   // Ce if n'est jamais éxecuté, mais pourrait être utile ?
-                coupMat = coupMat[indexPoint..].Replace(".", "");
-            }
-            if (indexCouleur == 2)
-            {   // Couleur du Roi mat = Blanc
+            // (le "#" du mat est déjà dans les notations du dernier coup : voir LogiqueMouvements.ExecutionCoup)
+            if (couleurRoiMat == "Blanc")
                 GestionResultat("0-1", " Gain Noir");
-            }
             else
-            {   // Couleur du Roi mat = Noir
                 GestionResultat("1-0", " Gain Blanc");
-            }
             InformationPourJoueur.Text = VarianteMoteurCourante.Text = "Le Roi " + couleurRoiMat + " est échec et mat";
             StatusProgramme.Text = "Partie terminée";
             Application.DoEvents();
@@ -568,7 +557,6 @@ namespace BrunoGUI_GenII
                 InformationsPartie.ForeColor = Color.DarkGreen;
             if (infoechec.Contains("Pat"))
             {
-                LogiqueMouvements.PartieEnCoursPat = true;
                 GestionResultat("1/2-1/2", "Pat (Nulle)");
                 InformationPourJoueur.Text = "Pat (Nulle)";
                 PlateauEnable(false); // un des joueurs est pat : fin de la partie
@@ -661,7 +649,7 @@ namespace BrunoGUI_GenII
                 if (_vue.CoteNoir)
                     TourneEchiquier();
                 AfficheCoupsBibliotheque(FenDepart);
-                ParametresJoueurHumain("Blancs", "A vous de jouer");            // On demande à l'humain de jouer
+                ParametresJoueurHumain("A vous de jouer");            // On demande à l'humain de jouer
                 PlateauEnable(true);                                            // On lui permet de bouger les pièces
             }
         }
@@ -682,7 +670,7 @@ namespace BrunoGUI_GenII
                 CommencerPartie(Joueur.Moteur, Joueur.Humain);
                 if (!_vue.CoteNoir)
                     TourneEchiquier();                                          // On met la vue côté Noir
-                ParametresJoueurHumain("Noirs", "Le moteur UCI joue");
+                ParametresJoueurHumain("Le moteur UCI joue");
                 JeuMoteurAvecBibliothèque(FenDepart);
             }
         }
@@ -1585,7 +1573,7 @@ namespace BrunoGUI_GenII
             // la position passée pendant le parcours, sinon la partie
             _vue.Tourner(_positionAffichee ?? LogiqueMouvements.PositionActuelle);
         }
-        private void ParametresJoueurHumain(string Couleur, string Affichage)
+        private void ParametresJoueurHumain(string Affichage)
         {   // Message au joueur humain en début de partie (sa couleur est fixée par CommencerPartie)
             InformationPourJoueur.Visible = true;
             InformationPourJoueur.Text = StatusProgramme.Text = Affichage;
