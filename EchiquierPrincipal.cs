@@ -424,21 +424,29 @@ namespace BrunoGUI_GenII
 
         private void AfficheDonneesBrutes()
         {   // Affiche les données brutes du moteur UCI, pour les curieux qui veulent voir ce qui se passe "sous le capot" :-)
-            if (InvokeRequired)
+            // Le texte est pris tout de suite (la ligne suivante remplacera DataUci) ; l'affichage est envoyé à l'interface
+            // sans l'attendre (BeginInvoke), pour ne pas ralentir la lecture des lignes du moteur
+            string texte;
+            if (MoteurUci.UciVersGui)
             {
-                Invoke(new MethodInvoker(AfficheDonneesBrutes));
-                return;     // Empêche le code suivant de s'exécuter sur le thread secondaire
+                if (MoteurUci.DataUci.Contains("currmove"))     // Inutile d'afficher les currmove, il n'y rien d'intéressant ...
+                    return;
+                texte = "[" + _nomMoteur + "]    " + MoteurUci.DataUci;
             }
             else
+                texte = " [BrunoGUI_GenII]    " + MoteurUci.DataVersUci;
+            if (!InvokeRequired)
+                donneesBrutesUci.AjouteLigne(texte);
+            else if (IsHandleCreated && !IsDisposed)
             {
-                if (MoteurUci.UciVersGui)
+                try
                 {
-                    if (!MoteurUci.DataUci.Contains("currmove"))    // Inutile d'afficher les currmove, il n'y rien d'intéressant ...
-                        donneesBrutesUci.DonneesBrutesVue.AppendText(Environment.NewLine + "[" + _nomMoteur + "]    " + MoteurUci.DataUci);
+                    BeginInvoke(new MethodInvoker(() => donneesBrutesUci.AjouteLigne(texte)));
                 }
-                else
-                    donneesBrutesUci.DonneesBrutesVue.AppendText(Environment.NewLine + " [BrunoGUI_GenII]    " + MoteurUci.DataVersUci);
-                donneesBrutesUci.DonneesBrutesVue.ScrollToCaret();  // Pour garder l'affichage dans toute la fenêtre
+                catch (Exception ex) when (ex is ObjectDisposedException || ex is InvalidOperationException)
+                {   // fenêtre en cours de fermeture : la ligne n'est plus affichée
+                    Debug.WriteLine("AfficheDonneesBrutes : " + ex.Message);
+                }
             }
         }
 
