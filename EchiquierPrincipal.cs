@@ -40,15 +40,12 @@ namespace BrunoGUI_GenII
         private readonly VueEchiquier _vue;     // l'affichage de l'échiquier : cases, pièces, couleurs, inversion (voir VueEchiquier.cs)
 
         // les variables
-        public static int NumeroDemiCoup { get; set; } = 0;
         private readonly Partie _partie = new();    // mode de la partie, qui joue quel camp (voir Partie.cs)
         public Partie PartieCourante => _partie;
-        public string _dossierRacine, _dossierStockfish;
-        private int _indexSource120, _forceMoteurElo, _nombreLignesPV, _tempsRestant;
-        private int _numeroLigne;       // Indices dans la DataGrid FeuillePartie
+        private int _indexSource120, _forceMoteurElo, _tempsRestant;
         private bool _plateauAutorise = true;   // c'est au joueur de bouger les pièces (voir PlateauEnable et MetAJourPlateau)
         private string _caseSource, _caseDestination;
-        private string _nomHumain, _joueurElo, _nomMoteur, _moteurElo, _joueurBlanc, _joueurNoir;
+        private string _nomHumain, _joueurElo, _nomMoteur, _moteurElo;
         private string _cheminMoteur, _nomMoteurChoisi;
         private string _bibliotheque = "rodent.bin";
         private bool _clickCaseSource, _visuSymbole, _montreDonneesBrutesUci, _montre3VariantesUci;
@@ -56,7 +53,6 @@ namespace BrunoGUI_GenII
         private bool _bibliothèqueActive = true;
         private int _dureeReflexionMilliSeconde = 5000;
         private LogiqueMouvements.TypePiece _selectionPromotion, _pieceSource;
-        private readonly Color _violetCustom = Color.FromArgb(128, 128, 255);  // Rouge = 128, Vert = 128, Bleu = 255
 
         // les classes
         public LogiqueMouvements LogiqueMouvements = new();
@@ -94,7 +90,7 @@ namespace BrunoGUI_GenII
             _dureeReflexionMilliSeconde = parametres.DureeReflexionSeconde * 1000;
             _nomMoteur = parametres.Moteur;
             _forceMoteurElo = parametres.ForceMoteur;
-            _nombreLignesPV = MoteurUci.NombreLignesPV = parametres.NombreLignesPV;
+            MoteurUci.NombreLignesPV = parametres.NombreLignesPV;
             _bibliotheque = parametres.Bibliotheque;
             LabelJoueurNoir.Text = parametres.Moteur;
             EloNoir.Text = _moteurElo = _forceMoteurElo.ToString();
@@ -109,7 +105,7 @@ namespace BrunoGUI_GenII
             TrackBarTempsReflexion.Value = Math.Clamp(parametres.DureeReflexionSeconde, TrackBarTempsReflexion.Minimum, TrackBarTempsReflexion.Maximum);
             labelTempsReflexion.Text = "[" + TrackBarTempsReflexion.Value + "]";
             // Debug pour vérifier
-            Debug.WriteLine($"Paramètres chargés : Biblio = {_bibliotheque}, Force = {_forceMoteurElo}, Nombre PV = {_nombreLignesPV}");
+            Debug.WriteLine($"Paramètres chargés : Biblio = {_bibliotheque}, Force = {_forceMoteurElo}, Nombre PV = {MoteurUci.NombreLignesPV}");
             Debug.WriteLine($"Paramètres chargés : Temps de réflexion = {_dureeReflexionMilliSeconde}");
 
             DateTime Aujourdhui = DateTime.Today;
@@ -137,8 +133,8 @@ namespace BrunoGUI_GenII
         private void BrunoInterfaceGraphique_Load(object sender, EventArgs e)
         {   // Forme Interface graphique
             // les évènements dans les classes
-            LogiqueMouvements.AfficheCoupNoir += AfficheCoupNoir;
-            LogiqueMouvements.AfficheCoupBlanc += AfficheCoupBlanc;
+            LogiqueMouvements.AfficheCoupNoir += CoupJoue;
+            LogiqueMouvements.AfficheCoupBlanc += CoupJoue;
             LogiqueMouvements.AfficheInfoEchec += AfficheInfoEchec;
             LogiqueMouvements.AfficheEchecEtMat += AfficheEchecEtMat;
             LogiqueMouvements.AfficheTour += AfficheTour;
@@ -151,17 +147,10 @@ namespace BrunoGUI_GenII
             this.KeyPreview = true; // <-- obligatoire pour capter toutes les touches
             // Les images des pièces et les couleurs des cases sont dans VueEchiquier (couleurs du .ini, voir le constructeur)
 
-            _dossierRacine = Chemins.RepertoireRacine;
-            string cheminMoteurs = Chemins.MoteursUCI;
-            string cheminPolyglot = Chemins.BibliothèquesPolyglot;
-
             _cheminMoteur = CheminStockfish;            // moteur lancé au démarrage
-            _dossierStockfish = Path.Combine(_dossierRacine, "stockfish");
-
-            Debug.WriteLine("Dossier Racine = " + _dossierRacine);
-            Debug.WriteLine("Dossier Stockfish = " + _dossierStockfish);
-            Debug.WriteLine("Chemin moteurs = " + cheminMoteurs);
-            Debug.WriteLine("Chemin Polyglot = " + cheminPolyglot);
+            Debug.WriteLine("Dossier Racine = " + Chemins.RepertoireRacine);
+            Debug.WriteLine("Chemin moteurs = " + Chemins.MoteursUCI);
+            Debug.WriteLine("Chemin Polyglot = " + Chemins.BibliothèquesPolyglot);
 
             InformationPourJoueur.Text = "   Bienvenue   ";
 
@@ -258,7 +247,6 @@ namespace BrunoGUI_GenII
             PartieEnCours.CoupsPartiePGN = PartieEnCours.Result = PartieEnCours.CompteDePLy = PartieEnCours.Ronde = "";
             PartieEnCours.Tournoi = "Entrainement";
             PartieEnCours.Lieu = "Maison";
-            NumeroDemiCoup = 0;
             MiseaZeroAffichages();
             MiseaZéroTimer();
             VarianteMoteurUci1.Text = string.Empty;
@@ -518,65 +506,18 @@ namespace BrunoGUI_GenII
             }
         }
 
-        private void AfficheCoupBlanc(string coupBlanc)
-        {   // Affiche le coup joué par les blancs
-            // Comme c'est le coup Blanc, il faut afficher le numéro du coup
-            if (LogiqueMouvements.EchecetMat == false)
-            {   // ******      Traitement du numéro de demi-coup :     ******
-                if (_partie.DepuisPosition)
-                {   // Si on a chargé une position depuis une FEN,
-                    // il faut calculer le numéro de demi-coup en fonction du nombre de coups joués
-                    int demiCoupsFen = ((int)NombreCoupsJoues - 1) * 2;
-                    if (QuiJoue == ColorPiece.Noir)
-                        demiCoupsFen++;
-                    NumeroDemiCoup = demiCoupsFen;
-                }
-                else
-                {
-                    NumeroDemiCoup = LogiqueMouvements.ListeCoupsFen.Count - 1;
-                }
-                // ******      Traitement du numéro de demi-coup :     ******
-                PartieEnCours.CompteDePLy = (LogiqueMouvements.ListeCoupsFen.Count).ToString();
-                _numeroLigne++;
-                string raisonNulle = _partie.RejeuPgn ? null : LogiqueMouvements.RaisonNulle();    // répétition, 50 coups ou matériel insuffisant
-                if (raisonNulle != null)
-                    GestionResultat("1/2-1/2", raisonNulle);
-                MetAJourCommandes();    // un coup a été joué : on peut parcourir la partie, la liste des coups, le retour arrière...
-            }
-            else
+        private void CoupJoue(string coup)
+        {   // Un coup (blanc ou noir) vient d'être joué dans la partie (événements AfficheCoupBlanc et AfficheCoupNoir)
+            if (LogiqueMouvements.EchecetMat)
             {
                 StatusProgramme.Text = "Partie terminée";
+                return;
             }
-        }
-
-        private void AfficheCoupNoir(string coupNoir)
-        {   //  Affiche le coup joué par les noirs
-            // Comme c'est le coup Noir, on n'a pas besoin d'afficher le numéro du coup
-            if (LogiqueMouvements.EchecetMat == false)
-            {   // ******      Traitement du numéro de demi-coup :     ******
-                if (_partie.DepuisPosition)
-                {   // Si on a chargé une position depuis une FEN,
-                    // il faut calculer le numéro de demi-coup en fonction du nombre de coups joués
-                    int demiCoupsFen = ((int)NombreCoupsJoues - 1) * 2;
-                    if (QuiJoue == ColorPiece.Noir)
-                        demiCoupsFen++;
-                    NumeroDemiCoup = demiCoupsFen;
-                }
-                else
-                {   // Sinon, on peut simplement utiliser la taille de la liste des coups FEN pour déterminer le numéro de demi-coup
-                    NumeroDemiCoup = LogiqueMouvements.ListeCoupsFen.Count - 1;
-                }
-                // ******      Traitement du numéro de demi-coup :     ******
-                PartieEnCours.CompteDePLy = (LogiqueMouvements.ListeCoupsFen.Count).ToString();
-                string raisonNulle = _partie.RejeuPgn ? null : LogiqueMouvements.RaisonNulle();    // répétition, 50 coups ou matériel insuffisant
-                if (raisonNulle != null)
-                    GestionResultat("1/2-1/2", raisonNulle);
-                MetAJourCommandes();    // un coup a été joué : on peut parcourir la partie, la liste des coups, le retour arrière...
-            }
-            else
-            {
-                StatusProgramme.Text = "Partie terminée";
-            }
+            PartieEnCours.CompteDePLy = LogiqueMouvements.ListeCoupsFen.Count.ToString();
+            string raisonNulle = _partie.RejeuPgn ? null : LogiqueMouvements.RaisonNulle();    // répétition, 50 coups ou matériel insuffisant
+            if (raisonNulle != null)
+                GestionResultat("1/2-1/2", raisonNulle);
+            MetAJourCommandes();    // un coup a été joué : on peut parcourir la partie, la liste des coups, le retour arrière...
         }
 
         private void AfficheTour(string Couleur)        // Affiche la couleur du joueur humain courant
@@ -734,7 +675,6 @@ namespace BrunoGUI_GenII
                 if (!_vue.CoteNoir)
                     TourneEchiquier();                                          // On met la vue côté Noir
                 ParametresJoueurHumain("Noirs", "Le moteur UCI joue");
-                NumeroDemiCoup = 0;
                 JeuMoteurAvecBibliothèque(FenDepart);
             }
         }
@@ -873,15 +813,7 @@ namespace BrunoGUI_GenII
         {   // Permet de faire jouer l'ordinateur UCI, sans que ce soit son tour (pour tester une position par exemple)
             AbandonneReflexion();   // une nouvelle demande remplace la réflexion en cours
             _partie.MoteurPrendLeTrait();   // le moteur joue désormais le camp au trait, l'humain l'autre
-            string Fenaenvoyer;
-            if (ListeCoupsFen.Count > 0)
-                Fenaenvoyer = ListeCoupsFen[^1];   // dernier FEN
-            else
-            {
-                NumeroDemiCoup = 0;
-                Fenaenvoyer = FenDepart; // position initiale
-            }
-            JeuMoteurAvecBibliothèque(Fenaenvoyer);
+            JeuMoteurAvecBibliothèque(ListeCoupsFen.Count > 0 ? ListeCoupsFen[^1] : FenDepart);   // dernière position, ou position initiale
             // Plateau bloqué tant que le moteur réfléchit ; libre si son coup de bibliothèque est déjà joué
             PlateauEnable(!_partie.MoteurAuTrait);
             _clickCaseSource = _visuSymbole = true;    // L'ordinateur ayant joué, c'est indispensable !
@@ -899,7 +831,6 @@ namespace BrunoGUI_GenII
             {
                 if (etaitTerminee)
                     EffaceResultat();   // on a annulé un coup d'une partie terminée : elle reprend
-                NumeroDemiCoup = LogiqueMouvements.ListeCoupsFen.Count == 0 ? 0 : NumeroDemiCoup - 1;
                 _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(LogiqueMouvements.RetourneChaineFenActuel()));
                 InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + QuiJoue + "s";
                 InformationsPartie.Text = _partie.Blancs == Joueur.Moteur ? "L'ordinateur joue les Blancs" :
@@ -1234,7 +1165,6 @@ namespace BrunoGUI_GenII
                 PartieEnCours.Ronde = "";
             }
             PartieEnCours.CompteDePLy = LogiqueMouvements.ListeCoupsFen.Count.ToString();
-            NumeroDemiCoup = _partie.DepuisPosition ? (int)Math.Round((NombreCoupsJoues - 1) * 2) : Math.Max(0, LogiqueMouvements.ListeCoupsFen.Count - 1);
             string fen = LogiqueMouvements.RetourneChaineFenActuel();
             _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(fen));
             InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + (QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
@@ -1373,8 +1303,6 @@ namespace BrunoGUI_GenII
             PartieEnCours.WhiteElo = EloBlanc.Text = "";
             PartieEnCours.BlackElo = EloNoir.Text = "";
             InformationPourJoueur.Text = "Trait aux " + (QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
-            // Numéro de demi-coup (à partir de 0) : NombreCoupsJoues vaut n (Blancs au trait) ou n + 0,5 (Noirs au trait) pour la FEN "... n"
-            NumeroDemiCoup = (int)Math.Round((NombreCoupsJoues - 1) * 2);
             PromotionPiece = TypePiece.Vide;
             PlateauEnable(true);   // On active le plateau pour pouvoir jouer à partir de la position chargée
             _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(contenuFen));
@@ -1453,9 +1381,9 @@ namespace BrunoGUI_GenII
             PartieEnCours.Lieu = partie.Lieu;
             PartieEnCours.Date = partie.Date;
             PartieEnCours.Ronde = partie.Ronde;
-            PartieEnCours.White = LabelJoueurBlanc.Text = _joueurBlanc = partie.White;
+            PartieEnCours.White = LabelJoueurBlanc.Text = partie.White;
             PartieEnCours.WhiteElo = EloBlanc.Text = partie.WhiteElo;
-            PartieEnCours.Black = LabelJoueurNoir.Text = _joueurNoir = partie.Black;
+            PartieEnCours.Black = LabelJoueurNoir.Text = partie.Black;
             PartieEnCours.BlackElo = EloNoir.Text = partie.BlackElo;
             PartieEnCours.Result = InformationsPartie.Text = partie.Result;
             PartieEnCours.ECO = partie.ECO;
@@ -1734,8 +1662,6 @@ namespace BrunoGUI_GenII
         private void MiseaZeroAffichages()
         {   // Réinitialise les affichages de la partie et du moteur
             Outils.MiseaZeroListes();
-            _numeroLigne = 0;
-            NumeroDemiCoup = 0;
             MiseaZeroVariantes();
         }
         private void MiseaZeroVariantes()
@@ -1747,10 +1673,6 @@ namespace BrunoGUI_GenII
         {
             VarianteMoteurUci2.Text = VarianteMoteurUci3.Text = "...";
             StatusProgramme.Text = InformationsPartie.Text = "Parcours partie";
-        }
-        private void NePasDérangerMoteur()
-        {   // Pendant la réflexion du moteur, tout reste possible : les actions qui rendent la réflexion inutile l'abandonnent
-            // (AbandonneReflexion, la réponse du moteur est alors ignorée), et parcourir la partie ne modifie que l'affichage
         }
         // ═══ Position affichée (parcours de la partie) ═══
         // L'échiquier montre soit la partie (LogiqueMouvements.PositionActuelle), soit une position passée (_positionAffichee).
@@ -1838,7 +1760,7 @@ namespace BrunoGUI_GenII
 
         private void LancerReflexion()
         {   // Lance le timer de réflexion et affiche le message de temps restant
-            NePasDérangerMoteur();
+            // (pendant la réflexion, tout reste possible : les actions qui la rendent inutile l'abandonnent, voir AbandonneReflexion)
             // Durée en secondes
             _tempsRestant = _dureeReflexionMilliSeconde / 1000;
             labelTempsReflexion.Text = "[" + _tempsRestant.ToString() + "]";
