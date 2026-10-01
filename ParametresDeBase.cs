@@ -20,10 +20,12 @@ namespace BrunoGUI_GenII
     public partial class ParametresDeBase : Form
     {
         private readonly EchiquierPrincipal interfaceGraphique;     // Stocke la référence de la classe principale
+        private readonly MoteurUci MoteurUci;                       // le moteur réglé par cette fenêtre
         public ParametresDeBase(EchiquierPrincipal brunoigInstance)
         {
             InitializeComponent();
             interfaceGraphique = brunoigInstance;
+            MoteurUci = brunoigInstance.MoteurUci;
             this.FormClosing += ParametresDeBase_FormClosing;   // Gestion du click sur la croix rouge en haut à droite ...
             this.VisibleChanged += ParametresDeBase_VisibleChanged;
         }
@@ -43,10 +45,7 @@ namespace BrunoGUI_GenII
             MoteurUci.DefinitMultiPV((int)baseMultipvNumerique.Value);
             var curseur = interfaceGraphique.TrackBarTempsReflexion;
             curseur.Value = Math.Clamp((int)baseReflexionNumerique.Value, curseur.Minimum, curseur.Maximum);   // met aussi à jour le temps de réflexion
-            if (interfaceGraphique.PartieCourante.Noirs == Joueur.Moteur)
-                interfaceGraphique.PartieEnCours.BlackElo = interfaceGraphique.EloNoir.Text = baseEloNumerique.Value.ToString();
-            else
-                interfaceGraphique.PartieEnCours.WhiteElo = interfaceGraphique.EloBlanc.Text = baseEloNumerique.Value.ToString();
+            interfaceGraphique.DefinitEloMoteur(baseEloNumerique.Value.ToString());    // affiché au(x) camp(s) joué(s) par le moteur
             this.DialogResult = DialogResult.OK;
             this.Hide();
         }

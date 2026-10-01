@@ -15,11 +15,11 @@ using System.Linq;
 
 namespace BrunoGUI_GenII
 {
-    public delegate void AffichageCoupJoue(string Coup); 
-    public delegate void AfficheInfo(string Chaine); 
-    public delegate void AffichagePiece(int IndexCase, LogiqueMouvements.TypePiece Caractere); 
-    public delegate void AffichageSymbole(int IndexCase, LogiqueMouvements.TypeSymbole Symbole); 
-    public delegate void AffichagePrisePiece(string Couleur, int IndexCase); 
+    public delegate void AffichageCoupJoue(string Coup);
+    public delegate void AfficheInfo(string Chaine);
+    public delegate void AfficheCouleur(LogiqueMouvements.ColorPiece Couleur);
+    public delegate void AffichagePiece(int IndexCase, LogiqueMouvements.TypePiece Caractere);
+    public delegate void AffichageSymbole(int IndexCase, LogiqueMouvements.TypeSymbole Symbole);
     public class LogiqueMouvements
     {
         // On joue à l'écran sur un échiquier de 64 cases
@@ -47,9 +47,10 @@ namespace BrunoGUI_GenII
 
         public static event AffichageCoupJoue AfficheCoupNoir;
         public static event AffichageCoupJoue AfficheCoupBlanc;
-        public static event AfficheInfo AfficheInfoEchec;
-        public static event AfficheInfo AfficheEchecEtMat;
-        public static event AfficheInfo AfficheTour;
+        public static event AfficheInfo AfficheInfoEchec;       // message d'échec ou de pat (vide : plus d'échec)
+        public static event AfficheCouleur AfficheEchecEtMat;   // camp maté
+        public static event AfficheCouleur AffichePat;          // camp pat (il n'a plus de coup)
+        public static event AfficheCouleur AfficheTour;         // camp au trait après un coup
         // Pièce choisie par le joueur pour une promotion (l'interface affiche le choix et attend le clic) ;
         // si personne ne répond (tests, fenêtre fermée), c'est une dame
         public static Func<ColorPiece, TypePiece> ChoixPromotion { get; set; }
@@ -466,7 +467,6 @@ namespace BrunoGUI_GenII
         {   // Exécute un coup pour le joueur humain ou le moteur UCI.
             // promotion : pièce choisie si le coup est une promotion (moteur, bibliothèque, PGN) ; Vide : on la demande au joueur
             // (ChoixPromotion) si le coup en est une
-            string CouleurEchec = string.Empty;
             bool AucunCoupJouable = false;      // après le coup : l'adversaire n'a plus de coup (mat s'il est en échec, pat sinon)
             CoupValide = false;
             DernierCoupTerminePartie = false;
@@ -558,11 +558,10 @@ namespace BrunoGUI_GenII
                         Uci = MouvementCoupUci + " ",
                     });
 
-                    CouleurEchec = QuiJoue == ColorPiece.Noir ? "Noir" : "Blanc";
                     // Affiche si le roi est en échec
                     if (Echec)
                     {
-                        AfficheInfoEchec?.Invoke("Le roi " + CouleurEchec + " est en échec");
+                        AfficheInfoEchec?.Invoke("Le roi " + NomCouleur(QuiJoue) + " est en échec");
                     }
                     if (QuiJoue == ColorPiece.Noir)
                     {
@@ -583,14 +582,17 @@ namespace BrunoGUI_GenII
                     if (AucunCoupJouable)
                     {
                         EchecetMat = true;
-                        AfficheEchecEtMat?.Invoke(CouleurEchec);
+                        AfficheEchecEtMat?.Invoke(QuiJoue);
                     }
                 }
                 else
                 {   // sinon on affiche si le joueur qui a la couleur est Pat
                     // ( plus de coups valides jouables + le joueur n'est pas échec )
                     if (AucunCoupJouable)
-                        AfficheInfoEchec?.Invoke("Le joueur " + CouleurEchec + " est Pat - plus de coup possible ");
+                    {
+                        AfficheInfoEchec?.Invoke("Le joueur " + NomCouleur(QuiJoue) + " est Pat - plus de coup possible ");
+                        AffichePat?.Invoke(QuiJoue);
+                    }
                 }
             }
         }
@@ -977,11 +979,14 @@ namespace BrunoGUI_GenII
                 }
                 // Changement de joueur
                 Outils.ChangerDeCoté();
-                AfficheTour?.Invoke((QuiJoue == ColorPiece.Blanc) ? "Blancs" : "Noirs");
+                AfficheTour?.Invoke(QuiJoue);
                 NombreCoupsJoues += Convert.ToSingle(0.5);      // On incrémente d'un demi-coup
             }
             return piecePromue;
         }
+        public static ColorPiece Adversaire(ColorPiece couleur) => couleur == ColorPiece.Blanc ? ColorPiece.Noir : ColorPiece.Blanc;
+        public static string NomCouleur(ColorPiece couleur) => couleur == ColorPiece.Blanc ? "Blanc" : "Noir";     // "le roi Blanc"
+        public static string NomCamp(ColorPiece couleur) => couleur == ColorPiece.Blanc ? "Blancs" : "Noirs";      // "aux Blancs de jouer"
         public static TypePiece PieceDeLaCouleur(TypePiece piece, ColorPiece couleur)
         {   // La même sorte de pièce de promotion, dans la couleur demandée (une dame si la pièce n'est pas une pièce de promotion)
             return piece switch

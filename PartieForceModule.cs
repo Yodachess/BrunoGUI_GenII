@@ -23,7 +23,7 @@ namespace BrunoGUI_GenII
     public partial class PartieForceModule : Form
     {
         // Choix proposés à l'ouverture de la fenêtre (préférences du .ini, puis derniers choix), et choix validés
-        public string ChoixCouleur { get; set; } = "Noirs";     // couleur jouée par le moteur
+        public LogiqueMouvements.ColorPiece ChoixCouleur { get; set; } = LogiqueMouvements.ColorPiece.Noir;    // camp joué par le moteur
         public string NomAdversaire { get; set; } = "Bruno";    // nom du joueur humain
         public int ForceModule { get; set; } = 1850;            // Elo du moteur si pas force maximale
         public int DureeReflexionSeconde { get; set; } = 5;
@@ -36,8 +36,8 @@ namespace BrunoGUI_GenII
         }
         private void AfficheChoix()
         {   // Met les contrôles de la fenêtre aux valeurs des propriétés
-            ModuleJoueBlancs.Checked = ChoixCouleur == "Blancs";
-            ModuleJoueNoirs.Checked = ChoixCouleur != "Blancs";
+            ModuleJoueBlancs.Checked = ChoixCouleur == LogiqueMouvements.ColorPiece.Blanc;
+            ModuleJoueNoirs.Checked = ChoixCouleur != LogiqueMouvements.ColorPiece.Blanc;
             ForceMoteurMaximum.Checked = ForceMaximale;
             ForceMoteurDefinie.Checked = !ForceMaximale;
             ValeurLimiteElo.Value = Math.Clamp(ForceModule, (int)ValeurLimiteElo.Minimum, (int)ValeurLimiteElo.Maximum);
@@ -66,7 +66,7 @@ namespace BrunoGUI_GenII
         }
         private void ForceMoteurOk_Click(object sender, EventArgs e)
         {
-            ChoixCouleur = ModuleJoueBlancs.Checked ? "Blancs" : "Noirs";
+            ChoixCouleur = ModuleJoueBlancs.Checked ? LogiqueMouvements.ColorPiece.Blanc : LogiqueMouvements.ColorPiece.Noir;
             NomAdversaire = TextBoxNomAdvesaire.Text;
             ForceMaximale = ForceMoteurMaximum.Checked;
             ForceModule = (int)ValeurLimiteElo.Value;

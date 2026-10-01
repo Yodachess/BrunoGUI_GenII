@@ -104,6 +104,18 @@ Charger("8/4P2k/8/8/8/8/8/4K3 w - - 0 1");
 Verifie("Promotion PGN : la pièce du coup est posée",
     GestionPartiePgn.DecodeCoupPartie("e8=N") && L.PiecesEchiquier[L.RenvoieCaseIndex120("e8")] == L.TypePiece.CavalierBlanc, DernierCoupPgn());
 
+L.ColorPiece? campMate = null, campPat = null, campAuTrait = null;
+L.AfficheEchecEtMat += c => campMate = c;
+L.AffichePat += c => campPat = c;
+L.AfficheTour += c => campAuTrait = c;
+Charger("7k/8/6K1/8/8/8/8/5Q2 w - - 0 1");
+L.ExecutionCoup("f1", "f8");
+Verifie("Mat : l'événement donne le camp maté", campMate == L.ColorPiece.Noir && campPat == null && campAuTrait == L.ColorPiece.Noir, $"maté {campMate}, pat {campPat}");
+campMate = campPat = null;
+Charger("7k/8/6K1/8/8/8/8/5Q2 w - - 0 1");
+L.ExecutionCoup("f1", "f7");
+Verifie("Pat : l'événement donne le camp pat (pas de mat)", campPat == L.ColorPiece.Noir && campMate == null, $"maté {campMate}, pat {campPat}");
+
 Charger("4k3/8/8/8/8/8/8/4K3 w - - 0 1");
 Charger("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1");
 Verifie("FEN : droits de roque KQkq relus en entier", L.RetourneChaineFenActuel().Contains(" KQkq "), L.RetourneChaineFenActuel());
@@ -357,7 +369,7 @@ bool lectureTolerante = prefs.ForceMoteur == 1850;
 prefs.CaseSombre = Parametres.FormatCouleur(System.Drawing.Color.FromArgb(181, 136, 99));
 prefs.NombreLignesPV = 2;
 prefs.ForceMaximale = false;
-prefs.CouleurMoteur = "Blancs";
+prefs.CouleurMoteur = L.ColorPiece.Blanc;
 prefs.TailleHachageMo = 512;
 prefs.SauverPreferences(iniSauve);
 string[] lignesSauvees = System.IO.File.ReadAllLines(iniSauve);
@@ -369,7 +381,7 @@ Verifie("Préférences : commentaire, ordre et clé inconnue conservés",
     lignesSauvees[0] == "; Mon commentaire" && lignesSauvees[1] == "Casesombre = #B58863" && lignesSauvees[2] == "CleInconnue = gardee" && lignesSauvees[3] == "NombrelignesPV = 2",
     string.Join(" | ", lignesSauvees.Take(4)));
 Verifie("Préférences : relecture de toutes les valeurs",
-    relus.CaseSombre == "#B58863" && relus.NombreLignesPV == 2 && !relus.ForceMaximale && relus.CouleurMoteur == "Blancs" && relus.TailleHachageMo == 512 && relus.ForceMoteur == 1850,
+    relus.CaseSombre == "#B58863" && relus.NombreLignesPV == 2 && !relus.ForceMaximale && relus.CouleurMoteur == L.ColorPiece.Blanc && relus.TailleHachageMo == 512 && relus.ForceMoteur == 1850,
     $"{relus.CaseSombre}, PV={relus.NombreLignesPV}, max={relus.ForceMaximale}, moteur={relus.CouleurMoteur}, Hash={relus.TailleHachageMo}");
 
 // Deux fichiers : BrunoGUI.ini (valeurs par défaut, jamais écrit) + BrunoGUI.preferences.ini (préférences, par-dessus)
