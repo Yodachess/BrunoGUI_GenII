@@ -949,9 +949,9 @@ namespace BrunoGUI_GenII
             groupParcoursPartie.TabIndex = 37;
             groupParcoursPartie.TabStop = false;
             groupParcoursPartie.Text = "Parcours partie PGN";
-            //
+            // 
             // BoutonReprendreIci
-            //
+            // 
             BoutonReprendreIci.Location = new System.Drawing.Point(6, 76);
             BoutonReprendreIci.Name = "BoutonReprendreIci";
             BoutonReprendreIci.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
@@ -964,7 +964,7 @@ namespace BrunoGUI_GenII
             BoutonReprendreIci.Values.DropDownArrowColor = System.Drawing.Color.Empty;
             BoutonReprendreIci.Values.Text = "Reprendre ici";
             BoutonReprendreIci.Click += BoutonReprendreIci_Click;
-            //
+            // 
             // BoutonFin
             // 
             BoutonFin.Location = new System.Drawing.Point(64, 49);
@@ -1184,7 +1184,7 @@ namespace BrunoGUI_GenII
             Margin = new System.Windows.Forms.Padding(2);
             Name = "EchiquierPrincipal";
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            Text = "Echiquier Principal";
+            Text = "BrunoGUI Génération II";
             FormClosing += EchiquierPrincipal_FormClosing;
             Load += BrunoInterfaceGraphique_Load;
             MenuInterfaceGraphique.ResumeLayout(false);
