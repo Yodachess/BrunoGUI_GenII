@@ -46,6 +46,7 @@ namespace BrunoGUI_GenII
         private bool _plateauAutorise = true;   // c'est au joueur de bouger les pièces (voir PlateauEnable et MetAJourPlateau)
         private string _caseSource, _caseDestination;
         private string _nomHumain, _joueurElo, _nomMoteur, _moteurElo;
+        private bool _nomsHumainMoteur;     // les joueurs affichés sont l'humain et le moteur (voir AfficheJoueursDeLaPartie)
         private string _cheminMoteur, _nomMoteurChoisi;
         private string _bibliotheque = "rodent.bin";
         private bool _clickCaseSource, _visuSymbole, _montreDonneesBrutesUci, _montre3VariantesUci;
@@ -733,11 +734,13 @@ namespace BrunoGUI_GenII
         // Joueurs affichés (noms et Elo)
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void AfficheJoueurs(string blancs, string eloBlancs, string noirs, string eloNoirs)
-        {   // Point de passage unique : les étiquettes et l'en-tête PGN de la partie sont toujours écrits ensemble
+        {   // Point de passage unique : les étiquettes et l'en-tête PGN de la partie sont toujours écrits ensemble.
+            // Noms donnés directement (position FEN, partie PGN, en-tête saisi, humain contre humain) : le moteur n'y touche plus
             PartieEnCours.White = LabelJoueurBlanc.Text = blancs;
             PartieEnCours.WhiteElo = EloBlanc.Text = eloBlancs;
             PartieEnCours.Black = LabelJoueurNoir.Text = noirs;
             PartieEnCours.BlackElo = EloNoir.Text = eloNoirs;
+            _nomsHumainMoteur = false;
         }
         private (string Nom, string Elo) IdentiteDe(Joueur joueur) =>
             joueur == Joueur.Moteur ? (_nomMoteur, _moteurElo) : (_nomHumain, _joueurElo);
@@ -746,12 +749,17 @@ namespace BrunoGUI_GenII
             var (blancs, eloBlancs) = IdentiteDe(_partie.Blancs);
             var (noirs, eloNoirs) = IdentiteDe(_partie.Noirs);
             AfficheJoueurs(blancs, eloBlancs, noirs, eloNoirs);
+            _nomsHumainMoteur = true;
         }
         private void AfficheMoteurDansLaPartie()
-        {   // Le nom ou l'Elo du moteur a changé : seul le ou les camps qu'il joue changent (jamais un joueur humain, ni une partie PGN chargée)
+        {   // Le nom ou l'Elo du moteur a changé : seul le ou les camps qu'il joue changent, et seulement si les noms affichés
+            // sont ceux de l'humain et du moteur (pas après un chargement FEN ou PGN, ni un en-tête saisi)
+            if (!_nomsHumainMoteur)
+                return;
             bool blancs = _partie.Blancs == Joueur.Moteur, noirs = _partie.Noirs == Joueur.Moteur;
             AfficheJoueurs(blancs ? _nomMoteur : PartieEnCours.White, blancs ? _moteurElo : PartieEnCours.WhiteElo,
                            noirs ? _nomMoteur : PartieEnCours.Black, noirs ? _moteurElo : PartieEnCours.BlackElo);
+            _nomsHumainMoteur = true;
         }
         public void DefinitEloMoteur(string elo)
         {   // Elo du moteur réglé dans les paramètres de base
