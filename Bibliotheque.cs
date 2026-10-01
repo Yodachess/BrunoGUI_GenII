@@ -120,6 +120,18 @@ namespace BrunoGUI_GenII
             }
         }
 
+        public static EntréePolyglot ChoisirEntree(IReadOnlyList<EntréePolyglot> entrees, bool aleatoire, Random hasard)
+        {   // Coup de bibliothèque à jouer : au hasard parmi tous (aleatoire), sinon au hasard parmi ceux de plus grand poids ;
+            // null s'il n'y a aucune entrée
+            if (entrees.Count == 0)
+                return null;
+            if (aleatoire)
+                return entrees[hasard.Next(entrees.Count)];
+            ushort poidsMaximum = entrees.Max(e => e.Poids);
+            List<EntréePolyglot> meilleures = entrees.Where(e => e.Poids == poidsMaximum).ToList();
+            return meilleures[hasard.Next(meilleures.Count)];
+        }
+
         public static IEnumerable<EntréePolyglot> TrouverLesEntrées(ulong clefPolyglot)
         {   // Trouve toutes les entrées dans le fichier Polyglot correspondant à la clé donnée
 

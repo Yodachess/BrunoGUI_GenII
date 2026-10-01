@@ -590,6 +590,19 @@ Verifie("PGN en Latin-1 : accents lus, date '??' conservée, annotations retiré
     partieLatin1.White == "Müller" && partieLatin1.Black == "Gaël" && partieLatin1.Date == "2024.??.??" && partieLatin1.CoupsPartiePGN.StartsWith("1. e4 e5 2. Nf3"),
     $"{partieLatin1.White} / {partieLatin1.Black} / {partieLatin1.Date} / {partieLatin1.CoupsPartiePGN}");
 
+// Choix du coup de bibliothèque : le meilleur poids (au hasard parmi les ex aequo), ou n'importe lequel en mode aléatoire
+List<EntréePolyglot> entreesBiblio =
+[
+    new() { CoupBiblio = 1, Poids = 10 }, new() { CoupBiblio = 2, Poids = 50 }, new() { CoupBiblio = 3, Poids = 50 }, new() { CoupBiblio = 4, Poids = 5 }
+];
+Random hasardTest = new(1234);
+bool toujoursMeilleur = Enumerable.Range(0, 200).Select(_ => PolyglotBibliothèque.ChoisirEntree(entreesBiblio, false, hasardTest)).All(e => e.Poids == 50);
+var choixMeilleurs = Enumerable.Range(0, 200).Select(_ => PolyglotBibliothèque.ChoisirEntree(entreesBiblio, false, hasardTest).CoupBiblio).Distinct().Count();
+var choixAleatoires = Enumerable.Range(0, 400).Select(_ => PolyglotBibliothèque.ChoisirEntree(entreesBiblio, true, hasardTest).CoupBiblio).Distinct().Count();
+Verifie("Bibliothèque : meilleur poids (les deux ex aequo sortent), tous les coups en mode aléatoire, aucun coup si liste vide",
+    toujoursMeilleur && choixMeilleurs == 2 && choixAleatoires == 4 && PolyglotBibliothèque.ChoisirEntree([], false, hasardTest) == null,
+    $"meilleurs : {choixMeilleurs} coups distincts, aléatoire : {choixAleatoires}");
+
 // Bibliothèque d'ouvertures introuvable : exception claire au chargement, puis aucun coup (et plus d'exception) à la recherche
 bool introuvableSignalee = false;
 try { new PolyglotBibliothèque().PolyglotBibliothèqueLecture("bibliotheque_introuvable.bin"); }
