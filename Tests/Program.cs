@@ -641,6 +641,16 @@ Verifie("Bibliothèque : meilleur poids (les deux ex aequo sortent), tous les co
     toujoursMeilleur && choixMeilleurs == 2 && choixAleatoires == 4 && PolyglotBibliothèque.ChoisirEntree([], false, hasardTest) == null,
     $"meilleurs : {choixMeilleurs} coups distincts, aléatoire : {choixAleatoires}");
 
+// Mise à jour de Stockfish : archive Windows adaptée au processeur (publication de Stockfish 19)
+string[] archivesSf19 = ["stockfish-android-armv8.tar", "stockfish-ubuntu-x86-64-universal.tar", "stockfish-windows-arm64-universal.zip", "stockfish-windows-x86-64-universal.zip"];
+string[] archivesAnciennes = ["stockfish-windows-x86-64-avx2.zip", "stockfish-windows-x86-64.zip", "stockfish-ubuntu-x86-64.tar"];
+Verifie("Mise à jour Stockfish : x86-64 universal sur PC classique, arm64 sur PC ARM, rien sans version Windows",
+    MiseAJourStockfish.ChoisirArchive(archivesSf19, System.Runtime.InteropServices.Architecture.X64) == "stockfish-windows-x86-64-universal.zip"
+    && MiseAJourStockfish.ChoisirArchive(archivesSf19, System.Runtime.InteropServices.Architecture.Arm64) == "stockfish-windows-arm64-universal.zip"
+    && MiseAJourStockfish.ChoisirArchive(archivesAnciennes, System.Runtime.InteropServices.Architecture.Arm64) != null
+    && MiseAJourStockfish.ChoisirArchive(["stockfish-ubuntu-x86-64.tar"], System.Runtime.InteropServices.Architecture.X64) == null,
+    MiseAJourStockfish.ChoisirArchive(archivesSf19, System.Runtime.InteropServices.Architecture.Arm64) ?? "(aucune)");
+
 // Bibliothèque d'ouvertures introuvable : exception claire au chargement, puis aucun coup (et plus d'exception) à la recherche
 bool introuvableSignalee = false;
 try { new PolyglotBibliothèque().PolyglotBibliothèqueLecture("bibliotheque_introuvable.bin"); }
