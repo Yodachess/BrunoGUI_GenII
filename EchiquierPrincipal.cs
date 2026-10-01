@@ -56,12 +56,12 @@ namespace BrunoGUI_GenII
 
         // les classes
         public LogiqueMouvements LogiqueMouvements = new();
-        public MoteurUci MoteurUci = new();
+        public readonly MoteurUci MoteurUci = new();    // le moteur UCI en cours (un seul objet, gardé quand on change de moteur)
         private readonly PiloteMoteur _pilote;      // ce qui est demandé au moteur (coup de partie ou analyse) : voir PiloteMoteur.cs
         public GestionPartiePgn GestionPartiePgn = new();
         public PartieForceModule maNouvellePartieForceModule = new();
         public PartieEchecsPGN PartieEnCours = new();
-        public ParametresUciStockfish mesParametresUciStockfish = new();
+        public ParametresUciStockfish mesParametresUciStockfish;    // créée dans le constructeur (elle règle MoteurUci)
         public ParametresDeBase mesparametresDeBase;        // mesparametresDeBase est déclarée, mais elle n’est instanciée qu'après "InitializeComponent();"
         private FenetrePartie mafenetrePartie;              // mafenetrePartie est déclarée, mais elle n’est pas encore instanciée. A instancier dans une méthode
         private AffichePgn affichePgn = new();   // affichePgn est à la fois déclarée et instanciée. Prêt à être utilisé dès le début
@@ -92,10 +92,7 @@ namespace BrunoGUI_GenII
             _forceMoteurElo = parametres.ForceMoteur;
             MoteurUci.NombreLignesPV = parametres.NombreLignesPV;
             _bibliotheque = parametres.Bibliotheque;
-            LabelJoueurNoir.Text = parametres.Moteur;
-            EloNoir.Text = _moteurElo = _forceMoteurElo.ToString();
-            LabelJoueurBlanc.Text = _nomHumain;
-            EloBlanc.Text = _joueurElo;
+            _moteurElo = _forceMoteurElo.ToString();
             // Préférences : la fenêtre "Nouvelle partie" propose les derniers choix, le curseur reprend le dernier temps de réflexion
             maNouvellePartieForceModule.ChoixCouleur = parametres.CouleurMoteur;
             maNouvellePartieForceModule.ForceMaximale = parametres.ForceMaximale;
@@ -117,12 +114,9 @@ namespace BrunoGUI_GenII
             PartieEnCours.Date = Aujourdhui.ToString("yyyy.MM.dd");
             PartieEnCours.Lieu = "Maison"; PartieEnCours.Tournoi = "Entrainement";
             PartieEnCours.Result = "*";
-            // En-têtes PGN de départ = joueurs affichés (humain avec les Blancs, moteur avec les Noirs), repris par la fenêtre "Entête PGN"
-            PartieEnCours.White = _nomHumain;
-            PartieEnCours.WhiteElo = string.IsNullOrWhiteSpace(_joueurElo) ? "?" : _joueurElo;
-            PartieEnCours.Black = parametres.Moteur;
-            PartieEnCours.BlackElo = _forceMoteurElo.ToString();
+            AfficheJoueursDeLaPartie();     // avant toute partie : l'humain avec les Blancs, le moteur avec les Noirs (étiquettes et en-tête PGN)
             mesparametresDeBase = new ParametresDeBase(this);
+            mesParametresUciStockfish = new ParametresUciStockfish(MoteurUci);
             fichierPartiePgn.VisibleChanged += (s, e) => MetAJourBoutonListeParties();   // bouton "Affiche/Masque liste parties"
             // Les options suivent l'état initial des cases à cocher du designer (le son était inversé : case cochée, son coupé)
             _emetUnSon = ActiveSon.Checked;
@@ -137,6 +131,7 @@ namespace BrunoGUI_GenII
             LogiqueMouvements.AfficheCoupBlanc += CoupJoue;
             LogiqueMouvements.AfficheInfoEchec += AfficheInfoEchec;
             LogiqueMouvements.AfficheEchecEtMat += AfficheEchecEtMat;
+            LogiqueMouvements.AffichePat += AffichePat;
             LogiqueMouvements.AfficheTour += AfficheTour;
             LogiqueMouvements.ChoixPromotion = AffichePromotionPion;
             LogiqueMouvements.DessinePiece += DessinePieceDeLaPartie;     // ignoré pendant le parcours de la partie
@@ -184,7 +179,6 @@ namespace BrunoGUI_GenII
                ActiverMenus(true);    // On réactive les menus après la mise à jour
            });
             Debug.WriteLine("Moteur = " + _nomMoteur);
-            PartieEnCours.Black = LabelJoueurNoir.Text = _nomMoteur;
             // VarianteMoteurUci2.Text = "[INFO] Fin de la vérification de mise à jour de Stockfish...";
         }
 
@@ -196,7 +190,7 @@ namespace BrunoGUI_GenII
                 AbandonneReflexion();   // nouvelle partie
                 QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
                 DémarreStockfish();
-                string couleurMoteur = maNouvellePartieForceModule.ChoixCouleur;
+                ColorPiece couleurMoteur = maNouvellePartieForceModule.ChoixCouleur;
                 bool forceMaximale = maNouvellePartieForceModule.ForceMaximale;
                 _forceMoteurElo = maNouvellePartieForceModule.ForceModule;
                 _nomHumain = maNouvellePartieForceModule.NomAdversaire;     // mémorisé dans les préférences à la fermeture
@@ -209,16 +203,14 @@ namespace BrunoGUI_GenII
                 {   // Moteur à sa force Elo maximale
                     _forceMoteurElo = 3150;
                 }
+                _moteurElo = _forceMoteurElo.ToString();
                 MoteurUci.ActiveLimiteElo();
-                MoteurUci.DefinitLimiteElo(_forceMoteurElo.ToString());
+                MoteurUci.DefinitLimiteElo(_moteurElo);
                 MoteurUci.DefinitMultiPV(MoteurUci.NombreLignesPV);
-                if (couleurMoteur == "Blancs")
+                if (couleurMoteur == ColorPiece.Blanc)
                 {   // Le moteur joue les blancs
-                    PartieEnCours.White = LabelJoueurBlanc.Text = _nomMoteur;
-                    PartieEnCours.WhiteElo = EloBlanc.Text = _forceMoteurElo.ToString();
-                    PartieEnCours.Black = LabelJoueurNoir.Text = maNouvellePartieForceModule.NomAdversaire;
-                    PartieEnCours.BlackElo = EloNoir.Text = _joueurElo;
                     CommencerPartie(Joueur.Moteur, Joueur.Humain);
+                    AfficheJoueursDeLaPartie();
                     if (!_vue.CoteNoir)
                         TourneEchiquier();      // On met la vue côté Noir
                     ParametresJoueurHumain("Le moteur UCI joue");      // On fait jouer le moteur côté blanc
@@ -226,13 +218,10 @@ namespace BrunoGUI_GenII
                 }
                 else
                 {   // Le moteur joue les noirs
-                    PartieEnCours.White = LabelJoueurBlanc.Text = maNouvellePartieForceModule.NomAdversaire;
-                    PartieEnCours.WhiteElo = EloBlanc.Text = _joueurElo;
-                    PartieEnCours.Black = LabelJoueurNoir.Text = _nomMoteur;
-                    PartieEnCours.BlackElo = EloNoir.Text = _forceMoteurElo.ToString();
                     if (_vue.CoteNoir)
                         TourneEchiquier();
                     CommencerPartie(Joueur.Humain, Joueur.Moteur);
+                    AfficheJoueursDeLaPartie();
                     ParametresJoueurHumain("A vous de jouer");            // On demande à l'humain de jouer
                     PlateauEnable(true);                                            // On lui permet de bouger les pièces
                 }
@@ -369,12 +358,9 @@ namespace BrunoGUI_GenII
                     if (ligne.NomMoteur != null)
                     {   // Récupération du nom du moteur (limité à 20 caractères pour l'affichage)
                         _nomMoteur = ligne.NomMoteur[..Math.Min(20, ligne.NomMoteur.Length)];
-                        // Le nom va au(x) camp(s) joué(s) par le moteur (étiquette et en-tête PGN identiques), jamais à un joueur humain
+                        // Le nom va au(x) camp(s) joué(s) par le moteur, jamais à un joueur humain
                         // (ex : partie PGN chargée, ou moteur qui joue les Blancs et redémarre après une mise à jour)
-                        if (_partie.Blancs == Joueur.Moteur)
-                            PartieEnCours.White = LabelJoueurBlanc.Text = _nomMoteur;
-                        if (_partie.Noirs == Joueur.Moteur)
-                            PartieEnCours.Black = LabelJoueurNoir.Text = _nomMoteur;
+                        AfficheMoteurDansLaPartie();
                     }
                     if (ligne.AuteurMoteur != null)     // Récupération de l'auteur
                         VarianteMoteurUci3.Text = "     Auteur(s) du moteur " + _nomMoteur + " = " + ligne.AuteurMoteur;
@@ -528,39 +514,38 @@ namespace BrunoGUI_GenII
             MetAJourCommandes();    // un coup a été joué : on peut parcourir la partie, la liste des coups, le retour arrière...
         }
 
-        private void AfficheTour(string Couleur)        // Affiche la couleur du joueur humain courant
-        {   // Affiche la couleur du joueur humain courant, et active les PictureBox si c'est au tour du joueur humain
+        private void AfficheTour(ColorPiece couleur)
+        {   // Affiche le camp au trait entre humains ; sinon active les cases si c'est au tour du joueur humain
             if (_partie.EntreHumains)
-                InformationPourJoueur.Text = StatusProgramme.Text = "Aux " + Couleur + " de jouer";
-            else    // active les Picturebox si c'est au tour du joueur humain
-                PlateauEnable(_partie.JoueurDe(Couleur == "Blancs" ? ColorPiece.Blanc : ColorPiece.Noir) == Joueur.Humain);
+                InformationPourJoueur.Text = StatusProgramme.Text = "Aux " + NomCamp(couleur) + " de jouer";
+            else
+                PlateauEnable(_partie.JoueurDe(couleur) == Joueur.Humain);
         }
 
-        private void AfficheEchecEtMat(string couleurRoiMat)   // Affiche l'échec et mat du roi de la couleur en paramètre
-        {   // Affiche l'échec et mat du roi de la couleur en paramètre, et gère la fin de partie
+        private void AfficheEchecEtMat(ColorPiece couleurMatee)
+        {   // Affiche l'échec et mat du camp en paramètre, et gère la fin de partie
             // (le "#" du mat est déjà dans les notations du dernier coup : voir LogiqueMouvements.ExecutionCoup)
-            if (couleurRoiMat == "Blanc")
+            if (couleurMatee == ColorPiece.Blanc)
                 GestionResultat("0-1", " Gain Noir");
             else
                 GestionResultat("1-0", " Gain Blanc");
-            InformationPourJoueur.Text = VarianteMoteurCourante.Text = "Le Roi " + couleurRoiMat + " est échec et mat";
+            InformationPourJoueur.Text = VarianteMoteurCourante.Text = "Le Roi " + NomCouleur(couleurMatee) + " est échec et mat";
             StatusProgramme.Text = "Partie terminée";
             Application.DoEvents();
             PlateauEnable(false);
         }
 
         private void AfficheInfoEchec(string infoechec)
-        {   // Affiche les informations d'échec ou de pat dans l'étiquette, et si c'est un pat, on gère la fin de partie
+        {   // Affiche les informations d'échec ou de pat dans l'étiquette (le pat lui-même est traité par AffichePat)
             InformationsPartie.Text = infoechec;
             InformationsPartie.ForeColor = Color.DarkGreen;
-            if (infoechec.Contains("échec") || infoechec.Contains("Pat"))
-                InformationsPartie.ForeColor = Color.DarkGreen;
-            if (infoechec.Contains("Pat"))
-            {
-                GestionResultat("1/2-1/2", "Pat (Nulle)");
-                InformationPourJoueur.Text = "Pat (Nulle)";
-                PlateauEnable(false); // un des joueurs est pat : fin de la partie
-            }
+        }
+
+        private void AffichePat(ColorPiece couleurPat)
+        {   // Un des joueurs est pat : fin de la partie
+            GestionResultat("1/2-1/2", "Pat (Nulle)");
+            InformationPourJoueur.Text = "Pat (Nulle)";
+            PlateauEnable(false);
         }
         private LogiqueMouvements.TypePiece AffichePromotionPion(LogiqueMouvements.ColorPiece couleur)
         {   // Promotion d'un pion de l'humain : on affiche les pièces disponibles pour la promotion, on attend que le joueur
@@ -641,12 +626,9 @@ namespace BrunoGUI_GenII
             {
                 AbandonneReflexion();   // nouvelle partie
                 QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
-                PartieEnCours.White = LabelJoueurBlanc.Text = _nomHumain;
-                PartieEnCours.Black = LabelJoueurNoir.Text = _nomMoteur;
-                PartieEnCours.WhiteElo = EloBlanc.Text = _joueurElo;
-                PartieEnCours.BlackElo = EloNoir.Text = _moteurElo;
                 StatusProgramme.Text = ScoreMoteur.Text = EvaluationUci.Text = VarianteMoteurCourante.Text = "";    // On efface les données de la partie précédente
                 CommencerPartie(Joueur.Humain, Joueur.Moteur);
+                AfficheJoueursDeLaPartie();
                 if (_vue.CoteNoir)
                     TourneEchiquier();
                 AfficheCoupsBibliotheque(FenDepart);
@@ -663,12 +645,9 @@ namespace BrunoGUI_GenII
             {
                 AbandonneReflexion();   // nouvelle partie
                 QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
-                PartieEnCours.White = LabelJoueurBlanc.Text = _nomMoteur;
-                PartieEnCours.Black = LabelJoueurNoir.Text = _nomHumain;
-                PartieEnCours.WhiteElo = EloBlanc.Text = _moteurElo;
-                PartieEnCours.BlackElo = EloNoir.Text = _joueurElo;
                 StatusProgramme.Text = ScoreMoteur.Text = EvaluationUci.Text = VarianteMoteurCourante.Text = "";     // On efface les données de la partie précédente
                 CommencerPartie(Joueur.Moteur, Joueur.Humain);
+                AfficheJoueursDeLaPartie();
                 if (!_vue.CoteNoir)
                     TourneEchiquier();                                          // On met la vue côté Noir
                 ParametresJoueurHumain("Le moteur UCI joue");
@@ -685,8 +664,7 @@ namespace BrunoGUI_GenII
             {
                 AbandonneReflexion();   // nouvelle partie
                 QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
-                PartieEnCours.White = LabelJoueurBlanc.Text = _nomHumain;
-                PartieEnCours.Black = LabelJoueurNoir.Text = "Adversaire";
+                AfficheJoueurs(_nomHumain, _joueurElo, "Adversaire", "");
                 StatusProgramme.Text = "Humain contre humain";
                 InformationsPartie.Text = " Bruno vous souhaite une bonne partie !";
                 MoteurUci.ActiveLimiteElo();        // Préparation du moteur en cas de demande d'analyse
@@ -719,14 +697,14 @@ namespace BrunoGUI_GenII
         }
         private void RodentIV_Click(object sender, EventArgs e)
         {   //  https://echecs-et-informatique.franceserv.com/rodent-iv.html
-            EloNoir.Text = _moteurElo = "+- 3000";
+            _moteurElo = "+- 3000";
             _cheminMoteur = Path.Combine(Chemins.MoteursUCI + @"\Rodent_IV", "rodent-iv-x64.exe");
             Debug.WriteLine("Chemin Rodent IV = " + _cheminMoteur);
             DémarrageMoteur();
         }
         private void Sargon1_1978_Click(object sender, EventArgs e)
         {   // https://echecs-et-informatique.franceserv.com/sargon-1978.html
-            EloNoir.Text = _moteurElo = "1678";
+            _moteurElo = "1678";
             _cheminMoteur = Path.Combine(Chemins.MoteursUCI + @"\sargon1978", "sargon1978_1_01b.exe");
             Debug.WriteLine("Chemin sargon I 1978 = " + _cheminMoteur);
             DémarrageMoteur();
@@ -734,7 +712,7 @@ namespace BrunoGUI_GenII
         }
         public void DémarreStockfish()
         {   //  https://stockfishchess.org/
-            EloNoir.Text = _moteurElo = "+- 3000";
+            _moteurElo = "+- 3000";
             _cheminMoteur = CheminStockfish;
             Debug.WriteLine("Chemin Stockfish = " + _cheminMoteur);
             DémarrageMoteur();
@@ -747,10 +725,38 @@ namespace BrunoGUI_GenII
             MoteurUci.Start(_cheminMoteur); // on démarre le nouveau moteur Uci
             _nomMoteurChoisi = Path.GetFileNameWithoutExtension(_cheminMoteur);
             Debug.WriteLine("Moteur = " + _nomMoteurChoisi);
-            if (_partie.Blancs == Joueur.Moteur)
-                LabelJoueurBlanc.Text = _nomMoteurChoisi;
-            if (_partie.Noirs == Joueur.Moteur)
-                LabelJoueurNoir.Text = _nomMoteurChoisi;
+            _nomMoteur = _nomMoteurChoisi;      // en attendant le nom annoncé par le moteur ("id name", voir AfficheUci)
+            AfficheMoteurDansLaPartie();
+        }
+
+        // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+        // Joueurs affichés (noms et Elo)
+        // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+        private void AfficheJoueurs(string blancs, string eloBlancs, string noirs, string eloNoirs)
+        {   // Point de passage unique : les étiquettes et l'en-tête PGN de la partie sont toujours écrits ensemble
+            PartieEnCours.White = LabelJoueurBlanc.Text = blancs;
+            PartieEnCours.WhiteElo = EloBlanc.Text = eloBlancs;
+            PartieEnCours.Black = LabelJoueurNoir.Text = noirs;
+            PartieEnCours.BlackElo = EloNoir.Text = eloNoirs;
+        }
+        private (string Nom, string Elo) IdentiteDe(Joueur joueur) =>
+            joueur == Joueur.Moteur ? (_nomMoteur, _moteurElo) : (_nomHumain, _joueurElo);
+        private void AfficheJoueursDeLaPartie()
+        {   // Nom et Elo de l'humain ou du moteur, selon qui joue chaque camp (_partie.Blancs / _partie.Noirs)
+            var (blancs, eloBlancs) = IdentiteDe(_partie.Blancs);
+            var (noirs, eloNoirs) = IdentiteDe(_partie.Noirs);
+            AfficheJoueurs(blancs, eloBlancs, noirs, eloNoirs);
+        }
+        private void AfficheMoteurDansLaPartie()
+        {   // Le nom ou l'Elo du moteur a changé : seul le ou les camps qu'il joue changent (jamais un joueur humain, ni une partie PGN chargée)
+            bool blancs = _partie.Blancs == Joueur.Moteur, noirs = _partie.Noirs == Joueur.Moteur;
+            AfficheJoueurs(blancs ? _nomMoteur : PartieEnCours.White, blancs ? _moteurElo : PartieEnCours.WhiteElo,
+                           noirs ? _nomMoteur : PartieEnCours.Black, noirs ? _moteurElo : PartieEnCours.BlackElo);
+        }
+        public void DefinitEloMoteur(string elo)
+        {   // Elo du moteur réglé dans les paramètres de base
+            _moteurElo = elo;
+            AfficheMoteurDansLaPartie();
         }
         private void ParametresDeBase_Click(object sender, EventArgs e)
         {   // Affiche les paramètres de base du moteur UCI
@@ -909,10 +915,8 @@ namespace BrunoGUI_GenII
         {   // Ouvre la fenêtre de l'en-tête PGN
             SaisieBalises SaisieBalises = new(PartieEnCours);
             SaisieBalises.ShowDialog();
-            LabelJoueurBlanc.Text = PartieEnCours.White;        // On affiche les noms et ELO des joueurs qui sont dans l'entête PGN
-            LabelJoueurNoir.Text = PartieEnCours.Black;
-            EloBlanc.Text = PartieEnCours.WhiteElo;
-            EloNoir.Text = PartieEnCours.BlackElo;
+            // On affiche les noms et Elo des joueurs qui sont dans l'en-tête PGN
+            AfficheJoueurs(PartieEnCours.White, PartieEnCours.WhiteElo, PartieEnCours.Black, PartieEnCours.BlackElo);
         }
         private void MontreVariantesUci_Click(object sender, EventArgs e)
         {   // Affiche ou masque les 3 variantes UCI (info multiPV) à chaque clic
@@ -1151,11 +1155,7 @@ namespace BrunoGUI_GenII
                 EffaceResultat();       // la partie n'a plus de résultat
             if (etaitLectureSeule)
             {   // La partie chargée devient une partie d'entraînement contre le moteur (l'humain a le camp au trait)
-                bool humainBlancs = _partie.Blancs == Joueur.Humain;
-                PartieEnCours.White = LabelJoueurBlanc.Text = humainBlancs ? _nomHumain : _nomMoteur;
-                PartieEnCours.Black = LabelJoueurNoir.Text = humainBlancs ? _nomMoteur : _nomHumain;
-                PartieEnCours.WhiteElo = EloBlanc.Text = humainBlancs ? _joueurElo : _moteurElo;
-                PartieEnCours.BlackElo = EloNoir.Text = humainBlancs ? _moteurElo : _joueurElo;
+                AfficheJoueursDeLaPartie();
                 PartieEnCours.Tournoi = "Entrainement";
                 PartieEnCours.Lieu = "Maison";
                 PartieEnCours.Date = DateTime.Today.ToString("yyyy.MM.dd");
@@ -1164,7 +1164,7 @@ namespace BrunoGUI_GenII
             PartieEnCours.CompteDePLy = LogiqueMouvements.ListeCoupsFen.Count.ToString();
             string fen = LogiqueMouvements.RetourneChaineFenActuel();
             AfficheCoupsBibliotheque(fen);
-            InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + (QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
+            InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + NomCamp(QuiJoue);
             InformationsPartie.Text = "Partie reprise";
             if (_partie.MoteurAuTrait)
             {   // C'est au moteur de jouer à partir de cette position
@@ -1289,11 +1289,8 @@ namespace BrunoGUI_GenII
             PartieEnCours.CoupsPartiePGN = PartieEnCours.Result = PartieEnCours.CompteDePLy = PartieEnCours.Ronde = "";
             PartieEnCours.Tournoi = "Entrainement";
             PartieEnCours.Lieu = "Maison";
-            PartieEnCours.White = LabelJoueurBlanc.Text = "";
-            PartieEnCours.Black = LabelJoueurNoir.Text = "";
-            PartieEnCours.WhiteElo = EloBlanc.Text = "";
-            PartieEnCours.BlackElo = EloNoir.Text = "";
-            InformationPourJoueur.Text = "Trait aux " + (QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
+            AfficheJoueursDeLaPartie();     // l'humain a le camp au trait, le moteur l'autre camp
+            InformationPourJoueur.Text = "Trait aux " + NomCamp(QuiJoue);
             PlateauEnable(true);   // On active le plateau pour pouvoir jouer à partir de la position chargée
             AfficheCoupsBibliotheque(contenuFen);
             MetAJourCommandes();
@@ -1370,10 +1367,7 @@ namespace BrunoGUI_GenII
             PartieEnCours.Lieu = partie.Lieu;
             PartieEnCours.Date = partie.Date;
             PartieEnCours.Ronde = partie.Ronde;
-            PartieEnCours.White = LabelJoueurBlanc.Text = partie.White;
-            PartieEnCours.WhiteElo = EloBlanc.Text = partie.WhiteElo;
-            PartieEnCours.Black = LabelJoueurNoir.Text = partie.Black;
-            PartieEnCours.BlackElo = EloNoir.Text = partie.BlackElo;
+            AfficheJoueurs(partie.White, partie.WhiteElo, partie.Black, partie.BlackElo);
             PartieEnCours.Result = InformationsPartie.Text = partie.Result;
             PartieEnCours.ECO = partie.ECO;
             PartieEnCours.CompteDePLy = partie.CompteDePLy;
@@ -1648,7 +1642,7 @@ namespace BrunoGUI_GenII
             MetAJourCommandes();
             _vue.DessinePosition(_positionAffichee);
             AfficheCoupsBibliotheque(fen);
-            InformationPourJoueur.Text = "Trait aux " + (_positionAffichee.QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
+            InformationPourJoueur.Text = "Trait aux " + NomCamp(_positionAffichee.QuiJoue);
             VarianteMoteurUci1.Text = index < 0 || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart
                 ? "   [ Position initiale ]" : $"   [ {TexteCoupJoue(index, _positionAffichee)} ]";
             MiseaZeroParcours();
@@ -1671,7 +1665,7 @@ namespace BrunoGUI_GenII
             LogiqueMouvements.DessinPieces();
             _vue.DernierCoupMasque = false;     // le dernier coup du moteur est de nouveau coloré
             AfficheCoupsBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
-            InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + (QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
+            InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + NomCamp(QuiJoue);
             InformationsPartie.Text = PartieEnLectureSeule ? "Fin de la partie" : "";
         }
         private void QuitteParcours()

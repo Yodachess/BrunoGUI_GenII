@@ -21,9 +21,11 @@ namespace BrunoGUI_GenII
 {
     public partial class ParametresUciStockfish : Form
     {
-        public ParametresUciStockfish()
+        private readonly MoteurUci MoteurUci;      // le moteur réglé par cette fenêtre
+        public ParametresUciStockfish(MoteurUci moteur)
         {
             InitializeComponent();
+            MoteurUci = moteur;
             this.FormClosing += ParametresUciStockfish_FormClosing;     // Gestion du click sur la croix rouge en haut à droite ...
             this.VisibleChanged += ParametresUciStockfish_VisibleChanged;
         }

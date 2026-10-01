@@ -6,7 +6,7 @@
 // └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 
 // Gestion du moteur UCI ...
-//      └─ Classe "MoteurUci" qui gère le moteur UCI
+//      └─ Classe "MoteurUci" qui gère le moteur UCI (un objet par moteur : tout son état est dans l'objet, rien de statique)
 //                      ├─ "Start"  pour démarrer le moteur
 //                      ├─ "ProcOutputDataReceived"     Evènement de sortie de données du processus UCI  
 //                      ├─ "EnvoieOptionsDemarrage"     Threads et Hash de BrunoGUI.ini, envoyés à la réception de "uciok"
@@ -37,33 +37,33 @@ namespace BrunoGUI_GenII
         void IMoteur.Abandonner() => AbandonneDemandeEnCours();
         bool IMoteur.EnReflexion => EnReflexion;
 
-        public static event AfficheMoteurUci AfficheUci;
-        public static event AfficheDonneesBrutesUci  AfficheDonneesBrutes;
-        public static event AfficheCoupMoteurUci AfficheCoupMoteur;
-        public static List<string> OptionsUci = [];  // Noms des options déclarées par le moteur (lignes "option name ...")
-        public static string DataUci { get; set; }              // dernière ligne reçue du moteur, telle quelle
-        public static LigneUci DerniereLigne { get; private set; } = new();   // la même ligne, décodée
-        public static string DataVersUci { get; set; }
-        public static string CoupAuFormatUci { get; set; }
-        public static bool UciVersGui { get; set; }
-        public static int NombreLignesPV { get; set; } = 3;     // Nombre de variantes (MultiPV) demandées au moteur
-        public static int? NombreThreads { get; set; }          // Threads et Hash (Mo) envoyés au démarrage du moteur (null : valeur du moteur)
-        public static int? TailleHachageMo { get; set; }
-        private static bool _optionsDemarrageEnvoyees;          // Threads/Hash ne sont envoyés qu'une fois par démarrage du moteur
-        public static string NomAnnonce { get; private set; }  // nom annoncé par le moteur ("id name ..."), ex : Stockfish 19
+        public event AfficheMoteurUci AfficheUci;
+        public event AfficheDonneesBrutesUci  AfficheDonneesBrutes;
+        public event AfficheCoupMoteurUci AfficheCoupMoteur;
+        public List<string> OptionsUci = [];  // Noms des options déclarées par le moteur (lignes "option name ...")
+        public string DataUci { get; set; }              // dernière ligne reçue du moteur, telle quelle
+        public LigneUci DerniereLigne { get; private set; } = new();   // la même ligne, décodée
+        public string DataVersUci { get; set; }
+        public string CoupAuFormatUci { get; set; }
+        public bool UciVersGui { get; set; }
+        public int NombreLignesPV { get; set; } = 3;     // Nombre de variantes (MultiPV) demandées au moteur
+        public int? NombreThreads { get; set; }          // Threads et Hash (Mo) envoyés au démarrage du moteur (null : valeur du moteur)
+        public int? TailleHachageMo { get; set; }
+        private bool _optionsDemarrageEnvoyees;          // Threads/Hash ne sont envoyés qu'une fois par démarrage du moteur
+        public string NomAnnonce { get; private set; }  // nom annoncé par le moteur ("id name ..."), ex : Stockfish 19
 
         // Numérotation des demandes ("go") : une réponse à une demande abandonnée (retour arrière, nouvelle partie, résultat...)
         // est ignorée, ce qui permet de laisser l'interface active pendant la réflexion du moteur
-        public static readonly SuiviDemandesMoteur Demandes = new();
-        public static int NumeroDemandeDeLaLigne { get; private set; }     // demande à laquelle répond DerniereLigne
-        public static bool LigneAbandonnee => Demandes.EstAbandonnee(NumeroDemandeDeLaLigne);  // DerniereLigne est une réponse périmée
-        public static bool EnReflexion => Demandes.EnAttenteNonAbandonnee;    // le moteur réfléchit à une demande toujours valable
-        public static void AbandonneDemandeEnCours()
+        public readonly SuiviDemandesMoteur Demandes = new();
+        public int NumeroDemandeDeLaLigne { get; private set; }     // demande à laquelle répond DerniereLigne
+        public bool LigneAbandonnee => Demandes.EstAbandonnee(NumeroDemandeDeLaLigne);  // DerniereLigne est une réponse périmée
+        public bool EnReflexion => Demandes.EnAttenteNonAbandonnee;    // le moteur réfléchit à une demande toujours valable
+        public void AbandonneDemandeEnCours()
         {   // La demande en cours devient périmée : "stop" (le moteur répond tout de suite par un bestmove, qui sera ignoré)
             if (Demandes.Abandonner())
                 StandardInputDataToUci("stop");
         }
-        private static Process Proc;
+        private Process Proc;
 
         public void Start(string fichierMoteurUci)
         {   // Démarrage du moteur Uci dont le chemin est passé en paramêtre
@@ -140,7 +140,7 @@ namespace BrunoGUI_GenII
             }
             UciVersGui = false;
         }
-        private static void EnvoieOptionsDemarrage()
+        private void EnvoieOptionsDemarrage()
         {   // Threads et Hash de BrunoGUI.ini (réglages de Stockfish), envoyés une seule fois et seulement si le moteur déclare ces options
             // (un nouveau "uci", par exemple depuis la fenêtre des paramètres, ne doit pas écraser les réglages faits entre-temps).
             // Uniquement à Stockfish : d'autres moteurs se comportent autrement avec plusieurs threads
@@ -155,7 +155,7 @@ namespace BrunoGUI_GenII
             if (TailleHachageMo is int hachage && OptionsUci.Contains("Hash"))
                 StandardInputDataToUci("setoption name Hash value " + hachage);
         }
-        public static void StandardInputDataToUci(string Data)
+        public void StandardInputDataToUci(string Data)
         {   // Envoi de données de l'interface vers moteur UCI
             Debug.WriteLine($"[App] {Data}");
             UciVersGui = false;
@@ -170,13 +170,13 @@ namespace BrunoGUI_GenII
                 Debug.WriteLine($"[App] Commande non envoyée, moteur arrêté : {ex.Message}");
             }
         }
-        private static void PositionFenUci(string PositionFenActuel)
+        private void PositionFenUci(string PositionFenActuel)
         {   // Position Fen courante envoyée au Moteur UCI
             StandardInputDataToUci("position fen " + PositionFenActuel);
         }
         public const int ReflexionInfinie = -1;     // durée à passer à JeuMoteurUci pour une réflexion sans limite (jusqu'à "stop")
 
-        public static void JeuMoteurUci(string FenActuel, int Duree)
+        public void JeuMoteurUci(string FenActuel, int Duree)
         {   // Envoie au moteur UCI le Fen actuel et invitation à jouer pour le moteur UCI (Duree en millisecondes, ou ReflexionInfinie)
             AbandonneDemandeEnCours();      // une nouvelle demande remplace celle en cours (UCI interdit "position"/"go" pendant une recherche)
             StandardInputDataToUci("setoption name MultiPV value " + NombreLignesPV);   // On demande le nombre de variations choisi
@@ -187,34 +187,34 @@ namespace BrunoGUI_GenII
             else
                 StandardInputDataToUci("go movetime " + Duree.ToString());
         }
-        public static void DefinitMultiPV(int nombreLignes)
+        public void DefinitMultiPV(int nombreLignes)
         {   // Mémorise et envoie au moteur le nombre de variantes (MultiPV)
             NombreLignesPV = nombreLignes;
             StandardInputDataToUci("setoption name MultiPV value " + nombreLignes);
         }
-        public static void DefinitThreads(int nombreThreads)
+        public void DefinitThreads(int nombreThreads)
         {   // Mémorise (renvoyé à chaque redémarrage du moteur, enregistré dans le .ini) et envoie au moteur le nombre de threads
             NombreThreads = nombreThreads;
             StandardInputDataToUci("setoption name Threads value " + nombreThreads);
         }
-        public static void DefinitHachage(int tailleMo)
+        public void DefinitHachage(int tailleMo)
         {   // Mémorise (renvoyé à chaque redémarrage du moteur, enregistré dans le .ini) et envoie au moteur la table de hachage (Mo)
             TailleHachageMo = tailleMo;
             StandardInputDataToUci("setoption name Hash value " + tailleMo);
         }
-        public static void ActiveLimiteElo()
+        public void ActiveLimiteElo()
         {   // Activation de la limitation du ELO
             StandardInputDataToUci("setoption name UCI_LimitStrength value true");
         }
-        public static void DefinitLimiteElo(string ValeurElo)
+        public void DefinitLimiteElo(string ValeurElo)
         {   // Définition de la force ELO du moteur (default 1320 min 1320 max 3190 pour Stockfish)
             StandardInputDataToUci("setoption name UCI_Elo value " + ValeurElo);
         }
-        public static void SpecialeSargon()
+        public void SpecialeSargon()
         {   // Sinon Sargon  mouline sans fin !!
             StandardInputDataToUci("setoption name FixedDepth value 6");       
         }
-        public static void Quitte()
+        public void Quitte()
         {   // On ferme le moteur UCI (sans erreur s'il n'a jamais démarré ou s'il a déjà été arrêté, ex : par une mise à jour).
             // Certains moteurs (ex : Sargon 1978) ignorent "quit" : après une seconde d'attente, le processus est arrêté de force,
             // sinon il resterait en mémoire et verrouillerait son .exe
