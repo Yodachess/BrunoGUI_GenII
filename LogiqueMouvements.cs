@@ -50,7 +50,9 @@ namespace BrunoGUI_GenII
         public static event AfficheInfo AfficheInfoEchec;
         public static event AfficheInfo AfficheEchecEtMat;
         public static event AfficheInfo AfficheTour;
-        public static event AfficheInfo AffichePromotionPion;
+        // Pièce choisie par le joueur pour une promotion (l'interface affiche le choix et attend le clic) ;
+        // si personne ne répond (tests, fenêtre fermée), c'est une dame
+        public static Func<ColorPiece, TypePiece> ChoixPromotion { get; set; }
         // public static event AfficheInfo AfficheFen;
         public static event AffichagePiece DessinePiece;
         public static event AffichageSymbole DessineSymbole;
@@ -121,7 +123,6 @@ namespace BrunoGUI_GenII
 
         public static bool CoupValide { get; set; }
         public static bool DernierCoupTerminePartie { get; private set; }  // le dernier coup joué a maté ou pat l'adversaire
-        public static bool BloquerChoixPromo { get; set;    }// Lors de l'execution du coup, il ne faudra pas proposer le choix de pièce promue
         private static bool TestSecondPion { get; set; }
         private static bool FlagEnPassant { get; set; }
         public static string FenDepart { get; set; } = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -133,7 +134,6 @@ namespace BrunoGUI_GenII
         private static string MouvementCoupNal { get; set; }
         private static string MouvementCoupUci { get; set; }
         private static FlagMouvementRoque Roque { get; set; }
-        public static TypePiece PromotionPiece { get; set; }
 
         private static readonly Dictionary<FlagMouvementRoque, string> ListeCasesTraverseesRoi = new()
         {
@@ -193,7 +193,6 @@ namespace BrunoGUI_GenII
         {   // Remplit le Fen à partir d'une string FEN au départ de la partie et affiche l'échiquier de départ
             FlagEnPassant = false;
             TestSecondPion = false;
-            PromotionPiece = TypePiece.Vide;
             MouvementCoup = string.Empty;
             QuiJoue = ColorPiece.Blanc;     // détermination du trait ( les blancs commencent )
             PetitRoqueBlancPossible = PetitRoqueNoirPossible = GrandRoqueBlancPossible = GrandRoqueNoirPossible = true; // Tous roques possible 
@@ -463,8 +462,10 @@ namespace BrunoGUI_GenII
             return ChaineFen + " " + (IndexCaseEnPassant != 0 ? NomCaseAlgebrique(IndexCaseEnPassant) : "-") + " " + SansPrise + " " + Math.Truncate(NombreCoupsJoues).ToString();
         }
 
-        public static void ExecutionCoup(string caseSource, string caseDestination)
-        {   // Exécute un coup pour le joueur humain ou le moteur UCI
+        public static void ExecutionCoup(string caseSource, string caseDestination, TypePiece promotion = TypePiece.Vide)
+        {   // Exécute un coup pour le joueur humain ou le moteur UCI.
+            // promotion : pièce choisie si le coup est une promotion (moteur, bibliothèque, PGN) ; Vide : on la demande au joueur
+            // (ChoixPromotion) si le coup en est une
             string CouleurEchec = string.Empty;
             bool AucunCoupJouable = false;      // après le coup : l'adversaire n'a plus de coup (mat s'il est en échec, pat sinon)
             CoupValide = false;
@@ -477,15 +478,9 @@ namespace BrunoGUI_GenII
                 {
                     AfficheInfoEchec?.Invoke(string.Empty);
                     MouvementCoup = CoupNotationAlgebriquePGN(caseSource, caseDestination);
-                    FaireMouvement(caseSource, caseDestination);
+                    TypePiece piecePromue = FaireMouvement(caseSource, caseDestination, promotion);     // Vide : pas une promotion
 
-                    if (LogiqueMouvements.PromotionPiece != TypePiece.Vide)
-                    {
-                        PiecesEchiquier[RenvoieCaseIndex120(caseDestination)] = LogiqueMouvements.PromotionPiece;
-                    }
-
-                    // *******Traitement promotion *********
-                    string lettrePromo = LogiqueMouvements.PromotionPiece switch
+                    string lettrePromo = piecePromue switch
                     {   // On rajoute la pièce promue avant de stocker dans le PGN
                         TypePiece.ReineBlanche or TypePiece.ReineNoire => "D",
                         TypePiece.TourBlanche or TypePiece.TourNoire => "T",
@@ -494,8 +489,6 @@ namespace BrunoGUI_GenII
                         _ => ""
                     };
                     MouvementCoup += lettrePromo;
-                    LogiqueMouvements.PromotionPiece = TypePiece.Vide;        
-                    // *******Traitement promotion *********
 
                     string ChaineFen = RetourneChaineFenActuel();       // Position après le coup
 
@@ -919,8 +912,10 @@ namespace BrunoGUI_GenII
                 return false;
         }
 
-        private static void FaireMouvement(string caseSource, string caseDestination)
-        {   // Effectue un mouvement de pièce sans vérifier la validité du mouvement (reçoit un mouvement du type e2e4)
+        private static TypePiece FaireMouvement(string caseSource, string caseDestination, TypePiece promotion)
+        {   // Effectue un mouvement de pièce sans vérifier la validité du mouvement (reçoit un mouvement du type e2e4).
+            // Renvoie la pièce promue si c'est une promotion (voir ExecutionCoup), sinon Vide
+            TypePiece piecePromue = TypePiece.Vide;
             int IndexSource = RenvoieCaseIndex120(caseSource);  // convertit la case source en index
             int IndexDestination = RenvoieCaseIndex120(caseDestination); // convertit la case destination en index
             {
@@ -967,15 +962,14 @@ namespace BrunoGUI_GenII
                                           (IndexDestination >= 91 && IndexDestination <= 98);
 
                     if (estPion && derniereRangee)
-                    {
-                        string couleur = piece == TypePiece.PionBlanc ? "Blanc" : "Noir";
-
-                        if (!BloquerChoixPromo)
-                            AffichePromotionPion?.Invoke(couleur);
-
+                    {   // Pièce promue : celle demandée, sinon le choix du joueur, sinon une dame (toujours de la couleur du pion)
+                        ColorPiece couleur = piece == TypePiece.PionBlanc ? ColorPiece.Blanc : ColorPiece.Noir;
+                        if (promotion == TypePiece.Vide)
+                            promotion = ChoixPromotion?.Invoke(couleur) ?? TypePiece.Vide;
+                        piecePromue = PieceDeLaCouleur(promotion, couleur);
                         // Remplace le pion par la pièce promue
-                        PiecesEchiquier[IndexDestination] = PromotionPiece;
-                        DessinePiece?.Invoke(IndexDestination, PromotionPiece);
+                        PiecesEchiquier[IndexDestination] = piecePromue;
+                        DessinePiece?.Invoke(IndexDestination, piecePromue);
                         // Test échec avec la pièce promue en place (échec direct ou à la découverte)
                         CalculeEchec();
                     }
@@ -986,6 +980,28 @@ namespace BrunoGUI_GenII
                 AfficheTour?.Invoke((QuiJoue == ColorPiece.Blanc) ? "Blancs" : "Noirs");
                 NombreCoupsJoues += Convert.ToSingle(0.5);      // On incrémente d'un demi-coup
             }
+            return piecePromue;
+        }
+        public static TypePiece PieceDeLaCouleur(TypePiece piece, ColorPiece couleur)
+        {   // La même sorte de pièce de promotion, dans la couleur demandée (une dame si la pièce n'est pas une pièce de promotion)
+            return piece switch
+            {
+                TypePiece.TourBlanche or TypePiece.TourNoire => couleur == ColorPiece.Blanc ? TypePiece.TourBlanche : TypePiece.TourNoire,
+                TypePiece.FouBlanc or TypePiece.FouNoir => couleur == ColorPiece.Blanc ? TypePiece.FouBlanc : TypePiece.FouNoir,
+                TypePiece.CavalierBlanc or TypePiece.CavalierNoir => couleur == ColorPiece.Blanc ? TypePiece.CavalierBlanc : TypePiece.CavalierNoir,
+                _ => couleur == ColorPiece.Blanc ? TypePiece.ReineBlanche : TypePiece.ReineNoire
+            };
+        }
+        public static TypePiece PieceDePromotion(char lettreUci, ColorPiece couleur)
+        {   // Pièce de promotion d'après la lettre UCI ("q", "r", "b", "n" : e7e8q) ; une dame si la lettre est inconnue
+            TypePiece piece = char.ToLower(lettreUci) switch
+            {
+                'r' => TypePiece.TourBlanche,
+                'b' => TypePiece.FouBlanc,
+                'n' => TypePiece.CavalierBlanc,
+                _ => TypePiece.ReineBlanche
+            };
+            return PieceDeLaCouleur(piece, couleur);
         }
         private static string NomsPieceLocale(TypePiece lettreInitiale)
         {   // Retourne le nom des pièces françaises ( TCFDR in français)

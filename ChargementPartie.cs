@@ -37,7 +37,6 @@ namespace BrunoGUI_GenII
             InitialisationEchiquier();
             MiseenplaceFen(fen);
             AjoutePositionDeDepart(fen);    // élément sans coup en tête de liste : le retour arrière ne remonte jamais avant
-            PromotionPiece = TypePiece.Vide;
             partie.CommencerDepuisPosition();   // l'humain joue le camp au trait, le moteur lui répond
             return true;
         }

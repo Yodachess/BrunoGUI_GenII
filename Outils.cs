@@ -84,16 +84,8 @@ namespace BrunoGUI_GenII
         {   // Retourne les coups dans le format PGN (Cdxe4)
             // Si coupConseil = true, seul le dernier coup de la variante est retourné (avec son numéro)
             // Les coups sont joués sur une copie de la position analysée (par défaut la partie) : rien n'est modifié, ni redessiné
-            TypePiece promotionEnCours = PromotionPiece;
-            try
-            {
-                return LogiqueMouvements.CalculerSur(position ?? LogiqueMouvements.PositionActuelle,
-                                                     () => ConvertitVarianteUci(varianteBrute, numeroDemiCoup, coupConseil));
-            }
-            finally
-            {
-                PromotionPiece = promotionEnCours;
-            }
+            return LogiqueMouvements.CalculerSur(position ?? LogiqueMouvements.PositionActuelle,
+                                                 () => ConvertitVarianteUci(varianteBrute, numeroDemiCoup, coupConseil));
         }
         private static string ConvertitVarianteUci(string varianteBrute, int numeroDemiCoup, bool coupConseil)
         {   // Joue la variante sur la position actuelle (qui doit être une copie, voir VarianteUciVersPgn)
@@ -115,25 +107,13 @@ namespace BrunoGUI_GenII
                         if (source.Length != 2 || destination.Length != 2)      // Sécurité supplémentaire
                             continue;
 
-                        // *******Traitement promotion *********
-                        PromotionPiece = TypePiece.Vide;        // Remise à zéro de la promotion
-                        if (varianteUciDecoupe[i].Length >= 5)  // si promotion, on ajoute la pièce promue (ex : axb8=q)
-                        {
-                            char piecePromo = char.ToLower(varianteUciDecoupe[i][4]);
-                            // Déterminer la couleur de la promotion
-                            bool promotionBlanche = destination[1] == '8';
-                            PromotionPiece = piecePromo switch
-                            {   // Mise à jour de PromotionPiece
-                                'q' => promotionBlanche ? TypePiece.ReineBlanche : TypePiece.ReineNoire,
-                                'r' => promotionBlanche ? TypePiece.TourBlanche : TypePiece.TourNoire,
-                                'b' => promotionBlanche ? TypePiece.FouBlanc : TypePiece.FouNoir,
-                                'n' => promotionBlanche ? TypePiece.CavalierBlanc : TypePiece.CavalierNoir,
-                                _ => TypePiece.Vide,
-                            };
-                        }
+                        // *******Traitement promotion ********* (ex : e7e8q ; la couleur est celle de la rangée d'arrivée)
+                        TypePiece promotion = varianteUciDecoupe[i].Length >= 5
+                            ? LogiqueMouvements.PieceDePromotion(varianteUciDecoupe[i][4], destination[1] == '8' ? ColorPiece.Blanc : ColorPiece.Noir)
+                            : TypePiece.Vide;
                         // Génération du coup PGN AVANT déplacement
                         string coupExaminePgn = LogiqueMouvements.CoupNotationAlgebriquePGN(source, destination);
-                        if (PromotionPiece != TypePiece.Vide)
+                        if (promotion != TypePiece.Vide)
                         {   // Ajouter la pièce promue au PGN
                             coupExaminePgn += CaracterePieceLocale(char.ToLower(varianteUciDecoupe[i][4]));
                         }
@@ -144,9 +124,9 @@ namespace BrunoGUI_GenII
                             (PiecesEchiquier[indexSource] == TypePiece.PionBlanc || PiecesEchiquier[indexSource] == TypePiece.PionNoir);
                         LogiqueMouvements.SimuleCoup(indexSource, indexDestination);
                         IndexCaseEnPassant = doublePasPion ? (indexSource + indexDestination) / 2 : 0;   // pour le coup suivant de la variante
-                        if (PromotionPiece != TypePiece.Vide)
+                        if (promotion != TypePiece.Vide)
                         {   // IMPORTANT : remplacer le pion par la pièce promue
-                            LogiqueMouvements.PiecesEchiquier[RenvoieCaseIndex120(destination)] = PromotionPiece;
+                            LogiqueMouvements.PiecesEchiquier[RenvoieCaseIndex120(destination)] = promotion;
                         }
                         // *******Traitement promotion *********
 
@@ -194,8 +174,6 @@ namespace BrunoGUI_GenII
                             (LogiqueMouvements.QuiJoue == ColorPiece.Blanc)
                             ? ColorPiece.Noir
                             : ColorPiece.Blanc;
-                        // IMPORTANT : reset après chaque coup
-                        PromotionPiece = TypePiece.Vide;
                     }
                 }
             }

@@ -112,15 +112,13 @@ namespace BrunoGUI_GenII
             }
             catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentOutOfRangeException || ex is FormatException)
             {   // coup trop mal formé pour être décodé (ex : "e9") : rien n'est joué
-                BloquerChoixPromo = false;
-                PromotionPiece = TypePiece.Vide;
                 return false;
             }
         }
         private static bool DecodeEtJoueCoup(string coupPartie)
         {
             char dernierCaractereCoup;
-            BloquerChoixPromo = false;
+            TypePiece promotion = TypePiece.ReineBlanche;   // pièce de promotion (dame si le coup ne la précise pas ; couleur du pion)
             ColorPiece couleurQuiJoue;
             string CaseDestination, CaseSource;
             CaseSource = CaseDestination = "";
@@ -217,23 +215,8 @@ namespace BrunoGUI_GenII
                 if (char.IsLower(CoupPGN[0]))               // COUP DE PION, car la 1ère lettre est une minuscule
                 {
                     if (CoupPGN.Contains('='))              // PROMOTION
-                    {   // PROMOTION  
-                        switch (CoupPGN[CoupPGN.Length - 1])
-                        {
-                            case 'Q':
-                                LogiqueMouvements.PromotionPiece = (couleurQuiJoue == ColorPiece.Blanc) ? TypePiece.ReineBlanche : TypePiece.ReineNoire;
-                                break;
-                            case 'R':
-                                LogiqueMouvements.PromotionPiece = (couleurQuiJoue == ColorPiece.Blanc) ? TypePiece.TourBlanche : TypePiece.TourNoire;
-                                break;
-                            case 'N':
-                                LogiqueMouvements.PromotionPiece = (couleurQuiJoue == ColorPiece.Blanc) ? TypePiece.CavalierBlanc : TypePiece.CavalierNoir;
-                                break;
-                            case 'B':
-                                LogiqueMouvements.PromotionPiece = (couleurQuiJoue == ColorPiece.Blanc) ? TypePiece.FouBlanc : TypePiece.FouNoir;
-                                break;
-                        }
-                        BloquerChoixPromo = true;   // Lors de l'execution du coup, il ne faudra pas proposer le choix de pièce promue
+                    {   // PROMOTION : lettre anglaise de la pièce (Q, R, B, N), les mêmes qu'en UCI
+                        promotion = LogiqueMouvements.PieceDePromotion(CoupPGN[^1], couleurQuiJoue);
                         CoupPGN = CoupPGN[..^2];    // On nettoie le coup de la promotion pour l'analyse qui suit
                     }
                     if (CoupPGN.Contains('x'))              // PRISE
@@ -277,12 +260,9 @@ namespace BrunoGUI_GenII
                 if (string.IsNullOrWhiteSpace(CaseSource) || string.IsNullOrWhiteSpace(CaseDestination)
                     || RenvoieCaseIndex120(CaseSource) < 0 || RenvoieCaseIndex120(CaseDestination) < 0)
                 {   // Coup illisible (cases non déterminées) : rien n'est joué
-                    BloquerChoixPromo = false;
-                    PromotionPiece = TypePiece.Vide;
                     return false;
                 }
-                LogiqueMouvements.ExecutionCoup(CaseSource, CaseDestination);
-                BloquerChoixPromo = false;
+                LogiqueMouvements.ExecutionCoup(CaseSource, CaseDestination, promotion);   // (jamais de choix demandé au joueur)
                 return LogiqueMouvements.CoupValide;    // false : coup illégal dans cette position
             }
             return false;

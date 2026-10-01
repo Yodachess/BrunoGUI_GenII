@@ -40,8 +40,6 @@ void Charger(string fen)
             L.PiecesEchiquier[r * 10 + c] = L.TypePiece.Vide;
     ViderListes();
     L.Echec = L.EchecetMat = false;
-    L.PromotionPiece = L.TypePiece.Vide;
-    L.BloquerChoixPromo = false;
     L.MiseenplaceFen(fen);
 }
 
@@ -83,10 +81,28 @@ L.ExecutionCoup("e5", "d6");
 Verifie("50 coups : remise à zéro sur prise en passant", L.CoupValide && L.SansPrise == 0, "SansPrise = " + L.SansPrise);
 
 Charger("8/R1P4k/8/8/8/8/8/4K3 w - - 0 1");
-L.PromotionPiece = L.TypePiece.CavalierBlanc;
-L.BloquerChoixPromo = true;
-L.ExecutionCoup("c7", "c8");
+L.ExecutionCoup("c7", "c8", L.TypePiece.CavalierBlanc);
 Verifie("Promotion avec échec à la découverte", DernierCoupPgn().Contains('+'), DernierCoupPgn());
+
+Charger("8/4P2k/8/8/8/8/8/4K3 w - - 0 1");
+L.ExecutionCoup("e7", "e8");
+Verifie("Promotion sans choix (aucune interface) : dame", L.PiecesEchiquier[L.RenvoieCaseIndex120("e8")] == L.TypePiece.ReineBlanche, DernierCoupPgn());
+L.ColorPiece? couleurDemandee = null;
+L.ChoixPromotion = couleur => { couleurDemandee = couleur; return L.TypePiece.TourNoire; };
+Charger("4K3/8/8/8/8/8/4p2k/8 b - - 0 1");
+L.ExecutionCoup("e2", "e1");
+Verifie("Promotion : la pièce choisie par l'interface est posée",
+    couleurDemandee == L.ColorPiece.Noir && L.PiecesEchiquier[L.RenvoieCaseIndex120("e1")] == L.TypePiece.TourNoire && DernierCoupPgn().StartsWith("e1=R"),
+    $"{couleurDemandee} {DernierCoupPgn()}");
+Charger("8/4P2k/8/8/8/8/8/4K3 w - - 0 1");
+couleurDemandee = null;
+L.ExecutionCoup("e7", "e8", L.TypePiece.FouNoir);
+Verifie("Promotion imposée : l'interface n'est pas sollicitée, la pièce prend la couleur du pion",
+    couleurDemandee == null && L.PiecesEchiquier[L.RenvoieCaseIndex120("e8")] == L.TypePiece.FouBlanc, DernierCoupPgn());
+L.ChoixPromotion = null;
+Charger("8/4P2k/8/8/8/8/8/4K3 w - - 0 1");
+Verifie("Promotion PGN : la pièce du coup est posée",
+    GestionPartiePgn.DecodeCoupPartie("e8=N") && L.PiecesEchiquier[L.RenvoieCaseIndex120("e8")] == L.TypePiece.CavalierBlanc, DernierCoupPgn());
 
 Charger("4k3/8/8/8/8/8/8/4K3 w - - 0 1");
 Charger("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1");
@@ -694,7 +710,7 @@ Verifie("Abandon : signalé si le moteur réfléchissait, plus d'analyse en cour
 
 Charger("8/4P2k/8/8/8/8/8/4K3 w - - 0 1");
 Verifie("Coup UCI avec promotion : la pièce demandée est posée (cavalier)",
-    PiloteMoteur.JouerCoupUci("e7e8n") && L.PiecesEchiquier[L.RenvoieCaseIndex120("e8")] == L.TypePiece.CavalierBlanc && !L.BloquerChoixPromo,
+    PiloteMoteur.JouerCoupUci("e7e8n") && L.PiecesEchiquier[L.RenvoieCaseIndex120("e8")] == L.TypePiece.CavalierBlanc,
     L.RetourneChaineFenActuel());
 Verifie("Coup UCI illégal ou mal formé : refusé", !PiloteMoteur.JouerCoupUci("e1e5") && !PiloteMoteur.JouerCoupUci("e1") && !PiloteMoteur.JouerCoupUci(null), L.RetourneChaineFenActuel());
 
@@ -758,9 +774,7 @@ long Perft(int profondeur)
         {   // Chaque coup est joué sur une copie : on revient automatiquement à la position de départ
             total += L.CalculerSurCopie(() =>
             {
-                L.PromotionPiece = promotion;
-                L.BloquerChoixPromo = true;
-                L.ExecutionCoup(source, destination);
+                L.ExecutionCoup(source, destination, promotion);
                 if (!L.CoupValide)
                     throw new InvalidOperationException($"Coup légal refusé par ExecutionCoup : {source}{destination}");
                 return Perft(profondeur - 1);
