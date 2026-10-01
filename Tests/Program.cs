@@ -75,6 +75,13 @@ Charger("4k3/8/8/8/8/8/3r4/3RK3 w - - 10 30");
 L.ExecutionCoup("d1", "c1");
 Verifie("50 coups : +1 sans prise ni coup de pion", L.SansPrise == 11, "SansPrise = " + L.SansPrise);
 
+Charger("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 10 20");
+L.ExecutionCoup("e1", "g1");
+Verifie("50 coups : le roque compte +1 (une seule fois)", L.SansPrise == 11, "SansPrise = " + L.SansPrise);
+Charger("4k3/8/8/3pP3/8/8/8/4K3 w - d6 7 30");
+L.ExecutionCoup("e5", "d6");
+Verifie("50 coups : remise à zéro sur prise en passant", L.CoupValide && L.SansPrise == 0, "SansPrise = " + L.SansPrise);
+
 Charger("8/R1P4k/8/8/8/8/8/4K3 w - - 0 1");
 L.PromotionPiece = L.TypePiece.CavalierBlanc;
 L.BloquerChoixPromo = true;
