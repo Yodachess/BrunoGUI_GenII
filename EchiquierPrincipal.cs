@@ -962,7 +962,11 @@ namespace BrunoGUI_GenII
             // Version 1.06 = "Reprendre ici" (reprendre une partie, même terminée ou chargée en PGN, depuis une position passée),
             //                pilotage du moteur et calcul des évaluations/variantes hors du formulaire (testés), mat affiché avec
             //                le camp qui mate, variantes en coups entiers, arrêt garanti du moteur (Sargon), fin d'analyse fiabilisée
-            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.06\n--  Bruno COURTOIS  -- " +
+            // Version 1.10 = revue de code (annuler une nouvelle partie, PGN : variantes, SetUp/FEN, Latin-1...), formulaire allégé
+            //                (affichage de l'échiquier, chargement FEN/PGN et bibliothèque sortis et testés), fenêtre du protocole
+            //                plus rapide, mise à jour de Stockfish simplifiée (ARM), promotion passée en paramètre, couleurs typées,
+            //                noms et Elo des joueurs affichés en un seul endroit (Elo au bon camp), MoteurUci sans statique
+            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.10\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", "A propos de",
                 KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
         }
