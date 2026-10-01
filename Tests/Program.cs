@@ -580,6 +580,39 @@ Verifie("PGN écrit : balises SetUp et FEN, premier coup noir numéroté, résul
 PartieEchecsPGN partieRelue = FichierPartiePgn.DecodePartiePGN(pgnEcrit);
 Verifie("PGN relu : la balise FEN est retrouvée", partieRelue.Fen == fenNoirsAuTrait, partieRelue.Fen ?? "(aucune)");
 
+// Chargement d'une position FEN et d'une partie PGN complète (ChargementPartie)
+Partie partieChargee = new();
+Charger(L.FenDepart);
+L.ExecutionCoup("e2", "e4");
+Verifie("FEN incomplète : refusée, la partie en cours ne change pas",
+    !ChargementPartie.ChargerPosition("8/8/8/8 w - -", partieChargee) && L.ListeCoups.Count == 1 && partieChargee.Mode == ModePartie.AucunePartie, $"{L.ListeCoups.Count} coup(s)");
+bool positionChargee = ChargementPartie.ChargerPosition("  " + fenNoirsAuTrait + "\r\n", partieChargee);
+Verifie("FEN chargée (blancs autour compris) : position de départ, humain au trait (Noirs)",
+    positionChargee && L.ListeCoups.Count == 1 && L.ListeCoups[0].EstPositionDeDepart && L.RetourneChaineFenActuel() == fenNoirsAuTrait
+    && partieChargee.DepuisPosition && partieChargee.HumainAuTrait && partieChargee.Noirs == Joueur.Humain,
+    L.RetourneChaineFenActuel());
+
+PartieEchecsPGN pgnComplet = FichierPartiePgn.DecodePartiePGN(
+    "[Event \"x\"]\n[Result \"1-0\"]\n\n1. e4 e5 (1... c5 2. Nf3 (2. c3 d5) 2... d6) 2. Nf3 Nc6 {commentaire} 3. Bb5 a6 4. Ba4 Nf6 5. 0-0 Be7 6. Re1 b5 7. Bb3 d6 8. c3 0-0 1-0");
+ResultatChargementPgn chargementComplet = ChargementPartie.ChargerPartiePgn(pgnComplet, partieChargee);
+Verifie("PGN complet : 16 demi-coups rejoués (variantes ignorées, roques 0-0), lecture seule",
+    chargementComplet.CoupIllisible == null && chargementComplet.DemiCoupsJoues == 16 && L.ListeCoups.Count == 16 && partieChargee.Mode == ModePartie.LectureSeule && !partieChargee.RejeuPgn,
+    $"{chargementComplet.DemiCoupsJoues} demi-coups, illisible : {chargementComplet.CoupIllisible ?? "aucun"}, mode {partieChargee.Mode}");
+PartieEchecsPGN pgnIllegal = FichierPartiePgn.DecodePartiePGN("[Event \"x\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Qh7 Nf6 0-1");
+ResultatChargementPgn chargementIllegal = ChargementPartie.ChargerPartiePgn(pgnIllegal, partieChargee);
+Verifie("PGN avec un coup illégal : arrêt avant lui (3. Qh7), 4 demi-coups chargés",
+    chargementIllegal.CoupIllisible == "Qh7" && chargementIllegal.DemiCoupsJoues == 4 && L.ListeCoups.Count == 4 && partieChargee.Mode == ModePartie.LectureSeule,
+    $"illisible : {chargementIllegal.CoupIllisible}, {chargementIllegal.DemiCoupsJoues} demi-coups");
+PartieEchecsPGN pgnFen = FichierPartiePgn.DecodePartiePGN($"[Event \"x\"]\n[SetUp \"1\"]\n[FEN \"{fenNoirsAuTrait}\"]\n\n3... Nf6 4. Bc4 Bc5 5. c3 d6 *");
+ResultatChargementPgn chargementFen = ChargementPartie.ChargerPartiePgn(pgnFen, partieChargee);
+Verifie("PGN avec balise FEN : rejoué depuis la position (5 demi-coups), départ FEN",
+    !chargementFen.FenIncomplete && chargementFen.CoupIllisible == null && chargementFen.DemiCoupsJoues == 5 && L.ListeCoups.Count == 6 && partieChargee.DepuisPosition,
+    $"{chargementFen.DemiCoupsJoues} demi-coups, {L.ListeCoups.Count} éléments");
+PartieEchecsPGN pgnFenIncomplete = FichierPartiePgn.DecodePartiePGN("[Event \"x\"]\n[FEN \"8/8/8\"]\n\n1. e4 e5 *");
+ResultatChargementPgn chargementFenIncomplete = ChargementPartie.ChargerPartiePgn(pgnFenIncomplete, partieChargee);
+Verifie("PGN avec balise FEN incomplète : signalée, coups joués depuis la position initiale",
+    chargementFenIncomplete.FenIncomplete && chargementFenIncomplete.DemiCoupsJoues == 2 && !partieChargee.DepuisPosition, $"{chargementFenIncomplete.DemiCoupsJoues} demi-coups");
+
 // Fichier PGN en Latin-1 (accents) avec une date incomplète "2024.??.??" et des annotations dans les coups
 string fichierLatin1 = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "test_brunogui_latin1.pgn");
 System.IO.File.WriteAllText(fichierLatin1,

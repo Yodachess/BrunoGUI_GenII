@@ -1274,7 +1274,7 @@ namespace BrunoGUI_GenII
                 Debug.WriteLine("Chargement FEN : Erreur lors de la lecture du fichier : " + ex.Message);
                 return;
             }
-            if (contenuFen.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length < 6)
+            if (!ChargementPartie.EstFenComplete(contenuFen))
             {
                 KryptonMessageBox.Show("Ce fichier ne contient pas une position FEN complète (6 champs).", "Chargement FEN",
                     KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
@@ -1284,14 +1284,8 @@ namespace BrunoGUI_GenII
             QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
             ListeParties.Clear();    // On vide la liste des parties
             ListePartiesPGN.Clear(); // On vide la liste des parties PGN
-            ViderCoups();              // On vide la liste des coups (toutes les notations)
-            InitialisationEchiquier();    // On réinitialise l'échiquier
+            ChargementPartie.ChargerPosition(contenuFen, _partie);     // l'humain joue le camp au trait, le moteur lui répond
             VarianteMoteurUci1.Text = "Fen chargé : " + contenuFen;
-            // Trait, droits de roque, case en passant, compteur des 50 coups et numéro du coup : tout vient de la FEN
-            LogiqueMouvements.MiseenplaceFen(contenuFen);
-            AjoutePositionDeDepart(contenuFen);  // La partie commence à cette position (élément sans coup, en tête de liste) :
-                                                 // le retour arrière ne remonte jamais avant
-            _partie.CommencerDepuisPosition();  // l'humain joue le camp au trait, le moteur lui répond
             _vue.EffaceDernierCoup();                // les cases du dernier coup de la partie précédente
             _pilote.Abandonner();       // plus aucune demande (analyse ou coup) en cours au moteur
             _clickCaseSource = _visuSymbole = true;
@@ -1303,7 +1297,6 @@ namespace BrunoGUI_GenII
             PartieEnCours.WhiteElo = EloBlanc.Text = "";
             PartieEnCours.BlackElo = EloNoir.Text = "";
             InformationPourJoueur.Text = "Trait aux " + (QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
-            PromotionPiece = TypePiece.Vide;
             PlateauEnable(true);   // On active le plateau pour pouvoir jouer à partir de la position chargée
             AfficheCoupsBibliotheque(contenuFen);
             MetAJourCommandes();
@@ -1375,7 +1368,6 @@ namespace BrunoGUI_GenII
             AbandonneReflexion();
             QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
             _vue.EffaceDernierCoup();    // les cases du dernier coup de la partie précédente
-            Outils.MiseaZeroListes();
             Debug.WriteLine("ChargerPartieDepuisPgn / :  " + partie.White + " vs " + partie.Black + "   Résultat : " + partie.Result);
             PartieEnCours.Tournoi = partie.Tournoi;
             PartieEnCours.Lieu = partie.Lieu;
@@ -1392,55 +1384,20 @@ namespace BrunoGUI_GenII
             InformationPourJoueur.Text = partie.Tournoi + " / ronde " + partie.Ronde;
             StatusProgramme.Text = $"{partie.White} vs {partie.Black}";
             ScoreMoteur.Text = InformationsPartie.Text = "Résultat : " + partie.Result;
-            // Partie commençant à une position ([SetUp "1"] [FEN "..."]) : les coups sont joués depuis cette position
-            if (!string.IsNullOrWhiteSpace(partie.Fen))
-            {
-                if (partie.Fen.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length >= 6)
-                {
-                    LogiqueMouvements.MiseenplaceFen(partie.Fen.Trim());
-                    AjoutePositionDeDepart(partie.Fen.Trim());      // la partie commence à cette position (retour arrière et parcours s'y arrêtent)
-                }
-                else
-                    KryptonMessageBox.Show("La position de départ de cette partie (balise FEN) est incomplète : les coups sont joués depuis la position initiale.",
-                        "Partie PGN", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
-            }
-            // Certains fichiers PGN n'ont pas d'espace entre le numéro et le coup, il faut l'ajouter :
-            PartieEnCours.CoupsPartiePGN = (PartieEnCours.CoupsPartiePGN ?? "").Replace(".", ". ");
-            // On decoupe la liste de coups recue :
-            string[] coupsPartie = PartieEnCours.CoupsPartiePGN.Split([' ', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
-            Debug.WriteLine($"Partie en PGN : {PartieEnCours.CoupsPartiePGN}");
-            ParcoursPartie(coupsPartie);
-        }
-        private void ParcoursPartie(string[] suiteCoups)
-        {   // Parcourt la partie coup par coup pour l'afficher sur l'échiquier et afficher le résultat à la fin.
-            // Chaque coup est joué pour le camp au trait de la position ; au premier coup illisible ou illégal, le rejeu s'arrête
-            bool depuisPosition = LogiqueMouvements.ListeCoups.Count > 0 && LogiqueMouvements.ListeCoups[0].EstPositionDeDepart;
-            _partie.Commencer(Joueur.Humain, Joueur.Humain, depuisPosition);    // rejeu des coups de la partie ; lecture seule à la fin
             VarianteMoteurCourante.Text = "";
-            PartieEnCoursMat = PartieEnCoursPat = false;     // On réinitialise les indicateurs de fin de partie
-            _partie.RejeuPgn = true;    // pas de nulle automatique pendant le rejeu : c'est le résultat du PGN qui compte
-            string coupIllisible = null;
-            int demiCoupsJoues = 0;
-            try
-            {
-                foreach (string element in suiteCoups)      // numéros de coups et résultat compris (ignorés par DecodeCoupPartie)
-                {
-                    if (!GestionPartiePgn.DecodeCoupPartie(element))     // coup illisible ou illégal : rien n'est joué
-                    {
-                        coupIllisible = element;
-                        break;
-                    }
-                    if (!GestionPartiePgn.EstNumeroOuResultat(element))
-                        demiCoupsJoues++;
-                }
-            }
-            finally
-            {
-                _partie.RejeuPgn = false;
-            }
-            if (coupIllisible != null)
-                KryptonMessageBox.Show($"Coup illisible ou illégal : « {coupIllisible} » (demi-coup n° {demiCoupsJoues + 1}).\n" +
+            Debug.WriteLine($"Partie en PGN : {partie.CoupsPartiePGN}");
+            // Rejeu des coups (depuis la balise FEN s'il y en a une) ; la partie finit en lecture seule
+            ResultatChargementPgn chargement = ChargementPartie.ChargerPartiePgn(partie, _partie);
+            if (chargement.FenIncomplete)
+                KryptonMessageBox.Show("La position de départ de cette partie (balise FEN) est incomplète : les coups sont joués depuis la position initiale.",
+                    "Partie PGN", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+            if (chargement.CoupIllisible != null)
+                KryptonMessageBox.Show($"Coup illisible ou illégal : « {chargement.CoupIllisible} » (demi-coup n° {chargement.DemiCoupsJoues + 1}).\n" +
                     "La partie est chargée jusqu'au coup précédent.", "Partie PGN", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+            AfficheResultatPartiePgn();
+        }
+        private void AfficheResultatPartiePgn()
+        {   // Partie PGN rejouée : son résultat est affiché, et l'échiquier montre la partie depuis le début
             switch (PartieEnCours.Result)       // Et on ajoute le résultat
             {
                 case "1-0":
@@ -1456,12 +1413,10 @@ namespace BrunoGUI_GenII
                     InformationsPartie.Text = "Résultat : * Indéterminé";
                     break;
                 default:
-                    Console.WriteLine($"Pas de résultat défini : {PartieEnCours.Result}");
+                    Debug.WriteLine($"Pas de résultat défini : {PartieEnCours.Result}");
                     break;
             }
-            Thread.Sleep(200);  // pause 0,2 seconde
             // La partie reste sur sa position finale ; elle est en lecture seule (parcours et analyse), et on l'affiche depuis le début
-            _partie.PasserEnLectureSeule();
             PlateauEnable(false);
             MetAJourCommandes();
             string resultat = InformationsPartie.Text;
