@@ -31,36 +31,13 @@ namespace BrunoGUI_GenII
     public partial class EchiquierPrincipal : Form
     {
         // Les listes
-        private readonly Dictionary<LogiqueMouvements.TypePiece, Bitmap> ListeBitmapsPiece = []; // liste des Bitmaps pour les pièces
-        private readonly Dictionary<LogiqueMouvements.TypeSymbole, Bitmap> ListeBitmapsSymbole = []; // liste des Bitmaps pour les symboles
-        private readonly List<PictureBox> PictJeux = []; // les 120 cases du jeu
         private readonly List<LogiqueMouvements.TypePiece> ListeNoire = // Reine, Tour, Fou et Cavalier noirs pour promotion
             [LogiqueMouvements.TypePiece.ReineNoire, LogiqueMouvements.TypePiece.TourNoire, LogiqueMouvements.TypePiece.FouNoir, LogiqueMouvements.TypePiece.CavalierNoir];
         private readonly List<LogiqueMouvements.TypePiece> ListeBlanche =   // Reine, Tour, Fou et Cavalier blancs pour promotion
             [LogiqueMouvements.TypePiece.ReineBlanche, LogiqueMouvements.TypePiece.TourBlanche, LogiqueMouvements.TypePiece.FouBlanc, LogiqueMouvements.TypePiece.CavalierBlanc];
-        private readonly List<Color> CouleurCaseOrigines = []; // Couleurs d'origine des cases
-        private readonly List<int> IndiceVisuCoteNoir = [];
         private List<string> ListeParties = [];
         private List<PartieEchecsPGN> ListePartiesPGN = [];
-
-        // les Bitmaps
-        private readonly Bitmap PionBlanc = new(Properties.Resources.PionBlanc);
-        private readonly Bitmap TourBlanche = new(Properties.Resources.TourBlanche);
-        private readonly Bitmap CavalierBlanc = new(Properties.Resources.CavalierBlanc);
-        private readonly Bitmap FouBlanc = new(Properties.Resources.FouBlanc);
-        private readonly Bitmap ReineBlanche = new(Properties.Resources.ReineBlanche);
-        private readonly Bitmap RoiBlanc = new(Properties.Resources.RoiBlanc);
-        private readonly Bitmap PionNoir = new(Properties.Resources.PionNoir);
-        private readonly Bitmap TourNoire = new(Properties.Resources.TourNoire);
-        private readonly Bitmap CavalierNoir = new(Properties.Resources.CavalierNoir);
-        private readonly Bitmap FouNoir = new(Properties.Resources.FouNoir);
-        private readonly Bitmap ReineNoire = new(Properties.Resources.ReineNoire);
-        private readonly Bitmap RoiNoir = new(Properties.Resources.RoiNoir);
-        private readonly Bitmap CercleVert = new(Properties.Resources.SansPrise); // mouvement autorisé sans prise
-        private readonly Bitmap CercleRouge = new(Properties.Resources.Menace); // menace pour la pièce sélectionnée
-        private readonly Bitmap CercleViolet = new(Properties.Resources.Interdit); // mouvement interdit
-        private readonly Bitmap CroixPriseVerte = new(Properties.Resources.AvecPrise); // mouvement autorisé avec prise
-        // private readonly Bitmap CerclePrise = new(Properties.Resources.AvecPrise); // mouvement autorisé avec prise
+        private readonly VueEchiquier _vue;     // l'affichage de l'échiquier : cases, pièces, couleurs, inversion (voir VueEchiquier.cs)
 
         // les variables
         public static int NumeroDemiCoup { get; set; } = 0;
@@ -68,21 +45,16 @@ namespace BrunoGUI_GenII
         public Partie PartieCourante => _partie;
         public string _dossierRacine, _dossierStockfish;
         private int _indexSource120, _forceMoteurElo, _nombreLignesPV, _tempsRestant;
-        private int _dernierCoupMoteurUci;   // dernière case jouée par le moteur UCI
         private int _numeroLigne;       // Indices dans la DataGrid FeuillePartie
-        private int _indexCaseSourceDernierMouvement, _indexCaseDestinationDernierMouvement;
         private bool _plateauAutorise = true;   // c'est au joueur de bouger les pièces (voir PlateauEnable et MetAJourPlateau)
-        private bool _dernierCoupColore;        // les cases du dernier coup du moteur sont à montrer (masquées pendant le parcours)
         private string _caseSource, _caseDestination;
         private string _nomHumain, _joueurElo, _nomMoteur, _moteurElo, _joueurBlanc, _joueurNoir;
         private string _cheminMoteur, _nomMoteurChoisi;
         private string _bibliotheque = "rodent.bin";
         private bool _clickCaseSource, _visuSymbole, _montreDonneesBrutesUci, _montre3VariantesUci;
-        private bool _visuCoteNoir;     // True quand les Noirs sont en bas de l'écran
         private bool _clavierActif, _emetUnSon, _bibliothèqueAléatoire;
         private bool _bibliothèqueActive = true;
         private int _dureeReflexionMilliSeconde = 5000;
-        private Color _couleurCaseSombre, _couleurCaseClaire, _couleurCaseSource, _couleurCaseDestination;
         private LogiqueMouvements.TypePiece _selectionPromotion, _pieceSource;
         private readonly Color _violetCustom = Color.FromArgb(128, 128, 255);  // Rouge = 128, Vert = 128, Bleu = 255
 
@@ -112,10 +84,11 @@ namespace BrunoGUI_GenII
             MoteurUci.NombreThreads = parametres.NombreCoeursThread;    // envoyés au moteur à son démarrage (voir MoteurUci)
             MoteurUci.TailleHachageMo = parametres.TailleHachageMo;
             // Mise à jour des variables à partir des données du fichier
-            _couleurCaseSombre = Parametres.ConvertitCouleur(parametres.CaseSombre, Parametres.LichessCaseSombre);
-            _couleurCaseClaire = Parametres.ConvertitCouleur(parametres.CaseClaire, Parametres.LichessCaseClaire);
-            _couleurCaseSource = Parametres.ConvertitCouleur(parametres.CouleurCaseSource, Parametres.LichessCaseSource);
-            _couleurCaseDestination = Parametres.ConvertitCouleur(parametres.CouleurCaseDestination, Parametres.LichessCaseDestination);
+            _vue = new VueEchiquier(Plateau, this,      // vue côté Blancs au départ ; couleurs du .ini (style Lichess par défaut)
+                Parametres.ConvertitCouleur(parametres.CaseClaire, Parametres.LichessCaseClaire),
+                Parametres.ConvertitCouleur(parametres.CaseSombre, Parametres.LichessCaseSombre),
+                Parametres.ConvertitCouleur(parametres.CouleurCaseSource, Parametres.LichessCaseSource),
+                Parametres.ConvertitCouleur(parametres.CouleurCaseDestination, Parametres.LichessCaseDestination));
             _nomHumain = parametres.NomHumain;
             _joueurElo = parametres.EloHumain;
             _dureeReflexionMilliSeconde = parametres.DureeReflexionSeconde * 1000;
@@ -136,13 +109,10 @@ namespace BrunoGUI_GenII
             TrackBarTempsReflexion.Value = Math.Clamp(parametres.DureeReflexionSeconde, TrackBarTempsReflexion.Minimum, TrackBarTempsReflexion.Maximum);
             labelTempsReflexion.Text = "[" + TrackBarTempsReflexion.Value + "]";
             // Debug pour vérifier
-            Debug.WriteLine($"Paramètres chargés : Moteur = {_cheminMoteur}, Case sombre = {_couleurCaseSombre.Name}, Case claire = {_couleurCaseClaire.Name}");
-            Debug.WriteLine($"Paramètres chargés : Case source = {_couleurCaseSource.Name}, Case destination = {_couleurCaseDestination.Name}");
             Debug.WriteLine($"Paramètres chargés : Biblio = {_bibliotheque}, Force = {_forceMoteurElo}, Nombre PV = {_nombreLignesPV}");
             Debug.WriteLine($"Paramètres chargés : Temps de réflexion = {_dureeReflexionMilliSeconde}");
 
             DateTime Aujourdhui = DateTime.Today;
-            _visuCoteNoir = false;      // On commence avec la vue côté Blanc (par défaut, l'ordinateur a les Noirs : voir Partie)
             _montreDonneesBrutesUci = _clavierActif = false;
             _pilote = new PiloteMoteur(MoteurUci)
             {   // Bibliothèque d'ouvertures (si elle est active) : le coup choisi est aussi affiché dans la liste de la bibliothèque
@@ -179,28 +149,7 @@ namespace BrunoGUI_GenII
             MoteurUci.AfficheDonneesBrutes += AfficheDonneesBrutes;
             MoteurUci.AfficheCoupMoteur += AfficheCoupMoteur;
             this.KeyPreview = true; // <-- obligatoire pour capter toutes les touches
-            // Liste des pièces du jeu
-            ListeBitmapsPiece.Add(LogiqueMouvements.TypePiece.PionBlanc, PionBlanc);        // pion blanc
-            ListeBitmapsPiece.Add(LogiqueMouvements.TypePiece.TourBlanche, TourBlanche);    // tour blanche
-            ListeBitmapsPiece.Add(LogiqueMouvements.TypePiece.CavalierBlanc, CavalierBlanc);// cavalier blanc
-            ListeBitmapsPiece.Add(LogiqueMouvements.TypePiece.FouBlanc, FouBlanc);          // fou blanc
-            ListeBitmapsPiece.Add(LogiqueMouvements.TypePiece.ReineBlanche, ReineBlanche);  // reine blanche
-            ListeBitmapsPiece.Add(LogiqueMouvements.TypePiece.RoiBlanc, RoiBlanc);          // roi blanc
-            ListeBitmapsPiece.Add(LogiqueMouvements.TypePiece.PionNoir, PionNoir);          // pion noir
-            ListeBitmapsPiece.Add(LogiqueMouvements.TypePiece.TourNoire, TourNoire);        //tour noire
-            ListeBitmapsPiece.Add(LogiqueMouvements.TypePiece.CavalierNoir, CavalierNoir);  // cavalier noir
-            ListeBitmapsPiece.Add(LogiqueMouvements.TypePiece.FouNoir, FouNoir);            // fou noir
-            ListeBitmapsPiece.Add(LogiqueMouvements.TypePiece.ReineNoire, ReineNoire);      // reine noire
-            ListeBitmapsPiece.Add(LogiqueMouvements.TypePiece.RoiNoir, RoiNoir);            // roi noir
-            ListeBitmapsPiece.Add(LogiqueMouvements.TypePiece.Vide, null);                  // case vide
-            // Liste des symboles du jeu
-            ListeBitmapsSymbole.Add(LogiqueMouvements.TypeSymbole.SymboleMenacePiece, CercleRouge); // symbole Menace
-            ListeBitmapsSymbole.Add(LogiqueMouvements.TypeSymbole.SymboleMouvementSansPrise, CercleVert); // symbole Mouvement sans prise
-            ListeBitmapsSymbole.Add(LogiqueMouvements.TypeSymbole.SymboleMouvementInterdit, CercleViolet); // symbole Mouvement interdit
-            ListeBitmapsSymbole.Add(LogiqueMouvements.TypeSymbole.SymboleMouvementAvecPrise, CroixPriseVerte); // symbole Mouvement avec prise
-
-            // Les couleurs des cases viennent de BrunoGUI.ini (voir le constructeur) ; le style Lichess est la valeur par défaut
-
+            // Les images des pièces et les couleurs des cases sont dans VueEchiquier (couleurs du .ini, voir le constructeur)
 
             _dossierRacine = Chemins.RepertoireRacine;
             string cheminMoteurs = Chemins.MoteursUCI;
@@ -216,12 +165,7 @@ namespace BrunoGUI_GenII
 
             InformationPourJoueur.Text = "   Bienvenue   ";
 
-            DessineEchiquier();
-            for (int i = 0; i <= 119; i++)
-            {   // L'échiquier 120 cases (bordures comprises) est créé par la classe Position
-                IndiceVisuCoteNoir.Add(i);      // on crée la liste de 1 à 120
-            }
-            IndiceVisuCoteNoir.Reverse();       // On inverse l'ordre pour avoir la liste de 120 à 1 pour la vue côté noir
+            _vue.CreerCases(CaseMouseDown);     // les 120 cases (64 visibles), indexées comme le tableau "mailbox"
             LogiqueMouvements.InitialisationEchiquier();
             RécupèreBibliothèque();
             MiseaZeroAffichages();
@@ -286,7 +230,7 @@ namespace BrunoGUI_GenII
                     PartieEnCours.Black = LabelJoueurNoir.Text = maNouvellePartieForceModule.NomAdversaire;
                     PartieEnCours.BlackElo = EloNoir.Text = _joueurElo;
                     CommencerPartie(Joueur.Moteur, Joueur.Humain);
-                    if (_visuCoteNoir == false)
+                    if (!_vue.CoteNoir)
                         TourneEchiquier();      // On met la vue côté Noir
                     ParametresJoueurHumain("Noirs", "Le moteur UCI joue");      // On fait jouer le moteur côté blanc
                     JeuMoteurAvecBibliothèque(FenDepart);
@@ -297,7 +241,7 @@ namespace BrunoGUI_GenII
                     PartieEnCours.WhiteElo = EloBlanc.Text = _joueurElo;
                     PartieEnCours.Black = LabelJoueurNoir.Text = _nomMoteur;
                     PartieEnCours.BlackElo = EloNoir.Text = _forceMoteurElo.ToString();
-                    if (_visuCoteNoir)
+                    if (_vue.CoteNoir)
                         TourneEchiquier();
                     CommencerPartie(Joueur.Humain, Joueur.Moteur);
                     ParametresJoueurHumain("Blancs", "A vous de jouer");            // On demande à l'humain de jouer
@@ -309,8 +253,7 @@ namespace BrunoGUI_GenII
         {   // Début d'une nouvelle partie : qui joue les Blancs et les Noirs (humain ou moteur)
             _pilote.Abandonner();       // plus aucune demande (analyse ou coup) en cours au moteur
             _partie.Commencer(blancs, noirs);
-            EffaceDernierCoup();        // les cases du dernier coup de la partie précédente
-            _dernierCoupMoteurUci = -1;
+            _vue.EffaceDernierCoup();   // les cases du dernier coup de la partie précédente
             _clickCaseSource = _visuSymbole = true;
             PartieEnCours.CoupsPartiePGN = PartieEnCours.Result = PartieEnCours.CompteDePLy = PartieEnCours.Ronde = "";
             PartieEnCours.Tournoi = "Entrainement";
@@ -347,9 +290,7 @@ namespace BrunoGUI_GenII
                 }
                 if (sender is PictureBox CaseClick)
                 {
-                    int IndexCase120 = Convert.ToInt32(CaseClick.Name[8..]); // Utilise le numéro de la PictureBox comme index
-                    if (_visuCoteNoir)
-                        IndexCase120 = IndiceVisuCoteNoir[IndexCase120];    // Si on regarde côté noir, il faut inverser l'index par rapport a la vue côté blanc
+                    int IndexCase120 = _vue.IndexDeLaCase(CaseClick);    // (tient compte de la vue côté Noirs)
                     if (_partie.Mode == ModePartie.AucunePartie)     // au lancement, aucune partie choisie : pas de coup
                         KryptonMessageBox.Show("Veuillez choisir une partie :\n\n" +
                             "   •  Stockfish : jouer contre Stockfish (force réglable)\n" +
@@ -361,10 +302,10 @@ namespace BrunoGUI_GenII
                             _indexSource120 = IndexCase120;
                             _caseSource = LogiqueMouvements.NomCaseAlgebrique(_indexSource120);
                             _pieceSource = LogiqueMouvements.PiecesEchiquier[_indexSource120];
-                            if (PictJeux[IndexCase120].Image != null)
+                            if (_vue.ImageCase(IndexCase120) != null)
                             {   // Si la case cliquée contient bien une pièce ou un pion, on va utiliser le thumbnail de la pièce comme curseur :-)
-                                MetCurseurPiece(PictJeux[IndexCase120].Image);     // la pièce suit la souris
-                                DessinePiece(IndexCase120, LogiqueMouvements.TypePiece.Vide);   // On vide la case d'origine car le joueur bouge la pièce ...
+                                _vue.MetCurseurPiece(_vue.ImageCase(IndexCase120));     // la pièce suit la souris
+                                _vue.DessinePiece(IndexCase120, LogiqueMouvements.TypePiece.Vide);   // On vide la case d'origine car le joueur bouge la pièce ...
                                 LogiqueMouvements.DessineMouvements(_caseSource, true);
                                 _clickCaseSource = false;
                             }
@@ -372,7 +313,7 @@ namespace BrunoGUI_GenII
                         else
                         {       // Déplacement d'une pièce
                             LogiqueMouvements.Echec = false;
-                            LibereCurseurPiece();           // On revient au curseur "normal"
+                            _vue.LibereCurseurPiece();      // On revient au curseur "normal"
                             LogiqueMouvements.EffaceSymboles(true);
                             _caseDestination = LogiqueMouvements.NomCaseAlgebrique(IndexCase120);
                             AbandonneReflexion();   // une analyse en cours porterait sur la position d'avant ce coup
@@ -388,10 +329,10 @@ namespace BrunoGUI_GenII
                             }
                             else
                             {   // Si le coup n'est pas valide, on remet la pièce sur sa case d'origine !
-                                DessinePiece(_indexSource120, _pieceSource);
+                                _vue.DessinePiece(_indexSource120, _pieceSource);
                             }
                             _clickCaseSource = true;
-                            EffaceDernierCoup();
+                            _vue.EffaceDernierCoup();
                         }
                     }
                 }
@@ -545,20 +486,8 @@ namespace BrunoGUI_GenII
                     _caseSource = MoteurUci.CoupAuFormatUci[..2];    // CoupAuFormatUci contient le "best move" sous la forme e2e4
                     _caseDestination = MoteurUci.CoupAuFormatUci.Substring(2, 2);
                     PiloteMoteur.JouerCoupUci(MoteurUci.CoupAuFormatUci);      // (rien n'est joué si la position est déjà un mat)
-                    if (_dernierCoupMoteurUci != -1)
-                    {       // on redessine la case pour effacer le contour du coup précédent du Moteur UCI
-                        PictJeux[_dernierCoupMoteurUci].BackColor = CouleurCaseOrigines[_dernierCoupMoteurUci];
-                        if (!ParcoursEnCours)       // pendant le parcours, l'échiquier montre une position passée
-                            DessinePiece(_dernierCoupMoteurUci, LogiqueMouvements.PiecesEchiquier[_dernierCoupMoteurUci]);
-                    }
-                    _dernierCoupMoteurUci = LogiqueMouvements.RenvoieCaseIndex120(_caseDestination);
-
-                    if (_dernierCoupColore)
-                        CouleursNormalesDernierCoup();  // le moteur a déjà joué juste avant (ex : "Ordinateur joue") : on efface son coup précédent
-                    _indexCaseSourceDernierMouvement = RenvoieCaseIndex120(_caseSource);              // convertit la case source en index
-                    _indexCaseDestinationDernierMouvement = RenvoieCaseIndex120(_caseDestination);    // convertit la case destination en index
-                    _dernierCoupColore = true;
-                    ColoreDernierCoup();        // montre les cases source et destination du coup (au retour de parcours s'il y en a un)
+                    // Cases de départ et d'arrivée du coup colorées (pendant le parcours : seulement au retour à la partie)
+                    _vue.MontreDernierCoup(RenvoieCaseIndex120(_caseSource), RenvoieCaseIndex120(_caseDestination));
                     LeMoteurARépondu();      // On réautorise si le moteur a fini de réfléchir
                     if (ParcoursEnCours)
                     {   // Le coup est joué dans la partie, mais l'affichage reste sur la position passée que l'utilisateur regarde
@@ -700,10 +629,11 @@ namespace BrunoGUI_GenII
         {   // Affiche la promotion d'un pion : on affiche les pièces disponibles pour la promotion,
             // et on attend que le joueur clique sur une pièce pour faire son choix
             _selectionPromotion = LogiqueMouvements.TypePiece.Vide;
-            Promo0.Image = Couleur == "Noir" ? ReineNoire : ReineBlanche;
-            Promo1.Image = Couleur == "Noir" ? TourNoire : TourBlanche;
-            Promo2.Image = Couleur == "Noir" ? FouNoir : FouBlanc;
-            Promo3.Image = Couleur == "Noir" ? CavalierNoir : CavalierBlanc;
+            List<LogiqueMouvements.TypePiece> pieces = Couleur == "Noir" ? ListeNoire : ListeBlanche;    // dame, tour, fou, cavalier
+            Promo0.Image = _vue.ImagePiece(pieces[0]);
+            Promo1.Image = _vue.ImagePiece(pieces[1]);
+            Promo2.Image = _vue.ImagePiece(pieces[2]);
+            Promo3.Image = _vue.ImagePiece(pieces[3]);
             GroupPromo.Visible = true;
             // Pendant le choix, tout le reste est inactif (menus, boutons, échiquier, flèches du clavier) : une nouvelle partie,
             // un chargement... lancés au milieu de ce coup corromperaient la partie. L'état de chaque contrôle est rétabli ensuite
@@ -734,23 +664,6 @@ namespace BrunoGUI_GenII
                     _clavierActif = clavierAvantChoix;
                 }
             }
-        }
-        private void EffaceDernierCoup()
-        {   // Efface les couleurs de la case source et destination du dernier coup joué
-            _dernierCoupColore = false;
-            CouleursNormalesDernierCoup();
-        }
-        private void CouleursNormalesDernierCoup()
-        {   // Remet la couleur normale des cases du dernier coup (sans oublier ce coup : voir ColoreDernierCoup)
-            PictJeux[_indexCaseSourceDernierMouvement].BackColor = Outils.EstCaseClaire(_indexCaseSourceDernierMouvement) ? _couleurCaseClaire : _couleurCaseSombre;
-            PictJeux[_indexCaseDestinationDernierMouvement].BackColor = Outils.EstCaseClaire(_indexCaseDestinationDernierMouvement) ? _couleurCaseClaire : _couleurCaseSombre;
-        }
-        private void ColoreDernierCoup()
-        {   // Montre les cases source et destination du dernier coup du moteur, sauf pendant le parcours (position passée affichée)
-            if (!_dernierCoupColore || ParcoursEnCours)
-                return;
-            PictJeux[_indexCaseSourceDernierMouvement].BackColor = _couleurCaseSource;
-            PictJeux[_indexCaseDestinationDernierMouvement].BackColor = _couleurCaseDestination;
         }
 
         private void BoutonGainBlanc_Click(object sender, EventArgs e)
@@ -796,7 +709,7 @@ namespace BrunoGUI_GenII
                 PartieEnCours.BlackElo = EloNoir.Text = _moteurElo;
                 StatusProgramme.Text = ScoreMoteur.Text = EvaluationUci.Text = VarianteMoteurCourante.Text = "";    // On efface les données de la partie précédente
                 CommencerPartie(Joueur.Humain, Joueur.Moteur);
-                if (_visuCoteNoir)
+                if (_vue.CoteNoir)
                     TourneEchiquier();
                 _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(FenDepart));
                 ParametresJoueurHumain("Blancs", "A vous de jouer");            // On demande à l'humain de jouer
@@ -818,7 +731,7 @@ namespace BrunoGUI_GenII
                 PartieEnCours.BlackElo = EloNoir.Text = _joueurElo;
                 StatusProgramme.Text = ScoreMoteur.Text = EvaluationUci.Text = VarianteMoteurCourante.Text = "";     // On efface les données de la partie précédente
                 CommencerPartie(Joueur.Moteur, Joueur.Humain);
-                if (_visuCoteNoir == false)
+                if (!_vue.CoteNoir)
                     TourneEchiquier();                                          // On met la vue côté Noir
                 ParametresJoueurHumain("Noirs", "Le moteur UCI joue");
                 NumeroDemiCoup = 0;
@@ -918,48 +831,14 @@ namespace BrunoGUI_GenII
         }
 
         private void CaseSombre_Click(object sender, EventArgs e)
-        {   // Permet de choisir la couleur des cases sombres de l'échiquier
+        {   // Permet de choisir la couleur des cases sombres de l'échiquier (enregistrée dans les préférences à la fermeture)
             if (CouleurDialogue.ShowDialog() == DialogResult.OK)
-            {   // On récupère la couleur choisie par l'utilisateur
-                _couleurCaseSombre = CouleurDialogue.Color;
-                Color Couleur;
-                int index = 0;
-                CouleurCaseOrigines.Clear();                        // On nettoie la liste des couleurs d'origine
-                // les 120 cases du jeu (seules 64 cases sont visibles : voir la classe ClassEchiquier pour les détails )
-                for (int Ligne = 0; Ligne <= 11; Ligne++)           // On parcourt les lignes de l"échiquier
-                {
-                    Couleur = Ligne % 2 == 0 ? _couleurCaseClaire : _couleurCaseSombre; // Couleur des cases de l'échiquier
-                    for (int Colonne = 0; Colonne <= 9; Colonne++)              // On parcourt les colonnes de l'échiquier
-                    {
-                        PictJeux[index].BackColor = Couleur;
-                        CouleurCaseOrigines.Add(Couleur);
-                        index++;
-                        Couleur = Couleur == _couleurCaseClaire ? _couleurCaseSombre : _couleurCaseClaire;
-                    }
-                }
-            }
+                _vue.ChangeCouleurs(_vue.CaseClaire, CouleurDialogue.Color);
         }
         private void CaseClaire_Click(object sender, EventArgs e)
-        {   // Permet à l'utilisateur de choisir la couleur des cases claires de l'échiquier
+        {   // Permet de choisir la couleur des cases claires de l'échiquier (enregistrée dans les préférences à la fermeture)
             if (CouleurDialogue.ShowDialog() == DialogResult.OK)
-            {   // On récupère la couleur choisie par l'utilisateur
-                _couleurCaseClaire = CouleurDialogue.Color;
-                Color Couleur;
-                int index = 0;
-                CouleurCaseOrigines.Clear();                        // On nettoie la liste des couleurs d'origine
-                // les 120 cases du jeu (seules 64 cases sont visibles : voir la classe ClassEchiquier pour les détails )
-                for (int ligne = 0; ligne <= 11; ligne++)           // On parcourt les lignes de l"échiquier
-                {
-                    Couleur = ligne % 2 == 0 ? _couleurCaseClaire : _couleurCaseSombre; // Couleur des cases de l'échiquier
-                    for (int Colonne = 0; Colonne <= 9; Colonne++)              // On parcourt les colonnes de l'échiquier
-                    {
-                        PictJeux[index].BackColor = Couleur;
-                        CouleurCaseOrigines.Add(Couleur);
-                        index++;
-                        Couleur = Couleur == _couleurCaseClaire ? _couleurCaseSombre : _couleurCaseClaire;
-                    }
-                }
-            }
+                _vue.ChangeCouleurs(CouleurDialogue.Color, _vue.CaseSombre);
         }
 
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
@@ -1012,7 +891,7 @@ namespace BrunoGUI_GenII
             if (ParcoursEnCours)
                 return;             // sécurité : le bouton est grisé pendant le parcours (voir MetAJourCommandes)
             AbandonneReflexion();   // retour arrière : le moteur ne doit pas jouer sur la position annulée
-            EffaceDernierCoup();
+            _vue.EffaceDernierCoup();
             bool etaitTerminee = _partie.Mode == ModePartie.Terminee;
             if (!_partie.AnnulerDernierCoup())      // retire le dernier 1/2 coup et rétablit la position (jamais avant la position de départ)
                 _ = KryptonMessageBox.Show("Pas assez de coups joués \nPas de retour arrière possible", "Retour impossible", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
@@ -1242,10 +1121,10 @@ namespace BrunoGUI_GenII
         }
         private void SauvePreferences()
         {   // Enregistre les réglages faits dans l'interface dans BrunoGUI.preferences.ini (à côté de l'exécutable)
-            parametres.CaseSombre = Parametres.FormatCouleur(_couleurCaseSombre);
-            parametres.CaseClaire = Parametres.FormatCouleur(_couleurCaseClaire);
-            parametres.CouleurCaseSource = Parametres.FormatCouleur(_couleurCaseSource);
-            parametres.CouleurCaseDestination = Parametres.FormatCouleur(_couleurCaseDestination);
+            parametres.CaseSombre = Parametres.FormatCouleur(_vue.CaseSombre);
+            parametres.CaseClaire = Parametres.FormatCouleur(_vue.CaseClaire);
+            parametres.CouleurCaseSource = Parametres.FormatCouleur(_vue.CaseSource);
+            parametres.CouleurCaseDestination = Parametres.FormatCouleur(_vue.CaseDestination);
             parametres.NomHumain = _nomHumain;
             parametres.DureeReflexionSeconde = TrackBarTempsReflexion.Value;
             parametres.ForceMoteur = maNouvellePartieForceModule.ForceModule;       // l'Elo choisi, même si la dernière partie était en force maximale
@@ -1333,14 +1212,13 @@ namespace BrunoGUI_GenII
             if (mafenetrePartie != null && !mafenetrePartie.IsDisposed)
                 mafenetrePartie.Close();    // sa liste de coups ne correspond plus à la partie
             QuitteParcours();
-            EffaceDernierCoup();
+            _vue.EffaceDernierCoup();
             if (_partie.ReprendreDepuis(index) == 0 && !etaitLectureSeule)
             {   // rien à supprimer : l'échiquier revient simplement à la partie
                 LogiqueMouvements.DessinPieces();
                 MetAJourCommandes();
                 return;
             }
-            _dernierCoupMoteurUci = -1;
             if (etaitTerminee || etaitLectureSeule)
                 EffaceResultat();       // la partie n'a plus de résultat
             if (etaitLectureSeule)
@@ -1484,9 +1362,8 @@ namespace BrunoGUI_GenII
             AjoutePositionDeDepart(contenuFen);  // La partie commence à cette position (élément sans coup, en tête de liste) :
                                                  // le retour arrière ne remonte jamais avant
             _partie.CommencerDepuisPosition();  // l'humain joue le camp au trait, le moteur lui répond
-            EffaceDernierCoup();                // les cases du dernier coup de la partie précédente
+            _vue.EffaceDernierCoup();                // les cases du dernier coup de la partie précédente
             _pilote.Abandonner();       // plus aucune demande (analyse ou coup) en cours au moteur
-            _dernierCoupMoteurUci = -1;
             _clickCaseSource = _visuSymbole = true;
             PartieEnCours.CoupsPartiePGN = PartieEnCours.Result = PartieEnCours.CompteDePLy = PartieEnCours.Ronde = "";
             PartieEnCours.Tournoi = "Entrainement";
@@ -1569,7 +1446,7 @@ namespace BrunoGUI_GenII
         {   // --- Charge UNE partie depuis un fichier PGN lorsque'on double-clique ---
             AbandonneReflexion();
             QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
-            EffaceDernierCoup();    // les cases du dernier coup de la partie précédente
+            _vue.EffaceDernierCoup();    // les cases du dernier coup de la partie précédente
             Outils.MiseaZeroListes();
             Debug.WriteLine("ChargerPartieDepuisPgn / :  " + partie.White + " vs " + partie.Black + "   Résultat : " + partie.Result);
             PartieEnCours.Tournoi = partie.Tournoi;
@@ -1683,8 +1560,6 @@ namespace BrunoGUI_GenII
             {
                 InformationPourJoueur.Text = StatusProgramme.Text = _nomMoteur + " réfléchit ...";
             }
-            if (LogiqueMouvements.RenvoieCaseIndex120(_caseDestination) == _dernierCoupMoteurUci)
-                _dernierCoupMoteurUci = -1;
         }
 
         private string AfficherCoupsBibliotheque(ulong clePosition)
@@ -1735,105 +1610,11 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         // Routines de Dessin
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-        private void DessineEchiquier()
-        {   // Dessine les cases de l'échiquier (120 cases au total, mais seules 64 sont visibles)
-            Color Couleur;
-            int Index = 0;
-            // les 120 cases du jeu (seules 64 cases sont visibles : voir la classe LogiqueMouvements pour les détails )
-            for (int Ligne = 0; Ligne <= 11; Ligne++)
-            {
-                Couleur = Ligne % 2 == 0 ? _couleurCaseClaire : _couleurCaseSombre;     // Couleur des cases de l'échiquier
-                for (int Colonne = 0; Colonne <= 9; Colonne++)
-                {
-                    PictureBox Pict = new()
-                    {   //  Les cases sont des PictureBox indéxées, par exemple : case a1 = PictJeux21, case h8 = PictJeux98
-                        Name = "Pictjeux" + Index.ToString(),
-                        BackColor = Couleur,
-                        SizeMode = PictureBoxSizeMode.StretchImage,
-                        Size = new Size(60, 60),    // Taille des case = 60 * 60 pixels
-                        Location = new Point(-39 + (Colonne * 60), 560 - (Ligne * 60)), // -39 semble OK mais à checker ?
-                        Visible = Ligne > 1 & Ligne < 10 & Colonne > 0 & Colonne < 9, // On ne rend visible que les 64 cases utiles
-                        Enabled = false
-                    };
-                    CouleurCaseOrigines.Add(Couleur);
-                    Pict.BringToFront();
-                    PictJeux.Add(Pict);
-                    Pict.MouseDown += CaseMouseDown;
-                    Plateau.Controls.Add(Pict);
-                    Index++;
-                    Couleur = Couleur == _couleurCaseClaire ? _couleurCaseSombre : _couleurCaseClaire;
-                }
-            }
-        }
-        private void DessinePiece(int IndexCase, LogiqueMouvements.TypePiece Piece)
-        {   // Dessine une pièce sur l'échiquier avec l'indexSource120 et le type de la Piece
-            try
-            {
-                if (InvokeRequired)
-                {
-                    Invoke(new MethodInvoker(() => DessinePiece(IndexCase, Piece)));
-                    return; // Empêche l'exécution du reste de la méthode sur le thread d'origine
-                }
-                else
-                {
-                    RemplaceImage(IndexCase, ListeBitmapsPiece[Piece]);    // (libère l'éventuelle image pièce + symbole)
-                    Application.DoEvents();
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Erreur dans DessinePiece : " + ex.Message);
-                Debug.WriteLine($"StackTrace : {ex.StackTrace}");
-            }
-        }
+        // (cases, pièces, couleurs, inversion, curseur : voir VueEchiquier.cs)
         private void DessineSymbole(int IndexCase, LogiqueMouvements.TypeSymbole Symbole)
-        {   // Dessine un des 4 symboles sur l'échiquier si ceux sont visibles
-            if (_visuSymbole == true)
-            {
-                if (PictJeux[IndexCase].Image == null)                          // Si la case est vide,
-                    RemplaceImage(IndexCase, ListeBitmapsSymbole[Symbole]);     // On dessine le symbole passé en paramètre
-                else
-                {   // Si la case n'est pas vide : image composée (pièce + symbole), libérée quand elle est remplacée
-                    Bitmap CaseJeu = new(PictJeux[IndexCase].Image);
-                    using (Graphics g = Graphics.FromImage(CaseJeu))
-                        g.DrawImage(ListeBitmapsSymbole[Symbole], 0, 0, 100, 100);
-                    _imagesComposees.Add(CaseJeu);
-                    RemplaceImage(IndexCase, CaseJeu);
-                }
-            }
-        }
-        // Images composées (pièce + symbole) créées par DessineSymbole : à libérer quand une case change d'image
-        // (les images des pièces et des symboles, partagées par toutes les cases, ne sont jamais libérées)
-        private readonly HashSet<Image> _imagesComposees = [];
-        private void RemplaceImage(int indexCase, Image nouvelle)
-        {
-            Image ancienne = PictJeux[indexCase].Image;
-            PictJeux[indexCase].Image = nouvelle;
-            if (ancienne != null && ancienne != nouvelle && _imagesComposees.Remove(ancienne))
-                ancienne.Dispose();
-        }
-        // Curseur "pièce" pendant un déplacement : l'icône Windows et le curseur sont libérés quand on en change
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        private static extern bool DestroyIcon(IntPtr icone);
-        private Cursor _curseurPiece;
-        private IntPtr _iconeCurseurPiece;
-        private void MetCurseurPiece(Image piece)
-        {
-            LibereCurseurPiece();
-            using Bitmap copie = new(piece);
-            using Bitmap vignette = (Bitmap)copie.GetThumbnailImage(88, 88, null, IntPtr.Zero);
-            _iconeCurseurPiece = vignette.GetHicon();
-            _curseurPiece = new Cursor(_iconeCurseurPiece);
-            Cursor = _curseurPiece;
-        }
-        private void LibereCurseurPiece()
-        {
-            Cursor = Cursors.Default;
-            _curseurPiece?.Dispose();
-            _curseurPiece = null;
-            if (_iconeCurseurPiece != IntPtr.Zero)
-                DestroyIcon(_iconeCurseurPiece);
-            _iconeCurseurPiece = IntPtr.Zero;
+        {   // Symboles des mouvements possibles de la pièce sélectionnée, s'ils sont visibles
+            if (_visuSymbole)
+                _vue.DessineSymbole(IndexCase, Symbole);
         }
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         //  Diverses méthodes
@@ -1883,14 +1664,12 @@ namespace BrunoGUI_GenII
         {   // Pendant le parcours, les cases restent cliquables : le clic ramène à la partie (voir CaseMouseDown), sans jouer de coup.
             // Exception : partie PGN en lecture seule, où l'échiquier n'est jamais cliquable.
             // Avant toute partie, le clic affiche "Veuillez choisir votre couleur"
-            if (PictJeux.Count < 120)
+            if (!_vue.CasesCreees)
                 return;     // cases pas encore créées
             bool actif = ParcoursEnCours
                 ? !PartieEnLectureSeule
                 : _plateauAutorise && (_partie.Mode == ModePartie.EnCours || _partie.Mode == ModePartie.AucunePartie);
-            for (int i = 0; i <= 119; i++)
-                if (PictJeux[i].Visible)
-                    PictJeux[i].Enabled = actif;
+            _vue.ActiverCases(actif);
         }
 
         // ═══ Etat de la partie et commandes actives ═══
@@ -1916,19 +1695,9 @@ namespace BrunoGUI_GenII
             MetAJourPlateau();
         }
         private void TourneEchiquier()
-        {   // Tourne l'échiquier de 180° pour changer le côté de visualisation
-            // Les couleurs du dernier coup sont sur les cases physiques : on les retire avant l'inversion, et on les remet après
-            if (_dernierCoupColore)
-                CouleursNormalesDernierCoup();
-            PictJeux.Reverse();             // On inverse les liste des PictureBox ce qui revient à faire une rotation à 180°
-            Plateau.Image.RotateFlip(RotateFlipType.Rotate180FlipNone);
-            Plateau.Refresh();              // On inverse le plateau
-            if (ParcoursEnCours)
-                DessineEchiquierDe(_positionAffichee);  // pendant le parcours : la position affichée
-            else
-                LogiqueMouvements.DessinPieces();       // On dessine les pièces de la partie
-            _visuCoteNoir = !_visuCoteNoir;   // On inverse le flag de côté de visualisation
-            ColoreDernierCoup();              // (rien pendant le parcours, ni si aucun coup du moteur n'est à montrer)
+        {   // Tourne l'échiquier de 180° (vue côté Blancs / côté Noirs) et redessine la position affichée :
+            // la position passée pendant le parcours, sinon la partie
+            _vue.Tourner(_positionAffichee ?? LogiqueMouvements.PositionActuelle);
         }
         private void ParametresJoueurHumain(string Couleur, string Affichage)
         {   // Message au joueur humain en début de partie (sa couleur est fixée par CommencerPartie)
@@ -2008,12 +1777,11 @@ namespace BrunoGUI_GenII
             if (_pilote.AnalyseEnCours)
                 AbandonneReflexion();       // l'analyse portait sur la position affichée jusqu'ici (la réflexion du moteur pour son coup continue)
             string fen = index < 0 ? FenDepart : LogiqueMouvements.ListeCoups[index].Fen;
-            if (_dernierCoupColore)
-                CouleursNormalesDernierCoup();  // le dernier coup de la partie n'a pas de sens sur une position passée
+            _vue.DernierCoupMasque = true;  // le dernier coup de la partie n'a pas de sens sur une position passée
             _positionAffichee = LogiqueMouvements.PositionDepuisFen(fen);
             _indexAffiche = index;
             MetAJourCommandes();
-            DessineEchiquierDe(_positionAffichee);
+            _vue.DessinePosition(_positionAffichee);
             _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(fen));
             InformationPourJoueur.Text = "Trait aux " + (_positionAffichee.QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
             VarianteMoteurUci1.Text = index < 0 || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart
@@ -2036,7 +1804,7 @@ namespace BrunoGUI_GenII
             _positionAffichee = null;
             MetAJourCommandes();
             LogiqueMouvements.DessinPieces();
-            ColoreDernierCoup();
+            _vue.DernierCoupMasque = false;     // le dernier coup du moteur est de nouveau coloré
             _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(LogiqueMouvements.RetourneChaineFenActuel()));
             InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + (QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
             InformationsPartie.Text = PartieEnLectureSeule ? "Fin de la partie" : "";
@@ -2044,18 +1812,13 @@ namespace BrunoGUI_GenII
         private void QuitteParcours()
         {   // La partie va être remplacée (nouvelle partie, chargement) : l'échiquier suivra la partie
             _positionAffichee = null;
+            _vue.DernierCoupMasque = false;
             MetAJourCommandes();
-        }
-        private void DessineEchiquierDe(Position position)
-        {   // Dessine directement les 64 cases d'une position (sans passer par l'événement de la partie, ignoré pendant le parcours)
-            for (int ligne = 2; ligne <= 9; ligne++)
-                for (int colonne = 1; colonne <= 8; colonne++)
-                    DessinePiece((ligne * 10) + colonne, position.Pieces[(ligne * 10) + colonne]);
         }
         private void DessinePieceDeLaPartie(int IndexCase, LogiqueMouvements.TypePiece Piece)
         {   // Dessins demandés par la partie (coups joués...) : ignorés pendant le parcours, l'échiquier est redessiné au retour
             if (!ParcoursEnCours)
-                DessinePiece(IndexCase, Piece);
+                _vue.DessinePiece(IndexCase, Piece);
         }
 
         private void AbandonneReflexion()
