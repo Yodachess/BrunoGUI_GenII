@@ -60,9 +60,8 @@ namespace BrunoGUI_GenII
         }
         public void Terminer() => Mode = ModePartie.Terminee;           // mat, pat, nulle ou abandon
         public void Reprendre()
-        {   // La partie est (de nouveau) en cours : aucune fin de partie n'est plus signalée
+        {   // La partie est (de nouveau) en cours
             Mode = ModePartie.EnCours;
-            PartieEnCoursMat = PartieEnCoursPat = false;
         }
         public void PasserEnLectureSeule() => Mode = ModePartie.LectureSeule;
         public void MoteurPrendLeTrait()

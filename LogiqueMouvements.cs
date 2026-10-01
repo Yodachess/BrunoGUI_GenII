@@ -122,9 +122,6 @@ namespace BrunoGUI_GenII
         public static bool CoupValide { get; set; }
         public static bool DernierCoupTerminePartie { get; private set; }  // le dernier coup joué a maté ou pat l'adversaire
         public static bool BloquerChoixPromo { get; set;    }// Lors de l'execution du coup, il ne faudra pas proposer le choix de pièce promue
-        public static bool StatutMoteurUci { get; set; } // true si MoteurUci a démarré
-        public static bool PartieEnCoursMat { get; set; }
-        public static bool PartieEnCoursPat { get; set; }
         private static bool TestSecondPion { get; set; }
         private static bool FlagEnPassant { get; set; }
         public static string FenDepart { get; set; } = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";

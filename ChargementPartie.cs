@@ -59,7 +59,6 @@ namespace BrunoGUI_GenII
             }
             bool depuisPosition = ListeCoups.Count > 0 && ListeCoups[0].EstPositionDeDepart;
             partie.Commencer(Joueur.Humain, Joueur.Humain, depuisPosition);
-            PartieEnCoursMat = PartieEnCoursPat = false;
             partie.RejeuPgn = true;     // pas de nulle automatique pendant le rejeu : c'est le résultat du PGN qui compte
             string coupIllisible = null;
             int demiCoupsJoues = 0;
