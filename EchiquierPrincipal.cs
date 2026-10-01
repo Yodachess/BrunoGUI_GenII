@@ -112,7 +112,7 @@ namespace BrunoGUI_GenII
             _montreDonneesBrutesUci = _clavierActif = false;
             _pilote = new PiloteMoteur(MoteurUci)
             {   // Bibliothèque d'ouvertures (si elle est active) : le coup choisi est aussi affiché dans la liste de la bibliothèque
-                ChoixBibliotheque = fen => _bibliothèqueActive ? AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(fen)) : null
+                ChoixBibliotheque = fen => _bibliothèqueActive ? ChoisirCoupBibliotheque(fen) : null
             };
             PartieEnCours.Date = Aujourdhui.ToString("yyyy.MM.dd");
             PartieEnCours.Lieu = "Maison"; PartieEnCours.Tournoi = "Entrainement";
@@ -258,7 +258,7 @@ namespace BrunoGUI_GenII
                 InformationPourJoueur.Visible = true;
                 InformationPourJoueur.Text = StatusProgramme.Text = "Aux Blancs de jouer";
             }
-            _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(FenDepart));
+            AfficheCoupsBibliotheque(FenDepart);
             MetAJourCommandes();
         }
 
@@ -309,7 +309,7 @@ namespace BrunoGUI_GenII
                             string chaineFen = LogiqueMouvements.RetourneChaineFenActuel(); // UCI : remplacer le FEN par liste de coups ?!
                             if (LogiqueMouvements.CoupValide)
                             {   // envoi de la Position Fen au moteur UCI
-                                _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(chaineFen));
+                                AfficheCoupsBibliotheque(chaineFen);
                                 if (_partie.MoteurAuTrait)      // c'est au moteur de répondre (pas après un mat ou un pat : partie terminée)
                                 {
                                     JeuMoteurAvecBibliothèque(chaineFen);
@@ -652,7 +652,7 @@ namespace BrunoGUI_GenII
                 CommencerPartie(Joueur.Humain, Joueur.Moteur);
                 if (_vue.CoteNoir)
                     TourneEchiquier();
-                _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(FenDepart));
+                AfficheCoupsBibliotheque(FenDepart);
                 ParametresJoueurHumain("Blancs", "A vous de jouer");            // On demande à l'humain de jouer
                 PlateauEnable(true);                                            // On lui permet de bouger les pièces
             }
@@ -831,7 +831,7 @@ namespace BrunoGUI_GenII
             {
                 if (etaitTerminee)
                     EffaceResultat();   // on a annulé un coup d'une partie terminée : elle reprend
-                _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(LogiqueMouvements.RetourneChaineFenActuel()));
+                AfficheCoupsBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
                 InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + QuiJoue + "s";
                 InformationsPartie.Text = _partie.Blancs == Joueur.Moteur ? "L'ordinateur joue les Blancs" :
                           _partie.Noirs == Joueur.Moteur ? "L'ordinateur joue les Noirs" :
@@ -1166,7 +1166,7 @@ namespace BrunoGUI_GenII
             }
             PartieEnCours.CompteDePLy = LogiqueMouvements.ListeCoupsFen.Count.ToString();
             string fen = LogiqueMouvements.RetourneChaineFenActuel();
-            _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(fen));
+            AfficheCoupsBibliotheque(fen);
             InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + (QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
             InformationsPartie.Text = "Partie reprise";
             if (_partie.MoteurAuTrait)
@@ -1305,7 +1305,7 @@ namespace BrunoGUI_GenII
             InformationPourJoueur.Text = "Trait aux " + (QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
             PromotionPiece = TypePiece.Vide;
             PlateauEnable(true);   // On active le plateau pour pouvoir jouer à partir de la position chargée
-            _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(contenuFen));
+            AfficheCoupsBibliotheque(contenuFen);
             MetAJourCommandes();
         }
         private void EnregistrerPgn_Click(object sender, EventArgs e)
@@ -1479,7 +1479,7 @@ namespace BrunoGUI_GenII
                 VarianteMoteurUci1.Text = "Coup bibliothèque " + Path.GetFileName(_bibliotheque) + " exécuté par le moteur -> " + coupChoisiTxt;
                 VarianteMoteurUci2.Text = VarianteMoteurUci3.Text = ".....";
                 Debug.WriteLine($"Coup bibliothèque exécuté : {coupChoisiTxt}");
-                _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(LogiqueMouvements.RetourneChaineFenActuel()));
+                AfficheCoupsBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
                 return;
             }
             // Aucun coup dans la bibliothèque ou bibliothèque inactive : le moteur réfléchit
@@ -1490,49 +1490,44 @@ namespace BrunoGUI_GenII
             }
         }
 
-        private string AfficherCoupsBibliotheque(ulong clePosition)
-        {   // Affiche les coups disponibles dans la bibliothèque pour une position donnée
-            var entrees = PolyglotBibliothèque.TrouverLesEntrées(clePosition).ToList();
+        // ═══ Bibliothèque d'ouvertures : affichage des coups connus, et choix du coup quand le moteur doit jouer ═══
+        private static readonly Random _hasard = new();
+        private Font _policeBiblioNormale, _policeBiblioGras;     // créées une seule fois (une police par ligne serait une fuite)
+        private string ChoisirCoupBibliotheque(string fen)
+        {   // Le moteur doit jouer : coup choisi dans la bibliothèque (PolyglotBibliothèque.ChoisirEntree), marqué ⭐ dans la liste ;
+            // null s'il n'y en a pas
+            List<EntréePolyglot> entrees = PolyglotBibliothèque.TrouverLesEntrées(PolyglotBibliothèque.CalculeClefPolyglot(fen)).ToList();
+            EntréePolyglot choisie = PolyglotBibliothèque.ChoisirEntree(entrees, _bibliothèqueAléatoire, _hasard);
+            AfficheCoupsBibliotheque(entrees, choisie);
+            return choisie == null ? null : PolyglotBibliothèque.DecodeCoup(choisie.CoupBiblio);
+        }
+        private void AfficheCoupsBibliotheque(string fen)
+        {   // Coups connus de la bibliothèque pour cette position (sans en choisir aucun)
+            AfficheCoupsBibliotheque(PolyglotBibliothèque.TrouverLesEntrées(PolyglotBibliothèque.CalculeClefPolyglot(fen)).ToList(), null);
+        }
+        private void AfficheCoupsBibliotheque(List<EntréePolyglot> entrees, EntréePolyglot choisie)
+        {   // Liste des coups, par poids décroissant ; le coup choisi (s'il y en a un) est marqué ⭐ en vert
+            _policeBiblioNormale ??= new Font(CoupsBibliothèqueBox.Font, FontStyle.Regular);
+            _policeBiblioGras ??= new Font(CoupsBibliothèqueBox.Font, FontStyle.Bold);
             CoupsBibliothèqueBox.Clear();
-            // --- Titre ---
             CoupsBibliothèqueBox.SelectionAlignment = HorizontalAlignment.Center;
             CoupsBibliothèqueBox.SelectionColor = Color.Black;
-            CoupsBibliothèqueBox.SelectionFont = new Font(CoupsBibliothèqueBox.Font, FontStyle.Bold);
+            CoupsBibliothèqueBox.SelectionFont = _policeBiblioGras;
             CoupsBibliothèqueBox.AppendText("Bibliothèque\n--------------\n");
             CoupsBibliothèqueBox.SelectionAlignment = HorizontalAlignment.Left;
             if (entrees.Count == 0)
             {
-                CoupsBibliothèqueBox.SelectionFont = new Font(CoupsBibliothèqueBox.Font, FontStyle.Regular);
+                CoupsBibliothèqueBox.SelectionFont = _policeBiblioNormale;
                 CoupsBibliothèqueBox.AppendText("Aucun coup trouvé dans la bibliothèque.\n");
-                return string.Empty;
+                return;
             }
-            // --- Choix du coup ---
-            EntréePolyglot entreeChoisie;
-            var rnd = new Random();
-
-            if (_bibliothèqueAléatoire)
-            {   // Choix aléatoire parmi toutes les entrées
-                entreeChoisie = entrees[rnd.Next(entrees.Count)];
-            }
-            else
-            {   // Choix parmi les meilleurs poids
-                var maxPoids = entrees.Max(e => e.Poids);
-                var meilleures = entrees.Where(e => e.Poids == maxPoids).ToList();
-                entreeChoisie = meilleures[rnd.Next(meilleures.Count)];
-            }
-
-            string coupChoisiTxt = PolyglotBibliothèque.DecodeCoup(entreeChoisie.CoupBiblio);            // Tri des coups par poids décroissant
-            entrees = [.. entrees.OrderByDescending(e => e.Poids)];
-            // --- Affichage dans la liste ---
-            foreach (var e in entrees)
+            foreach (EntréePolyglot entree in entrees.OrderByDescending(e => e.Poids))
             {
-                string coupTxt = PolyglotBibliothèque.DecodeCoup(e.CoupBiblio);
-                bool estChoisi = (e == entreeChoisie);
-                CoupsBibliothèqueBox.SelectionFont = new Font(CoupsBibliothèqueBox.Font, estChoisi ? FontStyle.Bold : FontStyle.Regular);
-                CoupsBibliothèqueBox.SelectionColor = estChoisi ? Color.Green : Color.Black; string prefixe = estChoisi ? "⭐ " : " *  ";
-                CoupsBibliothèqueBox.AppendText($"{prefixe}{coupTxt} ({e.Poids})\n");
+                bool estChoisie = entree == choisie;
+                CoupsBibliothèqueBox.SelectionFont = estChoisie ? _policeBiblioGras : _policeBiblioNormale;
+                CoupsBibliothèqueBox.SelectionColor = estChoisie ? Color.Green : Color.Black;
+                CoupsBibliothèqueBox.AppendText($"{(estChoisie ? "⭐ " : " *  ")}{PolyglotBibliothèque.DecodeCoup(entree.CoupBiblio)} ({entree.Poids})\n");
             }
-            return coupChoisiTxt;
         }
 
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
@@ -1654,9 +1649,7 @@ namespace BrunoGUI_GenII
             CoupsBibliothèque.SelectAll();
             CoupsBibliothèque.SelectionAlignment = HorizontalAlignment.Center;
             CoupsBibliothèque.DeselectAll();
-            // Recherche de la position dans la bibliothèque à partir du FEN
-            ulong clePosition = PolyglotBibliothèque.CalculeClefPolyglot(LogiqueMouvements.RetourneChaineFenActuel());
-            _ = AfficherCoupsBibliotheque(clePosition);
+            AfficheCoupsBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());     // coups connus pour la position actuelle
             return true;
         }
         private void MiseaZeroAffichages()
@@ -1704,7 +1697,7 @@ namespace BrunoGUI_GenII
             _indexAffiche = index;
             MetAJourCommandes();
             _vue.DessinePosition(_positionAffichee);
-            _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(fen));
+            AfficheCoupsBibliotheque(fen);
             InformationPourJoueur.Text = "Trait aux " + (_positionAffichee.QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
             VarianteMoteurUci1.Text = index < 0 || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart
                 ? "   [ Position initiale ]" : $"   [ {TexteCoupJoue(index, _positionAffichee)} ]";
@@ -1727,7 +1720,7 @@ namespace BrunoGUI_GenII
             MetAJourCommandes();
             LogiqueMouvements.DessinPieces();
             _vue.DernierCoupMasque = false;     // le dernier coup du moteur est de nouveau coloré
-            _ = AfficherCoupsBibliotheque(PolyglotBibliothèque.CalculeClefPolyglot(LogiqueMouvements.RetourneChaineFenActuel()));
+            AfficheCoupsBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
             InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + (QuiJoue == ColorPiece.Blanc ? "Blancs" : "Noirs");
             InformationsPartie.Text = PartieEnLectureSeule ? "Fin de la partie" : "";
         }
