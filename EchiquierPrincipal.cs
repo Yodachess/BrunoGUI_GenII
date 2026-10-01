@@ -1289,7 +1289,7 @@ namespace BrunoGUI_GenII
             PartieEnCours.CoupsPartiePGN = PartieEnCours.Result = PartieEnCours.CompteDePLy = PartieEnCours.Ronde = "";
             PartieEnCours.Tournoi = "Entrainement";
             PartieEnCours.Lieu = "Maison";
-            AfficheJoueursDeLaPartie();     // l'humain a le camp au trait, le moteur l'autre camp
+            AfficheJoueurs("", "", "", "");     // position chargée : ce n'est la partie ni de l'humain ni du moteur, noms vides
             InformationPourJoueur.Text = "Trait aux " + NomCamp(QuiJoue);
             PlateauEnable(true);   // On active le plateau pour pouvoir jouer à partir de la position chargée
             AfficheCoupsBibliotheque(contenuFen);
