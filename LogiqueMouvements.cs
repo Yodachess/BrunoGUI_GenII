@@ -248,7 +248,7 @@ namespace BrunoGUI_GenII
         }
 
         public static int DemiCoupAvant(Position position)
-        {   // Numéro (à partir de 0) du dernier demi-coup joué avant cette position, au sens de EchiquierPrincipal.NumeroDemiCoup :
+        {   // Numéro (à partir de 0) du dernier demi-coup joué avant cette position :
             // sert à numéroter les variantes du moteur (Outils.VarianteUciVersPgn). 0 pour la position initiale
             int demiCoupsJoues = (int)Math.Round((position.NombreCoupsJoues - 1) * 2);
             return Math.Max(0, demiCoupsJoues - 1);
