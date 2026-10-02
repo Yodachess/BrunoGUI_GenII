@@ -33,7 +33,7 @@ namespace BrunoGUI_GenII
     public class MoteurUci : IMoteur
     {
         // Le moteur vu par PiloteMoteur (qui ne connaît que IMoteur : un faux moteur le remplace dans les tests)
-        void IMoteur.Chercher(string fen, int dureeMilliSecondes) => JeuMoteurUci(fen, dureeMilliSecondes);
+        void IMoteur.Chercher(string fen, LimiteTemps limite) => JeuMoteurUci(fen, limite);
         void IMoteur.Abandonner() => AbandonneDemandeEnCours();
         bool IMoteur.EnReflexion => EnReflexion;
 
@@ -174,18 +174,13 @@ namespace BrunoGUI_GenII
         {   // Position Fen courante envoyée au Moteur UCI
             StandardInputDataToUci("position fen " + PositionFenActuel);
         }
-        public const int ReflexionInfinie = -1;     // durée à passer à JeuMoteurUci pour une réflexion sans limite (jusqu'à "stop")
-
-        public void JeuMoteurUci(string FenActuel, int Duree)
-        {   // Envoie au moteur UCI le Fen actuel et invitation à jouer pour le moteur UCI (Duree en millisecondes, ou ReflexionInfinie)
+        public void JeuMoteurUci(string FenActuel, LimiteTemps limite)
+        {   // Envoie au moteur UCI le Fen actuel et invitation à jouer pour le moteur UCI (temps fixe, sans limite ou pendule : voir LimiteTemps)
             AbandonneDemandeEnCours();      // une nouvelle demande remplace celle en cours (UCI interdit "position"/"go" pendant une recherche)
             StandardInputDataToUci("setoption name MultiPV value " + NombreLignesPV);   // On demande le nombre de variations choisi
             PositionFenUci(FenActuel);
             Demandes.DemandeEnvoyee();      // numéro de cette demande (compté avant l'envoi du "go", dont la réponse peut arriver très vite)
-            if (Duree == ReflexionInfinie)
-                StandardInputDataToUci("go infinite");      // Réflexion sans limite, jusqu'à l'envoi de "stop"
-            else
-                StandardInputDataToUci("go movetime " + Duree.ToString());
+            StandardInputDataToUci(limite.CommandeGo);
         }
         public void DefinitMultiPV(int nombreLignes)
         {   // Mémorise et envoie au moteur le nombre de variantes (MultiPV)

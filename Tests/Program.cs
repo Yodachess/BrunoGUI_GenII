@@ -693,32 +693,49 @@ Console.WriteLine("── Pilote du moteur ──");
 FauxMoteur faux = new();
 PiloteMoteur pilote = new(faux);
 Charger(L.FenDepart);
-var resultatSansBiblio = pilote.DemanderCoup(L.FenDepart, 1000);
+var resultatSansBiblio = pilote.DemanderCoup(L.FenDepart, LimiteTemps.Duree(1000));
 Verifie("Sans bibliothèque : la demande part au moteur",
-    resultatSansBiblio == ResultatDemandeCoup.EnvoyeAuMoteur && faux.Recherches == 1 && faux.DerniereFen == L.FenDepart && pilote.Demande == TypeDemande.CoupDePartie,
-    $"{resultatSansBiblio}, {faux.Recherches} recherche(s)");
+    resultatSansBiblio == ResultatDemandeCoup.EnvoyeAuMoteur && faux.Recherches == 1 && faux.DerniereFen == L.FenDepart && pilote.Demande == TypeDemande.CoupDePartie
+    && faux.DerniereLimite.CommandeGo == "go movetime 1000",
+    $"{resultatSansBiblio}, {faux.Recherches} recherche(s), {faux.DerniereLimite?.CommandeGo}");
 faux.Repond();      // le bestmove arrive : le moteur ne réfléchit plus
 Verifie("Réponse reçue : c'était un coup de partie, plus rien en cours",
     pilote.ReponseRecue() == TypeDemande.CoupDePartie && pilote.Demande == TypeDemande.Aucune, pilote.Demande.ToString());
 
 pilote.ChoixBibliotheque = fen => "e2e4";
-var resultatBiblio = pilote.DemanderCoup(L.FenDepart, 1000);
+var resultatBiblio = pilote.DemanderCoup(L.FenDepart, LimiteTemps.Duree(1000));
 Verifie("Coup de bibliothèque : joué tout de suite, sans solliciter le moteur",
     resultatBiblio == ResultatDemandeCoup.CoupBibliotheque && faux.Recherches == 1 && L.ListeCoupsUci.LastOrDefault()?.Trim() == "e2e4" && pilote.Demande == TypeDemande.Aucune,
     $"{resultatBiblio}, dernier coup {L.ListeCoupsUci.LastOrDefault()}");
 pilote.ChoixBibliotheque = fen => "e2e4";      // illégal : c'est aux Noirs, et e2 est vide
-var resultatBiblioIllegal = pilote.DemanderCoup(L.RetourneChaineFenActuel(), 1000);
+var resultatBiblioIllegal = pilote.DemanderCoup(L.RetourneChaineFenActuel(), LimiteTemps.Duree(1000));
 Verifie("Coup de bibliothèque illégal : la main passe au moteur",
     resultatBiblioIllegal == ResultatDemandeCoup.EnvoyeAuMoteur && faux.Recherches == 2 && L.ListeCoups.Count == 1, $"{resultatBiblioIllegal}, {L.ListeCoups.Count} coup(s)");
 
 Position positionAnalysee = L.PositionDepuisFen(L.FenDepart);
 pilote.DemanderAnalyse(positionAnalysee, 2000);
 Verifie("Analyse : la demande précédente est abandonnée, la position analysée est une copie",
-    faux.Abandons == 1 && pilote.AnalyseEnCours && pilote.PositionAnalysee != positionAnalysee && faux.DerniereFen == L.FenDepart && faux.DerniereDuree == 2000,
+    faux.Abandons == 1 && pilote.AnalyseEnCours && pilote.PositionAnalysee != positionAnalysee && faux.DerniereFen == L.FenDepart && faux.DerniereLimite.CommandeGo == "go movetime 2000",
     $"{faux.Abandons} abandon(s), FEN envoyée {faux.DerniereFen}");
+Verifie("Commande go : temps fixe (au moins 1 s), sans limite",
+    LimiteTemps.Duree(5000).CommandeGo == "go movetime 5000" && LimiteTemps.Duree(0).CommandeGo == "go movetime 1000" && LimiteTemps.SansLimite.CommandeGo == "go infinite",
+    $"{LimiteTemps.Duree(0).CommandeGo}");
+Verifie("Commande go : temps de la pendule en millisecondes (jamais 0)",
+    LimiteTemps.ParPendule(TimeSpan.FromSeconds(291), TimeSpan.FromSeconds(280.5), TimeSpan.FromSeconds(3)).CommandeGo == "go wtime 291000 btime 280500 winc 3000 binc 3000"
+    && LimiteTemps.ParPendule(TimeSpan.Zero, TimeSpan.FromMinutes(30), TimeSpan.Zero).CommandeGo == "go wtime 1 btime 1800000 winc 0 binc 0",
+    LimiteTemps.ParPendule(TimeSpan.FromSeconds(291), TimeSpan.FromSeconds(280.5), TimeSpan.FromSeconds(3)).CommandeGo);
 bool reflechissait = pilote.Abandonner();
 Verifie("Abandon : signalé si le moteur réfléchissait, plus d'analyse en cours",
     reflechissait && !pilote.AnalyseEnCours && faux.Abandons == 2 && !pilote.Abandonner() && faux.Abandons == 2, $"{faux.Abandons} abandon(s)");
+TimeSpan horlogeMoteur = TimeSpan.Zero;
+var penduleMoteur = new Pendule(Cadence.Minutes(5, 3), () => horlogeMoteur);
+penduleMoteur.Demarrer(L.ColorPiece.Blanc);
+horlogeMoteur += TimeSpan.FromSeconds(10);
+pilote.ChoixBibliotheque = null;
+pilote.DemanderCoup(L.RetourneChaineFenActuel(), LimiteTemps.DepuisPendule(penduleMoteur));
+Verifie("Coup de partie avec pendule : le moteur reçoit les temps restants à cet instant",
+    pilote.Demande == TypeDemande.CoupDePartie && faux.DerniereLimite.CommandeGo == "go wtime 290000 btime 300000 winc 3000 binc 3000", faux.DerniereLimite.CommandeGo);
+pilote.Abandonner();
 
 Charger("8/4P2k/8/8/8/8/8/4K3 w - - 0 1");
 Verifie("Coup UCI avec promotion : la pièce demandée est posée (cavalier)",
@@ -897,9 +914,9 @@ class FauxMoteur : IMoteur
 {
     public int Recherches, Abandons;
     public string DerniereFen;
-    public int DerniereDuree;
+    public LimiteTemps DerniereLimite;
     public bool EnReflexion { get; private set; }
-    public void Chercher(string fen, int dureeMilliSecondes) { Recherches++; DerniereFen = fen; DerniereDuree = dureeMilliSecondes; EnReflexion = true; }
+    public void Chercher(string fen, LimiteTemps limite) { Recherches++; DerniereFen = fen; DerniereLimite = limite; EnReflexion = true; }
     public void Abandonner() { Abandons++; EnReflexion = false; }
     public void Repond() => EnReflexion = false;     // simule l'arrivée du bestmove
 }

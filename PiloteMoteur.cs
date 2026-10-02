@@ -6,6 +6,7 @@
 // └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 
 // Pilotage du moteur, sans interface graphique (testé dans Tests/Program.cs avec un faux moteur)
+//  ├─ Classe "LimiteTemps" : temps fixe, sans limite, ou temps de la pendule (et la commande "go" correspondante)
 //  ├─ Interface "IMoteur" : ce que le pilote attend du moteur (MoteurUci dans l'application)
 //  └─ Classe "PiloteMoteur" : ce qui a été demandé au moteur, et ce qu'il faut faire de sa réponse
 //              ├─ "DemanderCoup"       coup de la partie : bibliothèque d'ouvertures d'abord, sinon le moteur
@@ -20,9 +21,41 @@ using static BrunoGUI_GenII.LogiqueMouvements;
 
 namespace BrunoGUI_GenII
 {
+    public sealed record LimiteTemps
+    {   // Temps donné au moteur pour une recherche : un temps fixe ("go movetime"), sans limite ("go infinite", jusqu'à "stop"),
+        // ou les temps de la pendule ("go wtime ... btime ... winc ... binc ...") : le moteur gère alors son temps lui-même
+        public int? DureeMilliSecondes { get; private init; }       // temps fixe (null : pendule ou sans limite)
+        public bool Infinie { get; private init; }
+        public TimeSpan TempsBlancs { get; private init; }          // pendule : temps restant de chaque camp et bonus par coup
+        public TimeSpan TempsNoirs { get; private init; }
+        public TimeSpan Increment { get; private init; }
+
+        public static LimiteTemps Duree(int dureeMilliSecondes) =>
+            // Au moins 1 s : "go movetime 0" ferait réfléchir certains moteurs (Stockfish) sans fin
+            new() { DureeMilliSecondes = Math.Max(1000, dureeMilliSecondes) };
+        public static readonly LimiteTemps SansLimite = new() { Infinie = true };
+        public static LimiteTemps ParPendule(TimeSpan tempsBlancs, TimeSpan tempsNoirs, TimeSpan increment) =>
+            new() { TempsBlancs = tempsBlancs, TempsNoirs = tempsNoirs, Increment = increment };
+        public static LimiteTemps DepuisPendule(Pendule pendule) =>
+            ParPendule(pendule.TempsRestant(ColorPiece.Blanc), pendule.TempsRestant(ColorPiece.Noir), pendule.Cadence.Increment);
+
+        public string CommandeGo
+        {   // Commande UCI (temps en millisecondes ; jamais 0 avec une pendule : le moteur jouerait sans réfléchir du tout)
+            get
+            {
+                if (Infinie)
+                    return "go infinite";
+                if (DureeMilliSecondes is int duree)
+                    return "go movetime " + duree;
+                static long Ms(TimeSpan temps) => Math.Max(1, (long)temps.TotalMilliseconds);
+                return $"go wtime {Ms(TempsBlancs)} btime {Ms(TempsNoirs)} winc {(long)Increment.TotalMilliseconds} binc {(long)Increment.TotalMilliseconds}";
+            }
+        }
+    }
+
     public interface IMoteur
     {
-        void Chercher(string fen, int dureeMilliSecondes);  // "position fen ..." puis "go" (la demande précédente est abandonnée)
+        void Chercher(string fen, LimiteTemps limite);      // "position fen ..." puis "go" (la demande précédente est abandonnée)
         void Abandonner();                                  // la demande en cours devient périmée ("stop")
         bool EnReflexion { get; }                           // le moteur réfléchit à une demande toujours valable
     }
@@ -49,8 +82,9 @@ namespace BrunoGUI_GenII
         // Choix dans la bibliothèque d'ouvertures : FEN -> coup UCI, ou null/vide s'il n'y en a pas (null : pas de bibliothèque)
         public Func<string, string> ChoixBibliotheque { get; set; }
 
-        public ResultatDemandeCoup DemanderCoup(string fen, int dureeMilliSecondes)
-        {   // Coup de la partie pour le camp au trait : la bibliothèque d'abord (coup joué tout de suite), sinon le moteur.
+        public ResultatDemandeCoup DemanderCoup(string fen, LimiteTemps limite)
+        {   // Coup de la partie pour le camp au trait : la bibliothèque d'abord (coup joué tout de suite), sinon le moteur
+            // (avec un temps fixe, ou les temps de la pendule).
             // Un coup de bibliothèque illégal (bibliothèque qui ne correspond pas à la position) laisse la main au moteur
             Abandonner();
             string coup = ChoixBibliotheque?.Invoke(fen);
@@ -61,7 +95,7 @@ namespace BrunoGUI_GenII
             }
             Demande = TypeDemande.CoupDePartie;
             Lignes.Reinitialiser();
-            _moteur.Chercher(fen, dureeMilliSecondes);
+            _moteur.Chercher(fen, limite);
             return ResultatDemandeCoup.EnvoyeAuMoteur;
         }
 
@@ -71,7 +105,7 @@ namespace BrunoGUI_GenII
             PositionAnalysee = position.Copier();
             Demande = TypeDemande.Analyse;
             Lignes.Reinitialiser();
-            _moteur.Chercher(CalculerSur(position, RetourneChaineFenActuel), dureeMilliSecondes);
+            _moteur.Chercher(CalculerSur(position, RetourneChaineFenActuel), LimiteTemps.Duree(dureeMilliSecondes));
         }
 
         public bool Abandonner()
