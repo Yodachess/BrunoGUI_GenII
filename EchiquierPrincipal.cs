@@ -520,6 +520,8 @@ namespace BrunoGUI_GenII
                 PerteAuTemps(campSansTemps);
                 return;
             }
+            if (_pendule != null)
+                _pendule.NoteTemps(LogiqueMouvements.ListeCoups[^1]);   // pour le retour arrière et "Reprendre ici"
             AffichePendules();
             string raisonNulle = _partie.RejeuPgn ? null : LogiqueMouvements.RaisonNulle();    // répétition, 50 coups ou matériel insuffisant
             if (raisonNulle != null)
@@ -772,6 +774,7 @@ namespace BrunoGUI_GenII
         {   // Début d'une partie : pendule de la cadence choisie, temps complets affichés. Elle ne démarre qu'au premier coup
             // (voir CoupJoue), comme sur les serveurs : on peut regarder la position avant que le temps file
             _pendule = _cadence.EstSansPendule ? null : new Pendule(_cadence, () => _chrono.Elapsed);
+            PartieEnCours.TimeControl = _pendule?.Cadence.TimeControl ?? "";     // balise PGN [TimeControl] (absente sans pendule)
             if (_pendule != null)
                 _minuteriePendule.Start();
             else
@@ -932,6 +935,8 @@ namespace BrunoGUI_GenII
         {   // Permet de faire jouer l'ordinateur UCI, sans que ce soit son tour (pour tester une position par exemple)
             AbandonneReflexion();   // une nouvelle demande remplace la réflexion en cours
             _partie.MoteurPrendLeTrait();   // le moteur joue désormais le camp au trait, l'humain l'autre
+            if (_pendule != null && _pendule.CampQuiDecompte == null && _partie.EnCours && ListeCoups.Any(c => !c.EstPositionDeDepart))
+                _pendule.Demarrer(QuiJoue);     // pendule arrêtée par un retour arrière : elle repart pour le moteur
             JeuMoteurAvecBibliothèque(ListeCoupsFen.Count > 0 ? ListeCoupsFen[^1] : FenDepart);   // dernière position, ou position initiale
             // Plateau bloqué tant que le moteur réfléchit ; libre si son coup de bibliothèque est déjà joué
             PlateauEnable(!_partie.MoteurAuTrait);
@@ -950,8 +955,14 @@ namespace BrunoGUI_GenII
             {
                 if (etaitTerminee)
                     EffaceResultat();   // on a annulé un coup d'une partie terminée : elle reprend
+                // Pendule : temps d'avant le coup annulé. Si c'est au moteur de jouer, elle attend ("Ordinateur joue", ou un
+                // 2e retour arrière) : sinon son temps s'écoulerait alors que personne ne lui demande de jouer
+                _pendule?.RestaurerDepuis(LogiqueMouvements.ListeCoups, QuiJoue);
+                if (_partie.MoteurAuTrait)
+                    _pendule?.Arreter();
+                AffichePendules();
                 AfficheCoupsBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
-                InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + QuiJoue + "s";
+                InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + NomCamp(QuiJoue);
                 InformationsPartie.Text = _partie.Blancs == Joueur.Moteur ? "L'ordinateur joue les Blancs" :
                           _partie.Noirs == Joueur.Moteur ? "L'ordinateur joue les Noirs" :
                           "L'ordinateur ne joue pas cette partie";
@@ -1282,6 +1293,11 @@ namespace BrunoGUI_GenII
                 PartieEnCours.Date = DateTime.Today.ToString("yyyy.MM.dd");
                 PartieEnCours.Ronde = "";
             }
+            if (etaitLectureSeule)
+                NouvellePendule();      // partie d'entraînement : la cadence choisie, qui part au prochain coup
+            else
+                _pendule?.RestaurerDepuis(LogiqueMouvements.ListeCoups, QuiJoue);   // temps notés après le coup où l'on reprend
+            AffichePendules();
             PartieEnCours.CompteDePLy = LogiqueMouvements.ListeCoupsFen.Count.ToString();
             string fen = LogiqueMouvements.RetourneChaineFenActuel();
             AfficheCoupsBibliotheque(fen);
@@ -1500,6 +1516,7 @@ namespace BrunoGUI_GenII
             PartieEnCours.ECO = partie.ECO;
             PartieEnCours.CompteDePLy = partie.CompteDePLy;
             PartieEnCours.CoupsPartiePGN = partie.CoupsPartiePGN;
+            PartieEnCours.TimeControl = partie.TimeControl;
             InformationPourJoueur.Text = partie.Tournoi + " / ronde " + partie.Ronde;
             StatusProgramme.Text = $"{partie.White} vs {partie.Black}";
             ScoreMoteur.Text = InformationsPartie.Text = "Résultat : " + partie.Result;

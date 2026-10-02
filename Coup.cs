@@ -24,6 +24,10 @@ namespace BrunoGUI_GenII
         public string Nal { get; init; } = "";          // notation algébrique longue, ex : "12. Cg1-f3+ "
         public string Uci { get; init; } = "";          // ex : "g1f3 "
         public bool EstPositionDeDepart { get; init; }  // true : pas un coup, seulement la position de départ (partie chargée depuis un FEN)
+        // Partie à la pendule : temps restant de chaque camp juste après ce coup (null sans pendule). Notés par l'interface après
+        // le coup (la logique ne connaît pas la pendule) ; servent à remettre la pendule à l'heure (retour arrière, "Reprendre ici")
+        public TimeSpan? TempsBlancs { get; set; }
+        public TimeSpan? TempsNoirs { get; set; }
 
         public static Coup PositionDeDepart(string fen) => new() { Fen = fen, EstPositionDeDepart = true };
 
