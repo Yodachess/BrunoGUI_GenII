@@ -668,11 +668,11 @@ namespace BrunoGUI_GenII
             // 
             LabelJoueurBlanc.BackColor = System.Drawing.Color.White;
             LabelJoueurBlanc.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            LabelJoueurBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            LabelJoueurBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             LabelJoueurBlanc.ForeColor = System.Drawing.Color.Black;
             LabelJoueurBlanc.Location = new System.Drawing.Point(10, 28);
             LabelJoueurBlanc.Name = "LabelJoueurBlanc";
-            LabelJoueurBlanc.Size = new System.Drawing.Size(176, 36);
+            LabelJoueurBlanc.Size = new System.Drawing.Size(192, 36);
             LabelJoueurBlanc.TabIndex = 24;
             LabelJoueurBlanc.Text = "[Elo] Joueur Blanc";
             LabelJoueurBlanc.Padding = new System.Windows.Forms.Padding(6, 0, 2, 0);
@@ -682,11 +682,11 @@ namespace BrunoGUI_GenII
             // 
             PenduleBlanc.BackColor = System.Drawing.Color.White;
             PenduleBlanc.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            PenduleBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            PenduleBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             PenduleBlanc.ForeColor = System.Drawing.Color.Black;
-            PenduleBlanc.Location = new System.Drawing.Point(188, 28);
+            PenduleBlanc.Location = new System.Drawing.Point(204, 28);
             PenduleBlanc.Name = "PenduleBlanc";
-            PenduleBlanc.Size = new System.Drawing.Size(80, 36);
+            PenduleBlanc.Size = new System.Drawing.Size(64, 36);
             PenduleBlanc.TabIndex = 26;
             PenduleBlanc.Text = "-:--";
             PenduleBlanc.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -695,11 +695,11 @@ namespace BrunoGUI_GenII
             // 
             LabelJoueurNoir.BackColor = System.Drawing.Color.Black;
             LabelJoueurNoir.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            LabelJoueurNoir.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            LabelJoueurNoir.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             LabelJoueurNoir.ForeColor = System.Drawing.Color.White;
             LabelJoueurNoir.Location = new System.Drawing.Point(270, 28);
             LabelJoueurNoir.Name = "LabelJoueurNoir";
-            LabelJoueurNoir.Size = new System.Drawing.Size(176, 36);
+            LabelJoueurNoir.Size = new System.Drawing.Size(192, 36);
             LabelJoueurNoir.TabIndex = 27;
             LabelJoueurNoir.Text = "[Elo] Joueur Noir";
             LabelJoueurNoir.Padding = new System.Windows.Forms.Padding(6, 0, 2, 0);
@@ -709,11 +709,11 @@ namespace BrunoGUI_GenII
             // 
             PenduleNoir.BackColor = System.Drawing.Color.Black;
             PenduleNoir.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            PenduleNoir.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            PenduleNoir.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             PenduleNoir.ForeColor = System.Drawing.Color.White;
-            PenduleNoir.Location = new System.Drawing.Point(448, 28);
+            PenduleNoir.Location = new System.Drawing.Point(464, 28);
             PenduleNoir.Name = "PenduleNoir";
-            PenduleNoir.Size = new System.Drawing.Size(80, 36);
+            PenduleNoir.Size = new System.Drawing.Size(64, 36);
             PenduleNoir.TabIndex = 29;
             PenduleNoir.Text = "-:--";
             PenduleNoir.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
