@@ -50,6 +50,8 @@ namespace BrunoGUI_GenII
             GroupeTempsRefflexion = new Krypton.Toolkit.KryptonGroupBox();
             TempsReflexion = new Krypton.Toolkit.KryptonNumericUpDown();
             LabelDureeReflexion = new Krypton.Toolkit.KryptonLabel();
+            ListePendule = new Krypton.Toolkit.KryptonComboBox();
+            LabelPendule = new Krypton.Toolkit.KryptonLabel();
             kryptonGroupBox1 = new Krypton.Toolkit.KryptonGroupBox();
             TextBoxNomAdvesaire = new System.Windows.Forms.RichTextBox();
             LabelAdversaire = new Krypton.Toolkit.KryptonLabel();
@@ -62,6 +64,7 @@ namespace BrunoGUI_GenII
             ((System.ComponentModel.ISupportInitialize)GroupeTempsRefflexion).BeginInit();
             ((System.ComponentModel.ISupportInitialize)GroupeTempsRefflexion.Panel).BeginInit();
             GroupeTempsRefflexion.Panel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)ListePendule).BeginInit();
             ((System.ComponentModel.ISupportInitialize)kryptonGroupBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)kryptonGroupBox1.Panel).BeginInit();
             kryptonGroupBox1.Panel.SuspendLayout();
@@ -186,7 +189,7 @@ namespace BrunoGUI_GenII
             // 
             // ForceMoteurOk
             // 
-            ForceMoteurOk.Location = new System.Drawing.Point(150, 333);
+            ForceMoteurOk.Location = new System.Drawing.Point(150, 361);
             ForceMoteurOk.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             ForceMoteurOk.Name = "ForceMoteurOk";
             ForceMoteurOk.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
@@ -202,7 +205,7 @@ namespace BrunoGUI_GenII
             // ForceMoteurAnnuler
             // 
             ForceMoteurAnnuler.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            ForceMoteurAnnuler.Location = new System.Drawing.Point(266, 333);
+            ForceMoteurAnnuler.Location = new System.Drawing.Point(266, 361);
             ForceMoteurAnnuler.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             ForceMoteurAnnuler.Name = "ForceMoteurAnnuler";
             ForceMoteurAnnuler.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
@@ -223,22 +226,24 @@ namespace BrunoGUI_GenII
             // 
             // 
             // 
+            GroupeTempsRefflexion.Panel.Controls.Add(ListePendule);
+            GroupeTempsRefflexion.Panel.Controls.Add(LabelPendule);
             GroupeTempsRefflexion.Panel.Controls.Add(TempsReflexion);
             GroupeTempsRefflexion.Panel.Controls.Add(LabelDureeReflexion);
-            GroupeTempsRefflexion.Size = new System.Drawing.Size(356, 67);
+            GroupeTempsRefflexion.Size = new System.Drawing.Size(356, 95);
             GroupeTempsRefflexion.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
             GroupeTempsRefflexion.StateCommon.Border.Rounding = 20F;
             GroupeTempsRefflexion.StateCommon.Border.Width = 1;
             GroupeTempsRefflexion.TabIndex = 4;
-            GroupeTempsRefflexion.ToolTipValues.Description = "Sélectionnez la durée de réflexion du moteur en secondes";
+            GroupeTempsRefflexion.ToolTipValues.Description = "Pendule de la partie, ou durée de réflexion du moteur à chaque coup (sans pendule)";
             GroupeTempsRefflexion.ToolTipValues.EnableToolTips = true;
             GroupeTempsRefflexion.ToolTipValues.Heading = "";
-            GroupeTempsRefflexion.Values.Heading = "     Durée Réflexion";
+            GroupeTempsRefflexion.Values.Heading = "     Pendule et réflexion";
             // 
             // TempsReflexion
             // 
             TempsReflexion.Increment = new decimal(new int[] { 1, 0, 0, 0 });
-            TempsReflexion.Location = new System.Drawing.Point(240, 0);
+            TempsReflexion.Location = new System.Drawing.Point(240, 30);
             TempsReflexion.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             TempsReflexion.Maximum = new decimal(new int[] { 9999, 0, 0, 0 });
             TempsReflexion.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
@@ -246,18 +251,39 @@ namespace BrunoGUI_GenII
             TempsReflexion.Size = new System.Drawing.Size(89, 22);
             TempsReflexion.StateCommon.Border.Color1 = System.Drawing.Color.Black;
             TempsReflexion.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
-            TempsReflexion.TabIndex = 1;
+            TempsReflexion.TabIndex = 3;
             TempsReflexion.Value = new decimal(new int[] { 5, 0, 0, 0 });
             // 
             // LabelDureeReflexion
             // 
             LabelDureeReflexion.AutoSize = false;
-            LabelDureeReflexion.Location = new System.Drawing.Point(9, 0);
+            LabelDureeReflexion.Location = new System.Drawing.Point(9, 30);
             LabelDureeReflexion.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             LabelDureeReflexion.Name = "LabelDureeReflexion";
             LabelDureeReflexion.Size = new System.Drawing.Size(229, 29);
-            LabelDureeReflexion.TabIndex = 0;
-            LabelDureeReflexion.Values.Text = "Durée réflexion (en secondes) :";
+            LabelDureeReflexion.TabIndex = 2;
+            LabelDureeReflexion.Values.Text = "Réflexion par coup (secondes) :";
+            // 
+            // LabelPendule
+            // 
+            LabelPendule.AutoSize = false;
+            LabelPendule.Location = new System.Drawing.Point(9, 0);
+            LabelPendule.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            LabelPendule.Name = "LabelPendule";
+            LabelPendule.Size = new System.Drawing.Size(90, 29);
+            LabelPendule.TabIndex = 0;
+            LabelPendule.Values.Text = "Pendule :";
+            // 
+            // ListePendule
+            // 
+            ListePendule.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            ListePendule.DropDownWidth = 160;
+            ListePendule.Location = new System.Drawing.Point(169, 0);
+            ListePendule.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            ListePendule.Name = "ListePendule";
+            ListePendule.Size = new System.Drawing.Size(160, 22);
+            ListePendule.TabIndex = 1;
+            ListePendule.SelectedIndexChanged += ListePendule_SelectedIndexChanged;
             // 
             // kryptonGroupBox1
             // 
@@ -304,7 +330,7 @@ namespace BrunoGUI_GenII
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.Color.Silver;
             CancelButton = ForceMoteurAnnuler;
-            ClientSize = new System.Drawing.Size(390, 376);
+            ClientSize = new System.Drawing.Size(390, 404);
             Controls.Add(kryptonGroupBox1);
             Controls.Add(GroupeTempsRefflexion);
             Controls.Add(ForceMoteurAnnuler);
@@ -324,6 +350,7 @@ namespace BrunoGUI_GenII
             GroupeForceMoteur.Panel.ResumeLayout(false);
             GroupeForceMoteur.Panel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)GroupeForceMoteur).EndInit();
+            ((System.ComponentModel.ISupportInitialize)ListePendule).EndInit();
             ((System.ComponentModel.ISupportInitialize)GroupeTempsRefflexion.Panel).EndInit();
             GroupeTempsRefflexion.Panel.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)GroupeTempsRefflexion).EndInit();
@@ -351,6 +378,8 @@ namespace BrunoGUI_GenII
         private Krypton.Toolkit.KryptonGroupBox GroupeTempsRefflexion;
         private Krypton.Toolkit.KryptonNumericUpDown TempsReflexion;
         private Krypton.Toolkit.KryptonLabel LabelDureeReflexion;
+        private Krypton.Toolkit.KryptonComboBox ListePendule;
+        private Krypton.Toolkit.KryptonLabel LabelPendule;
         private Krypton.Toolkit.KryptonGroupBox kryptonGroupBox1;
         private Krypton.Toolkit.KryptonLabel LabelAdversaire;
         private System.Windows.Forms.RichTextBox TextBoxNomAdvesaire;

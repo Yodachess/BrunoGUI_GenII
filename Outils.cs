@@ -233,6 +233,7 @@ namespace BrunoGUI_GenII
         public int ForceMoteur { get; set; } = 1850;            // Elo choisi dans "Nouvelle partie" (si pas force maximale)
         public bool ForceMaximale { get; set; } = true;         // "Nouvelle partie" : moteur à sa force maximale
         public ColorPiece CouleurMoteur { get; set; } = ColorPiece.Noir;    // "Nouvelle partie" : camp joué par le moteur ("Blancs" ou "Noirs" dans le .ini)
+        public Cadence Cadence { get; set; } = Cadence.SansPendule;    // pendule des nouvelles parties ("300+3", "-" sans pendule)
         public int NombreLignesPV { get; set; } = 3;
         public int NombreCoeursThread { get; set; } = 4;
         public int? TailleHachageMo { get; set; }       // null : taille par défaut du moteur
@@ -301,6 +302,7 @@ namespace BrunoGUI_GenII
                     case "Forcemoteur": ForceMoteur = PremierEntier(valeur) ?? ForceMoteur; break;
                     case "ForceMaximale": ForceMaximale = !valeur.Equals("false", StringComparison.OrdinalIgnoreCase); break;
                     case "CouleurMoteur": CouleurMoteur = valeur == NomCamp(ColorPiece.Blanc) ? ColorPiece.Blanc : ColorPiece.Noir; break;
+                    case "Cadence": Cadence = Cadence.Lire(valeur); break;
                     case "NombrelignesPV": NombreLignesPV = PremierEntier(valeur) ?? NombreLignesPV; break;
                     case "NombreCoeursThread": NombreCoeursThread = PremierEntier(valeur) ?? NombreCoeursThread; break;
                     case "TableHachage": TailleHachageMo = PremierEntier(valeur); break;     // en Mo, ex : "256" ou "256 min"
@@ -346,6 +348,7 @@ namespace BrunoGUI_GenII
                 ["Forcemoteur"] = ForceMoteur.ToString(),
                 ["ForceMaximale"] = ForceMaximale ? "true" : "false",
                 ["CouleurMoteur"] = NomCamp(CouleurMoteur),
+                ["Cadence"] = Cadence.TimeControl,
                 ["NombrelignesPV"] = NombreLignesPV.ToString(),
                 ["NombreCoeursThread"] = NombreCoeursThread.ToString(),
                 ["Bibliotheque"] = Bibliotheque,

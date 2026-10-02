@@ -100,8 +100,12 @@ namespace BrunoGUI_GenII
             maNouvellePartieForceModule.ForceModule = parametres.ForceMoteur;
             maNouvellePartieForceModule.DureeReflexionSeconde = parametres.DureeReflexionSeconde;
             maNouvellePartieForceModule.NomAdversaire = parametres.NomHumain;
-            TrackBarTempsReflexion.Value = Math.Clamp(parametres.DureeReflexionSeconde, TrackBarTempsReflexion.Minimum, TrackBarTempsReflexion.Maximum);
-            labelTempsReflexion.Text = "[" + TrackBarTempsReflexion.Value + "]";
+            TempsReflexionSecondes.Value = Math.Clamp(parametres.DureeReflexionSeconde, (int)TempsReflexionSecondes.Minimum, (int)TempsReflexionSecondes.Maximum);
+            labelTempsReflexion.Text = "[" + TempsReflexionSecondes.Value + "]";
+            foreach (Cadence cadence in Cadence.Proposees)
+                ListePendule.Items.Add(cadence);
+            ChoisitCadence(parametres.Cadence);
+            _minuteriePendule.Tick += MinuteriePendule_Tick;
             // Debug pour vérifier
             Debug.WriteLine($"Paramètres chargés : Biblio = {_bibliotheque}, Force = {_forceMoteurElo}, Nombre PV = {MoteurUci.NombreLignesPV}");
             Debug.WriteLine($"Paramètres chargés : Temps de réflexion = {_dureeReflexionMilliSeconde}");
@@ -196,8 +200,9 @@ namespace BrunoGUI_GenII
                 _forceMoteurElo = maNouvellePartieForceModule.ForceModule;
                 _nomHumain = maNouvellePartieForceModule.NomAdversaire;     // mémorisé dans les préférences à la fermeture
                 _dureeReflexionMilliSeconde = maNouvellePartieForceModule.DureeReflexionSeconde * 1000;
-                TrackBarTempsReflexion.Value = maNouvellePartieForceModule.DureeReflexionSeconde;   // On met à jour la trackbar ...
-                labelTempsReflexion.Text = "[" + TrackBarTempsReflexion.Value.ToString() + "]";
+                TempsReflexionSecondes.Value = Math.Clamp(maNouvellePartieForceModule.DureeReflexionSeconde, (int)TempsReflexionSecondes.Minimum, (int)TempsReflexionSecondes.Maximum);
+                labelTempsReflexion.Text = "[" + TempsReflexionSecondes.Value + "]";
+                ChoisitCadence(maNouvellePartieForceModule.ChoixCadence);     // la pendule de cette partie (et des suivantes)
 
                 MiseaZeroAffichages();
                 if (forceMaximale)
@@ -249,6 +254,7 @@ namespace BrunoGUI_GenII
                 InformationPourJoueur.Text = StatusProgramme.Text = "Aux Blancs de jouer";
             }
             AfficheCoupsBibliotheque(FenDepart);
+            NouvellePendule();          // cadence choisie (Sans pendule : temps fixe par coup, comme avant)
             MetAJourCommandes();
         }
 
@@ -449,7 +455,6 @@ namespace BrunoGUI_GenII
                 if (MoteurUci.LigneAbandonnee)
                     return;     // la demande a été abandonnée entre-temps (vérifié ici, sur le thread de l'interface) : coup ignoré
                 MiseaZéroTimer();
-                TrackBarTempsReflexion.Enabled = true;
                 if (_emetUnSon)
                 {   // Son pour dire que le coup est joué (son système par défaut si le fichier de Windows est absent)
                     try
@@ -509,6 +514,12 @@ namespace BrunoGUI_GenII
                 return;
             }
             PartieEnCours.CompteDePLy = LogiqueMouvements.ListeCoupsFen.Count.ToString();
+            if (_pendule != null && !_pendule.CoupJoue() && _pendule.TempsEcoule() is ColorPiece campSansTemps)
+            {   // Coup joué alors que le temps était déjà écoulé (entre deux tics de la minuterie) : la partie est perdue au temps
+                PerteAuTemps(campSansTemps);
+                return;
+            }
+            AffichePendules();
             string raisonNulle = _partie.RejeuPgn ? null : LogiqueMouvements.RaisonNulle();    // répétition, 50 coups ou matériel insuffisant
             if (raisonNulle != null)
                 GestionResultat("1/2-1/2", raisonNulle);
@@ -612,6 +623,8 @@ namespace BrunoGUI_GenII
             InformationsPartie.Text = resultat + "  (" + vainqueur + ")";
             StatusProgramme.Text = "Partie terminée";
             _partie.Terminer();     // le retour arrière reste possible pour reprendre la partie (Partie.AnnulerDernierCoup)
+            _pendule?.Arreter();    // les temps restent affichés
+            AffichePendules();
             PlateauEnable(false);
             MetAJourCommandes();
         }
@@ -731,6 +744,89 @@ namespace BrunoGUI_GenII
         }
 
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+        // Pendule (voir Pendule.cs)
+        // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+        private Cadence _cadence = Cadence.SansPendule;     // cadence choisie : elle vaut pour la PROCHAINE nouvelle partie
+        private Pendule _pendule;                           // pendule de la partie en cours (null : sans pendule, temps fixe par coup)
+        private readonly Stopwatch _chrono = Stopwatch.StartNew();      // heure de la pendule (précise, indépendante des tics)
+        private readonly System.Windows.Forms.Timer _minuteriePendule = new() { Interval = 100 };   // affichage et chute du drapeau
+
+        private void ChoisitCadence(Cadence cadence)
+        {   // Sélectionne la cadence dans la liste (ajoutée si elle n'y est pas, ex : valeur écrite à la main dans le .ini)
+            _cadence = cadence;     // avant la sélection : pas de message "à la prochaine partie"
+            maNouvellePartieForceModule.ChoixCadence = cadence;
+            if (!ListePendule.Items.Contains(cadence))
+                ListePendule.Items.Add(cadence);
+            ListePendule.SelectedItem = cadence;
+        }
+        private void ListePendule_SelectedIndexChanged(object sender, EventArgs e)
+        {   // Nouvelle cadence : pour la partie suivante (la partie en cours garde la sienne)
+            if (ListePendule.SelectedItem is not Cadence cadence || cadence == _cadence)
+                return;
+            _cadence = cadence;
+            maNouvellePartieForceModule.ChoixCadence = cadence;
+            InformationsPartie.Text = "Pendule " + cadence.Nom + " : à la prochaine partie";
+        }
+        private void NouvellePendule()
+        {   // Début d'une partie : pendule de la cadence choisie, le camp au trait commence à décompter
+            _pendule = _cadence.EstSansPendule ? null : new Pendule(_cadence, () => _chrono.Elapsed);
+            _pendule?.Demarrer(QuiJoue);
+            if (_pendule != null)
+                _minuteriePendule.Start();
+            else
+                _minuteriePendule.Stop();
+            AffichePendules();
+        }
+        private void SupprimePendule()
+        {   // Partie sans pendule (ex : partie PGN chargée)
+            _pendule = null;
+            _minuteriePendule.Stop();
+            AffichePendules();
+        }
+        private void MinuteriePendule_Tick(object sender, EventArgs e)
+        {   // Tous les dixièmes de seconde : reprise après une analyse, chute du drapeau, affichage
+            if (_pendule == null)
+                return;
+            if (_pendule.EnPause && !_pilote.AnalyseEnCours)
+            {   // L'analyse est finie (ou abandonnée) : la pendule repart ; si le moteur devait jouer, l'analyse a interrompu
+                // sa réflexion : on lui redemande son coup (sinon son temps s'écoulerait sans qu'il réfléchisse)
+                _pendule.Reprendre();
+                if (_partie.MoteurAuTrait && _pilote.Demande == TypeDemande.Aucune)
+                    JeuMoteurAvecBibliothèque(LogiqueMouvements.RetourneChaineFenActuel());
+            }
+            // (pendant le choix d'une promotion, le coup n'est pas fini : la chute du drapeau est traitée juste après, par CoupJoue)
+            if (_partie.EnCours && !GroupPromo.Visible && _pendule.TempsEcoule() is ColorPiece campSansTemps)
+                PerteAuTemps(campSansTemps);
+            AffichePendules();
+        }
+        private void PerteAuTemps(ColorPiece campSansTemps)
+        {   // Le temps du camp est écoulé : il perd, sauf si l'adversaire n'a pas de quoi mater (nulle)
+            ColorPiece adversaire = Adversaire(campSansTemps);
+            string message = "Temps écoulé pour les " + NomCamp(campSansTemps);
+            if (LogiqueMouvements.PeutMater(adversaire))
+                GestionResultat(adversaire == ColorPiece.Blanc ? "1-0" : "0-1", " Gain " + NomCouleur(adversaire) + " (temps)");
+            else
+                GestionResultat("1/2-1/2", "Nulle (temps écoulé, matériel insuffisant)");
+            InformationPourJoueur.Text = VarianteMoteurCourante.Text = message;
+        }
+        private void AffichePendules()
+        {   // Les deux pendules (masquées sans pendule) : le camp qui décompte sur fond vert, en rouge sous 10 secondes
+            PenduleBlanc.Visible = PenduleNoir.Visible = _pendule != null;
+            if (_pendule == null)
+                return;
+            AffichePendule(PenduleBlanc, ColorPiece.Blanc, Color.White, Color.Black);
+            AffichePendule(PenduleNoir, ColorPiece.Noir, Color.Black, Color.White);
+        }
+        private void AffichePendule(Label affichage, ColorPiece camp, Color fond, Color texte)
+        {
+            TimeSpan restant = _pendule.TempsRestant(camp);
+            bool decompte = _pendule.Tourne && _pendule.CampQuiDecompte == camp;
+            affichage.Text = Pendule.Texte(restant);
+            affichage.BackColor = decompte ? Color.LightGreen : fond;
+            affichage.ForeColor = restant < TimeSpan.FromSeconds(10) ? Color.Red : decompte ? Color.Black : texte;
+        }
+
+        // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         // Joueurs affichés (noms et Elo)
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void AfficheJoueurs(string blancs, string eloBlancs, string noirs, string eloNoirs)
@@ -814,6 +910,8 @@ namespace BrunoGUI_GenII
             }
             InformationPourJoueur.Text = StatusProgramme.Text = "Analyse de la position ...";
             _pilote.DemanderAnalyse(position, _dureeReflexionMilliSeconde);   // les variantes du moteur seront converties sur cette position
+            _pendule?.Pause();  // l'analyse est une aide : la pendule s'arrête pendant ce temps (voir MinuteriePendule_Tick)
+            AffichePendules();
             LancerReflexion();  // Décompte le temps de réflexion
         }
         private void InverseEchiquier_Click(object sender, EventArgs e)
@@ -1070,7 +1168,8 @@ namespace BrunoGUI_GenII
             parametres.CouleurCaseSource = Parametres.FormatCouleur(_vue.CaseSource);
             parametres.CouleurCaseDestination = Parametres.FormatCouleur(_vue.CaseDestination);
             parametres.NomHumain = _nomHumain;
-            parametres.DureeReflexionSeconde = TrackBarTempsReflexion.Value;
+            parametres.DureeReflexionSeconde = (int)TempsReflexionSecondes.Value;
+            parametres.Cadence = _cadence;
             parametres.ForceMoteur = maNouvellePartieForceModule.ForceModule;       // l'Elo choisi, même si la dernière partie était en force maximale
             parametres.ForceMaximale = maNouvellePartieForceModule.ForceMaximale;
             parametres.CouleurMoteur = maNouvellePartieForceModule.ChoixCouleur;
@@ -1302,6 +1401,7 @@ namespace BrunoGUI_GenII
             PartieEnCours.Tournoi = "Entrainement";
             PartieEnCours.Lieu = "Maison";
             AfficheJoueurs("", "", "", "");     // position chargée : ce n'est la partie ni de l'humain ni du moteur, noms vides
+            NouvellePendule();                  // la partie qui commence à cette position suit la cadence choisie
             InformationPourJoueur.Text = "Trait aux " + NomCamp(QuiJoue);
             PlateauEnable(true);   // On active le plateau pour pouvoir jouer à partir de la position chargée
             AfficheCoupsBibliotheque(contenuFen);
@@ -1374,6 +1474,7 @@ namespace BrunoGUI_GenII
             AbandonneReflexion();
             QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
             _vue.EffaceDernierCoup();    // les cases du dernier coup de la partie précédente
+            SupprimePendule();      // partie PGN : pas de pendule
             Debug.WriteLine("ChargerPartieDepuisPgn / :  " + partie.White + " vs " + partie.Black + "   Résultat : " + partie.Result);
             PartieEnCours.Tournoi = partie.Tournoi;
             PartieEnCours.Lieu = partie.Lieu;
@@ -1431,7 +1532,9 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void JeuMoteurAvecBibliothèque(string chaineFen)
         {   // Coup du moteur pour la partie : bibliothèque d'ouvertures d'abord (voir _pilote.ChoixBibliotheque), sinon réflexion du moteur
-            if (_pilote.DemanderCoup(chaineFen, LimiteTemps.Duree(_dureeReflexionMilliSeconde)) == ResultatDemandeCoup.CoupBibliotheque)
+            // Avec une pendule, le moteur reçoit les temps restants et gère son temps ; sinon, un temps fixe par coup
+            LimiteTemps limite = _pendule != null ? LimiteTemps.DepuisPendule(_pendule) : LimiteTemps.Duree(_dureeReflexionMilliSeconde);
+            if (_pilote.DemanderCoup(chaineFen, limite) == ResultatDemandeCoup.CoupBibliotheque)
             {   // Coup trouvé dans la bibliothèque : il est déjà joué
                 string coupChoisiTxt = _pilote.DernierCoupBibliotheque;
                 VarianteMoteurUci1.Text = "Coup bibliothèque " + Path.GetFileName(_bibliotheque) + " exécuté par le moteur -> " + coupChoisiTxt;
@@ -1441,7 +1544,8 @@ namespace BrunoGUI_GenII
                 return;
             }
             // Aucun coup dans la bibliothèque ou bibliothèque inactive : le moteur réfléchit
-            LancerReflexion();  // Décompte le temps de réflexion
+            if (_pendule == null)
+                LancerReflexion();  // Décompte le temps de réflexion (avec une pendule, c'est elle qui décompte)
             if (!LogiqueMouvements.EchecetMat)
             {
                 InformationPourJoueur.Text = StatusProgramme.Text = _nomMoteur + " réfléchit ...";
@@ -1500,12 +1604,11 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         //  Diverses méthodes
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-        private void TrackBarTempsReflexion_ValueChanged(object sender, EventArgs e)
-        {   // Méthode appelée lorsque la valeur du TrackBar de temps de réflexion change
-            _dureeReflexionMilliSeconde = TrackBarTempsReflexion.Value * 1000;
+        private void TempsReflexionSecondes_ValueChanged(object sender, EventArgs e)
+        {   // Temps de réflexion (secondes) : analyses, et coups du moteur dans une partie sans pendule
+            _dureeReflexionMilliSeconde = (int)TempsReflexionSecondes.Value * 1000;
             InformationsPartie.Text = "Temps de réflexion = " + (_dureeReflexionMilliSeconde / 1000).ToString() + " secondes";
-            labelTempsReflexion.Text = "(" + TrackBarTempsReflexion.Value + ")";
-            Debug.WriteLine($" 3. _dureeReflexionMilliSeconde = {_dureeReflexionMilliSeconde}");
+            labelTempsReflexion.Text = "[" + TempsReflexionSecondes.Value + "]";
         }
         private void ActiveBibliothèque_CheckedChanged(object sender, EventArgs e)
         {   // Activer ou non la bibliothèque (on lit la case : une bascule se décalerait si l'état initial différait)
@@ -1698,7 +1801,6 @@ namespace BrunoGUI_GenII
             if (!_pilote.Abandonner())
                 return;     // le moteur ne réfléchissait pas : rien à signaler
             MiseaZéroTimer();
-            TrackBarTempsReflexion.Enabled = true;
             LeMoteurARépondu();
             InformationPourJoueur.Text = StatusProgramme.Text = "Réflexion du moteur interrompue";
         }
