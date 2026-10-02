@@ -966,8 +966,11 @@ namespace BrunoGUI_GenII
                 InformationsPartie.Text = _partie.Blancs == Joueur.Moteur ? "L'ordinateur joue les Blancs" :
                           _partie.Noirs == Joueur.Moteur ? "L'ordinateur joue les Noirs" :
                           "L'ordinateur ne joue pas cette partie";
-                // Au joueur de jouer, sauf si c'est au tour du moteur (il faut alors un 2e retour arrière, ou "Ordinateur joue")
+                // Un demi-coup par clic (choix de Bruno) : au joueur de jouer, sauf si c'est au tour du moteur (il faut alors
+                // un 2e retour arrière, ou "Ordinateur joue") ; le message le dit, l'échiquier bloqué ne doit pas surprendre
                 PlateauEnable(!_partie.MoteurAuTrait);
+                VarianteMoteurUci2.Text = _partie.MoteurAuTrait
+                    ? $"   Au tour de {_nomMoteur} : encore « Retour arrière » pour revenir à votre coup, ou « Ordinateur joue »" : "...";
             }
             MetAJourCommandes();
         }
