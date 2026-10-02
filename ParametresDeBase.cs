@@ -36,15 +36,15 @@ namespace BrunoGUI_GenII
             baseMultipvNumerique.Value = Math.Clamp(MoteurUci.NombreLignesPV, (int)baseMultipvNumerique.Minimum, (int)baseMultipvNumerique.Maximum);
             if (MoteurUci.NombreThreads is int threads)
                 baseThreadsNumerique.Value = Math.Clamp(threads, (int)baseThreadsNumerique.Minimum, (int)baseThreadsNumerique.Maximum);
-            baseReflexionNumerique.Value = Math.Clamp(interfaceGraphique.TrackBarTempsReflexion.Value, (int)baseReflexionNumerique.Minimum, (int)baseReflexionNumerique.Maximum);
+            baseReflexionNumerique.Value = Math.Clamp(interfaceGraphique.TempsReflexionSecondes.Value, baseReflexionNumerique.Minimum, baseReflexionNumerique.Maximum);
         }
         private void BaseBoutonOk_Click(object sender, EventArgs e)
         {
             MoteurUci.DefinitLimiteElo(baseEloNumerique.Value.ToString());
             MoteurUci.DefinitThreads((int)baseThreadsNumerique.Value);
             MoteurUci.DefinitMultiPV((int)baseMultipvNumerique.Value);
-            var curseur = interfaceGraphique.TrackBarTempsReflexion;
-            curseur.Value = Math.Clamp((int)baseReflexionNumerique.Value, curseur.Minimum, curseur.Maximum);   // met aussi à jour le temps de réflexion
+            var champ = interfaceGraphique.TempsReflexionSecondes;
+            champ.Value = Math.Clamp(baseReflexionNumerique.Value, champ.Minimum, champ.Maximum);   // met aussi à jour le temps de réflexion
             interfaceGraphique.DefinitEloMoteur(baseEloNumerique.Value.ToString());    // affiché au(x) camp(s) joué(s) par le moteur
             this.DialogResult = DialogResult.OK;
             this.Hide();

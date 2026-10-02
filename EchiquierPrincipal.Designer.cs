@@ -95,6 +95,8 @@ namespace BrunoGUI_GenII
             EloNoir = new System.Windows.Forms.Label();
             LabelJoueurBlanc = new System.Windows.Forms.Label();
             EloBlanc = new System.Windows.Forms.Label();
+            PenduleBlanc = new System.Windows.Forms.Label();
+            PenduleNoir = new System.Windows.Forms.Label();
             InformationsPartie = new System.Windows.Forms.Label();
             MontreVariantesUci = new Krypton.Toolkit.KryptonButton();
             ListeCoupsBouton = new Krypton.Toolkit.KryptonButton();
@@ -120,7 +122,9 @@ namespace BrunoGUI_GenII
             ActiveSon = new System.Windows.Forms.CheckBox();
             groupBoxTempsReflexion = new System.Windows.Forms.GroupBox();
             labelTempsReflexion = new System.Windows.Forms.Label();
-            TrackBarTempsReflexion = new System.Windows.Forms.TrackBar();
+            ListePendule = new System.Windows.Forms.ComboBox();
+            LabelCoupAnalyse = new System.Windows.Forms.Label();
+            TempsReflexionSecondes = new System.Windows.Forms.NumericUpDown();
             KryptonApropos = new Krypton.Toolkit.KryptonButton();
             ActiveAléatoire = new System.Windows.Forms.CheckBox();
             SaisiePartieBouton = new Krypton.Toolkit.KryptonButton();
@@ -136,7 +140,7 @@ namespace BrunoGUI_GenII
             ((System.ComponentModel.ISupportInitialize)Plateau).BeginInit();
             groupParcoursPartie.SuspendLayout();
             groupBoxTempsReflexion.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)TrackBarTempsReflexion).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)TempsReflexionSecondes).BeginInit();
             SuspendLayout();
             // 
             // InformationPourJoueur
@@ -671,6 +675,8 @@ namespace BrunoGUI_GenII
             groupeJoueurs.Controls.Add(EloNoir);
             groupeJoueurs.Controls.Add(LabelJoueurBlanc);
             groupeJoueurs.Controls.Add(EloBlanc);
+            groupeJoueurs.Controls.Add(PenduleBlanc);
+            groupeJoueurs.Controls.Add(PenduleNoir);
             groupeJoueurs.Location = new System.Drawing.Point(10, 28);
             groupeJoueurs.Name = "groupeJoueurs";
             groupeJoueurs.Size = new System.Drawing.Size(518, 37);
@@ -686,7 +692,7 @@ namespace BrunoGUI_GenII
             LabelJoueurNoir.ForeColor = System.Drawing.Color.White;
             LabelJoueurNoir.Location = new System.Drawing.Point(262, 14);
             LabelJoueurNoir.Name = "LabelJoueurNoir";
-            LabelJoueurNoir.Size = new System.Drawing.Size(160, 20);
+            LabelJoueurNoir.Size = new System.Drawing.Size(110, 20);
             LabelJoueurNoir.TabIndex = 3;
             LabelJoueurNoir.Text = "Joueur Noir";
             LabelJoueurNoir.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -697,9 +703,9 @@ namespace BrunoGUI_GenII
             EloNoir.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             EloNoir.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             EloNoir.ForeColor = System.Drawing.Color.White;
-            EloNoir.Location = new System.Drawing.Point(428, 14);
+            EloNoir.Location = new System.Drawing.Point(374, 14);
             EloNoir.Name = "EloNoir";
-            EloNoir.Size = new System.Drawing.Size(90, 20);
+            EloNoir.Size = new System.Drawing.Size(55, 20);
             EloNoir.TabIndex = 2;
             EloNoir.Text = "Elo Noir";
             EloNoir.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -711,7 +717,7 @@ namespace BrunoGUI_GenII
             LabelJoueurBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             LabelJoueurBlanc.Location = new System.Drawing.Point(2, 14);
             LabelJoueurBlanc.Name = "LabelJoueurBlanc";
-            LabelJoueurBlanc.Size = new System.Drawing.Size(160, 20);
+            LabelJoueurBlanc.Size = new System.Drawing.Size(110, 20);
             LabelJoueurBlanc.TabIndex = 1;
             LabelJoueurBlanc.Text = "Joueur Blanc";
             LabelJoueurBlanc.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -721,9 +727,9 @@ namespace BrunoGUI_GenII
             EloBlanc.BackColor = System.Drawing.Color.White;
             EloBlanc.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             EloBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
-            EloBlanc.Location = new System.Drawing.Point(166, 14);
+            EloBlanc.Location = new System.Drawing.Point(114, 14);
             EloBlanc.Name = "EloBlanc";
-            EloBlanc.Size = new System.Drawing.Size(90, 20);
+            EloBlanc.Size = new System.Drawing.Size(55, 20);
             EloBlanc.TabIndex = 0;
             EloBlanc.Text = "Elo Blanc";
             EloBlanc.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -1055,37 +1061,54 @@ namespace BrunoGUI_GenII
             // 
             groupBoxTempsReflexion.BackColor = System.Drawing.Color.WhiteSmoke;
             groupBoxTempsReflexion.Controls.Add(labelTempsReflexion);
-            groupBoxTempsReflexion.Controls.Add(TrackBarTempsReflexion);
+            groupBoxTempsReflexion.Controls.Add(ListePendule);
+            groupBoxTempsReflexion.Controls.Add(LabelCoupAnalyse);
+            groupBoxTempsReflexion.Controls.Add(TempsReflexionSecondes);
             groupBoxTempsReflexion.Location = new System.Drawing.Point(180, 710);
             groupBoxTempsReflexion.Name = "groupBoxTempsReflexion";
             groupBoxTempsReflexion.Size = new System.Drawing.Size(350, 46);
             groupBoxTempsReflexion.TabIndex = 40;
             groupBoxTempsReflexion.TabStop = false;
-            groupBoxTempsReflexion.Text = "Temps de réflexion en secondes [1-600]";
+            groupBoxTempsReflexion.Text = "Pendule (partie suivante) et temps de réflexion";
             // 
             // labelTempsReflexion
             // 
             labelTempsReflexion.Font = new System.Drawing.Font("Gill Sans Ultra Bold", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             labelTempsReflexion.ForeColor = System.Drawing.Color.DarkGreen;
-            labelTempsReflexion.Location = new System.Drawing.Point(280, 16);
+            labelTempsReflexion.Location = new System.Drawing.Point(288, 16);
             labelTempsReflexion.Name = "labelTempsReflexion";
-            labelTempsReflexion.Size = new System.Drawing.Size(70, 23);
-            labelTempsReflexion.TabIndex = 1;
+            labelTempsReflexion.Size = new System.Drawing.Size(60, 23);
+            labelTempsReflexion.TabIndex = 4;
             labelTempsReflexion.Text = "[5]";
             labelTempsReflexion.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // TrackBarTempsReflexion
+            // ListePendule
             // 
-            TrackBarTempsReflexion.AutoSize = false;
-            TrackBarTempsReflexion.BackColor = System.Drawing.Color.Gray;
-            TrackBarTempsReflexion.Location = new System.Drawing.Point(6, 16);
-            TrackBarTempsReflexion.Maximum = 600;
-            TrackBarTempsReflexion.Minimum = 1;
-            TrackBarTempsReflexion.Name = "TrackBarTempsReflexion";
-            TrackBarTempsReflexion.Size = new System.Drawing.Size(278, 25);
-            TrackBarTempsReflexion.TabIndex = 0;
-            TrackBarTempsReflexion.Value = 1;
-            TrackBarTempsReflexion.ValueChanged += TrackBarTempsReflexion_ValueChanged;
+            ListePendule.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            ListePendule.Location = new System.Drawing.Point(6, 17);
+            ListePendule.Name = "ListePendule";
+            ListePendule.Size = new System.Drawing.Size(128, 23);
+            ListePendule.TabIndex = 0;
+            ListePendule.SelectedIndexChanged += ListePendule_SelectedIndexChanged;
+            // 
+            // LabelCoupAnalyse
+            // 
+            LabelCoupAnalyse.Location = new System.Drawing.Point(138, 20);
+            LabelCoupAnalyse.Name = "LabelCoupAnalyse";
+            LabelCoupAnalyse.Size = new System.Drawing.Size(96, 18);
+            LabelCoupAnalyse.TabIndex = 2;
+            LabelCoupAnalyse.Text = "Coup/analyse (s)";
+            // 
+            // TempsReflexionSecondes
+            // 
+            TempsReflexionSecondes.Location = new System.Drawing.Point(234, 17);
+            TempsReflexionSecondes.Maximum = new decimal(new int[] { 600, 0, 0, 0 });
+            TempsReflexionSecondes.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            TempsReflexionSecondes.Name = "TempsReflexionSecondes";
+            TempsReflexionSecondes.Size = new System.Drawing.Size(52, 23);
+            TempsReflexionSecondes.TabIndex = 3;
+            TempsReflexionSecondes.Value = new decimal(new int[] { 5, 0, 0, 0 });
+            TempsReflexionSecondes.ValueChanged += TempsReflexionSecondes_ValueChanged;
             // 
             // KryptonApropos
             // 
@@ -1200,7 +1223,7 @@ namespace BrunoGUI_GenII
             ((System.ComponentModel.ISupportInitialize)Plateau).EndInit();
             groupParcoursPartie.ResumeLayout(false);
             groupBoxTempsReflexion.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)TrackBarTempsReflexion).EndInit();
+            ((System.ComponentModel.ISupportInitialize)TempsReflexionSecondes).EndInit();
             ResumeLayout(false);
             PerformLayout();
 
@@ -1288,7 +1311,11 @@ namespace BrunoGUI_GenII
         private System.Windows.Forms.Label labelTempsReflexion;
         private Krypton.Toolkit.KryptonButton KryptonApropos;
         private System.Windows.Forms.CheckBox ActiveAléatoire;
-        public System.Windows.Forms.TrackBar TrackBarTempsReflexion;
+        public System.Windows.Forms.NumericUpDown TempsReflexionSecondes;
+        private System.Windows.Forms.ComboBox ListePendule;
+        private System.Windows.Forms.Label LabelCoupAnalyse;
+        private System.Windows.Forms.Label PenduleBlanc;
+        private System.Windows.Forms.Label PenduleNoir;
         public Krypton.Toolkit.KryptonButton SaisiePartieBouton;
         private System.Windows.Forms.ToolStripMenuItem AideDocumentation;
         public System.Windows.Forms.GroupBox groupParcoursPartie;

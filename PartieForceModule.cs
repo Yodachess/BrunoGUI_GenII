@@ -28,11 +28,18 @@ namespace BrunoGUI_GenII
         public int ForceModule { get; set; } = 1850;            // Elo du moteur si pas force maximale
         public int DureeReflexionSeconde { get; set; } = 5;
         public bool ForceMaximale { get; set; } = true;
+        public Cadence ChoixCadence { get; set; } = Cadence.SansPendule;    // pendule de la partie (sans : temps fixe par coup)
 
         public PartieForceModule()
         {
             InitializeComponent();
+            foreach (Cadence cadence in Cadence.Proposees)
+                ListePendule.Items.Add(cadence);
             this.VisibleChanged += (s, e) => { if (Visible) AfficheChoix(); };
+        }
+        private void ListePendule_SelectedIndexChanged(object sender, EventArgs e)
+        {   // La durée de réflexion par coup ne sert que sans pendule (avec une pendule, le moteur gère son temps)
+            TempsReflexion.Enabled = ListePendule.SelectedItem is not Cadence cadence || cadence.EstSansPendule;
         }
         private void AfficheChoix()
         {   // Met les contrôles de la fenêtre aux valeurs des propriétés
@@ -44,11 +51,14 @@ namespace BrunoGUI_GenII
             ValeurLimiteElo.Enabled = !ForceMaximale;
             TempsReflexion.Value = Math.Clamp(DureeReflexionSeconde, (int)TempsReflexion.Minimum, (int)TempsReflexion.Maximum);
             TextBoxNomAdvesaire.Text = NomAdversaire;
+            if (!ListePendule.Items.Contains(ChoixCadence))
+                ListePendule.Items.Add(ChoixCadence);       // cadence du .ini absente de la liste proposée
+            ListePendule.SelectedItem = ChoixCadence;
+            ListePendule_SelectedIndexChanged(ListePendule, EventArgs.Empty);
         }
         private void NouvellePartieForceModule_Load(object sender, EventArgs e)
         {
             AfficheChoix();
-            TempsReflexion.Enabled = true;
 
             // Méthodes séparées pour la gestion des événements
             ForceMoteurMaximum.CheckedChanged += ForceMoteurMaximum_CheckedChanged;
@@ -71,6 +81,8 @@ namespace BrunoGUI_GenII
             ForceMaximale = ForceMoteurMaximum.Checked;
             ForceModule = (int)ValeurLimiteElo.Value;
             DureeReflexionSeconde = ((int)TempsReflexion.Value);
+            if (ListePendule.SelectedItem is Cadence cadence)
+                ChoixCadence = cadence;
             Debug.WriteLine($"ForceMoteurOk_Click / Durée Réflexion secondes =  {DureeReflexionSeconde}");
             this.DialogResult = DialogResult.OK;
             this.Close();

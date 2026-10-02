@@ -371,6 +371,7 @@ prefs.NombreLignesPV = 2;
 prefs.ForceMaximale = false;
 prefs.CouleurMoteur = L.ColorPiece.Blanc;
 prefs.TailleHachageMo = 512;
+prefs.Cadence = Cadence.Minutes(5, 3);
 prefs.SauverPreferences(iniSauve);
 string[] lignesSauvees = System.IO.File.ReadAllLines(iniSauve);
 Parametres relus = new();
@@ -381,8 +382,9 @@ Verifie("Préférences : commentaire, ordre et clé inconnue conservés",
     lignesSauvees[0] == "; Mon commentaire" && lignesSauvees[1] == "Casesombre = #B58863" && lignesSauvees[2] == "CleInconnue = gardee" && lignesSauvees[3] == "NombrelignesPV = 2",
     string.Join(" | ", lignesSauvees.Take(4)));
 Verifie("Préférences : relecture de toutes les valeurs",
-    relus.CaseSombre == "#B58863" && relus.NombreLignesPV == 2 && !relus.ForceMaximale && relus.CouleurMoteur == L.ColorPiece.Blanc && relus.TailleHachageMo == 512 && relus.ForceMoteur == 1850,
-    $"{relus.CaseSombre}, PV={relus.NombreLignesPV}, max={relus.ForceMaximale}, moteur={relus.CouleurMoteur}, Hash={relus.TailleHachageMo}");
+    relus.CaseSombre == "#B58863" && relus.NombreLignesPV == 2 && !relus.ForceMaximale && relus.CouleurMoteur == L.ColorPiece.Blanc && relus.TailleHachageMo == 512 && relus.ForceMoteur == 1850
+    && relus.Cadence == Cadence.Minutes(5, 3) && new Parametres().Cadence.EstSansPendule,
+    $"{relus.CaseSombre}, PV={relus.NombreLignesPV}, max={relus.ForceMaximale}, moteur={relus.CouleurMoteur}, Hash={relus.TailleHachageMo}, pendule={relus.Cadence}");
 
 // Deux fichiers : BrunoGUI.ini (valeurs par défaut, jamais écrit) + BrunoGUI.preferences.ini (préférences, par-dessus)
 string dossierTest = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "BrunoGUI_test_prefs");
