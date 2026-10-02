@@ -49,26 +49,36 @@ namespace BrunoGUI_GenII
 
     public class GestionPartiePgn
     {   // Spécification détaillée du format PGN = https://fr.wikipedia.org/wiki/Portable_Game_Notation
-        public static string RetourneContenuPgn(PartieEchecsPGN partieEnCours, string localisation)
-        {   // Met au format Pgn la partieEnCours pour visualisation et sauvegarde ... 
+        public static string RetourneContenuPgn(PartieEchecsPGN partieEnCours, string localisation, bool avecTemps = false)
+        {   // Met au format Pgn la partieEnCours pour visualisation et sauvegarde ...
+            // avecTemps : temps restant après chaque coup d'une partie à la pendule, en commentaire "{[%clk 0:02:51]}" (format
+            // de Lichess et ChessBase) ; seulement dans le fichier enregistré, pas dans l'affichage (choix de Bruno)
             int comptepartiel = 0;
             string contenuPgn = "";
+            bool apresCommentaire = false;      // un coup noir qui suit un commentaire reprend son numéro ("1... e5"), comme l'exige le PGN
             // Partie commençant par un coup noir (départ FEN, Noirs au trait) : le PGN exige "n... coup"
             Coup premier = ListeCoups.FirstOrDefault(c => !c.EstPositionDeDepart);
             if (premier != null && !premier.EstCoupBlanc)
                 contenuPgn = premier.NumeroDuCoup + "... ";
             for (int i = 0; i < ListeCoupsPgnIntl.Count; i++)   // Création du contenu du fichier en lignes de 80 caractères
             {   // Il faut des lignes <= 80 caractères, mais n'aller à la ligne que si c'est un espace
-                comptepartiel += ListeCoupsPgnIntl[i].Length;
-                if (localisation == "Fr")
-                    contenuPgn += ListeCoupsPgnFr[i];
-                else
-                    contenuPgn += ListeCoupsPgnIntl[i];
-                if (comptepartiel >= 74)
-                {   // Si plus de 80 caractères, il faut découper  (attention aux coups comme Cfxe6+)
-                    contenuPgn += " \n";        // Rajout des sauts de ligne
-                    comptepartiel = 0;          // Ligne suivante
+                Coup coup = ListeCoups[i];
+                string texteCoup = localisation == "Fr" ? ListeCoupsPgnFr[i] : ListeCoupsPgnIntl[i];
+                TimeSpan? temps = coup.EstCoupBlanc ? coup.TempsBlancs : coup.TempsNoirs;     // pendule du camp qui vient de jouer
+                if (avecTemps && !coup.EstPositionDeDepart && temps is TimeSpan restant)
+                {
+                    if (!coup.EstCoupBlanc && apresCommentaire)
+                        texteCoup = coup.NumeroDuCoup + "... " + texteCoup;
+                    texteCoup += $"{{[%clk {(int)restant.TotalHours}:{restant.Minutes:00}:{restant.Seconds:00}]}} ";
+                    apresCommentaire = true;
                 }
+                if (comptepartiel > 0 && comptepartiel + texteCoup.TrimEnd().Length > 80)
+                {   // Le coup ferait dépasser 80 caractères : il commence la ligne suivante (on ne coupe jamais dans un coup ni un commentaire)
+                    contenuPgn = contenuPgn.TrimEnd(' ') + "\n";
+                    comptepartiel = 0;
+                }
+                comptepartiel += texteCoup.Length;
+                contenuPgn += texteCoup;
             }
             contenuPgn = contenuPgn + " " + ResultatPgn(partieEnCours);   // Rajout du résultat à la fin de la partie
             contenuPgn = RetourneEntetePgn(partieEnCours) + contenuPgn;

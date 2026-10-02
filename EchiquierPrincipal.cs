@@ -1445,7 +1445,8 @@ namespace BrunoGUI_GenII
         {   // Enregistre la partie au format PGN
             try
             {
-                string contenuPgn = GestionPartiePgn.RetourneContenuPgn(PartieEnCours, "Intl"); // On récupère la partie au format PGN
+                // La partie au format PGN, avec les temps de la pendule après chaque coup (seulement dans le fichier, pas à l'affichage)
+                string contenuPgn = GestionPartiePgn.RetourneContenuPgn(PartieEnCours, "Intl", avecTemps: true);
                 // Ecriture du fichier PGN (Partie complète + en-tête)
                 {
                     SauvegardeFichier.OverwritePrompt = false;      // Permet d'éviter l'affichage de 2 boites de dialogue si le fichier choisi existe...

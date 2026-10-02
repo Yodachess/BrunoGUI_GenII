@@ -615,6 +615,27 @@ Verifie("PGN écrit : balises SetUp et FEN, premier coup noir numéroté, résul
 PartieEchecsPGN partieRelue = FichierPartiePgn.DecodePartiePGN(pgnEcrit);
 Verifie("PGN relu : la balise FEN est retrouvée", partieRelue.Fen == fenNoirsAuTrait, partieRelue.Fen ?? "(aucune)");
 
+// Partie à la pendule : temps après chaque coup dans le fichier enregistré seulement ({[%clk h:mm:ss]})
+Charger(L.FenDepart);
+string[] coupsPendule = ["e2e4", "e7e5", "g1f3", "b8c6", "f1b5", "a7a6", "b5a4", "g8f6", "e1g1", "f8e7", "f1e1", "b7b5", "a4b3", "d7d6"];
+for (int i = 0; i < coupsPendule.Length; i++)
+{
+    L.ExecutionCoup(coupsPendule[i][..2], coupsPendule[i][2..]);
+    L.ListeCoups[^1].TempsBlancs = TimeSpan.FromSeconds(180 - 3 * i);
+    L.ListeCoups[^1].TempsNoirs = TimeSpan.FromSeconds(180 - 2 * i);
+}
+string pgnSansTemps = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "" }, "Intl");
+string pgnAvecTemps = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "" }, "Intl", avecTemps: true);
+string[] lignesCoups = pgnAvecTemps.Split('\n').Where(l => !l.StartsWith('[') && l.Trim() != "").ToArray();
+Verifie("PGN enregistré : temps après chaque coup, numéro repris devant les coups noirs, lignes de 80 caractères au plus",
+    pgnAvecTemps.Contains("1. e4 {[%clk 0:03:00]} 1... e5 {[%clk 0:02:58]} 2. Nf3 {[%clk 0:02:54]}") && lignesCoups.All(l => l.Length <= 80) && lignesCoups.Length > 1,
+    string.Join(" | ", lignesCoups));
+Verifie("PGN affiché : sans les temps", !pgnSansTemps.Contains("%clk") && pgnSansTemps.Contains("1. e4 e5 2. Nf3"), pgnSansTemps.Replace("\n", " "));
+Partie partiePendule = new();
+ResultatChargementPgn relecturePendule = ChargementPartie.ChargerPartiePgn(FichierPartiePgn.DecodePartiePGN(pgnAvecTemps), partiePendule);
+Verifie("PGN avec les temps : relu sans erreur (commentaires ignorés)",
+    relecturePendule.CoupIllisible == null && relecturePendule.DemiCoupsJoues == coupsPendule.Length, $"{relecturePendule.DemiCoupsJoues} demi-coups, illisible : {relecturePendule.CoupIllisible ?? "aucun"}");
+
 // Chargement d'une position FEN et d'une partie PGN complète (ChargementPartie)
 Partie partieChargee = new();
 Charger(L.FenDepart);
