@@ -844,8 +844,8 @@ namespace BrunoGUI_GenII
             _nomsHumainMoteur = false;
         }
         private static string TexteJoueur(string nom, string elo) =>
-            // Une seule étiquette par camp : "[1767] Bruno" (le nom seul si l'Elo est inconnu)
-            string.IsNullOrWhiteSpace(elo) || elo.Trim() == "?" ? nom : $"[{elo.Trim()}] {nom}";
+            // Une seule étiquette par camp : "[1767] Bruno", "[?] Bruno" si l'Elo est inconnu ; rien sans nom (position FEN chargée)
+            string.IsNullOrWhiteSpace(nom) ? "" : $"[{(string.IsNullOrWhiteSpace(elo) ? "?" : elo.Trim())}] {nom}";
         private (string Nom, string Elo) IdentiteDe(Joueur joueur) =>
             joueur == Joueur.Moteur ? (_nomMoteur, _moteurElo) : (_nomHumain, _joueurElo);
         private void AfficheJoueursDeLaPartie()

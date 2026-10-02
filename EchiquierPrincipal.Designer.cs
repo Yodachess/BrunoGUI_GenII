@@ -90,10 +90,10 @@ namespace BrunoGUI_GenII
             VarianteMoteurUci2 = new System.Windows.Forms.RichTextBox();
             VarianteMoteurUci3 = new System.Windows.Forms.RichTextBox();
             AnalysePosition = new Krypton.Toolkit.KryptonButton();
-            LabelJoueurNoir = new System.Windows.Forms.Label();
-            LabelJoueurBlanc = new System.Windows.Forms.Label();
-            PenduleBlanc = new System.Windows.Forms.Label();
-            PenduleNoir = new System.Windows.Forms.Label();
+            LabelJoueurNoir = new EtiquetteUneLigne();
+            LabelJoueurBlanc = new EtiquetteUneLigne();
+            PenduleBlanc = new EtiquetteUneLigne();
+            PenduleNoir = new EtiquetteUneLigne();
             InformationsPartie = new System.Windows.Forms.Label();
             MontreVariantesUci = new Krypton.Toolkit.KryptonButton();
             ListeCoupsBouton = new Krypton.Toolkit.KryptonButton();
@@ -675,7 +675,8 @@ namespace BrunoGUI_GenII
             LabelJoueurBlanc.Size = new System.Drawing.Size(176, 36);
             LabelJoueurBlanc.TabIndex = 24;
             LabelJoueurBlanc.Text = "[Elo] Joueur Blanc";
-            LabelJoueurBlanc.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            LabelJoueurBlanc.Padding = new System.Windows.Forms.Padding(6, 0, 2, 0);
+            LabelJoueurBlanc.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // PenduleBlanc
             // 
@@ -701,7 +702,8 @@ namespace BrunoGUI_GenII
             LabelJoueurNoir.Size = new System.Drawing.Size(176, 36);
             LabelJoueurNoir.TabIndex = 27;
             LabelJoueurNoir.Text = "[Elo] Joueur Noir";
-            LabelJoueurNoir.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            LabelJoueurNoir.Padding = new System.Windows.Forms.Padding(6, 0, 2, 0);
+            LabelJoueurNoir.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // PenduleNoir
             // 
@@ -1248,8 +1250,8 @@ namespace BrunoGUI_GenII
         private System.Windows.Forms.RichTextBox VarianteMoteurUci2;
         private System.Windows.Forms.RichTextBox VarianteMoteurUci3;
         private System.Windows.Forms.ToolStripStatusLabel EvaluationUci;
-        private System.Windows.Forms.Label LabelJoueurNoir;
-        private System.Windows.Forms.Label LabelJoueurBlanc;
+        private EtiquetteUneLigne LabelJoueurNoir;
+        private EtiquetteUneLigne LabelJoueurBlanc;
         private System.Windows.Forms.Label InformationsPartie;
         private Krypton.Toolkit.KryptonButton MontreVariantesUci;
         private System.Windows.Forms.ToolStripMenuItem ParametresAvances;
@@ -1293,8 +1295,8 @@ namespace BrunoGUI_GenII
         public System.Windows.Forms.NumericUpDown TempsReflexionSecondes;
         private System.Windows.Forms.ComboBox ListePendule;
         private System.Windows.Forms.Label LabelCoupAnalyse;
-        private System.Windows.Forms.Label PenduleBlanc;
-        private System.Windows.Forms.Label PenduleNoir;
+        private EtiquetteUneLigne PenduleBlanc;
+        private EtiquetteUneLigne PenduleNoir;
         public Krypton.Toolkit.KryptonButton SaisiePartieBouton;
         private System.Windows.Forms.ToolStripMenuItem AideDocumentation;
         public System.Windows.Forms.GroupBox groupParcoursPartie;
