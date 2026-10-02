@@ -285,6 +285,7 @@ namespace BrunoGUI_GenII
             private KryptonTextBox whiteeloCase;
             private KryptonTextBox blackeloCase;
             private KryptonTextBox plycountCase;
+            private KryptonTextBox cadenceCase;
             private KryptonButton sauveEnTete;
             private KryptonButton annulerEnTete;
 
@@ -309,6 +310,7 @@ namespace BrunoGUI_GenII
                 whiteeloCase = CreationBalisesTextBox("ELO Blancs :", 20, 250);
                 blackeloCase = CreationBalisesTextBox("ELO Noirs :", 20, 280);
                 plycountCase = CreationBalisesTextBox("Demi coups :", 20, 310);
+                cadenceCase = CreationBalisesTextBox("Cadence :  ", 20, 340);      // TimeControl : "180+2" = 3 min + 2 s par coup
                 // Pré-remplir les champs
                 tournamentCase.Text = partieBalises.Tournoi;
                 lieuCase.Text = partieBalises.Lieu;
@@ -321,11 +323,12 @@ namespace BrunoGUI_GenII
                 whiteeloCase.Text = partieBalises.WhiteElo;
                 blackeloCase.Text = partieBalises.BlackElo;
                 plycountCase.Text = partieBalises.CompteDePLy;
+                cadenceCase.Text = partieBalises.TimeControl;
                 // Boutons
                 sauveEnTete = new KryptonButton
                 {
                     Text = "Enregistrer En-têtes", // ✅ Utilise simplement `Text`
-                    Location = new Point(20, 350),
+                    Location = new Point(20, 380),
                     Width = 110
                 };
                 sauveEnTete.Click += SauveBalises_Click;
@@ -334,7 +337,7 @@ namespace BrunoGUI_GenII
                 annulerEnTete = new KryptonButton
                 {
                     Text = "Quitter En-Têtes",
-                    Location = new Point(135, 350),
+                    Location = new Point(135, 380),
                     Width = 110
                 };
                 annulerEnTete.Click += AnnulerBalises_Click;
@@ -342,7 +345,7 @@ namespace BrunoGUI_GenII
 
                 // Configuration de la fenêtre
                 this.Text = "Saisie des en-têtes de parties";
-                this.Size = new Size(280, 420);
+                this.Size = new Size(280, 450);
             }
             private KryptonTextBox CreationBalisesTextBox(string labelText, int x, int y)
             {
@@ -378,6 +381,7 @@ namespace BrunoGUI_GenII
                 partieBalises.WhiteElo = whiteeloCase.Text;
                 partieBalises.BlackElo = blackeloCase.Text;
                 partieBalises.CompteDePLy = plycountCase.Text;
+                partieBalises.TimeControl = cadenceCase.Text.Trim();
                 // Fermer la fenêtre
                 this.Close();
             }
