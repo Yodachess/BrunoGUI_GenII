@@ -42,7 +42,7 @@ namespace BrunoGUI_GenII
         // les variables
         private readonly Partie _partie = new();    // mode de la partie, qui joue quel camp (voir Partie.cs)
         public Partie PartieCourante => _partie;
-        private int _indexSource120, _forceMoteurElo, _tempsRestant;
+        private int _indexSource120, _forceMoteurElo;
         private bool _plateauAutorise = true;   // c'est au joueur de bouger les pièces (voir PlateauEnable et MetAJourPlateau)
         private string _caseSource, _caseDestination;
         private string _nomHumain, _joueurElo, _nomMoteur, _moteurElo;
@@ -101,11 +101,11 @@ namespace BrunoGUI_GenII
             maNouvellePartieForceModule.DureeReflexionSeconde = parametres.DureeReflexionSeconde;
             maNouvellePartieForceModule.NomAdversaire = parametres.NomHumain;
             TempsReflexionSecondes.Value = Math.Clamp(parametres.DureeReflexionSeconde, (int)TempsReflexionSecondes.Minimum, (int)TempsReflexionSecondes.Maximum);
-            labelTempsReflexion.Text = "[" + TempsReflexionSecondes.Value + "]";
             foreach (Cadence cadence in Cadence.Proposees)
                 ListePendule.Items.Add(cadence);
             ChoisitCadence(parametres.Cadence);
             _minuteriePendule.Tick += MinuteriePendule_Tick;
+            AffichePendules();      // pas de pendule au départ : noms et Elo prennent toute la largeur
             // Debug pour vérifier
             Debug.WriteLine($"Paramètres chargés : Biblio = {_bibliotheque}, Force = {_forceMoteurElo}, Nombre PV = {MoteurUci.NombreLignesPV}");
             Debug.WriteLine($"Paramètres chargés : Temps de réflexion = {_dureeReflexionMilliSeconde}");
@@ -201,7 +201,6 @@ namespace BrunoGUI_GenII
                 _nomHumain = maNouvellePartieForceModule.NomAdversaire;     // mémorisé dans les préférences à la fermeture
                 _dureeReflexionMilliSeconde = maNouvellePartieForceModule.DureeReflexionSeconde * 1000;
                 TempsReflexionSecondes.Value = Math.Clamp(maNouvellePartieForceModule.DureeReflexionSeconde, (int)TempsReflexionSecondes.Minimum, (int)TempsReflexionSecondes.Maximum);
-                labelTempsReflexion.Text = "[" + TempsReflexionSecondes.Value + "]";
                 ChoisitCadence(maNouvellePartieForceModule.ChoixCadence);     // la pendule de cette partie (et des suivantes)
 
                 MiseaZeroAffichages();
@@ -810,9 +809,18 @@ namespace BrunoGUI_GenII
             InformationPourJoueur.Text = VarianteMoteurCourante.Text = message;
         }
         private void AffichePendules()
-        {   // Les deux pendules (masquées sans pendule) : le camp qui décompte sur fond vert, en rouge sous 10 secondes
-            PenduleBlanc.Visible = PenduleNoir.Visible = _pendule != null;
-            if (_pendule == null)
+        {   // Les deux pendules (masquées sans pendule) : le camp qui décompte sur fond vert, en rouge sous 10 secondes.
+            // Sans pendule, le nom de chaque camp prend la place de sa pendule (l'Elo est collé à droite du nom)
+            bool avecPendule = _pendule != null;
+            if (PenduleBlanc.Visible != avecPendule || LabelJoueurBlanc.Right + 2 != EloBlanc.Left)
+            {
+                PenduleBlanc.Visible = PenduleNoir.Visible = avecPendule;
+                int largeurNom = PenduleBlanc.Right - LabelJoueurBlanc.Left - EloBlanc.Width - 2 - (avecPendule ? PenduleBlanc.Width + 2 : 0);
+                LabelJoueurBlanc.Width = LabelJoueurNoir.Width = largeurNom;
+                EloBlanc.Left = LabelJoueurBlanc.Right + 2;
+                EloNoir.Left = LabelJoueurNoir.Right + 2;
+            }
+            if (!avecPendule)
                 return;
             AffichePendule(PenduleBlanc, ColorPiece.Blanc, Color.White, Color.Black);
             AffichePendule(PenduleNoir, ColorPiece.Noir, Color.Black, Color.White);
@@ -1608,7 +1616,6 @@ namespace BrunoGUI_GenII
         {   // Temps de réflexion (secondes) : analyses, et coups du moteur dans une partie sans pendule
             _dureeReflexionMilliSeconde = (int)TempsReflexionSecondes.Value * 1000;
             InformationsPartie.Text = "Temps de réflexion = " + (_dureeReflexionMilliSeconde / 1000).ToString() + " secondes";
-            labelTempsReflexion.Text = "[" + TempsReflexionSecondes.Value + "]";
         }
         private void ActiveBibliothèque_CheckedChanged(object sender, EventArgs e)
         {   // Activer ou non la bibliothèque (on lit la case : une bascule se décalerait si l'état initial différait)
@@ -1809,41 +1816,31 @@ namespace BrunoGUI_GenII
             MetAJourCommandes();
         }
 
+        private TimeSpan _debutReflexion;       // heure (_chrono) du début de la réflexion à temps fixe
         private void LancerReflexion()
-        {   // Lance le timer de réflexion et affiche le message de temps restant
+        {   // Réflexion à temps fixe (analyse, ou coup du moteur sans pendule) : la barre se remplit pendant ce temps
             // (pendant la réflexion, tout reste possible : les actions qui la rendent inutile l'abandonnent, voir AbandonneReflexion)
-            // Durée en secondes
-            _tempsRestant = _dureeReflexionMilliSeconde / 1000;
-            labelTempsReflexion.Text = "[" + _tempsRestant.ToString() + "]";
-
-            timer.Interval = 1000; // 1 seconde
+            _debutReflexion = _chrono.Elapsed;
+            BarreReflexion.Value = 0;
+            BarreReflexion.Visible = true;
+            timer.Interval = 100;
             timer.Tick -= Timer_Tick;
             timer.Tick += Timer_Tick;
             timer.Start();
         }
         private void Timer_Tick(object sender, EventArgs e)
-        {   // Méthode appelée à chaque tick du timer (toutes les secondes)
-            _tempsRestant--;
-            labelTempsReflexion.Text = "[" + _tempsRestant.ToString() + "]";
-            InformationsPartie.Text = "merci de patienter " + _tempsRestant.ToString() + " seconde(s)";
-            if (_tempsRestant <= 0)
-            {
+        {   // Tous les dixièmes de seconde : part du temps de réflexion écoulée (la barre reste pleine jusqu'à la réponse du moteur)
+            double ecoule = (_chrono.Elapsed - _debutReflexion).TotalMilliseconds / Math.Max(1, _dureeReflexionMilliSeconde);
+            BarreReflexion.Value = (int)Math.Round(Math.Min(1, ecoule) * BarreReflexion.Maximum);
+            if (ecoule >= 1)
                 timer.Stop();
-                Task.Delay(3000).ContinueWith(_ =>
-                {   // attend 3 secondes avant de remettre la valeur initiale
-                    this.Invoke(new Action(() =>
-                    {
-                        labelTempsReflexion.Text = "[" + (_dureeReflexionMilliSeconde / 1000).ToString() + "]";
-                    }));
-                });
-            }
         }
         private void MiseaZéroTimer()
-        {   // Appelée après que le moteur a répondu pour remettre le timer à zéro
-            timer.Stop(); // stoppe le timer
-            _tempsRestant = _dureeReflexionMilliSeconde / 1000; // reset
-            labelTempsReflexion.Text = "[" + _tempsRestant.ToString() + "]";
-            InformationsPartie.Text = ""; // si tu veux nettoyer le message
+        {   // Le moteur a répondu (ou la réflexion est abandonnée) : plus de barre
+            timer.Stop();
+            BarreReflexion.Visible = false;
+            BarreReflexion.Value = 0;
+            InformationsPartie.Text = "";
         }
 
 

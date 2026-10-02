@@ -90,7 +90,6 @@ namespace BrunoGUI_GenII
             VarianteMoteurUci2 = new System.Windows.Forms.RichTextBox();
             VarianteMoteurUci3 = new System.Windows.Forms.RichTextBox();
             AnalysePosition = new Krypton.Toolkit.KryptonButton();
-            groupeJoueurs = new System.Windows.Forms.GroupBox();
             LabelJoueurNoir = new System.Windows.Forms.Label();
             EloNoir = new System.Windows.Forms.Label();
             LabelJoueurBlanc = new System.Windows.Forms.Label();
@@ -121,7 +120,7 @@ namespace BrunoGUI_GenII
             ActiveBibliothèque = new System.Windows.Forms.CheckBox();
             ActiveSon = new System.Windows.Forms.CheckBox();
             groupBoxTempsReflexion = new System.Windows.Forms.GroupBox();
-            labelTempsReflexion = new System.Windows.Forms.Label();
+            BarreReflexion = new System.Windows.Forms.ProgressBar();
             ListePendule = new System.Windows.Forms.ComboBox();
             LabelCoupAnalyse = new System.Windows.Forms.Label();
             TempsReflexionSecondes = new System.Windows.Forms.NumericUpDown();
@@ -136,7 +135,6 @@ namespace BrunoGUI_GenII
             ((System.ComponentModel.ISupportInitialize)Promo1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)Promo0).BeginInit();
             kryptonStatusStrip1.SuspendLayout();
-            groupeJoueurs.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)Plateau).BeginInit();
             groupParcoursPartie.SuspendLayout();
             groupBoxTempsReflexion.SuspendLayout();
@@ -668,57 +666,16 @@ namespace BrunoGUI_GenII
             AnalysePosition.Values.Text = "Analyse Position";
             AnalysePosition.Click += AnalysePosition_Click;
             // 
-            // groupeJoueurs
-            // 
-            groupeJoueurs.BackColor = System.Drawing.Color.LightGray;
-            groupeJoueurs.Controls.Add(LabelJoueurNoir);
-            groupeJoueurs.Controls.Add(EloNoir);
-            groupeJoueurs.Controls.Add(LabelJoueurBlanc);
-            groupeJoueurs.Controls.Add(EloBlanc);
-            groupeJoueurs.Controls.Add(PenduleBlanc);
-            groupeJoueurs.Controls.Add(PenduleNoir);
-            groupeJoueurs.Location = new System.Drawing.Point(10, 28);
-            groupeJoueurs.Name = "groupeJoueurs";
-            groupeJoueurs.Size = new System.Drawing.Size(518, 37);
-            groupeJoueurs.TabIndex = 24;
-            groupeJoueurs.TabStop = false;
-            groupeJoueurs.Text = "Joueurs";
-            // 
-            // LabelJoueurNoir
-            // 
-            LabelJoueurNoir.BackColor = System.Drawing.Color.Black;
-            LabelJoueurNoir.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            LabelJoueurNoir.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
-            LabelJoueurNoir.ForeColor = System.Drawing.Color.White;
-            LabelJoueurNoir.Location = new System.Drawing.Point(262, 14);
-            LabelJoueurNoir.Name = "LabelJoueurNoir";
-            LabelJoueurNoir.Size = new System.Drawing.Size(110, 20);
-            LabelJoueurNoir.TabIndex = 3;
-            LabelJoueurNoir.Text = "Joueur Noir";
-            LabelJoueurNoir.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // EloNoir
-            // 
-            EloNoir.BackColor = System.Drawing.Color.Black;
-            EloNoir.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            EloNoir.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
-            EloNoir.ForeColor = System.Drawing.Color.White;
-            EloNoir.Location = new System.Drawing.Point(374, 14);
-            EloNoir.Name = "EloNoir";
-            EloNoir.Size = new System.Drawing.Size(55, 20);
-            EloNoir.TabIndex = 2;
-            EloNoir.Text = "Elo Noir";
-            EloNoir.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
             // LabelJoueurBlanc
             // 
             LabelJoueurBlanc.BackColor = System.Drawing.Color.White;
             LabelJoueurBlanc.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            LabelJoueurBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
-            LabelJoueurBlanc.Location = new System.Drawing.Point(2, 14);
+            LabelJoueurBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            LabelJoueurBlanc.ForeColor = System.Drawing.Color.Black;
+            LabelJoueurBlanc.Location = new System.Drawing.Point(10, 28);
             LabelJoueurBlanc.Name = "LabelJoueurBlanc";
-            LabelJoueurBlanc.Size = new System.Drawing.Size(110, 20);
-            LabelJoueurBlanc.TabIndex = 1;
+            LabelJoueurBlanc.Size = new System.Drawing.Size(204, 36);
+            LabelJoueurBlanc.TabIndex = 24;
             LabelJoueurBlanc.Text = "Joueur Blanc";
             LabelJoueurBlanc.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
@@ -726,37 +683,65 @@ namespace BrunoGUI_GenII
             // 
             EloBlanc.BackColor = System.Drawing.Color.White;
             EloBlanc.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            EloBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
-            EloBlanc.Location = new System.Drawing.Point(114, 14);
+            EloBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            EloBlanc.ForeColor = System.Drawing.Color.Black;
+            EloBlanc.Location = new System.Drawing.Point(216, 28);
             EloBlanc.Name = "EloBlanc";
-            EloBlanc.Size = new System.Drawing.Size(55, 20);
-            EloBlanc.TabIndex = 0;
-            EloBlanc.Text = "Elo Blanc";
+            EloBlanc.Size = new System.Drawing.Size(52, 36);
+            EloBlanc.TabIndex = 25;
+            EloBlanc.Text = "Elo";
             EloBlanc.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // PenduleBlanc
             // 
             PenduleBlanc.BackColor = System.Drawing.Color.White;
             PenduleBlanc.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            PenduleBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
-            PenduleBlanc.Location = new System.Drawing.Point(171, 14);
+            PenduleBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            PenduleBlanc.ForeColor = System.Drawing.Color.Black;
+            PenduleBlanc.Location = new System.Drawing.Point(188, 28);
             PenduleBlanc.Name = "PenduleBlanc";
-            PenduleBlanc.Size = new System.Drawing.Size(85, 20);
-            PenduleBlanc.TabIndex = 4;
+            PenduleBlanc.Size = new System.Drawing.Size(80, 36);
+            PenduleBlanc.TabIndex = 26;
             PenduleBlanc.Text = "5:00";
             PenduleBlanc.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             PenduleBlanc.Visible = false;
+            // 
+            // LabelJoueurNoir
+            // 
+            LabelJoueurNoir.BackColor = System.Drawing.Color.Black;
+            LabelJoueurNoir.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            LabelJoueurNoir.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            LabelJoueurNoir.ForeColor = System.Drawing.Color.White;
+            LabelJoueurNoir.Location = new System.Drawing.Point(270, 28);
+            LabelJoueurNoir.Name = "LabelJoueurNoir";
+            LabelJoueurNoir.Size = new System.Drawing.Size(204, 36);
+            LabelJoueurNoir.TabIndex = 27;
+            LabelJoueurNoir.Text = "Joueur Noir";
+            LabelJoueurNoir.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // EloNoir
+            // 
+            EloNoir.BackColor = System.Drawing.Color.Black;
+            EloNoir.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            EloNoir.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            EloNoir.ForeColor = System.Drawing.Color.White;
+            EloNoir.Location = new System.Drawing.Point(476, 28);
+            EloNoir.Name = "EloNoir";
+            EloNoir.Size = new System.Drawing.Size(52, 36);
+            EloNoir.TabIndex = 28;
+            EloNoir.Text = "Elo";
+            EloNoir.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // PenduleNoir
             // 
             PenduleNoir.BackColor = System.Drawing.Color.Black;
             PenduleNoir.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            PenduleNoir.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            PenduleNoir.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             PenduleNoir.ForeColor = System.Drawing.Color.White;
-            PenduleNoir.Location = new System.Drawing.Point(431, 14);
+            PenduleNoir.Location = new System.Drawing.Point(448, 28);
             PenduleNoir.Name = "PenduleNoir";
-            PenduleNoir.Size = new System.Drawing.Size(85, 20);
-            PenduleNoir.TabIndex = 5;
+            PenduleNoir.Size = new System.Drawing.Size(80, 36);
+            PenduleNoir.TabIndex = 29;
             PenduleNoir.Text = "5:00";
             PenduleNoir.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             PenduleNoir.Visible = false;
@@ -1087,7 +1072,7 @@ namespace BrunoGUI_GenII
             // groupBoxTempsReflexion
             // 
             groupBoxTempsReflexion.BackColor = System.Drawing.Color.WhiteSmoke;
-            groupBoxTempsReflexion.Controls.Add(labelTempsReflexion);
+            groupBoxTempsReflexion.Controls.Add(BarreReflexion);
             groupBoxTempsReflexion.Controls.Add(ListePendule);
             groupBoxTempsReflexion.Controls.Add(LabelCoupAnalyse);
             groupBoxTempsReflexion.Controls.Add(TempsReflexionSecondes);
@@ -1098,16 +1083,14 @@ namespace BrunoGUI_GenII
             groupBoxTempsReflexion.TabStop = false;
             groupBoxTempsReflexion.Text = "Pendule (partie suivante) et temps de réflexion";
             // 
-            // labelTempsReflexion
+            // BarreReflexion
             // 
-            labelTempsReflexion.Font = new System.Drawing.Font("Gill Sans Ultra Bold", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            labelTempsReflexion.ForeColor = System.Drawing.Color.DarkGreen;
-            labelTempsReflexion.Location = new System.Drawing.Point(288, 16);
-            labelTempsReflexion.Name = "labelTempsReflexion";
-            labelTempsReflexion.Size = new System.Drawing.Size(60, 23);
-            labelTempsReflexion.TabIndex = 4;
-            labelTempsReflexion.Text = "[5]";
-            labelTempsReflexion.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            BarreReflexion.Location = new System.Drawing.Point(292, 20);
+            BarreReflexion.Name = "BarreReflexion";
+            BarreReflexion.Size = new System.Drawing.Size(52, 16);
+            BarreReflexion.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            BarreReflexion.TabIndex = 4;
+            BarreReflexion.Visible = false;
             // 
             // ListePendule
             // 
@@ -1214,7 +1197,12 @@ namespace BrunoGUI_GenII
             Controls.Add(ListeCoupsBouton);
             Controls.Add(MontreVariantesUci);
             Controls.Add(InformationsPartie);
-            Controls.Add(groupeJoueurs);
+            Controls.Add(LabelJoueurBlanc);
+            Controls.Add(EloBlanc);
+            Controls.Add(PenduleBlanc);
+            Controls.Add(LabelJoueurNoir);
+            Controls.Add(EloNoir);
+            Controls.Add(PenduleNoir);
             Controls.Add(AnalysePosition);
             Controls.Add(VarianteMoteurUci3);
             Controls.Add(VarianteMoteurUci2);
@@ -1246,7 +1234,6 @@ namespace BrunoGUI_GenII
             ((System.ComponentModel.ISupportInitialize)Promo0).EndInit();
             kryptonStatusStrip1.ResumeLayout(false);
             kryptonStatusStrip1.PerformLayout();
-            groupeJoueurs.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)Plateau).EndInit();
             groupParcoursPartie.ResumeLayout(false);
             groupBoxTempsReflexion.ResumeLayout(false);
@@ -1293,7 +1280,6 @@ namespace BrunoGUI_GenII
         private System.Windows.Forms.RichTextBox VarianteMoteurUci2;
         private System.Windows.Forms.RichTextBox VarianteMoteurUci3;
         private System.Windows.Forms.ToolStripStatusLabel EvaluationUci;
-        private System.Windows.Forms.GroupBox groupeJoueurs;
         private System.Windows.Forms.Label LabelJoueurNoir;
         private System.Windows.Forms.Label LabelJoueurBlanc;
         private System.Windows.Forms.Label InformationsPartie;
@@ -1335,7 +1321,7 @@ namespace BrunoGUI_GenII
         private System.Windows.Forms.CheckBox ActiveBibliothèque;
         private System.Windows.Forms.CheckBox ActiveSon;
         private System.Windows.Forms.GroupBox groupBoxTempsReflexion;
-        private System.Windows.Forms.Label labelTempsReflexion;
+        private System.Windows.Forms.ProgressBar BarreReflexion;
         private Krypton.Toolkit.KryptonButton KryptonApropos;
         private System.Windows.Forms.CheckBox ActiveAléatoire;
         public System.Windows.Forms.NumericUpDown TempsReflexionSecondes;
