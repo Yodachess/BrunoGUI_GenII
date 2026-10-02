@@ -1431,7 +1431,7 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void JeuMoteurAvecBibliothèque(string chaineFen)
         {   // Coup du moteur pour la partie : bibliothèque d'ouvertures d'abord (voir _pilote.ChoixBibliotheque), sinon réflexion du moteur
-            if (_pilote.DemanderCoup(chaineFen, _dureeReflexionMilliSeconde) == ResultatDemandeCoup.CoupBibliotheque)
+            if (_pilote.DemanderCoup(chaineFen, LimiteTemps.Duree(_dureeReflexionMilliSeconde)) == ResultatDemandeCoup.CoupBibliotheque)
             {   // Coup trouvé dans la bibliothèque : il est déjà joué
                 string coupChoisiTxt = _pilote.DernierCoupBibliotheque;
                 VarianteMoteurUci1.Text = "Coup bibliothèque " + Path.GetFileName(_bibliotheque) + " exécuté par le moteur -> " + coupChoisiTxt;
