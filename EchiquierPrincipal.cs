@@ -105,7 +105,7 @@ namespace BrunoGUI_GenII
                 ListePendule.Items.Add(cadence);
             ChoisitCadence(parametres.Cadence);
             _minuteriePendule.Tick += MinuteriePendule_Tick;
-            AffichePendules();      // pas de pendule au départ : noms et Elo prennent toute la largeur
+            AffichePendules();      // pas de pendule au départ : "-:--"
             // Debug pour vérifier
             Debug.WriteLine($"Paramètres chargés : Biblio = {_bibliotheque}, Force = {_forceMoteurElo}, Nombre PV = {MoteurUci.NombreLignesPV}");
             Debug.WriteLine($"Paramètres chargés : Temps de réflexion = {_dureeReflexionMilliSeconde}");
@@ -809,19 +809,14 @@ namespace BrunoGUI_GenII
             InformationPourJoueur.Text = VarianteMoteurCourante.Text = message;
         }
         private void AffichePendules()
-        {   // Les deux pendules (masquées sans pendule) : le camp qui décompte sur fond vert, en rouge sous 10 secondes.
-            // Sans pendule, le nom de chaque camp prend la place de sa pendule (l'Elo est collé à droite du nom)
-            bool avecPendule = _pendule != null;
-            if (PenduleBlanc.Visible != avecPendule || LabelJoueurBlanc.Right + 2 != EloBlanc.Left)
+        {   // Les deux pendules, toujours affichées : "-:--" sans pendule ; le camp qui décompte sur fond vert, en rouge sous 10 secondes
+            if (_pendule == null)
             {
-                PenduleBlanc.Visible = PenduleNoir.Visible = avecPendule;
-                int largeurNom = PenduleBlanc.Right - LabelJoueurBlanc.Left - EloBlanc.Width - 2 - (avecPendule ? PenduleBlanc.Width + 2 : 0);
-                LabelJoueurBlanc.Width = LabelJoueurNoir.Width = largeurNom;
-                EloBlanc.Left = LabelJoueurBlanc.Right + 2;
-                EloNoir.Left = LabelJoueurNoir.Right + 2;
-            }
-            if (!avecPendule)
+                PenduleBlanc.Text = PenduleNoir.Text = "-:--";
+                PenduleBlanc.BackColor = PenduleNoir.ForeColor = Color.White;
+                PenduleNoir.BackColor = PenduleBlanc.ForeColor = Color.Black;
                 return;
+            }
             AffichePendule(PenduleBlanc, ColorPiece.Blanc, Color.White, Color.Black);
             AffichePendule(PenduleNoir, ColorPiece.Noir, Color.Black, Color.White);
         }
@@ -840,12 +835,17 @@ namespace BrunoGUI_GenII
         private void AfficheJoueurs(string blancs, string eloBlancs, string noirs, string eloNoirs)
         {   // Point de passage unique : les étiquettes et l'en-tête PGN de la partie sont toujours écrits ensemble.
             // Noms donnés directement (position FEN, partie PGN, en-tête saisi, humain contre humain) : le moteur n'y touche plus
-            PartieEnCours.White = LabelJoueurBlanc.Text = blancs;
-            PartieEnCours.WhiteElo = EloBlanc.Text = eloBlancs;
-            PartieEnCours.Black = LabelJoueurNoir.Text = noirs;
-            PartieEnCours.BlackElo = EloNoir.Text = eloNoirs;
+            PartieEnCours.White = blancs;
+            PartieEnCours.WhiteElo = eloBlancs;
+            PartieEnCours.Black = noirs;
+            PartieEnCours.BlackElo = eloNoirs;
+            LabelJoueurBlanc.Text = TexteJoueur(blancs, eloBlancs);
+            LabelJoueurNoir.Text = TexteJoueur(noirs, eloNoirs);
             _nomsHumainMoteur = false;
         }
+        private static string TexteJoueur(string nom, string elo) =>
+            // Une seule étiquette par camp : "[1767] Bruno" (le nom seul si l'Elo est inconnu)
+            string.IsNullOrWhiteSpace(elo) || elo.Trim() == "?" ? nom : $"[{elo.Trim()}] {nom}";
         private (string Nom, string Elo) IdentiteDe(Joueur joueur) =>
             joueur == Joueur.Moteur ? (_nomMoteur, _moteurElo) : (_nomHumain, _joueurElo);
         private void AfficheJoueursDeLaPartie()

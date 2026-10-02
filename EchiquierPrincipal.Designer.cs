@@ -91,9 +91,7 @@ namespace BrunoGUI_GenII
             VarianteMoteurUci3 = new System.Windows.Forms.RichTextBox();
             AnalysePosition = new Krypton.Toolkit.KryptonButton();
             LabelJoueurNoir = new System.Windows.Forms.Label();
-            EloNoir = new System.Windows.Forms.Label();
             LabelJoueurBlanc = new System.Windows.Forms.Label();
-            EloBlanc = new System.Windows.Forms.Label();
             PenduleBlanc = new System.Windows.Forms.Label();
             PenduleNoir = new System.Windows.Forms.Label();
             InformationsPartie = new System.Windows.Forms.Label();
@@ -674,23 +672,10 @@ namespace BrunoGUI_GenII
             LabelJoueurBlanc.ForeColor = System.Drawing.Color.Black;
             LabelJoueurBlanc.Location = new System.Drawing.Point(10, 28);
             LabelJoueurBlanc.Name = "LabelJoueurBlanc";
-            LabelJoueurBlanc.Size = new System.Drawing.Size(204, 36);
+            LabelJoueurBlanc.Size = new System.Drawing.Size(176, 36);
             LabelJoueurBlanc.TabIndex = 24;
-            LabelJoueurBlanc.Text = "Joueur Blanc";
+            LabelJoueurBlanc.Text = "[Elo] Joueur Blanc";
             LabelJoueurBlanc.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // EloBlanc
-            // 
-            EloBlanc.BackColor = System.Drawing.Color.White;
-            EloBlanc.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            EloBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
-            EloBlanc.ForeColor = System.Drawing.Color.Black;
-            EloBlanc.Location = new System.Drawing.Point(216, 28);
-            EloBlanc.Name = "EloBlanc";
-            EloBlanc.Size = new System.Drawing.Size(52, 36);
-            EloBlanc.TabIndex = 25;
-            EloBlanc.Text = "Elo";
-            EloBlanc.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // PenduleBlanc
             // 
@@ -702,9 +687,8 @@ namespace BrunoGUI_GenII
             PenduleBlanc.Name = "PenduleBlanc";
             PenduleBlanc.Size = new System.Drawing.Size(80, 36);
             PenduleBlanc.TabIndex = 26;
-            PenduleBlanc.Text = "5:00";
+            PenduleBlanc.Text = "-:--";
             PenduleBlanc.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            PenduleBlanc.Visible = false;
             // 
             // LabelJoueurNoir
             // 
@@ -714,23 +698,10 @@ namespace BrunoGUI_GenII
             LabelJoueurNoir.ForeColor = System.Drawing.Color.White;
             LabelJoueurNoir.Location = new System.Drawing.Point(270, 28);
             LabelJoueurNoir.Name = "LabelJoueurNoir";
-            LabelJoueurNoir.Size = new System.Drawing.Size(204, 36);
+            LabelJoueurNoir.Size = new System.Drawing.Size(176, 36);
             LabelJoueurNoir.TabIndex = 27;
-            LabelJoueurNoir.Text = "Joueur Noir";
+            LabelJoueurNoir.Text = "[Elo] Joueur Noir";
             LabelJoueurNoir.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // EloNoir
-            // 
-            EloNoir.BackColor = System.Drawing.Color.Black;
-            EloNoir.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            EloNoir.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
-            EloNoir.ForeColor = System.Drawing.Color.White;
-            EloNoir.Location = new System.Drawing.Point(476, 28);
-            EloNoir.Name = "EloNoir";
-            EloNoir.Size = new System.Drawing.Size(52, 36);
-            EloNoir.TabIndex = 28;
-            EloNoir.Text = "Elo";
-            EloNoir.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // PenduleNoir
             // 
@@ -742,9 +713,8 @@ namespace BrunoGUI_GenII
             PenduleNoir.Name = "PenduleNoir";
             PenduleNoir.Size = new System.Drawing.Size(80, 36);
             PenduleNoir.TabIndex = 29;
-            PenduleNoir.Text = "5:00";
+            PenduleNoir.Text = "-:--";
             PenduleNoir.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            PenduleNoir.Visible = false;
             // 
             // InformationsPartie
             // 
@@ -1198,10 +1168,8 @@ namespace BrunoGUI_GenII
             Controls.Add(MontreVariantesUci);
             Controls.Add(InformationsPartie);
             Controls.Add(LabelJoueurBlanc);
-            Controls.Add(EloBlanc);
             Controls.Add(PenduleBlanc);
             Controls.Add(LabelJoueurNoir);
-            Controls.Add(EloNoir);
             Controls.Add(PenduleNoir);
             Controls.Add(AnalysePosition);
             Controls.Add(VarianteMoteurUci3);
@@ -1293,8 +1261,6 @@ namespace BrunoGUI_GenII
         private Krypton.Toolkit.KryptonButton BoutonGainBlanc;
         private Krypton.Toolkit.KryptonButton BoutonGainNoir;
         private Krypton.Toolkit.KryptonButton BoutonNulle;
-        public System.Windows.Forms.Label EloNoir;
-        public System.Windows.Forms.Label EloBlanc;
         private Krypton.Toolkit.KryptonButton KryptonQuitter;
         private System.Windows.Forms.RichTextBox CoupsBibliothèqueBox;
         private System.Windows.Forms.ToolStripMenuItem moteursBibliothèquesToolStripMenuItem;
