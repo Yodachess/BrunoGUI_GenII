@@ -734,6 +734,33 @@ namespace BrunoGUI_GenII
             EloBlanc.Text = "Elo Blanc";
             EloBlanc.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
+            // PenduleBlanc
+            // 
+            PenduleBlanc.BackColor = System.Drawing.Color.White;
+            PenduleBlanc.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            PenduleBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            PenduleBlanc.Location = new System.Drawing.Point(171, 14);
+            PenduleBlanc.Name = "PenduleBlanc";
+            PenduleBlanc.Size = new System.Drawing.Size(85, 20);
+            PenduleBlanc.TabIndex = 4;
+            PenduleBlanc.Text = "5:00";
+            PenduleBlanc.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            PenduleBlanc.Visible = false;
+            // 
+            // PenduleNoir
+            // 
+            PenduleNoir.BackColor = System.Drawing.Color.Black;
+            PenduleNoir.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            PenduleNoir.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            PenduleNoir.ForeColor = System.Drawing.Color.White;
+            PenduleNoir.Location = new System.Drawing.Point(431, 14);
+            PenduleNoir.Name = "PenduleNoir";
+            PenduleNoir.Size = new System.Drawing.Size(85, 20);
+            PenduleNoir.TabIndex = 5;
+            PenduleNoir.Text = "5:00";
+            PenduleNoir.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            PenduleNoir.Visible = false;
+            // 
             // InformationsPartie
             // 
             InformationsPartie.BackColor = System.Drawing.Color.WhiteSmoke;
