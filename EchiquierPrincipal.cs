@@ -1379,20 +1379,21 @@ namespace BrunoGUI_GenII
         {
             if (ChargerPositionFen.ShowDialog() != DialogResult.OK)
                 return;     // annulé : la partie en cours ne change pas
-            string contenuFen;
+            string[] positions;     // une position par ligne (un fichier peut en contenir plusieurs : on charge la première)
             try
             {
-                contenuFen = File.ReadAllText(Path.GetFullPath(ChargerPositionFen.FileName)).Trim();
-                Debug.WriteLine("Contenu du fichier FEN : " + contenuFen);
+                positions = File.ReadAllLines(Path.GetFullPath(ChargerPositionFen.FileName)).Where(l => !string.IsNullOrWhiteSpace(l)).ToArray();
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("Chargement FEN : Erreur lors de la lecture du fichier : " + ex.Message);
+                KryptonMessageBox.Show("Lecture impossible : " + ex.Message, "Chargement FEN", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
                 return;
             }
-            if (!ChargementPartie.EstFenComplete(contenuFen))
-            {
-                KryptonMessageBox.Show("Ce fichier ne contient pas une position FEN complète (6 champs).", "Chargement FEN",
+            string contenuFen = positions.Length > 0 ? ChargementPartie.NormaliseFen(positions[0]) : "";
+            string erreur = ChargementPartie.ErreurFen(contenuFen);
+            if (erreur != null)
+            {   // FEN mal formée : on ne la lit pas (elle ferait planter la lecture ou donnerait une position incohérente)
+                KryptonMessageBox.Show($"Position FEN refusée : {erreur}.\n\n{contenuFen}", "Chargement FEN",
                     KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
                 return;
             }
@@ -1413,6 +1414,8 @@ namespace BrunoGUI_GenII
             InformationPourJoueur.Text = "Trait aux " + NomCamp(QuiJoue);
             PlateauEnable(true);   // On active le plateau pour pouvoir jouer à partir de la position chargée
             AfficheCoupsBibliotheque(contenuFen);
+            if (positions.Length > 1)
+                InformationsPartie.Text = $"Fichier de {positions.Length} positions : la première est chargée";
             MetAJourCommandes();
         }
         private void EnregistrerPgn_Click(object sender, EventArgs e)
@@ -1501,7 +1504,8 @@ namespace BrunoGUI_GenII
             // Rejeu des coups (depuis la balise FEN s'il y en a une) ; la partie finit en lecture seule
             ResultatChargementPgn chargement = ChargementPartie.ChargerPartiePgn(partie, _partie);
             if (chargement.FenIncomplete)
-                KryptonMessageBox.Show("La position de départ de cette partie (balise FEN) est incomplète : les coups sont joués depuis la position initiale.",
+                KryptonMessageBox.Show($"La position de départ de cette partie (balise FEN) est refusée : {ChargementPartie.ErreurFen(partie.Fen)}.\n" +
+                    "Les coups sont joués depuis la position initiale.",
                     "Partie PGN", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
             if (chargement.CoupIllisible != null)
                 KryptonMessageBox.Show($"Coup illisible ou illégal : « {chargement.CoupIllisible} » (demi-coup n° {chargement.DemiCoupsJoues + 1}).\n" +

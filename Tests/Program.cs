@@ -648,6 +648,26 @@ ResultatChargementPgn chargementFenIncomplete = ChargementPartie.ChargerPartiePg
 Verifie("PGN avec balise FEN incomplète : signalée, coups joués depuis la position initiale",
     chargementFenIncomplete.FenIncomplete && chargementFenIncomplete.DemiCoupsJoues == 2 && !partieChargee.DepuisPosition, $"{chargementFenIncomplete.DemiCoupsJoues} demi-coups");
 
+string ErreurFen(string fen) => ChargementPartie.ErreurFen(fen) ?? "aucune";
+Verifie("FEN valides acceptées (position initiale, espaces en trop, en passant)",
+    ChargementPartie.ErreurFen(L.FenDepart) == null && ChargementPartie.ErreurFen("  " + L.FenDepart.Replace(" ", "   ") + " \t") == null
+    && ChargementPartie.ErreurFen("rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3") == null,
+    ErreurFen(L.FenDepart));
+Verifie("Fichier de plusieurs positions lu d'un bloc : refusé (le plantage signalé par Bruno)",
+    ChargementPartie.ErreurFen("6k1/8/8/8/8/8/8/6K1 b - - 0 1\r\n8/7p/3Q2pk/4P3/8/6PP/pq3PK1/8 w - - 0 1") != null,
+    ErreurFen("6k1/8/8/8/8/8/8/6K1 b - - 0 1\r\n8/7p/3Q2pk/4P3/8/6PP/pq3PK1/8 w - - 0 1"));
+Verifie("FEN mal formées : refusées avec leur raison",
+    ErreurFen("8/8/8 w - - 0 1").Contains("rangée") && ErreurFen("4k3/8/8/8/8/8/8/4K2 w - - 0 1").Contains("7 case")
+    && ErreurFen("4k3/8/8/8/8/8/8/8 w - - 0 1").Contains("roi") && ErreurFen("4k3/8/8/8/8/8/8/4K3 x - - 0 1").Contains("trait")
+    && ErreurFen("4k3/8/8/8/8/8/8/4K3 w KX - 0 1").Contains("roque") && ErreurFen("4k3/8/8/8/8/8/8/4K3 w - e5 0 1").Contains("passant")
+    && ErreurFen("4k3/8/8/8/8/8/8/4K3 w - - a 1").Contains("50 coups") && ErreurFen("4k3/8/8/8/8/8/8/4K3 w - - 0 0").Contains("numéro")
+    && ErreurFen("4k2P/8/8/8/8/8/8/4K3 w - - 0 1").Contains("pion") && ErreurFen("4k3/8/8/8/8/8/8/4K3 w - - 0").Contains("5 champ")
+    && ErreurFen("4k3/8/8/8/8/8/8/4K2Z w - - 0 1").Contains("Z"),
+    ErreurFen("4k3/8/8/8/8/8/8/4K2 w - - 0 1"));
+Verifie("Position impossible : le camp qui n'a pas le trait est en échec",
+    ErreurFen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").Contains("échec") && ChargementPartie.ErreurFen("4k3/8/8/8/8/8/8/4R1K1 b - - 0 1") == null,
+    ErreurFen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1"));
+
 // Fichier PGN en Latin-1 (accents) avec une date incomplète "2024.??.??" et des annotations dans les coups
 string fichierLatin1 = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "test_brunogui_latin1.pgn");
 System.IO.File.WriteAllText(fichierLatin1,
