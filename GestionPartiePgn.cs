@@ -44,6 +44,7 @@ namespace BrunoGUI_GenII
         public string CompteDePLy { get; set; }
         public string CoupsPartiePGN { get; set; }
         public string Fen { get; set; }             // position de départ ([SetUp "1"] [FEN "..."]) ; vide : position initiale
+        public string TimeControl { get; set; }     // cadence ([TimeControl "180+2"], en secondes + bonus) ; vide : sans pendule
     }
 
     public class GestionPartiePgn
@@ -83,6 +84,8 @@ namespace BrunoGUI_GenII
             enTetePgn = "[BlackElo \"" + partieEnCours.BlackElo + "\"]\n" + enTetePgn;    // Elo Noirs
             enTetePgn = "[WhiteElo \"" + partieEnCours.WhiteElo + "\"]\n" + enTetePgn;    // Elo Blancs
             enTetePgn = "[ECO \"" + partieEnCours.ECO + "\"]\n" + enTetePgn;              // Code ECO (ouverture) de la partie
+            if (!string.IsNullOrWhiteSpace(partieEnCours.TimeControl))
+                enTetePgn = "[TimeControl \"" + partieEnCours.TimeControl + "\"]\n" + enTetePgn;   // Cadence de la pendule
             // Partie commençant à une position (chargée depuis un FEN) : balises SetUp et FEN, sinon le fichier serait illisible
             if (ListeCoups.Count > 0 && ListeCoups[0].EstPositionDeDepart)
                 enTetePgn = "[SetUp \"1\"]\n[FEN \"" + ListeCoups[0].Fen + "\"]\n" + enTetePgn;

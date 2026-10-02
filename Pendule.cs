@@ -10,7 +10,8 @@
 //  └─ Classe "Pendule"   : temps restant de chaque camp, seul le camp au trait décompte
 //              ├─ "Demarrer", "CoupJoue" (bonus ajouté, l'autre camp décompte), "Pause", "Reprendre", "Arreter"
 //              ├─ "TempsRestant", "TempsEcoule"
-//              └─ "Restaurer"  (retour arrière : temps d'avant le coup annulé)
+//              ├─ "NoteTemps"  temps restants notés dans le Coup qui vient d'être joué
+//              └─ "Restaurer", "RestaurerDepuis"  (retour arrière, "Reprendre ici" : temps notés après le dernier coup restant)
 // L'heure est donnée par une fonction (un chronomètre dans l'application, un temps simulé dans les tests) :
 // la pendule calcule le temps écoulé, elle ne compte pas les tics d'une minuterie.
 
@@ -133,6 +134,25 @@ namespace BrunoGUI_GenII
             CampQuiDecompte = auTrait;
             EnPause = false;
             _debutDecompte = _maintenant();
+        }
+
+        public void NoteTemps(Coup coup)
+        {   // Le coup vient d'être joué (et la pendule de changer de camp) : on y note les temps restants des deux camps
+            coup.TempsBlancs = TempsRestant(ColorPiece.Blanc);
+            coup.TempsNoirs = TempsRestant(ColorPiece.Noir);
+        }
+
+        public void RestaurerDepuis(System.Collections.Generic.IReadOnlyList<Coup> coups, ColorPiece auTrait)
+        {   // Retour arrière ou "Reprendre ici" : la pendule reprend les temps notés après le dernier coup restant.
+            // Aucun coup joué (ou coups joués sans pendule) : temps complets, et elle ne repart qu'au prochain coup
+            Coup dernier = null;
+            for (int i = coups.Count - 1; i >= 0 && dernier == null; i--)
+                if (!coups[i].EstPositionDeDepart)
+                    dernier = coups[i];
+            if (dernier?.TempsBlancs is TimeSpan blancs && dernier.TempsNoirs is TimeSpan noirs)
+                Restaurer(blancs, noirs, auTrait);
+            else
+                Restaurer(Cadence.TempsInitial, Cadence.TempsInitial, null);
         }
 
         private void Fige()

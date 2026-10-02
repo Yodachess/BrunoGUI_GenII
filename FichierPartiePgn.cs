@@ -209,6 +209,9 @@ namespace BrunoGUI_GenII
                     case "FEN":         // partie qui commence à une position (avec [SetUp "1"])
                         PartiePGN.Fen = ValeurBalise;
                         break;
+                    case "TimeControl": // cadence de la pendule (ex : "180+2")
+                        PartiePGN.TimeControl = ValeurBalise;
+                        break;
                     default:
                         break;
                 }   // On se limite aux balises obligatoires + ECO + ELO + CompteDePLy, il en existe beaucoup d'autres

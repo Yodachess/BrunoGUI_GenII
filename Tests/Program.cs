@@ -852,6 +852,32 @@ Verifie("Affichage du temps",
     && Pendule.Texte(S(20)) == "0:20" && Pendule.Texte(S(-1)) == "0:00.0",
     $"{Pendule.Texte(S(297))} {Pendule.Texte(S(3723))} {Pendule.Texte(S(9.47))} {Pendule.Texte(S(20))}");
 
+var penduleCoups = new Pendule(Cadence.Minutes(3, 2), () => horloge);
+penduleCoups.Demarrer(L.ColorPiece.Noir);
+horloge += S(8);
+Coup coupNote = new();
+penduleCoups.NoteTemps(coupNote);
+Verifie("Temps notés dans le coup joué", coupNote.TempsBlancs == S(180) && coupNote.TempsNoirs == S(172), $"{coupNote.TempsBlancs} / {coupNote.TempsNoirs}");
+List<Coup> coupsJoues = [new() { TempsBlancs = S(180), TempsNoirs = S(180) }, new() { TempsBlancs = S(150), TempsNoirs = S(172) }];
+penduleCoups.RestaurerDepuis(coupsJoues, L.ColorPiece.Blanc);
+horloge += S(1);
+Verifie("Retour arrière : temps notés après le dernier coup restant, le camp au trait décompte",
+    penduleCoups.TempsRestant(L.ColorPiece.Blanc) == S(149) && penduleCoups.TempsRestant(L.ColorPiece.Noir) == S(172) && penduleCoups.CampQuiDecompte == L.ColorPiece.Blanc,
+    $"{penduleCoups.TempsRestant(L.ColorPiece.Blanc)} / {penduleCoups.TempsRestant(L.ColorPiece.Noir)}");
+penduleCoups.RestaurerDepuis([Coup.PositionDeDepart(L.FenDepart)], L.ColorPiece.Blanc);
+Verifie("Retour au début (aucun coup) : temps complets, pendule arrêtée jusqu'au prochain coup",
+    penduleCoups.TempsRestant(L.ColorPiece.Blanc) == S(180) && penduleCoups.TempsRestant(L.ColorPiece.Noir) == S(180) && penduleCoups.CampQuiDecompte == null, "");
+penduleCoups.RestaurerDepuis([new Coup()], L.ColorPiece.Noir);
+Verifie("Coups joués sans pendule (partie PGN reprise) : temps complets, pendule arrêtée",
+    penduleCoups.TempsRestant(L.ColorPiece.Noir) == S(180) && penduleCoups.CampQuiDecompte == null, "");
+
+var pgnPendule = new PartieEchecsPGN { Result = "*", TimeControl = "180+2" };
+string entetePendule = GestionPartiePgn.RetourneEntetePgn(pgnPendule);
+Verifie("PGN : balise TimeControl écrite avec une pendule, absente sans, et relue",
+    entetePendule.Contains("[TimeControl \"180+2\"]") && !GestionPartiePgn.RetourneEntetePgn(new PartieEchecsPGN { Result = "*" }).Contains("TimeControl")
+    && FichierPartiePgn.DecodePartiePGN("[Event \"x\"]\n[TimeControl \"300+3\"]\n\n1. e4 *").TimeControl == "300+3",
+    entetePendule.Replace("\n", " "));
+
 bool PeutMaterDans(string fen, L.ColorPiece camp) { Charger(fen); return L.PeutMater(camp); }
 Verifie("Temps écoulé : l'adversaire a-t-il de quoi mater ?",
     !PeutMaterDans("4k3/8/8/8/8/8/8/4K3 w - - 0 1", L.ColorPiece.Blanc)
