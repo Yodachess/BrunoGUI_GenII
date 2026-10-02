@@ -1472,8 +1472,8 @@ namespace BrunoGUI_GenII
                                 InformationPourJoueur.Text = "La partie est ajoutée dans le fichier " + Path.GetFileName(cheminPgn);
                             }
                             else if (resultat == DialogResult.Cancel)
-                            {   // Affiche la nouvelle partie
-                                KryptonMessageBox.Show($"Fichier PGN :\n {contenuPgn}", "Affichage fichier PGN", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                            {   // Affiche la nouvelle partie (sans les temps de la pendule : ils ne vont que dans le fichier)
+                                KryptonMessageBox.Show($"Fichier PGN :\n {GestionPartiePgn.RetourneContenuPgn(PartieEnCours, "Intl")}", "Affichage fichier PGN", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                             }
                         }
                         else
