@@ -513,7 +513,9 @@ namespace BrunoGUI_GenII
                 return;
             }
             PartieEnCours.CompteDePLy = LogiqueMouvements.ListeCoupsFen.Count.ToString();
-            if (_pendule != null && !_pendule.CoupJoue() && _pendule.TempsEcoule() is ColorPiece campSansTemps)
+            if (_pendule?.CampQuiDecompte == null)
+                _pendule?.Demarrer(QuiJoue);    // premier coup de la partie : la pendule part pour l'adversaire (rien n'est décompté avant)
+            else if (!_pendule.CoupJoue() && _pendule.TempsEcoule() is ColorPiece campSansTemps)
             {   // Coup joué alors que le temps était déjà écoulé (entre deux tics de la minuterie) : la partie est perdue au temps
                 PerteAuTemps(campSansTemps);
                 return;
@@ -767,9 +769,9 @@ namespace BrunoGUI_GenII
             InformationsPartie.Text = "Pendule " + cadence.Nom + " : à la prochaine partie";
         }
         private void NouvellePendule()
-        {   // Début d'une partie : pendule de la cadence choisie, le camp au trait commence à décompter
+        {   // Début d'une partie : pendule de la cadence choisie, temps complets affichés. Elle ne démarre qu'au premier coup
+            // (voir CoupJoue), comme sur les serveurs : on peut regarder la position avant que le temps file
             _pendule = _cadence.EstSansPendule ? null : new Pendule(_cadence, () => _chrono.Elapsed);
-            _pendule?.Demarrer(QuiJoue);
             if (_pendule != null)
                 _minuteriePendule.Start();
             else
@@ -1414,8 +1416,10 @@ namespace BrunoGUI_GenII
             InformationPourJoueur.Text = "Trait aux " + NomCamp(QuiJoue);
             PlateauEnable(true);   // On active le plateau pour pouvoir jouer à partir de la position chargée
             AfficheCoupsBibliotheque(contenuFen);
-            if (positions.Length > 1)
-                InformationsPartie.Text = $"Fichier de {positions.Length} positions : la première est chargée";
+            // Le cadre vert est court : les détails du chargement vont dans les lignes de variantes 2 et 3 (inutilisées à ce moment)
+            InformationsPartie.Text = "Position chargée";
+            VarianteMoteurUci2.Text = positions.Length > 1 ? $"   Fichier de {positions.Length} positions : la première est chargée" : "...";
+            VarianteMoteurUci3.Text = _pendule != null ? $"   Pendule {_pendule.Cadence.Nom} : elle démarre au premier coup" : "...";
             MetAJourCommandes();
         }
         private void EnregistrerPgn_Click(object sender, EventArgs e)
