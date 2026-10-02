@@ -759,6 +759,70 @@ Verifie("Variante avec promotion : la pièce est conservée", promo.VariantePgn.
 suiviAnalyse.Reinitialiser();
 Verifie("Nouvelle demande : plus de variante mémorisée", suiviAnalyse.Meilleure == null, "null");
 
+// ═══════════════ Pendule ═══════════════
+Console.WriteLine("── Pendule ──");
+
+Verifie("Cadence : nom, balise TimeControl et relecture",
+    Cadence.Minutes(5, 3).Nom == "5 min + 3 s" && Cadence.Minutes(30).Nom == "30 min" && Cadence.SansPendule.Nom == "Sans pendule"
+    && Cadence.Minutes(5, 3).TimeControl == "300+3" && Cadence.Minutes(30).TimeControl == "1800" && Cadence.SansPendule.TimeControl == "-"
+    && Cadence.Lire("300+3") == Cadence.Minutes(5, 3) && Cadence.Lire("1800") == Cadence.Minutes(30),
+    $"{Cadence.Minutes(5, 3).Nom} / {Cadence.Minutes(5, 3).TimeControl}");
+Verifie("Cadence illisible : sans pendule",
+    Cadence.Lire("-").EstSansPendule && Cadence.Lire("").EstSansPendule && Cadence.Lire(null).EstSansPendule
+    && Cadence.Lire("abc").EstSansPendule && Cadence.Lire("300+x").EstSansPendule && Cadence.Lire("0").EstSansPendule, "");
+Verifie("Cadences proposées : sans pendule en premier, toutes relues à l'identique",
+    Cadence.Proposees[0].EstSansPendule && Cadence.Proposees.All(c => Cadence.Lire(c.TimeControl) == c),
+    string.Join(", ", Cadence.Proposees.Select(c => c.TimeControl)));
+
+TimeSpan horloge = TimeSpan.Zero;       // temps simulé : on l'avance à la main
+TimeSpan S(double secondes) => TimeSpan.FromSeconds(secondes);
+var pendule = new Pendule(Cadence.Minutes(5, 3), () => horloge);
+Verifie("Pendule non démarrée : rien ne décompte",
+    pendule.CampQuiDecompte == null && !pendule.Tourne && (horloge += S(10)) > S(0) && pendule.TempsRestant(L.ColorPiece.Blanc) == S(300), "");
+pendule.Demarrer(L.ColorPiece.Blanc);
+horloge += S(12);
+Verifie("Seul le camp au trait décompte",
+    pendule.TempsRestant(L.ColorPiece.Blanc) == S(288) && pendule.TempsRestant(L.ColorPiece.Noir) == S(300),
+    $"{pendule.TempsRestant(L.ColorPiece.Blanc)} / {pendule.TempsRestant(L.ColorPiece.Noir)}");
+bool coupAccepte = pendule.CoupJoue();
+horloge += S(20);
+Verifie("Coup joué : bonus ajouté, l'adversaire décompte",
+    coupAccepte && pendule.CampQuiDecompte == L.ColorPiece.Noir && pendule.TempsRestant(L.ColorPiece.Blanc) == S(291) && pendule.TempsRestant(L.ColorPiece.Noir) == S(280),
+    $"{pendule.TempsRestant(L.ColorPiece.Blanc)} / {pendule.TempsRestant(L.ColorPiece.Noir)}");
+pendule.Pause();
+horloge += S(100);
+Verifie("Pause : le temps ne décompte plus", pendule.EnPause && pendule.TempsRestant(L.ColorPiece.Noir) == S(280), $"{pendule.TempsRestant(L.ColorPiece.Noir)}");
+pendule.Reprendre();
+horloge += S(5);
+Verifie("Reprise : le décompte repart d'où il était", !pendule.EnPause && pendule.TempsRestant(L.ColorPiece.Noir) == S(275), $"{pendule.TempsRestant(L.ColorPiece.Noir)}");
+horloge += S(300);
+Verifie("Temps écoulé : le camp qui décompte est signalé, sans temps négatif",
+    pendule.TempsEcoule() == L.ColorPiece.Noir && pendule.TempsRestant(L.ColorPiece.Noir) == TimeSpan.Zero, $"{pendule.TempsEcoule()}");
+Verifie("Coup joué après la chute du drapeau : refusé, rien ne change",
+    !pendule.CoupJoue() && pendule.CampQuiDecompte == L.ColorPiece.Noir && pendule.TempsRestant(L.ColorPiece.Blanc) == S(291), "");
+pendule.Restaurer(S(291), S(280), L.ColorPiece.Noir);
+horloge += S(1);
+Verifie("Retour arrière : temps d'avant le coup, le camp au trait décompte",
+    pendule.TempsRestant(L.ColorPiece.Noir) == S(279) && pendule.TempsRestant(L.ColorPiece.Blanc) == S(291) && pendule.TempsEcoule() == null, $"{pendule.TempsRestant(L.ColorPiece.Noir)}");
+pendule.Arreter();
+horloge += S(60);
+Verifie("Pendule arrêtée (fin de partie) : temps figés",
+    pendule.CampQuiDecompte == null && pendule.TempsRestant(L.ColorPiece.Noir) == S(279) && !pendule.CoupJoue(), "");
+Verifie("Affichage du temps",
+    Pendule.Texte(S(297)) == "4:57" && Pendule.Texte(S(3723)) == "1:02:03" && Pendule.Texte(S(9.47)) == "0:09.4"
+    && Pendule.Texte(S(20)) == "0:20" && Pendule.Texte(S(-1)) == "0:00.0",
+    $"{Pendule.Texte(S(297))} {Pendule.Texte(S(3723))} {Pendule.Texte(S(9.47))} {Pendule.Texte(S(20))}");
+
+bool PeutMaterDans(string fen, L.ColorPiece camp) { Charger(fen); return L.PeutMater(camp); }
+Verifie("Temps écoulé : l'adversaire a-t-il de quoi mater ?",
+    !PeutMaterDans("4k3/8/8/8/8/8/8/4K3 w - - 0 1", L.ColorPiece.Blanc)
+    && !PeutMaterDans("4k3/8/8/8/8/8/8/2B1K3 w - - 0 1", L.ColorPiece.Blanc)
+    && !PeutMaterDans("4k3/8/8/8/8/8/8/1N2K3 w - - 0 1", L.ColorPiece.Blanc)
+    && PeutMaterDans("4k3/8/8/8/8/8/8/1N2KN2 w - - 0 1", L.ColorPiece.Blanc)
+    && PeutMaterDans("4k3/8/8/8/8/8/4P3/4K3 w - - 0 1", L.ColorPiece.Blanc)
+    && PeutMaterDans("4k3/8/8/8/8/8/8/R3K3 w - - 0 1", L.ColorPiece.Blanc)
+    && !PeutMaterDans("4k3/8/8/8/8/8/8/R3K3 w - - 0 1", L.ColorPiece.Noir), "roi seul, roi + fou, roi + cavalier : pas de mat");
+
 // ═══════════════ Perft ═══════════════
 Console.WriteLine("── Perft ──");
 

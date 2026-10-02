@@ -677,9 +677,35 @@ namespace BrunoGUI_GenII
             return cavaliers == 0 && (fousCasesClaires == 0 || fousCasesSombres == 0);
         }
 
+        public static bool PeutMater(ColorPiece camp)
+        {   // Le camp a-t-il de quoi mater ? (pendule : si l'adversaire dépasse son temps, il perd, sauf si ce camp ne peut
+            // pas mater : nulle). Règle simplifiée des serveurs en ligne : roi seul, ou roi et un seul fou ou cavalier = pas de mat
+            int piecesLegeres = 0;
+            for (int i = 21; i <= 98; i++)
+            {
+                if (CouleurCase(i) != camp)
+                    continue;
+                switch (PiecesEchiquier[i])
+                {
+                    case TypePiece.RoiBlanc:
+                    case TypePiece.RoiNoir:
+                        break;
+                    case TypePiece.CavalierBlanc:
+                    case TypePiece.CavalierNoir:
+                    case TypePiece.FouBlanc:
+                    case TypePiece.FouNoir:
+                        piecesLegeres++;
+                        break;
+                    default:
+                        return true;    // pion, tour ou dame
+                }
+            }
+            return piecesLegeres >= 2;
+        }
+
         public static string RaisonNulle()
         {   // Après un coup : raison de la nulle automatique, ou null si la partie continue.
-            // Le mat et le pat du dernier coup sont signalés par leurs propres événements (AfficheEchecEtMat, AfficheInfoEchec).
+            // Le mat et le pat du dernier coup sont signalés par leurs propres événements (AfficheEchecEtMat, AffichePat).
             if (DernierCoupTerminePartie)
                 return null;
             if (TripleRepetition())
