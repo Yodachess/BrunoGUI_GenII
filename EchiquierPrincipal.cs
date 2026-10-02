@@ -1088,7 +1088,10 @@ namespace BrunoGUI_GenII
             //                (affichage de l'échiquier, chargement FEN/PGN et bibliothèque sortis et testés), fenêtre du protocole
             //                plus rapide, mise à jour de Stockfish simplifiée (ARM), promotion passée en paramètre, couleurs typées,
             //                noms et Elo des joueurs affichés en un seul endroit (Elo au bon camp), MoteurUci sans statique
-            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.10\n--  Bruno COURTOIS  -- " +
+            // Version 1.11 = pendule (cadences 3+2 à 30 min, temps du moteur en go wtime/btime, perte au temps, retour arrière et
+            //                "Reprendre ici" avec les temps, balise TimeControl et %clk dans le PGN enregistré), joueurs « [Elo] Nom »
+            //                sans cadre, barre de réflexion, contrôle complet des FEN (plus de plantage), promotion en paramètre
+            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.11\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", "A propos de",
                 KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
         }
