@@ -783,7 +783,7 @@ namespace BrunoGUI_GenII
                 AbandonneReflexion();   // le moteur s'arrête de réfléchir (sinon il jouerait pendant la pause) ; il recommencera à la reprise
                 _pendule.Pause();
                 _pauseJoueur = true;
-                InformationsPartie.Text = "Pause : clic sur une pendule pour reprendre";
+                InformationsPartie.Text = "En pause (clic pour reprendre)";     // le cadre vert est court : ~30 caractères
                 MetAJourCommandes();
             }
             AffichePendules();
