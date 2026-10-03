@@ -29,15 +29,22 @@ namespace BrunoGUI_GenII
         public TimeSpan TempsBlancs { get; private init; }          // pendule : temps restant de chaque camp et bonus par coup
         public TimeSpan TempsNoirs { get; private init; }
         public TimeSpan Increment { get; private init; }
+        public int? CoupsAvantControle { get; private init; }       // cadence à deux périodes : coups à jouer avant le contrôle ("movestogo")
 
         public static LimiteTemps Duree(int dureeMilliSecondes) =>
             // Au moins 1 s : "go movetime 0" ferait réfléchir certains moteurs (Stockfish) sans fin
             new() { DureeMilliSecondes = Math.Max(1000, dureeMilliSecondes) };
         public static readonly LimiteTemps SansLimite = new() { Infinie = true };
-        public static LimiteTemps ParPendule(TimeSpan tempsBlancs, TimeSpan tempsNoirs, TimeSpan increment) =>
-            new() { TempsBlancs = tempsBlancs, TempsNoirs = tempsNoirs, Increment = increment };
-        public static LimiteTemps DepuisPendule(Pendule pendule) =>
-            ParPendule(pendule.TempsRestant(ColorPiece.Blanc), pendule.TempsRestant(ColorPiece.Noir), pendule.Cadence.Increment);
+        public static LimiteTemps ParPendule(TimeSpan tempsBlancs, TimeSpan tempsNoirs, TimeSpan increment, int? coupsAvantControle = null) =>
+            new() { TempsBlancs = tempsBlancs, TempsNoirs = tempsNoirs, Increment = increment, CoupsAvantControle = coupsAvantControle };
+        public static LimiteTemps DepuisPendule(Pendule pendule, int numeroDuCoupAJouer = 0)
+        {   // Temps restants de la pendule ; avant le contrôle d'une cadence à deux périodes, le nombre de coups qui restent
+            // (sinon le moteur répartirait tout son temps restant jusqu'à la fin de la partie, sans savoir qu'il en recevra)
+            Cadence cadence = pendule.Cadence;
+            int? coupsAvantControle = cadence.ADeuxPeriodes && numeroDuCoupAJouer >= 1 && numeroDuCoupAJouer <= cadence.CoupsControle
+                ? cadence.CoupsControle - numeroDuCoupAJouer + 1 : null;
+            return ParPendule(pendule.TempsRestant(ColorPiece.Blanc), pendule.TempsRestant(ColorPiece.Noir), cadence.Increment, coupsAvantControle);
+        }
 
         public string CommandeGo
         {   // Commande UCI (temps en millisecondes ; jamais 0 avec une pendule : le moteur jouerait sans réfléchir du tout)
@@ -48,7 +55,8 @@ namespace BrunoGUI_GenII
                 if (DureeMilliSecondes is int duree)
                     return "go movetime " + duree;
                 static long Ms(TimeSpan temps) => Math.Max(1, (long)temps.TotalMilliseconds);
-                return $"go wtime {Ms(TempsBlancs)} btime {Ms(TempsNoirs)} winc {(long)Increment.TotalMilliseconds} binc {(long)Increment.TotalMilliseconds}";
+                return $"go wtime {Ms(TempsBlancs)} btime {Ms(TempsNoirs)} winc {(long)Increment.TotalMilliseconds} binc {(long)Increment.TotalMilliseconds}"
+                    + (CoupsAvantControle is int coups ? $" movestogo {coups}" : "");
             }
         }
     }

@@ -524,7 +524,7 @@ namespace BrunoGUI_GenII
             PartieEnCours.CompteDePLy = LogiqueMouvements.ListeCoupsFen.Count.ToString();
             if (_pendule?.CampQuiDecompte == null)
                 _pendule?.Demarrer(QuiJoue);    // premier coup de la partie : la pendule part pour l'adversaire (rien n'est décompté avant)
-            else if (!_pendule.CoupJoue() && _pendule.TempsEcoule() is ColorPiece campSansTemps)
+            else if (!_pendule.CoupJoue(LogiqueMouvements.ListeCoups[^1].NumeroDuCoup) && _pendule.TempsEcoule() is ColorPiece campSansTemps)
             {   // Coup joué alors que le temps était déjà écoulé (entre deux tics de la minuterie) : la partie est perdue au temps
                 PerteAuTemps(campSansTemps);
                 return;
@@ -765,6 +765,7 @@ namespace BrunoGUI_GenII
         private readonly System.Windows.Forms.Timer _minuteriePendule = new() { Interval = 100 };   // affichage et chute du drapeau
 
         private bool _pauseJoueur;      // pause demandée par un clic sur une pendule (à distinguer de la pause pendant une analyse)
+        private Font _policePendule, _policePenduleLongue;     // police des pendules, et plus petite pour les temps d'une heure ou plus
 
         private void Pendule_Click(object sender, EventArgs e)
         {   // Un clic sur l'une des deux pendules met la partie en pause, un autre la reprend (comme le bouton d'une vraie pendule).
@@ -863,6 +864,8 @@ namespace BrunoGUI_GenII
             PenduleBlanc.Cursor = PenduleNoir.Cursor = _pendule != null ? Cursors.Hand : Cursors.Default;   // cliquables : pause / reprise
             if (_pendule == null)
             {
+                if (_policePendule != null)
+                    PenduleBlanc.Font = PenduleNoir.Font = _policePendule;
                 PenduleBlanc.Text = PenduleNoir.Text = "-:--";
                 PenduleBlanc.BackColor = PenduleNoir.ForeColor = Color.White;
                 PenduleNoir.BackColor = PenduleBlanc.ForeColor = Color.Black;
@@ -876,6 +879,12 @@ namespace BrunoGUI_GenII
             TimeSpan restant = _pendule.TempsRestant(camp);
             bool decompte = _pendule.Tourne && _pendule.CampQuiDecompte == camp;
             affichage.Text = Pendule.Texte(restant);
+            // "1:30:00" (cadence FIDE) ne tient pas dans la pendule en police normale : police plus petite au-delà d'une heure
+            _policePendule ??= affichage.Font;
+            _policePenduleLongue ??= new Font(_policePendule.FontFamily, 10F, FontStyle.Bold);
+            Font police = restant >= TimeSpan.FromHours(1) ? _policePenduleLongue : _policePendule;
+            if (affichage.Font != police)
+                affichage.Font = police;
             affichage.BackColor = _pauseJoueur ? Color.Silver : decompte ? Color.LightGreen : fond;     // gris : partie en pause
             affichage.ForeColor = restant < TimeSpan.FromSeconds(10) ? Color.Red : decompte ? Color.Black : texte;
         }
@@ -1623,7 +1632,9 @@ namespace BrunoGUI_GenII
         private void JeuMoteurAvecBibliothèque(string chaineFen)
         {   // Coup du moteur pour la partie : bibliothèque d'ouvertures d'abord (voir _pilote.ChoixBibliotheque), sinon réflexion du moteur
             // Avec une pendule, le moteur reçoit les temps restants et gère son temps ; sinon, un temps fixe par coup
-            LimiteTemps limite = _pendule != null ? LimiteTemps.DepuisPendule(_pendule) : LimiteTemps.Duree(_dureeReflexionMilliSeconde);
+            // (numéro du coup à jouer : pour une cadence à deux périodes, le moteur sait combien de coups restent avant le contrôle)
+            LimiteTemps limite = _pendule != null ? LimiteTemps.DepuisPendule(_pendule, (int)Math.Truncate(LogiqueMouvements.NombreCoupsJoues))
+                                                  : LimiteTemps.Duree(_dureeReflexionMilliSeconde);
             if (_pilote.DemanderCoup(chaineFen, limite) == ResultatDemandeCoup.CoupBibliotheque)
             {   // Coup trouvé dans la bibliothèque : il est déjà joué
                 string coupChoisiTxt = _pilote.DernierCoupBibliotheque;

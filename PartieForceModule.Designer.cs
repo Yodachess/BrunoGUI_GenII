@@ -277,7 +277,7 @@ namespace BrunoGUI_GenII
             // ListePendule
             // 
             ListePendule.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            ListePendule.DropDownWidth = 160;
+            ListePendule.DropDownWidth = 200;
             ListePendule.Location = new System.Drawing.Point(169, 0);
             ListePendule.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             ListePendule.Name = "ListePendule";

@@ -837,6 +837,12 @@ Verifie("Cadences proposées : sans pendule en premier, toutes relues à l'ident
     Cadence.Proposees[0].EstSansPendule && Cadence.Proposees.All(c => Cadence.Lire(c.TimeControl) == c),
     string.Join(", ", Cadence.Proposees.Select(c => c.TimeControl)));
 
+Verifie("Cadence FIDE : nom, balise TimeControl et relecture",
+    Cadence.Fide.Nom == "90 + 30 min (+30 s) FIDE" && Cadence.Fide.TimeControl == "40/5400+30:1800+30" && Cadence.Lire("40/5400+30:1800+30") == Cadence.Fide
+    && Cadence.Lire("40/7200").TempsAjoute == TimeSpan.FromHours(2) && Cadence.Lire("40/x").EstSansPendule && Cadence.Lire("1:2:3").EstSansPendule
+    && Cadence.Lire("300:60").EstSansPendule,
+    $"{Cadence.Fide.Nom} / {Cadence.Fide.TimeControl}");
+
 TimeSpan horloge = TimeSpan.Zero;       // temps simulé : on l'avance à la main
 TimeSpan S(double secondes) => TimeSpan.FromSeconds(secondes);
 var pendule = new Pendule(Cadence.Minutes(5, 3), () => horloge);
@@ -875,6 +881,24 @@ Verifie("Affichage du temps",
     Pendule.Texte(S(297)) == "4:57" && Pendule.Texte(S(3723)) == "1:02:03" && Pendule.Texte(S(9.47)) == "0:09.4"
     && Pendule.Texte(S(20)) == "0:20" && Pendule.Texte(S(-1)) == "0:00.0",
     $"{Pendule.Texte(S(297))} {Pendule.Texte(S(3723))} {Pendule.Texte(S(9.47))} {Pendule.Texte(S(20))}");
+
+var penduleFide = new Pendule(Cadence.Fide, () => horloge);
+penduleFide.Demarrer(L.ColorPiece.Blanc);
+horloge += S(60);
+penduleFide.CoupJoue(39);
+horloge += S(60);
+penduleFide.CoupJoue(39);
+horloge += S(60);
+penduleFide.CoupJoue(40);
+Verifie("Cadence FIDE : +30 s par coup, et +30 min au 40e coup seulement",
+    penduleFide.TempsRestant(L.ColorPiece.Blanc) == S(5400 - 120 + 30 + 30 + 1800) && penduleFide.TempsRestant(L.ColorPiece.Noir) == S(5400 - 60 + 30),
+    $"{penduleFide.TempsRestant(L.ColorPiece.Blanc)} / {penduleFide.TempsRestant(L.ColorPiece.Noir)}");
+Verifie("Cadence FIDE : le moteur sait combien de coups restent avant le contrôle (movestogo)",
+    LimiteTemps.DepuisPendule(penduleFide, 38).CommandeGo.EndsWith(" movestogo 3") && LimiteTemps.DepuisPendule(penduleFide, 40).CommandeGo.EndsWith(" movestogo 1")
+    && !LimiteTemps.DepuisPendule(penduleFide, 41).CommandeGo.Contains("movestogo")
+    && !LimiteTemps.DepuisPendule(new Pendule(Cadence.Minutes(3, 2), () => horloge), 10).CommandeGo.Contains("movestogo"),
+    LimiteTemps.DepuisPendule(penduleFide, 38).CommandeGo);
+Verifie("Affichage d'un temps d'une heure ou plus", Pendule.Texte(S(5400)) == "1:30:00", Pendule.Texte(S(5400)));
 
 var penduleCoups = new Pendule(Cadence.Minutes(3, 2), () => horloge);
 penduleCoups.Demarrer(L.ColorPiece.Noir);
