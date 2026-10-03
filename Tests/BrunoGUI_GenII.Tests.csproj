@@ -9,4 +9,8 @@
   <ItemGroup>
     <ProjectReference Include="..\BrunoGUI_GenII.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Parties réelles annotées (Fritz, ChessBase) : lues comme par l'application -->
+    <None Update="PartiesAnnotees.pgn" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

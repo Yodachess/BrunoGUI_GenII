@@ -109,18 +109,33 @@ namespace BrunoGUI_GenII
             };
         }
         public static string LireTextePgn(string fichierPgn)
-        {   // Beaucoup de fichiers PGN sont en Latin-1 (ISO-8859-1), pas en UTF-8 : on essaie l'UTF-8 strict (avec ou sans BOM),
-            // et si le fichier n'est pas de l'UTF-8 valide, on le relit en Latin-1 (sinon les accents deviendraient "�")
-            byte[] octets = File.ReadAllBytes(fichierPgn);
-            try
+        {   // Beaucoup de fichiers PGN sont en Latin-1 (ISO-8859-1), pas en UTF-8, et certains mélangent les deux (parties de
+            // plusieurs logiciels mises bout à bout). Chaque LIGNE est donc lue en UTF-8 strict si elle en est, sinon en Latin-1 :
+            // relire tout le fichier en Latin-1 pour quelques lignes abîmerait les accents de toutes les autres ("Ã©"), et ferait
+            // de la marque UTF-8 du début (BOM) un faux premier coup "ï»¿". Les marques UTF-8 (BOM) sont retirées partout
+            return DecodeLignes(File.ReadAllBytes(fichierPgn));
+        }
+        public static string DecodeLignes(byte[] octets)
+        {
+            UTF8Encoding utf8Strict = new(false, true);
+            StringBuilder texte = new();
+            int debut = 0;
+            for (int i = 0; i <= octets.Length; i++)
             {
-                string texte = new UTF8Encoding(false, true).GetString(octets);
-                return texte.Length > 0 && texte[0] == '﻿' ? texte[1..] : texte;
+                if (i < octets.Length && octets[i] != '\n')
+                    continue;
+                int longueur = i - debut + (i < octets.Length ? 1 : 0);     // la ligne avec son "\n"
+                try
+                {
+                    texte.Append(utf8Strict.GetString(octets, debut, longueur));
+                }
+                catch (DecoderFallbackException)
+                {
+                    texte.Append(Encoding.Latin1.GetString(octets, debut, longueur));
+                }
+                debut = i + 1;
             }
-            catch (DecoderFallbackException)
-            {
-                return Encoding.Latin1.GetString(octets);
-            }
+            return texte.Replace("﻿", "").ToString();
         }
         public static List<string> DecodeFichierPGN(string fichierPgn)
         {   // --- On découpe le fichier PGN pour obtenir la liste des parties contenues dans le fichier. ---
