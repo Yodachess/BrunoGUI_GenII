@@ -45,6 +45,7 @@ namespace BrunoGUI_GenII
         public string CoupsPartiePGN { get; set; }
         public string Fen { get; set; }             // position de départ ([SetUp "1"] [FEN "..."]) ; vide : position initiale
         public string TimeControl { get; set; }     // cadence ([TimeControl "180+2"], en secondes + bonus) ; vide : sans pendule
+        public List<TimeSpan?> TempsCoups { get; set; } = [];  // temps de pendule après chaque coup ({[%clk h:mm:ss]}), dans l'ordre ; null : inconnu
     }
 
     public class GestionPartiePgn

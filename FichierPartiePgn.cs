@@ -40,12 +40,17 @@ namespace BrunoGUI_GenII
             Commentaire,
             Variante
         }
-        public static string ExtraireCoups(string pgn)
+        public const string MarqueTemps = "%clk=";     // garderTemps : "{[%clk 0:02:51]}" devient le mot "%clk=0:02:51"
+
+        public static string ExtraireCoups(string pgn, bool garderTemps = false)
         {   // Cette méthode parcourt le PGN caractère par caractère et utilise une machine à états
             // pour déterminer si elle se trouve dans les en-têtes, les coups, les commentaires ou les variantes.
             // Les variantes peuvent être imbriquées "( ... ( ... ) ... )" : on compte la profondeur, sinon la fin d'une variante
-            // intérieure ferait reprendre la variante extérieure comme si c'étaient des coups de la partie
+            // intérieure ferait reprendre la variante extérieure comme si c'étaient des coups de la partie.
+            // garderTemps : le temps de pendule d'un commentaire de la partie principale ([%clk h:mm:ss]) est gardé sous la forme
+            // d'un mot "%clk=h:mm:ss", placé juste après son coup (les autres commentaires disparaissent)
             StringBuilder sb = new();
+            StringBuilder commentaire = new();
             bool dansCommentaire = false;       // { ... }
             bool dansCommentaireLigne = false;  // ; ... jusqu'à la fin de la ligne
             int profondeurVariante = 0;
@@ -54,7 +59,16 @@ namespace BrunoGUI_GenII
                 char c = pgn[i];
                 if (dansCommentaire)
                 {
-                    if (c == '}') dansCommentaire = false;
+                    if (c != '}')
+                    {
+                        commentaire.Append(c);
+                        continue;
+                    }
+                    dansCommentaire = false;
+                    Match temps = Regex.Match(commentaire.ToString(), @"%clk\s+(\d+:\d{1,2}:\d{1,2}(?:\.\d+)?)");
+                    if (garderTemps && profondeurVariante == 0 && temps.Success)
+                        sb.Append(' ').Append(MarqueTemps).Append(temps.Groups[1].Value).Append(' ');
+                    commentaire.Clear();
                     continue;
                 }
                 if (dansCommentaireLigne)
@@ -218,7 +232,7 @@ namespace BrunoGUI_GenII
             }
 
             // --- EXTRACTION PROPRE VIA STATE MACHINE ---
-            string sectionCoups = ParseurPgn.ExtraireCoups(pgn);
+            string sectionCoups = ParseurPgn.ExtraireCoups(pgn, garderTemps: true);
 
             sectionCoups = Regex.Replace(sectionCoups, @"\s+", " ").Trim();
             sectionCoups = sectionCoups.Replace("]", "");
@@ -226,21 +240,29 @@ namespace BrunoGUI_GenII
 
             List<string> coupsPropres = [];
 
+            PartiePGN.TempsCoups = [];
             foreach (var t in tokens)
             {
                 string c = t;
+                if (c.StartsWith(ParseurPgn.MarqueTemps))
+                {   // Temps de pendule ([%clk h:mm:ss]) du coup qui précède : un élément de TempsCoups par coup gardé
+                    if (PartiePGN.TempsCoups.Count > 0 && TimeSpan.TryParse(c[ParseurPgn.MarqueTemps.Length..], System.Globalization.CultureInfo.InvariantCulture, out TimeSpan temps))
+                        PartiePGN.TempsCoups[^1] = temps;
+                    continue;
+                }
                 if (c == "1-0" || c == "0-1" || c == "1/2-1/2" || c == "*")
                 {
                     PartiePGN.Result = c;   // On met à jour le résultat de la partie à partir de la section des coups,
                     continue;               // au cas où il serait différent de celui indiqué dans les balises
                 }                           // (ce qui arrive parfois dans les fichiers PGN)
-                if (Regex.IsMatch(c, @"^\d+\.$"))
+                if (Regex.IsMatch(c, @"^\d+\.+$"))      // numéro de coup : "12." ou "12..." (coup noir après un commentaire)
                     continue;
                 if (c.Contains('$'))
                     continue;
                 if (c.Length < 2)
                     continue;
                 coupsPropres.Add(c);
+                PartiePGN.TempsCoups.Add(null);
             }
 
             string final = string.Join(" ", coupsPropres);
