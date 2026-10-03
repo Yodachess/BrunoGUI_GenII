@@ -20,34 +20,71 @@ using static BrunoGUI_GenII.LogiqueMouvements;
 
 namespace BrunoGUI_GenII
 {
-    public readonly record struct Cadence(TimeSpan TempsInitial, TimeSpan Increment)
+    // Cadence : temps initial et bonus par coup. Cadence à deux périodes (tournoi) : au coup n° CoupsControle, chaque camp
+    // reçoit TempsAjoute (ex : FIDE, 90 min pour 40 coups puis 30 min, avec 30 s par coup depuis le début)
+    public readonly record struct Cadence(TimeSpan TempsInitial, TimeSpan Increment, int CoupsControle = 0, TimeSpan TempsAjoute = default)
     {
         public static readonly Cadence SansPendule = new(TimeSpan.Zero, TimeSpan.Zero);
         public static Cadence Minutes(int minutes, int incrementSecondes = 0) =>
             new(TimeSpan.FromMinutes(minutes), TimeSpan.FromSeconds(incrementSecondes));
+        public static readonly Cadence Fide = new(TimeSpan.FromMinutes(90), TimeSpan.FromSeconds(30), 40, TimeSpan.FromMinutes(30));
 
         // Cadences proposées dans l'interface ("Sans pendule" en premier : le moteur a un temps fixe par coup)
         public static readonly Cadence[] Proposees =
-            [SansPendule, Minutes(3, 2), Minutes(5, 3), Minutes(10, 5), Minutes(15, 10), Minutes(30)];
+            [SansPendule, Minutes(3, 2), Minutes(5, 3), Minutes(10, 5), Minutes(15, 10), Minutes(30), Fide];
 
         public bool EstSansPendule => TempsInitial <= TimeSpan.Zero;
+        public bool ADeuxPeriodes => CoupsControle > 0 && TempsAjoute > TimeSpan.Zero;
 
+        private string TexteIncrement(string format) => Increment > TimeSpan.Zero ? string.Format(format, Increment.TotalSeconds) : "";
         public string Nom => EstSansPendule ? "Sans pendule"
-            : $"{TempsInitial.TotalMinutes:0} min" + (Increment > TimeSpan.Zero ? $" + {Increment.TotalSeconds:0} s" : "");
+            : this == Fide ? "90 + 30 min (+30 s) FIDE"
+            : ADeuxPeriodes ? $"{TempsInitial.TotalMinutes:0} min/{CoupsControle} coups + {TempsAjoute.TotalMinutes:0} min" + TexteIncrement(" (+{0:0} s)")
+            : $"{TempsInitial.TotalMinutes:0} min" + TexteIncrement(" + {0:0} s");
 
-        // Balise PGN [TimeControl] et clé du .ini : "300+3" (secondes + bonus), "-" sans pendule
-        public string TimeControl => EstSansPendule ? "-"
-            : $"{TempsInitial.TotalSeconds:0}" + (Increment > TimeSpan.Zero ? $"+{Increment.TotalSeconds:0}" : "");
+        // Balise PGN [TimeControl] et clé du .ini : "300+3" (secondes + bonus), "-" sans pendule ;
+        // deux périodes : "40/5400+30:1800+30" (40 coups en 5400 s, puis 1800 s pour la suite, bonus de 30 s par coup)
+        public string TimeControl
+        {
+            get
+            {
+                if (EstSansPendule)
+                    return "-";
+                string periode = $"{TempsInitial.TotalSeconds:0}" + TexteIncrement("+{0:0}");
+                return ADeuxPeriodes ? $"{CoupsControle}/{periode}:{TempsAjoute.TotalSeconds:0}" + TexteIncrement("+{0:0}") : periode;
+            }
+        }
 
         public static Cadence Lire(string texte)
-        {   // "300+3", "600" ou "-" ; une valeur illisible donne "Sans pendule"
-            string[] parties = (texte ?? "").Trim().Split('+');
-            if (parties.Length is < 1 or > 2 || !int.TryParse(parties[0], out int secondes) || secondes <= 0)
+        {   // "300+3", "600", "40/5400+30:1800+30" ou "-" ; une valeur illisible donne "Sans pendule".
+            // (Une seule période ajoutée : "40/7200" se lit comme 2 h pour 40 coups puis 2 h jusqu'à la fin)
+            string[] periodes = (texte ?? "").Trim().Split(':');
+            if (periodes.Length > 2)
                 return SansPendule;
-            int increment = 0;
-            if (parties.Length == 2 && (!int.TryParse(parties[1], out increment) || increment < 0))
+            int coupsControle = 0;
+            string premiere = periodes[0];
+            if (premiere.Contains('/'))
+            {
+                string[] coupsEtTemps = premiere.Split('/');
+                if (coupsEtTemps.Length != 2 || !int.TryParse(coupsEtTemps[0], out coupsControle) || coupsControle <= 0)
+                    return SansPendule;
+                premiere = coupsEtTemps[1];
+            }
+            if (!LirePeriode(premiere, out int secondes, out int increment))
                 return SansPendule;
-            return new(TimeSpan.FromSeconds(secondes), TimeSpan.FromSeconds(increment));
+            if (coupsControle == 0)
+                return periodes.Length == 1 ? new(TimeSpan.FromSeconds(secondes), TimeSpan.FromSeconds(increment)) : SansPendule;
+            int ajout = secondes;
+            if (periodes.Length == 2 && !LirePeriode(periodes[1], out ajout, out _))
+                return SansPendule;
+            return new(TimeSpan.FromSeconds(secondes), TimeSpan.FromSeconds(increment), coupsControle, TimeSpan.FromSeconds(ajout));
+        }
+        private static bool LirePeriode(string texte, out int secondes, out int increment)
+        {   // "5400+30" ou "1800" : temps en secondes et bonus par coup
+            secondes = increment = 0;
+            string[] parties = texte.Split('+');
+            return parties.Length is 1 or 2 && int.TryParse(parties[0], out secondes) && secondes > 0
+                && (parties.Length == 1 || (int.TryParse(parties[1], out increment) && increment >= 0));
         }
 
         public override string ToString() => Nom;     // texte affiché dans une liste de choix
@@ -90,16 +127,19 @@ namespace BrunoGUI_GenII
             _debutDecompte = _maintenant();
         }
 
-        public bool CoupJoue()
+        public bool CoupJoue(int numeroDuCoup = 0)
         {   // Le camp qui décomptait a joué : son temps est figé, il reçoit le bonus, et c'est à l'adversaire de décompter.
+            // numeroDuCoup : numéro du coup qui vient d'être joué ; au coup n° CoupsControle d'une cadence à deux périodes,
+            // le camp reçoit aussi le temps de la seconde période (ex : FIDE, +30 min au 40e coup).
             // Renvoie false (et rien ne change) si la pendule est arrêtée ou si le temps du camp était déjà écoulé
             if (CampQuiDecompte is not ColorPiece camp || TempsEcoule() != null)
                 return false;
             Fige();
+            TimeSpan ajout = Cadence.Increment + (Cadence.ADeuxPeriodes && numeroDuCoup == Cadence.CoupsControle ? Cadence.TempsAjoute : TimeSpan.Zero);
             if (camp == ColorPiece.Blanc)
-                _restantBlancs += Cadence.Increment;
+                _restantBlancs += ajout;
             else
-                _restantNoirs += Cadence.Increment;
+                _restantNoirs += ajout;
             CampQuiDecompte = Adversaire(camp);
             return true;
         }

@@ -1057,9 +1057,9 @@ namespace BrunoGUI_GenII
             // 
             // BarreReflexion
             // 
-            BarreReflexion.Location = new System.Drawing.Point(292, 20);
+            BarreReflexion.Location = new System.Drawing.Point(300, 20);
             BarreReflexion.Name = "BarreReflexion";
-            BarreReflexion.Size = new System.Drawing.Size(52, 16);
+            BarreReflexion.Size = new System.Drawing.Size(44, 16);
             BarreReflexion.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
             BarreReflexion.TabIndex = 4;
             BarreReflexion.Visible = false;
@@ -1069,25 +1069,26 @@ namespace BrunoGUI_GenII
             ListePendule.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             ListePendule.Location = new System.Drawing.Point(6, 17);
             ListePendule.Name = "ListePendule";
-            ListePendule.Size = new System.Drawing.Size(128, 23);
+            ListePendule.DropDownWidth = 180;
+            ListePendule.Size = new System.Drawing.Size(158, 23);
             ListePendule.TabIndex = 0;
             ListePendule.SelectedIndexChanged += ListePendule_SelectedIndexChanged;
             // 
             // LabelCoupAnalyse
             // 
-            LabelCoupAnalyse.Location = new System.Drawing.Point(138, 20);
+            LabelCoupAnalyse.Location = new System.Drawing.Point(168, 20);
             LabelCoupAnalyse.Name = "LabelCoupAnalyse";
-            LabelCoupAnalyse.Size = new System.Drawing.Size(96, 18);
+            LabelCoupAnalyse.Size = new System.Drawing.Size(80, 18);
             LabelCoupAnalyse.TabIndex = 2;
-            LabelCoupAnalyse.Text = "Coup/analyse (s)";
+            LabelCoupAnalyse.Text = "Réflexion (s)";
             // 
             // TempsReflexionSecondes
             // 
-            TempsReflexionSecondes.Location = new System.Drawing.Point(234, 17);
+            TempsReflexionSecondes.Location = new System.Drawing.Point(248, 17);
             TempsReflexionSecondes.Maximum = new decimal(new int[] { 600, 0, 0, 0 });
             TempsReflexionSecondes.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             TempsReflexionSecondes.Name = "TempsReflexionSecondes";
-            TempsReflexionSecondes.Size = new System.Drawing.Size(52, 23);
+            TempsReflexionSecondes.Size = new System.Drawing.Size(48, 23);
             TempsReflexionSecondes.TabIndex = 3;
             TempsReflexionSecondes.Value = new decimal(new int[] { 5, 0, 0, 0 });
             TempsReflexionSecondes.ValueChanged += TempsReflexionSecondes_ValueChanged;
