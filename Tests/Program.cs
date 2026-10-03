@@ -624,6 +624,9 @@ for (int i = 0; i < coupsPendule.Length; i++)
     L.ListeCoups[^1].TempsBlancs = TimeSpan.FromSeconds(180 - 3 * i);
     L.ListeCoups[^1].TempsNoirs = TimeSpan.FromSeconds(180 - 2 * i);
 }
+Verifie("Coup numéroté en français (cadre « Coup joué ») : blanc et noir",
+    L.ListeCoups[0].PgnFrNumerote == "1. e4" && L.ListeCoups[1].PgnFrNumerote == "1... e5" && L.ListeCoups[^1].PgnFrNumerote == "7... d6",
+    $"{L.ListeCoups[0].PgnFrNumerote} / {L.ListeCoups[1].PgnFrNumerote} / {L.ListeCoups[^1].PgnFrNumerote}");
 string pgnSansTemps = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "" }, "Intl");
 string pgnAvecTemps = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "" }, "Intl", avecTemps: true);
 string[] lignesCoups = pgnAvecTemps.Split('\n').Where(l => !l.StartsWith('[') && l.Trim() != "").ToArray();

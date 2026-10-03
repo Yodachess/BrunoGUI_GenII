@@ -476,6 +476,7 @@ namespace BrunoGUI_GenII
                     // Cases de départ et d'arrivée du coup colorées (pendant le parcours : seulement au retour à la partie)
                     _vue.MontreDernierCoup(RenvoieCaseIndex120(_caseSource), RenvoieCaseIndex120(_caseDestination));
                     LeMoteurARépondu();      // On réautorise si le moteur a fini de réfléchir
+                    AfficheCoupDuMoteur();
                     if (ParcoursEnCours)
                     {   // Le coup est joué dans la partie, mais l'affichage reste sur la position passée que l'utilisateur regarde
                         StatusProgramme.Text = "Le moteur a joué";
@@ -505,6 +506,12 @@ namespace BrunoGUI_GenII
             }
         }
 
+        private void AfficheCoupDuMoteur()
+        {   // Le moteur vient de jouer (réflexion ou bibliothèque) : son coup dans le cadre vert, ex : "Coup joué : 23. Ce6".
+            // Pas si la partie vient de finir (le cadre montre alors le résultat)
+            if (_partie.EnCours && LogiqueMouvements.ListeCoups.Count > 0 && !LogiqueMouvements.ListeCoups[^1].EstPositionDeDepart)
+                InformationsPartie.Text = "Coup joué : " + LogiqueMouvements.ListeCoups[^1].PgnFrNumerote;
+        }
         private void CoupJoue(string coup)
         {   // Un coup (blanc ou noir) vient d'être joué dans la partie (événements AfficheCoupBlanc et AfficheCoupNoir)
             if (LogiqueMouvements.EchecetMat)
@@ -1531,6 +1538,7 @@ namespace BrunoGUI_GenII
             Debug.WriteLine($"Partie en PGN : {partie.CoupsPartiePGN}");
             // Rejeu des coups (depuis la balise FEN s'il y en a une) ; la partie finit en lecture seule
             ResultatChargementPgn chargement = ChargementPartie.ChargerPartiePgn(partie, _partie);
+            PartieEnCours.CompteDePLy = chargement.DemiCoupsJoues.ToString();   // PlyCount : demi-coups réellement rejoués (la balise du fichier peut manquer ou être fausse)
             if (chargement.FenIncomplete)
                 KryptonMessageBox.Show($"La position de départ de cette partie (balise FEN) est refusée : {ChargementPartie.ErreurFen(partie.Fen)}.\n" +
                     "Les coups sont joués depuis la position initiale.",
@@ -1581,6 +1589,7 @@ namespace BrunoGUI_GenII
                 VarianteMoteurUci2.Text = VarianteMoteurUci3.Text = ".....";
                 Debug.WriteLine($"Coup bibliothèque exécuté : {coupChoisiTxt}");
                 AfficheCoupsBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
+                AfficheCoupDuMoteur();
                 return;
             }
             // Aucun coup dans la bibliothèque ou bibliothèque inactive : le moteur réfléchit
