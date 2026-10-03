@@ -133,8 +133,9 @@ namespace BrunoGUI_GenII
                     if (GestionPartiePgn.EstNumeroOuResultat(element))
                         continue;
                     TimeSpan? temps = demiCoupsJoues < (pgn.TempsCoups?.Count ?? 0) ? pgn.TempsCoups[demiCoupsJoues] : null;
-                    demiCoupsJoues++;
                     Coup coup = ListeCoups[^1];
+                    coup.TempsReflexion = demiCoupsJoues < (pgn.TempsReflexion?.Count ?? 0) ? pgn.TempsReflexion[demiCoupsJoues] : null;
+                    demiCoupsJoues++;
                     if (temps != null && coup.EstCoupBlanc)
                         tempsBlancs = temps;
                     else if (temps != null)

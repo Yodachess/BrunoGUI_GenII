@@ -28,6 +28,7 @@ namespace BrunoGUI_GenII
         // le coup (la logique ne connaît pas la pendule) ; servent à remettre la pendule à l'heure (retour arrière, "Reprendre ici")
         public TimeSpan? TempsBlancs { get; set; }
         public TimeSpan? TempsNoirs { get; set; }
+        public TimeSpan? TempsReflexion { get; set; }   // partie PGN chargée : temps passé sur ce coup ([%emt], ChessBase), null si inconnu
 
         public static Coup PositionDeDepart(string fen) => new() { Fen = fen, EstPositionDeDepart = true };
 

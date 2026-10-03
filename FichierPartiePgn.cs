@@ -41,6 +41,7 @@ namespace BrunoGUI_GenII
             Variante
         }
         public const string MarqueTemps = "%clk=";     // garderTemps : "{[%clk 0:02:51]}" devient le mot "%clk=0:02:51"
+        public const string MarqueReflexion = "%emt="; // "{[%emt 0:30:11]}" (temps passé sur le coup, ChessBase) devient "%emt=0:30:11"
 
         public static string ExtraireCoups(string pgn, bool garderTemps = false)
         {   // Cette méthode parcourt le PGN caractère par caractère et utilise une machine à états
@@ -65,9 +66,10 @@ namespace BrunoGUI_GenII
                         continue;
                     }
                     dansCommentaire = false;
-                    Match temps = Regex.Match(commentaire.ToString(), @"%clk\s+(\d+:\d{1,2}:\d{1,2}(?:\.\d+)?)");
-                    if (garderTemps && profondeurVariante == 0 && temps.Success)
-                        sb.Append(' ').Append(MarqueTemps).Append(temps.Groups[1].Value).Append(' ');
+                    if (garderTemps && profondeurVariante == 0)
+                        // (sauts de ligne retirés : ChessBase coupe parfois le temps en fin de ligne, ex : "[%emt 0:⏎00:47]")
+                        foreach (Match temps in Regex.Matches(commentaire.ToString().Replace("\r", "").Replace("\n", ""), @"%(clk|emt)\s*(\d+:\d{1,2}:\d{1,2}(?:\.\d+)?)"))
+                            sb.Append(' ').Append(temps.Groups[1].Value == "clk" ? MarqueTemps : MarqueReflexion).Append(temps.Groups[2].Value).Append(' ');
                     commentaire.Clear();
                     continue;
                 }
@@ -256,13 +258,17 @@ namespace BrunoGUI_GenII
             List<string> coupsPropres = [];
 
             PartiePGN.TempsCoups = [];
+            PartiePGN.TempsReflexion = [];
             foreach (var t in tokens)
             {
                 string c = t;
-                if (c.StartsWith(ParseurPgn.MarqueTemps))
-                {   // Temps de pendule ([%clk h:mm:ss]) du coup qui précède : un élément de TempsCoups par coup gardé
-                    if (PartiePGN.TempsCoups.Count > 0 && TimeSpan.TryParse(c[ParseurPgn.MarqueTemps.Length..], System.Globalization.CultureInfo.InvariantCulture, out TimeSpan temps))
-                        PartiePGN.TempsCoups[^1] = temps;
+                if (c.StartsWith(ParseurPgn.MarqueTemps) || c.StartsWith(ParseurPgn.MarqueReflexion))
+                {   // Temps de pendule ([%clk h:mm:ss]) ou temps de réflexion ([%emt h:mm:ss]) du coup qui précède :
+                    // un élément de TempsCoups et de TempsReflexion par coup gardé
+                    bool pendule = c.StartsWith(ParseurPgn.MarqueTemps);
+                    List<TimeSpan?> liste = pendule ? PartiePGN.TempsCoups : PartiePGN.TempsReflexion;
+                    if (liste.Count > 0 && TimeSpan.TryParse(c[ParseurPgn.MarqueTemps.Length..], System.Globalization.CultureInfo.InvariantCulture, out TimeSpan temps))
+                        liste[^1] = temps;
                     continue;
                 }
                 if (c == "1-0" || c == "0-1" || c == "1/2-1/2" || c == "*")
@@ -278,6 +284,7 @@ namespace BrunoGUI_GenII
                     continue;
                 coupsPropres.Add(c);
                 PartiePGN.TempsCoups.Add(null);
+                PartiePGN.TempsReflexion.Add(null);
             }
 
             string final = string.Join(" ", coupsPropres);
