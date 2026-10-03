@@ -105,6 +105,8 @@ namespace BrunoGUI_GenII
                 ListePendule.Items.Add(cadence);
             ChoisitCadence(parametres.Cadence);
             _minuteriePendule.Tick += MinuteriePendule_Tick;
+            PenduleBlanc.Click += Pendule_Click;        // un clic sur une pendule : pause / reprise
+            PenduleNoir.Click += Pendule_Click;
             AffichePendules();      // pas de pendule au départ : "-:--"
             // Debug pour vérifier
             Debug.WriteLine($"Paramètres chargés : Biblio = {_bibliotheque}, Force = {_forceMoteurElo}, Nombre PV = {MoteurUci.NombreLignesPV}");
@@ -633,6 +635,7 @@ namespace BrunoGUI_GenII
             InformationsPartie.Text = resultat + "  (" + vainqueur + ")";
             StatusProgramme.Text = "Partie terminée";
             _partie.Terminer();     // le retour arrière reste possible pour reprendre la partie (Partie.AnnulerDernierCoup)
+            _pauseJoueur = false;   // (ex : abandon déclaré pendant une pause)
             _pendule?.Arreter();    // les temps restent affichés
             AffichePendules();
             PlateauEnable(false);
@@ -761,6 +764,39 @@ namespace BrunoGUI_GenII
         private readonly Stopwatch _chrono = Stopwatch.StartNew();      // heure de la pendule (précise, indépendante des tics)
         private readonly System.Windows.Forms.Timer _minuteriePendule = new() { Interval = 100 };   // affichage et chute du drapeau
 
+        private bool _pauseJoueur;      // pause demandée par un clic sur une pendule (à distinguer de la pause pendant une analyse)
+
+        private void Pendule_Click(object sender, EventArgs e)
+        {   // Un clic sur l'une des deux pendules met la partie en pause, un autre la reprend (comme le bouton d'une vraie pendule).
+            // Sans pendule, ou hors d'une partie en cours, le clic ne fait rien
+            if (_pendule == null || !_partie.EnCours)
+                return;
+            if (_pauseJoueur)
+            {
+                FinPause();
+                InformationsPartie.Text = "Partie reprise";
+                if (_partie.MoteurAuTrait && _pilote.Demande == TypeDemande.Aucune)
+                    JeuMoteurAvecBibliothèque(LogiqueMouvements.RetourneChaineFenActuel());     // sa réflexion avait été interrompue
+            }
+            else if (_pendule.Tourne)
+            {
+                AbandonneReflexion();   // le moteur s'arrête de réfléchir (sinon il jouerait pendant la pause) ; il recommencera à la reprise
+                _pendule.Pause();
+                _pauseJoueur = true;
+                InformationsPartie.Text = "Pause : clic sur une pendule pour reprendre";
+                MetAJourCommandes();
+            }
+            AffichePendules();
+        }
+        private void FinPause()
+        {   // Fin de la pause du joueur (reprise, ou partie qui change : nouvelle partie, résultat, retour arrière...)
+            if (!_pauseJoueur)
+                return;
+            _pauseJoueur = false;
+            _pendule?.Reprendre();
+            MetAJourCommandes();
+        }
+
         private void ChoisitCadence(Cadence cadence)
         {   // Sélectionne la cadence dans la liste (ajoutée si elle n'y est pas, ex : valeur écrite à la main dans le .ini)
             _cadence = cadence;     // avant la sélection : pas de message "à la prochaine partie"
@@ -780,6 +816,7 @@ namespace BrunoGUI_GenII
         private void NouvellePendule()
         {   // Début d'une partie : pendule de la cadence choisie, temps complets affichés. Elle ne démarre qu'au premier coup
             // (voir CoupJoue), comme sur les serveurs : on peut regarder la position avant que le temps file
+            _pauseJoueur = false;
             _pendule = _cadence.EstSansPendule ? null : new Pendule(_cadence, () => _chrono.Elapsed);
             PartieEnCours.TimeControl = _pendule?.Cadence.TimeControl ?? "";     // balise PGN [TimeControl] (absente sans pendule)
             if (_pendule != null)
@@ -790,6 +827,7 @@ namespace BrunoGUI_GenII
         }
         private void SupprimePendule()
         {   // Partie sans pendule (ex : partie PGN chargée)
+            _pauseJoueur = false;
             _pendule = null;
             _minuteriePendule.Stop();
             AffichePendules();
@@ -798,7 +836,7 @@ namespace BrunoGUI_GenII
         {   // Tous les dixièmes de seconde : reprise après une analyse, chute du drapeau, affichage
             if (_pendule == null)
                 return;
-            if (_pendule.EnPause && !_pilote.AnalyseEnCours)
+            if (_pendule.EnPause && !_pilote.AnalyseEnCours && !_pauseJoueur)
             {   // L'analyse est finie (ou abandonnée) : la pendule repart ; si le moteur devait jouer, l'analyse a interrompu
                 // sa réflexion : on lui redemande son coup (sinon son temps s'écoulerait sans qu'il réfléchisse)
                 _pendule.Reprendre();
@@ -822,6 +860,7 @@ namespace BrunoGUI_GenII
         }
         private void AffichePendules()
         {   // Les deux pendules, toujours affichées : "-:--" sans pendule ; le camp qui décompte sur fond vert, en rouge sous 10 secondes
+            PenduleBlanc.Cursor = PenduleNoir.Cursor = _pendule != null ? Cursors.Hand : Cursors.Default;   // cliquables : pause / reprise
             if (_pendule == null)
             {
                 PenduleBlanc.Text = PenduleNoir.Text = "-:--";
@@ -837,7 +876,7 @@ namespace BrunoGUI_GenII
             TimeSpan restant = _pendule.TempsRestant(camp);
             bool decompte = _pendule.Tourne && _pendule.CampQuiDecompte == camp;
             affichage.Text = Pendule.Texte(restant);
-            affichage.BackColor = decompte ? Color.LightGreen : fond;
+            affichage.BackColor = _pauseJoueur ? Color.Silver : decompte ? Color.LightGreen : fond;     // gris : partie en pause
             affichage.ForeColor = restant < TimeSpan.FromSeconds(10) ? Color.Red : decompte ? Color.Black : texte;
         }
 
@@ -941,6 +980,7 @@ namespace BrunoGUI_GenII
         private void OrdinateurJoue_Click(object sender, EventArgs e)
         {   // Permet de faire jouer l'ordinateur UCI, sans que ce soit son tour (pour tester une position par exemple)
             AbandonneReflexion();   // une nouvelle demande remplace la réflexion en cours
+            FinPause();                     // faire jouer le moteur met fin à une pause
             _partie.MoteurPrendLeTrait();   // le moteur joue désormais le camp au trait, l'humain l'autre
             if (_pendule != null && _pendule.CampQuiDecompte == null && _partie.EnCours && ListeCoups.Any(c => !c.EstPositionDeDepart))
                 _pendule.Demarrer(QuiJoue);     // pendule arrêtée par un retour arrière : elle repart pour le moteur
@@ -964,6 +1004,7 @@ namespace BrunoGUI_GenII
                     EffaceResultat();   // on a annulé un coup d'une partie terminée : elle reprend
                 // Pendule : temps d'avant le coup annulé. Si c'est au moteur de jouer, elle attend ("Ordinateur joue", ou un
                 // 2e retour arrière) : sinon son temps s'écoulerait alors que personne ne lui demande de jouer
+                _pauseJoueur = false;   // le retour arrière met fin à une pause
                 _pendule?.RestaurerDepuis(LogiqueMouvements.ListeCoups, QuiJoue);
                 if (_partie.MoteurAuTrait)
                     _pendule?.Arreter();
@@ -1306,6 +1347,7 @@ namespace BrunoGUI_GenII
                 PartieEnCours.Date = DateTime.Today.ToString("yyyy.MM.dd");
                 PartieEnCours.Ronde = "";
             }
+            _pauseJoueur = false;       // reprendre la partie met fin à une pause
             if (etaitLectureSeule)
                 NouvellePendule();      // partie d'entraînement : la cadence choisie, qui part au prochain coup
             else
@@ -1696,9 +1738,10 @@ namespace BrunoGUI_GenII
             // Avant toute partie, le clic affiche "Veuillez choisir votre couleur"
             if (!_vue.CasesCreees)
                 return;     // cases pas encore créées
-            bool actif = ParcoursEnCours
+            // Pendant la pause (clic sur une pendule), on ne joue pas : l'échiquier est bloqué
+            bool actif = !_pauseJoueur && (ParcoursEnCours
                 ? !PartieEnLectureSeule
-                : _plateauAutorise && (_partie.Mode == ModePartie.EnCours || _partie.Mode == ModePartie.AucunePartie);
+                : _plateauAutorise && (_partie.Mode == ModePartie.EnCours || _partie.Mode == ModePartie.AucunePartie));
             _vue.ActiverCases(actif);
         }
 
