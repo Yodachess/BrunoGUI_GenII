@@ -1154,7 +1154,10 @@ namespace BrunoGUI_GenII
             // Version 1.11 = pendule (cadences 3+2 à 30 min, temps du moteur en go wtime/btime, perte au temps, retour arrière et
             //                "Reprendre ici" avec les temps, balise TimeControl et %clk dans le PGN enregistré), joueurs « [Elo] Nom »
             //                sans cadre, barre de réflexion, contrôle complet des FEN (plus de plantage), promotion en paramètre
-            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.11\n--  Bruno COURTOIS  -- " +
+            // Version 1.12 = coup du moteur affiché dans le cadre vert, pause par clic sur une pendule, cadence FIDE
+            //                (90 + 30 min, +30 s, movestogo), temps %clk et %emt relus et affichés au parcours, PlyCount juste,
+            //                fichiers PGN aux encodages mélangés lus ligne par ligne
+            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.12\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", "A propos de",
                 KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
         }
