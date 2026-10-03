@@ -714,6 +714,13 @@ foreach (string texteAnnote in partiesAnnotees)
     Verifie($"Partie annotée « {annotee.Tournoi} » : tous les coups relus",
         chargementAnnote.CoupIllisible == null && chargementAnnote.DemiCoupsJoues.ToString() == annotee.CompteDePLy,
         $"{chargementAnnote.DemiCoupsJoues} demi-coups sur {annotee.CompteDePLy}, illisible : {chargementAnnote.CoupIllisible ?? "aucun"} | {annotee.CoupsPartiePGN[..Math.Min(120, annotee.CoupsPartiePGN.Length)]}");
+    if (annotee.TimeControl != null)
+    {   // 2e partie (ChessBase) : temps de réflexion [%emt], y compris ceux coupés en fin de ligne ("[%emt 0:⏎00:47]")
+        Verifie("Partie annotée : temps de réflexion [%emt] relus pour chaque coup",
+            L.ListeCoups.All(c => c.TempsReflexion != null) && L.ListeCoups[12].TempsReflexion == new TimeSpan(0, 30, 11)
+            && L.ListeCoups[18].TempsReflexion == TimeSpan.FromSeconds(47) && L.ListeCoups[4].TempsReflexion == TimeSpan.FromSeconds(1),
+            $"7. d3 : {L.ListeCoups[12].TempsReflexion}, 10. Qf2 : {L.ListeCoups[18].TempsReflexion}, sans temps : {L.ListeCoups.Count(c => c.TempsReflexion == null)}");
+    }
 }
 
 // Fichier aux encodages mélangés (cas réel : BrunoAllGames.pgn) : marque UTF-8 au début, lignes UTF-8 et quelques lignes Latin-1

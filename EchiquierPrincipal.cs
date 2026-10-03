@@ -1867,12 +1867,18 @@ namespace BrunoGUI_GenII
             AfficheCoupsBibliotheque(fen);
             InformationPourJoueur.Text = "Trait aux " + NomCamp(_positionAffichee.QuiJoue);
             VarianteMoteurUci1.Text = index < 0 || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart
-                ? "   [ Position initiale ]" : $"   [ {TexteCoupJoue(index, _positionAffichee)} ]";
+                ? "   [ Position initiale ]" : $"   [ {TexteCoupJoue(index, _positionAffichee)} ]"
+                  + (LogiqueMouvements.ListeCoups[index].TempsReflexion is TimeSpan reflexion ? $"   (réflexion : {TexteDuree(reflexion)})" : "");
             MiseaZeroParcours();
             AffichePendules();      // partie sans pendule en cours (ex : PGN chargé) : temps notés à cette position
             if (!PartieEnLectureSeule)
                 InformationsPartie.Text = "Parcours : Fin ou clic pour revenir";
         }
+        private static string TexteDuree(TimeSpan duree) =>
+            // Temps de réflexion d'un coup ([%emt]) : "13 s", "30 min 11 s", "1 h 05 min"
+            duree.TotalHours >= 1 ? $"{(int)duree.TotalHours} h {duree.Minutes:00} min"
+            : duree.TotalMinutes >= 1 ? $"{duree.Minutes} min {duree.Seconds:00} s"
+            : $"{duree.Seconds} s";
         private static string TexteCoupJoue(int index, Position positionApres)
         {   // Ex : "Coup blanc : 12. Cf3" ou "Coup noir : 12... Fe7" (coup n° index, qui a mené à positionApres)
             string coup = LogiqueMouvements.ListeCoupsNal[index];
