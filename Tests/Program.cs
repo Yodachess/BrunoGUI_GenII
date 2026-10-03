@@ -705,6 +705,28 @@ Verifie("Position impossible : le camp qui n'a pas le trait est en échec",
     ErreurFen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").Contains("échec") && ChargementPartie.ErreurFen("4k3/8/8/8/8/8/8/4R1K1 b - - 0 1") == null,
     ErreurFen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1"));
 
+// Parties réelles annotées par Fritz / ChessBase (commentaires sur plusieurs lignes, variantes, $NAG, %eval, %emt)
+List<string> partiesAnnotees = FichierPartiePgn.DecodeFichierPGN(System.IO.Path.Combine(AppContext.BaseDirectory, "PartiesAnnotees.pgn"));
+foreach (string texteAnnote in partiesAnnotees)
+{
+    PartieEchecsPGN annotee = FichierPartiePgn.DecodePartiePGN(texteAnnote);
+    ResultatChargementPgn chargementAnnote = ChargementPartie.ChargerPartiePgn(annotee, partieChargee);
+    Verifie($"Partie annotée « {annotee.Tournoi} » : tous les coups relus",
+        chargementAnnote.CoupIllisible == null && chargementAnnote.DemiCoupsJoues.ToString() == annotee.CompteDePLy,
+        $"{chargementAnnote.DemiCoupsJoues} demi-coups sur {annotee.CompteDePLy}, illisible : {chargementAnnote.CoupIllisible ?? "aucun"} | {annotee.CoupsPartiePGN[..Math.Min(120, annotee.CoupsPartiePGN.Length)]}");
+}
+
+// Fichier aux encodages mélangés (cas réel : BrunoAllGames.pgn) : marque UTF-8 au début, lignes UTF-8 et quelques lignes Latin-1
+byte[] fichierMelange = [.. new byte[] { 0xEF, 0xBB, 0xBF },
+    .. System.Text.Encoding.UTF8.GetBytes("[Event \"Défense\"]\r\n[White \"Müller\"]\r\n\r\n1. e4 {pondérée} e5\r\n"),
+    .. System.Text.Encoding.Latin1.GetBytes("{précis}\r\n2. Nf3 *\r\n")];
+string texteMelange = FichierPartiePgn.DecodeLignes(fichierMelange);
+PartieEchecsPGN partieMelangee = FichierPartiePgn.DecodePartiePGN(texteMelange);
+Verifie("Encodages mélangés : chaque ligne lue dans le sien, marque UTF-8 retirée (pas de faux 1er coup « ï»¿ »)",
+    partieMelangee.Tournoi == "Défense" && partieMelangee.White == "Müller" && texteMelange.Contains("précis") && texteMelange.Contains("pondérée")
+    && !texteMelange.Contains('﻿') && ChargementPartie.ChargerPartiePgn(partieMelangee, partieChargee) is { CoupIllisible: null, DemiCoupsJoues: 3 },
+    $"{partieMelangee.Tournoi} / {partieMelangee.White} / {partieMelangee.CoupsPartiePGN}");
+
 // Fichier PGN en Latin-1 (accents) avec une date incomplète "2024.??.??" et des annotations dans les coups
 string fichierLatin1 = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "test_brunogui_latin1.pgn");
 System.IO.File.WriteAllText(fichierLatin1,
