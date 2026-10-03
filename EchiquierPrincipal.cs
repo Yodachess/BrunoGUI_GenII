@@ -863,14 +863,28 @@ namespace BrunoGUI_GenII
         {   // Les deux pendules, toujours affichées : "-:--" sans pendule ; le camp qui décompte sur fond vert, en rouge sous 10 secondes
             PenduleBlanc.Cursor = PenduleNoir.Cursor = _pendule != null ? Cursors.Hand : Cursors.Default;   // cliquables : pause / reprise
             if (_pendule == null)
-            {
-                PenduleBlanc.Text = PenduleNoir.Text = "-:--";
+            {   // Pas de pendule en cours : temps notés dans la partie (ex : PGN chargé avec des [%clk]) à la position affichée
+                var (tempsBlancs, tempsNoirs) = TempsDeLaPositionAffichee();
+                PenduleBlanc.Text = tempsBlancs is TimeSpan blancs ? Pendule.Texte(blancs) : "-:--";
+                PenduleNoir.Text = tempsNoirs is TimeSpan noirs ? Pendule.Texte(noirs) : "-:--";
                 PenduleBlanc.BackColor = PenduleNoir.ForeColor = Color.White;
                 PenduleNoir.BackColor = PenduleBlanc.ForeColor = Color.Black;
                 return;
             }
             AffichePendule(PenduleBlanc, ColorPiece.Blanc, Color.White, Color.Black);
             AffichePendule(PenduleNoir, ColorPiece.Noir, Color.Black, Color.White);
+        }
+        private (TimeSpan? Blancs, TimeSpan? Noirs) TempsDeLaPositionAffichee()
+        {   // Temps notés dans le coup de la position affichée (parcours) ou du dernier coup ; position de départ : temps initial
+            // de la cadence (balise TimeControl). Rien si la partie n'a aucun temps noté
+            List<Coup> coups = [.. LogiqueMouvements.ListeCoups];
+            if (!coups.Any(c => c.TempsBlancs != null || c.TempsNoirs != null))
+                return (null, null);
+            int index = ParcoursEnCours ? _indexAffiche : coups.Count - 1;
+            if (index >= 0 && index < coups.Count && !coups[index].EstPositionDeDepart)
+                return (coups[index].TempsBlancs, coups[index].TempsNoirs);
+            Cadence cadence = Cadence.Lire(PartieEnCours.TimeControl);
+            return cadence.EstSansPendule ? (null, null) : (cadence.TempsInitial, cadence.TempsInitial);
         }
         private void AffichePendule(Label affichage, ColorPiece camp, Color fond, Color texte)
         {
@@ -1855,6 +1869,7 @@ namespace BrunoGUI_GenII
             VarianteMoteurUci1.Text = index < 0 || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart
                 ? "   [ Position initiale ]" : $"   [ {TexteCoupJoue(index, _positionAffichee)} ]";
             MiseaZeroParcours();
+            AffichePendules();      // partie sans pendule en cours (ex : PGN chargé) : temps notés à cette position
             if (!PartieEnLectureSeule)
                 InformationsPartie.Text = "Parcours : Fin ou clic pour revenir";
         }
@@ -1876,6 +1891,7 @@ namespace BrunoGUI_GenII
             AfficheCoupsBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
             InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + NomCamp(QuiJoue);
             InformationsPartie.Text = PartieEnLectureSeule ? "Fin de la partie" : "";
+            AffichePendules();
         }
         private void QuitteParcours()
         {   // La partie va être remplacée (nouvelle partie, chargement) : l'échiquier suivra la partie

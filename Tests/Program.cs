@@ -638,6 +638,19 @@ Partie partiePendule = new();
 ResultatChargementPgn relecturePendule = ChargementPartie.ChargerPartiePgn(FichierPartiePgn.DecodePartiePGN(pgnAvecTemps), partiePendule);
 Verifie("PGN avec les temps : relu sans erreur (commentaires ignorés)",
     relecturePendule.CoupIllisible == null && relecturePendule.DemiCoupsJoues == coupsPendule.Length, $"{relecturePendule.DemiCoupsJoues} demi-coups, illisible : {relecturePendule.CoupIllisible ?? "aucun"}");
+Verifie("PGN avec les temps : chaque coup reprend son temps et le dernier temps de l'autre camp",
+    L.ListeCoups[0].TempsBlancs == TimeSpan.FromSeconds(180) && L.ListeCoups[0].TempsNoirs == null
+    && L.ListeCoups[2].TempsBlancs == TimeSpan.FromSeconds(174) && L.ListeCoups[2].TempsNoirs == TimeSpan.FromSeconds(178)
+    && L.ListeCoups[^1].TempsNoirs == TimeSpan.FromSeconds(180 - 2 * 13) && L.ListeCoups[^1].TempsBlancs == TimeSpan.FromSeconds(180 - 3 * 12),
+    $"coup 1 : {L.ListeCoups[0].TempsBlancs}/{L.ListeCoups[0].TempsNoirs}, coup 3 : {L.ListeCoups[2].TempsBlancs}/{L.ListeCoups[2].TempsNoirs}");
+PartieEchecsPGN pgnLichess = FichierPartiePgn.DecodePartiePGN("[Event \"x\"]\n[TimeControl \"180+2\"]\n\n1. e4 { [%clk 0:03:00] } 1... c5 { [%clk 0:02:59.5] } "
+    + "2. Nf3 { [%eval 0.3] [%clk 0:02:58] } ( 2. c3 { [%clk 0:00:01] } ) 2... d6 3. d4 { [%clk 0:02:55] } *");
+ChargementPartie.ChargerPartiePgn(pgnLichess, partiePendule);
+Verifie("PGN de Lichess : temps relus (dixièmes, autre commentaire), variante ignorée, temps initial de la balise TimeControl",
+    pgnLichess.TempsCoups.Count == 5 && L.ListeCoups.Count == 5 && L.ListeCoups[0].TempsNoirs == TimeSpan.FromSeconds(180)
+    && L.ListeCoups[1].TempsNoirs == TimeSpan.FromSeconds(179.5) && L.ListeCoups[2].TempsBlancs == TimeSpan.FromSeconds(178)
+    && L.ListeCoups[3].TempsNoirs == TimeSpan.FromSeconds(179.5) && L.ListeCoups[4].TempsBlancs == TimeSpan.FromSeconds(175),
+    string.Join(" ", L.ListeCoups.Select(c => $"{c.TempsBlancs}/{c.TempsNoirs}")));
 
 // Chargement d'une position FEN et d'une partie PGN complète (ChargementPartie)
 Partie partieChargee = new();

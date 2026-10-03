@@ -10,7 +10,8 @@
 //              ├─ "ErreurFen"          contrôle d'une FEN (6 champs, 8 rangées de 8 cases, un roi par camp...) : la raison, ou null
 //              ├─ "EstFenComplete"     ErreurFen == null ; "NormaliseFen" : champs séparés par un seul espace
 //              ├─ "ChargerPosition"    la partie commence à une position FEN (l'humain joue le camp au trait)
-//              └─ "ChargerPartiePgn"   rejoue une partie PGN (depuis sa balise FEN s'il y en a une), puis la met en lecture seule
+//              └─ "ChargerPartiePgn"   rejoue une partie PGN (depuis sa balise FEN s'il y en a une), puis la met en lecture seule ;
+//                                      les temps de pendule ([%clk]) sont notés dans chaque coup (Coup.TempsBlancs/TempsNoirs)
 // Le formulaire garde les boîtes de dialogue, les messages et les textes affichés : il lit le compte rendu du chargement.
 
 using System;
@@ -116,6 +117,10 @@ namespace BrunoGUI_GenII
             partie.RejeuPgn = true;     // pas de nulle automatique pendant le rejeu : c'est le résultat du PGN qui compte
             string coupIllisible = null;
             int demiCoupsJoues = 0;
+            // Temps de pendule ([%clk] après chaque coup) : chaque coup note le temps de son camp et le dernier temps connu de l'autre
+            // (au départ : le temps initial de la balise TimeControl, s'il y en a une)
+            Cadence cadence = Cadence.Lire(pgn.TimeControl);
+            TimeSpan? tempsBlancs = cadence.EstSansPendule ? null : cadence.TempsInitial, tempsNoirs = tempsBlancs;
             try
             {
                 foreach (string element in ElementsDesCoups(pgn.CoupsPartiePGN))  // numéros de coups et résultat compris (ignorés)
@@ -125,8 +130,20 @@ namespace BrunoGUI_GenII
                         coupIllisible = element;
                         break;
                     }
-                    if (!GestionPartiePgn.EstNumeroOuResultat(element))
-                        demiCoupsJoues++;
+                    if (GestionPartiePgn.EstNumeroOuResultat(element))
+                        continue;
+                    TimeSpan? temps = demiCoupsJoues < (pgn.TempsCoups?.Count ?? 0) ? pgn.TempsCoups[demiCoupsJoues] : null;
+                    demiCoupsJoues++;
+                    Coup coup = ListeCoups[^1];
+                    if (temps != null && coup.EstCoupBlanc)
+                        tempsBlancs = temps;
+                    else if (temps != null)
+                        tempsNoirs = temps;
+                    if (tempsBlancs != null || tempsNoirs != null)
+                    {
+                        coup.TempsBlancs = tempsBlancs;
+                        coup.TempsNoirs = tempsNoirs;
+                    }
                 }
             }
             finally
