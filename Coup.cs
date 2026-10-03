@@ -35,6 +35,8 @@ namespace BrunoGUI_GenII
         public bool EstCoupBlanc => !EstPositionDeDepart && Fen.Split(' ')[1] == "b";
         // Numéro du coup complet : 12 pour "12. Cf3" comme pour "12... Fe7" (le 6e champ de la FEN augmente après chaque coup noir)
         public int NumeroDuCoup => int.Parse(Fen.Split(' ')[5]) - (EstCoupBlanc ? 0 : 1);
+        // Le coup en français avec son numéro, blanc ou noir : "23. Ce6", "23... Fe7"
+        public string PgnFrNumerote => EstCoupBlanc ? PgnFr.Trim() : $"{NumeroDuCoup}... {PgnFr.Trim()}";
         public string PgnFrSansNumero
         {
             get
