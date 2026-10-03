@@ -107,6 +107,7 @@ namespace BrunoGUI_GenII
             _minuteriePendule.Tick += MinuteriePendule_Tick;
             PenduleBlanc.Click += Pendule_Click;        // un clic sur une pendule : pause / reprise
             PenduleNoir.Click += Pendule_Click;
+            PenduleBlanc.ReduitPourTenir = PenduleNoir.ReduitPourTenir = true;     // "1:30:00" toujours lisible en entier
             AffichePendules();      // pas de pendule au départ : "-:--"
             // Debug pour vérifier
             Debug.WriteLine($"Paramètres chargés : Biblio = {_bibliotheque}, Force = {_forceMoteurElo}, Nombre PV = {MoteurUci.NombreLignesPV}");
@@ -765,7 +766,6 @@ namespace BrunoGUI_GenII
         private readonly System.Windows.Forms.Timer _minuteriePendule = new() { Interval = 100 };   // affichage et chute du drapeau
 
         private bool _pauseJoueur;      // pause demandée par un clic sur une pendule (à distinguer de la pause pendant une analyse)
-        private Font _policePendule, _policePenduleLongue;     // police des pendules, et plus petite pour les temps d'une heure ou plus
 
         private void Pendule_Click(object sender, EventArgs e)
         {   // Un clic sur l'une des deux pendules met la partie en pause, un autre la reprend (comme le bouton d'une vraie pendule).
@@ -864,8 +864,6 @@ namespace BrunoGUI_GenII
             PenduleBlanc.Cursor = PenduleNoir.Cursor = _pendule != null ? Cursors.Hand : Cursors.Default;   // cliquables : pause / reprise
             if (_pendule == null)
             {
-                if (_policePendule != null)
-                    PenduleBlanc.Font = PenduleNoir.Font = _policePendule;
                 PenduleBlanc.Text = PenduleNoir.Text = "-:--";
                 PenduleBlanc.BackColor = PenduleNoir.ForeColor = Color.White;
                 PenduleNoir.BackColor = PenduleBlanc.ForeColor = Color.Black;
@@ -878,13 +876,7 @@ namespace BrunoGUI_GenII
         {
             TimeSpan restant = _pendule.TempsRestant(camp);
             bool decompte = _pendule.Tourne && _pendule.CampQuiDecompte == camp;
-            affichage.Text = Pendule.Texte(restant);
-            // "1:30:00" (cadence FIDE) ne tient pas dans la pendule en police normale : police plus petite au-delà d'une heure
-            _policePendule ??= affichage.Font;
-            _policePenduleLongue ??= new Font(_policePendule.FontFamily, 10F, FontStyle.Bold);
-            Font police = restant >= TimeSpan.FromHours(1) ? _policePenduleLongue : _policePendule;
-            if (affichage.Font != police)
-                affichage.Font = police;
+            affichage.Text = Pendule.Texte(restant);    // ("1:30:00" : la pendule réduit sa police pour qu'il tienne, voir ReduitPourTenir)
             affichage.BackColor = _pauseJoueur ? Color.Silver : decompte ? Color.LightGreen : fond;     // gris : partie en pause
             affichage.ForeColor = restant < TimeSpan.FromSeconds(10) ? Color.Red : decompte ? Color.Black : texte;
         }
