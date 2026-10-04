@@ -64,8 +64,9 @@ namespace BrunoGUI_GenII
     }
 
     // Ce que le moteur pense du coup n° IndexCoup de ListeCoups (Perte : chances de gain perdues par le camp qui l'a joué)
+    // (EvaluationMeilleur : évaluation de la position avant le coup, c'est-à-dire celle du meilleur coup du moteur)
     public record JugementCoup(int IndexCoup, ColorPiece Camp, double Perte, string Annotation, Evaluation? EvaluationApres,
-                               string MeilleurCoup, bool MeilleurJoue);
+                               string MeilleurCoup, bool MeilleurJoue, Evaluation? EvaluationMeilleur = null);
 
     public record BilanCamp(int Imprecisions, int Erreurs, int Gaffes, int PerteMoyenne);   // perte moyenne en centipions par coup
 
@@ -76,6 +77,11 @@ namespace BrunoGUI_GenII
         private readonly List<Coup> _coups;
 
         public IReadOnlyList<PositionAnalysee> Positions => _positions;
+
+        public int IndexDansListeCoups(int indexPosition) =>
+            // Le coup de ListeCoups qui mène à cette position (pour l'afficher) ; position de départ : -1, ou 0 (élément
+            // "position de départ") pour une partie commencée depuis un FEN
+            indexPosition > 0 ? _indexCoups[indexPosition - 1] : _coups.Count > 0 && _coups[0].EstPositionDeDepart ? 0 : -1;
 
         public AnalyseDePartie(IReadOnlyList<Coup> coups)
         {   // Les positions de la partie : celle de départ (position initiale ou FEN de départ), puis celle après chaque coup
@@ -137,7 +143,8 @@ namespace BrunoGUI_GenII
             bool meilleurJoue = meilleur != null && SansSymboles(meilleur) == SansSymboles(_coups[indexCoup].PgnFrSansNumero);
             // Le meilleur coup du moteur ne perd rien (l'écart d'évaluation entre deux recherches ne serait que du bruit)
             double perte = meilleurJoue ? 0 : Math.Max(0, camp == ColorPiece.Blanc ? avant - apres : apres - avant);
-            return new JugementCoup(indexCoup, camp, perte, JugementCoups.Annotation(perte), _positions[k + 1].Evaluation, meilleur, meilleurJoue);
+            return new JugementCoup(indexCoup, camp, perte, JugementCoups.Annotation(perte), _positions[k + 1].Evaluation, meilleur, meilleurJoue,
+                                    _positions[k].Evaluation);
         }
 
         private static string SansSymboles(string coup) => coup.TrimEnd('+', '#', '!', '?');
@@ -153,6 +160,8 @@ namespace BrunoGUI_GenII
                 coup.EvaluationApres = jugement.EvaluationApres;
                 coup.MeilleurCoup = jugement.MeilleurCoup;
                 coup.MeilleurJoue = jugement.MeilleurJoue;
+                coup.EvaluationMeilleur = jugement.EvaluationMeilleur;
+                coup.PerteAnalyse = jugement.Perte;
                 if (coup.Annotation == "" || coup.AnnotationProposee)
                 {
                     coup.Annotation = jugement.Annotation;
