@@ -152,9 +152,9 @@ namespace BrunoGUI_GenII
                 {
                     ligne = ligne.Replace("\r", "");
                     if (!ligne.TrimStart().StartsWith('['))
-                    {   // Lignes de coups seulement : on retire les annotations (!, ?, !?...) et les ".." de "12..." ;
-                        // les en-têtes restent intacts (ex : date "2024.??.??", nom avec un point d'exclamation)
-                        ligne = ligne.Replace("?", "").Replace("!", "").Replace("..", "");
+                    {   // Lignes de coups seulement : on retire les ".." de "12..." (les annotations !, ?, !?... sont gardées :
+                        // DecodePartiePGN les sépare des coups) ; les en-têtes restent intacts (ex : date "2024.??.??")
+                        ligne = ligne.Replace("..", "");
                     }
                     if (ligne.StartsWith("[Event ")) // Avec un espace à la fin de Event, pour ne pas confondre avec le Tag EventDate ...
                     {
@@ -259,6 +259,7 @@ namespace BrunoGUI_GenII
 
             PartiePGN.TempsCoups = [];
             PartiePGN.TempsReflexion = [];
+            PartiePGN.Annotations = [];
             foreach (var t in tokens)
             {
                 string c = t;
@@ -278,13 +279,23 @@ namespace BrunoGUI_GenII
                 }                           // (ce qui arrive parfois dans les fichiers PGN)
                 if (Regex.IsMatch(c, @"^\d+\.+$"))      // numéro de coup : "12." ou "12..." (coup noir après un commentaire)
                     continue;
+                if (c.StartsWith('$') || c.Trim('!', '?').Length == 0)
+                {   // Annotation du coup qui précède : code NAG ($1 à $6 ; les autres, ex : $14, sont ignorés) ou symbole isolé ("e4 !")
+                    string annotation = c.StartsWith('$') ? (int.TryParse(c[1..], out int nag) ? Annotations.DepuisNag(nag) : "")
+                                                          : Annotations.Separe("x" + c).Annotation;
+                    if (annotation != "" && PartiePGN.Annotations.Count > 0 && PartiePGN.Annotations[^1] == "")
+                        PartiePGN.Annotations[^1] = annotation;
+                    continue;
+                }
                 if (c.Contains('$'))
                     continue;
-                if (c.Length < 2)
+                var (coupSeul, annotationDuCoup) = Annotations.Separe(c);     // "Ng5?!" : le coup "Ng5", l'annotation "?!"
+                if (coupSeul.Length < 2)
                     continue;
-                coupsPropres.Add(c);
+                coupsPropres.Add(coupSeul);
                 PartiePGN.TempsCoups.Add(null);
                 PartiePGN.TempsReflexion.Add(null);
+                PartiePGN.Annotations.Add(annotationDuCoup);
             }
 
             string final = string.Join(" ", coupsPropres);

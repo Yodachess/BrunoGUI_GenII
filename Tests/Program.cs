@@ -632,6 +632,12 @@ Verifie("Feuille de partie : une ligne par coup complet, dernier coup noir pas e
 Verifie("Coup numéroté en français (cadre « Coup joué ») : blanc et noir",
     L.ListeCoups[0].PgnFrNumerote == "1. e4" && L.ListeCoups[1].PgnFrNumerote == "1... e5" && L.ListeCoups[^1].PgnFrNumerote == "7... d6",
     $"{L.ListeCoups[0].PgnFrNumerote} / {L.ListeCoups[1].PgnFrNumerote} / {L.ListeCoups[^1].PgnFrNumerote}");
+Verifie("Annotations : séparées du coup, codes NAG $1 à $6, autres ignorés",
+    Annotations.Separe("Ng5?!") == ("Ng5", "?!") && Annotations.Separe("Qg7#") == ("Qg7#", "") && Annotations.Separe("e4!!!") == ("e4", "")
+    && Annotations.DepuisNag(2) == "?" && Annotations.DepuisNag(5) == "!?" && Annotations.DepuisNag(14) == "",
+    $"{Annotations.Separe("Ng5?!")}");
+L.ListeCoups[6].Annotation = "?!";      // 4. Ba4?!
+L.ListeCoups[9].Annotation = "??";      // 5... Be7??
 string pgnSansTemps = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "" }, "Intl");
 string pgnAvecTemps = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "" }, "Intl", avecTemps: true);
 string[] lignesCoups = pgnAvecTemps.Split('\n').Where(l => !l.StartsWith('[') && l.Trim() != "").ToArray();
@@ -643,6 +649,10 @@ Partie partiePendule = new();
 ResultatChargementPgn relecturePendule = ChargementPartie.ChargerPartiePgn(FichierPartiePgn.DecodePartiePGN(pgnAvecTemps), partiePendule);
 Verifie("PGN avec les temps : relu sans erreur (commentaires ignorés)",
     relecturePendule.CoupIllisible == null && relecturePendule.DemiCoupsJoues == coupsPendule.Length, $"{relecturePendule.DemiCoupsJoues} demi-coups, illisible : {relecturePendule.CoupIllisible ?? "aucun"}");
+Verifie("PGN : annotations écrites collées au coup et relues",
+    pgnSansTemps.Contains("4. Ba4?! Nf6 5. O-O Be7??") && pgnAvecTemps.Contains("4. Ba4?! {[%clk")
+    && L.ListeCoups[6].Annotation == "?!" && L.ListeCoups[9].Annotation == "??" && L.ListeCoups[8].Annotation == "",
+    pgnSansTemps.Replace("\n", " "));
 Verifie("PGN avec les temps : chaque coup reprend son temps et le dernier temps de l'autre camp",
     L.ListeCoups[0].TempsBlancs == TimeSpan.FromSeconds(180) && L.ListeCoups[0].TempsNoirs == null
     && L.ListeCoups[2].TempsBlancs == TimeSpan.FromSeconds(174) && L.ListeCoups[2].TempsNoirs == TimeSpan.FromSeconds(178)
@@ -719,6 +729,15 @@ foreach (string texteAnnote in partiesAnnotees)
     Verifie($"Partie annotée « {annotee.Tournoi} » : tous les coups relus",
         chargementAnnote.CoupIllisible == null && chargementAnnote.DemiCoupsJoues.ToString() == annotee.CompteDePLy,
         $"{chargementAnnote.DemiCoupsJoues} demi-coups sur {annotee.CompteDePLy}, illisible : {chargementAnnote.CoupIllisible ?? "aucun"} | {annotee.CoupsPartiePGN[..Math.Min(120, annotee.CoupsPartiePGN.Length)]}");
+    if (annotee.TimeControl == null)
+        Verifie("Partie annotée par Fritz : codes NAG de la partie principale relus (27. e5 $1 = !), ceux des variantes ignorés",
+            L.ListeCoups[52].Annotation == "!" && L.ListeCoups[52].PgnIntl.Contains("e5") && L.ListeCoups[34].Annotation == ""
+            && L.ListeCoups.Count(c => c.Annotation != "") == 1,
+            string.Join(" ", L.ListeCoups.Where(c => c.Annotation != "").Select(c => c.PgnIntl.Trim() + c.Annotation)));
+    else
+        Verifie("Partie annotée ChessBase : 19. Ng5 $2 = ?, 20. Rxf6 $1 = !",
+            L.ListeCoups[36].Annotation == "?" && L.ListeCoups[38].Annotation == "!",
+            string.Join(" ", L.ListeCoups.Where(c => c.Annotation != "").Select(c => c.PgnIntl.Trim() + c.Annotation)));
     if (annotee.TimeControl != null)
     {   // 2e partie (ChessBase) : temps de réflexion [%emt], y compris ceux coupés en fin de ligne ("[%emt 0:⏎00:47]")
         Verifie("Partie annotée : temps de réflexion [%emt] relus pour chaque coup",
@@ -745,8 +764,9 @@ System.IO.File.WriteAllText(fichierLatin1,
     "[Event \"Test\"]\n[Date \"2024.??.??\"]\n[White \"Müller\"]\n[Black \"Gaël\"]\n[Result \"*\"]\n\n1. e4! e5?! 2. Nf3 *\n", System.Text.Encoding.Latin1);
 PartieEchecsPGN partieLatin1 = FichierPartiePgn.DecodePartiePGN(FichierPartiePgn.DecodeFichierPGN(fichierLatin1)[0]);
 System.IO.File.Delete(fichierLatin1);
-Verifie("PGN en Latin-1 : accents lus, date '??' conservée, annotations retirées des coups",
-    partieLatin1.White == "Müller" && partieLatin1.Black == "Gaël" && partieLatin1.Date == "2024.??.??" && partieLatin1.CoupsPartiePGN.StartsWith("1. e4 e5 2. Nf3"),
+Verifie("PGN en Latin-1 : accents lus, date '??' conservée, annotations séparées des coups et gardées",
+    partieLatin1.White == "Müller" && partieLatin1.Black == "Gaël" && partieLatin1.Date == "2024.??.??" && partieLatin1.CoupsPartiePGN.StartsWith("1. e4 e5 2. Nf3")
+    && partieLatin1.Annotations.SequenceEqual(["!", "?!", ""]),
     $"{partieLatin1.White} / {partieLatin1.Black} / {partieLatin1.Date} / {partieLatin1.CoupsPartiePGN}");
 
 // Choix du coup de bibliothèque : le meilleur poids (au hasard parmi les ex aequo), ou n'importe lequel en mode aléatoire

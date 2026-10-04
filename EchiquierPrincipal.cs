@@ -108,6 +108,7 @@ namespace BrunoGUI_GenII
             PenduleNoir.Click += Pendule_Click;
             PenduleBlanc.ReduitPourTenir = PenduleNoir.ReduitPourTenir = true;     // "1:30:00" toujours lisible en entier
             FeuilleDesCoups.CoupClique += FeuilleDesCoups_CoupClique;           // clic sur un coup de la feuille : sa position
+            FeuilleDesCoups.CoupCliqueDroit += FeuilleDesCoups_CoupCliqueDroit; // clic droit : annotations (!!, !, !?, ?!, ?, ??)
             AffichePendules();      // pas de pendule au départ : "-:--"
             // Debug pour vérifier
             Debug.WriteLine($"Paramètres chargés : Biblio = {_bibliotheque}, Force = {_forceMoteurElo}, Nombre PV = {MoteurUci.NombreLignesPV}");
@@ -1765,6 +1766,35 @@ namespace BrunoGUI_GenII
         private void FeuilleDesCoups_CoupClique(int index)
         {   // Clic sur un coup de la feuille : on affiche la position après ce coup (le dernier coup ramène à la partie)
             AfficheCoupDeLaPartie(index);
+        }
+        private void FeuilleDesCoups_CoupCliqueDroit(int index, Point position)
+        {   // Clic droit sur un coup de la feuille : menu des annotations (!!, !, !?, ?!, ?, ??), l'annotation actuelle cochée.
+            // L'annotation est rangée dans le coup (Coup.Annotation) et écrite dans le PGN
+            Coup coup = LogiqueMouvements.ListeCoups[index];
+            ContextMenuStrip menu = new();
+            foreach (string annotation in Annotations.Toutes)
+                menu.Items.Add(ElementAnnotation(coup, annotation, $"{annotation}\t{Annotations.Nom(annotation)}"));
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(ElementAnnotation(coup, "", Annotations.Nom("")));
+            menu.Closed += (s, e) => BeginInvoke(new Action(menu.Dispose));     // libéré après le traitement du clic
+            menu.Show(FeuilleDesCoups, position);
+        }
+        private Font _policeMenuAnnotations;    // créée une seule fois (une police par élément et par clic droit ne serait jamais libérée)
+        private ToolStripMenuItem ElementAnnotation(Coup coup, string annotation, string texte)
+        {
+            _policeMenuAnnotations ??= new Font(Font, FontStyle.Bold);
+            ToolStripMenuItem element = new(texte)
+            {
+                Checked = coup.Annotation == annotation,
+                ForeColor = FeuilleCoups.CouleurAnnotation(annotation),
+                Font = _policeMenuAnnotations
+            };
+            element.Click += (s, e) =>
+            {
+                coup.Annotation = annotation;
+                MetAJourFeuille();
+            };
+            return element;
         }
         private void TourneEchiquier()
         {   // Tourne l'échiquier de 180° (vue côté Blancs / côté Noirs) et redessine la position affichée :

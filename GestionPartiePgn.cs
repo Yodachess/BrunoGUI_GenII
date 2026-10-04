@@ -47,6 +47,7 @@ namespace BrunoGUI_GenII
         public string TimeControl { get; set; }     // cadence ([TimeControl "180+2"], en secondes + bonus) ; vide : sans pendule
         public List<TimeSpan?> TempsCoups { get; set; } = [];  // temps de pendule après chaque coup ({[%clk h:mm:ss]}), dans l'ordre ; null : inconnu
         public List<TimeSpan?> TempsReflexion { get; set; } = [];  // temps passé sur chaque coup ({[%emt h:mm:ss]}, ChessBase) ; null : inconnu
+        public List<string> Annotations { get; set; } = [];        // annotation de chaque coup ("!?", "??"... ; "" : aucune), dans l'ordre
     }
 
     public class GestionPartiePgn
@@ -66,6 +67,8 @@ namespace BrunoGUI_GenII
             {   // Il faut des lignes <= 80 caractères, mais n'aller à la ligne que si c'est un espace
                 Coup coup = ListeCoups[i];
                 string texteCoup = localisation == "Fr" ? ListeCoupsPgnFr[i] : ListeCoupsPgnIntl[i];
+                if (coup.Annotation != "")
+                    texteCoup = texteCoup.TrimEnd() + coup.Annotation + " ";    // annotation collée au coup : "15. Ng5?! "
                 TimeSpan? temps = coup.EstCoupBlanc ? coup.TempsBlancs : coup.TempsNoirs;     // pendule du camp qui vient de jouer
                 if (avecTemps && !coup.EstPositionDeDepart && temps is TimeSpan restant)
                 {
