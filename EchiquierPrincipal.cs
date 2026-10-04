@@ -1652,6 +1652,9 @@ namespace BrunoGUI_GenII
                 Debug.WriteLine($"Coup bibliothèque exécuté : {coupChoisiTxt}");
                 AfficheCoupsBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
                 AfficheCoupDuMoteur();
+                // Barre d'état : comme pour un coup réfléchi (écrit à la réception du bestmove), qu'un coup de bibliothèque n'a pas
+                if (LogiqueMouvements.ListeCoups.Count > 0)
+                    VarianteMoteurCourante.Text = "Coup joué : " + LogiqueMouvements.ListeCoups[^1].PgnFrNumerote + " (bibliothèque)";
                 return;
             }
             // Aucun coup dans la bibliothèque ou bibliothèque inactive : le moteur réfléchit
