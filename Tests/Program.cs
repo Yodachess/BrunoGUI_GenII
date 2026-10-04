@@ -945,7 +945,14 @@ analyseSansScore.Enregistre(0, null);
 Verifie("Analyse : une position sans score du moteur est sautée (pas de boucle), ses coups ne sont pas jugés",
     analyseSansScore.PositionSuivante == 1 && analyseSansScore.Jugement(0) == null, $"{analyseSansScore.PositionSuivante}");
 Verifie("Analyse : premier coup d'une variante (numéros sautés)",
-    AnalyseDePartie.PremierCoup("12... Fe7 13. Cf3") == "Fe7" && AnalyseDePartie.PremierCoup("") == null, "");
+    AnalyseDePartie.PremierCoup("12... Fe7 13. Cf3") == "Fe7" && AnalyseDePartie.PremierCoup("19 ... Fa2 20. Cf3") == "Fa2"
+    && AnalyseDePartie.PremierCoup("3. O-O Cf6") == "O-O" && AnalyseDePartie.PremierCoup("") == null,
+    AnalyseDePartie.PremierCoup("19 ... Fa2 20. Cf3"));
+// Le format réel des variantes du moteur quand les Noirs ont le trait (« 1 ... c5 ») : le meilleur coup noir est bien retrouvé
+SuiviAnalyse suiviNoirs = new();
+LigneAnalyse ligneNoirs = suiviNoirs.Ajouter(LigneUci.Analyser("info multipv 1 score cp -20 pv c7c5 g1f3"), L.PositionDepuisFen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"));
+Verifie("Analyse : meilleur coup noir tiré d'une vraie variante du moteur (« 1 ... c5 2. Cf3 »)",
+    AnalyseDePartie.PremierCoup(ligneNoirs.VariantePgn) == "c5", ligneNoirs.VariantePgn);
 
 // ═══════════════ Pendule ═══════════════
 Console.WriteLine("── Pendule ──");
