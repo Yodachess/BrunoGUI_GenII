@@ -933,6 +933,17 @@ BilanCamp bilanBlancs = analyseBerger.Bilan(L.ColorPiece.Blanc), bilanNoirs = an
 Verifie("Analyse : bilan par camp (imprécisions, erreurs, gaffes, perte moyenne en centipions)",
     bilanBlancs == bilanBlancs with { Imprecisions = 1, Erreurs = 0, Gaffes = 0 } && bilanNoirs.Gaffes == 1 && bilanNoirs.PerteMoyenne > bilanBlancs.PerteMoyenne,
     $"Blancs {bilanBlancs}, Noirs {bilanNoirs}");
+L.ListeCoups[5].Annotation = "!";       // le joueur pense que 3... Cf6 est un bon coup : l'analyse ne doit pas l'écraser
+analyseBerger.AppliqueAuxCoups(L.ListeCoups);
+Verifie("Analyse appliquée aux coups : annotation proposée (marquée), évaluation et meilleur coup ; celle du joueur est gardée",
+    L.ListeCoups[2].Annotation == "?!" && L.ListeCoups[2].AnnotationProposee && L.ListeCoups[2].MeilleurCoup == "Cf3"
+    && L.ListeCoups[2].EvaluationApres == new Evaluation(-60, null) && L.ListeCoups[0].MeilleurJoue && L.ListeCoups[0].Annotation == ""
+    && L.ListeCoups[5].Annotation == "!" && !L.ListeCoups[5].AnnotationProposee && L.ListeCoups[5].MeilleurCoup == "g6",
+    $"Dh5 {L.ListeCoups[2].Annotation} (proposée : {L.ListeCoups[2].AnnotationProposee}), Cf6 {L.ListeCoups[5].Annotation}");
+AnalyseDePartie analyseSansScore = new(L.ListeCoups);
+analyseSansScore.Enregistre(0, null);
+Verifie("Analyse : une position sans score du moteur est sautée (pas de boucle), ses coups ne sont pas jugés",
+    analyseSansScore.PositionSuivante == 1 && analyseSansScore.Jugement(0) == null, $"{analyseSansScore.PositionSuivante}");
 Verifie("Analyse : premier coup d'une variante (numéros sautés)",
     AnalyseDePartie.PremierCoup("12... Fe7 13. Cf3") == "Fe7" && AnalyseDePartie.PremierCoup("") == null, "");
 

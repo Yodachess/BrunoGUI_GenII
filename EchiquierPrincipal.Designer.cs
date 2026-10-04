@@ -80,6 +80,9 @@ namespace BrunoGUI_GenII
             Promo0 = new System.Windows.Forms.PictureBox();
             BoutonBalises = new Krypton.Toolkit.KryptonButton();
             RetourArriere = new Krypton.Toolkit.KryptonButton();
+            BoutonAnalysePartie = new Krypton.Toolkit.KryptonButton();
+            BarreAnalysePartie = new System.Windows.Forms.ProgressBar();
+            BilanAnalyse = new System.Windows.Forms.Label();
             BoutonSetupPosition = new Krypton.Toolkit.KryptonButton();
             VisualisationPgn = new Krypton.Toolkit.KryptonButton();
             kryptonStatusStrip1 = new Krypton.Toolkit.KryptonStatusStrip();
@@ -542,6 +545,42 @@ namespace BrunoGUI_GenII
             RetourArriere.Values.DropDownArrowColor = System.Drawing.Color.Empty;
             RetourArriere.Values.Text = "Retour Arrière";
             RetourArriere.Click += RetourArriere_Click;
+            // 
+            // BoutonAnalysePartie
+            // 
+            BoutonAnalysePartie.Location = new System.Drawing.Point(538, 616);
+            BoutonAnalysePartie.Name = "BoutonAnalysePartie";
+            BoutonAnalysePartie.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
+            BoutonAnalysePartie.Size = new System.Drawing.Size(212, 25);
+            BoutonAnalysePartie.StateCommon.Back.Color1 = System.Drawing.Color.FromArgb(192, 192, 255);
+            BoutonAnalysePartie.StateCommon.Border.Color1 = System.Drawing.Color.DarkGray;
+            BoutonAnalysePartie.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
+            BoutonAnalysePartie.StateCommon.Border.GraphicsHint = Krypton.Toolkit.PaletteGraphicsHint.AntiAlias;
+            BoutonAnalysePartie.StateCommon.Border.Rounding = 20F;
+            BoutonAnalysePartie.StateCommon.Border.Width = 3;
+            BoutonAnalysePartie.StateCommon.Content.ShortText.Color1 = System.Drawing.Color.Black;
+            BoutonAnalysePartie.StateCommon.Content.ShortText.Color2 = System.Drawing.Color.Black;
+            BoutonAnalysePartie.TabIndex = 30;
+            BoutonAnalysePartie.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            BoutonAnalysePartie.Values.Text = "Analyser la partie";
+            BoutonAnalysePartie.Click += BoutonAnalysePartie_Click;
+            // 
+            // BarreAnalysePartie
+            // 
+            BarreAnalysePartie.Location = new System.Drawing.Point(538, 646);
+            BarreAnalysePartie.Name = "BarreAnalysePartie";
+            BarreAnalysePartie.Size = new System.Drawing.Size(212, 12);
+            BarreAnalysePartie.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            BarreAnalysePartie.TabIndex = 31;
+            BarreAnalysePartie.Visible = false;
+            // 
+            // BilanAnalyse
+            // 
+            BilanAnalyse.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            BilanAnalyse.Location = new System.Drawing.Point(538, 662);
+            BilanAnalyse.Name = "BilanAnalyse";
+            BilanAnalyse.Size = new System.Drawing.Size(212, 44);
+            BilanAnalyse.TabIndex = 32;
             // 
             // BoutonSetupPosition
             // 
@@ -1188,6 +1227,9 @@ namespace BrunoGUI_GenII
             Controls.Add(kryptonStatusStrip1);
             Controls.Add(VisualisationPgn);
             Controls.Add(RetourArriere);
+            Controls.Add(BoutonAnalysePartie);
+            Controls.Add(BarreAnalysePartie);
+            Controls.Add(BilanAnalyse);
             Controls.Add(BoutonSetupPosition);
             Controls.Add(BoutonBalises);
             Controls.Add(GroupPromo);
@@ -1266,6 +1308,9 @@ namespace BrunoGUI_GenII
         private System.Windows.Forms.ToolStripMenuItem ParametresAvances;
         private FeuilleCoups FeuilleDesCoups;
         public Krypton.Toolkit.KryptonButton RetourArriere;
+        private Krypton.Toolkit.KryptonButton BoutonAnalysePartie;
+        private System.Windows.Forms.ProgressBar BarreAnalysePartie;
+        private System.Windows.Forms.Label BilanAnalyse;
         private Krypton.Toolkit.KryptonButton BoutonSetupPosition;
         public Krypton.Toolkit.KryptonButton AnalysePosition;
         private System.Windows.Forms.ToolStripMenuItem VisualiserPgn;
