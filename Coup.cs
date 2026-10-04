@@ -48,31 +48,28 @@ namespace BrunoGUI_GenII
         }
     }
 
+    // Une ligne de la feuille de partie : numéro du coup, et place dans ListeCoups du coup blanc et du coup noir
+    // (null : case vide, ex : "3. | ... | Cf6" pour une partie commencée par un coup noir, ou le coup noir pas encore joué)
+    public record LigneFeuille(int Numero, int? Blanc, int? Noir);
+
     public static class FeuilleDePartie
-    {   // Lignes de la feuille de partie (fenêtre "Liste des coups") : numéro, coup blanc, coup noir.
-        // Une partie commencée depuis un FEN avec les Noirs au trait a une première ligne "n. | ... | coup noir"
-        public static List<string[]> Lignes(IEnumerable<Coup> coups)
+    {   // Mise en page de la feuille de partie (composant FeuilleCoups, à droite de l'échiquier) : une ligne par coup complet
+        public static List<LigneFeuille> Lignes(IReadOnlyList<Coup> coups)
         {
-            List<string[]> lignes = [];
-            foreach (Coup coup in coups)
+            List<LigneFeuille> lignes = [];
+            for (int i = 0; i < coups.Count; i++)
             {
+                Coup coup = coups[i];
                 if (coup.EstPositionDeDepart)
                     continue;
                 if (coup.EstCoupBlanc)
-                    lignes.Add([coup.NumeroDuCoup + ".", coup.PgnFrSansNumero, ""]);
-                else if (lignes.Count > 0 && lignes[^1][2] == "")
-                    lignes[^1][2] = coup.PgnFrSansNumero;
+                    lignes.Add(new(coup.NumeroDuCoup, i, null));
+                else if (lignes.Count > 0 && lignes[^1].Noir == null && lignes[^1].Numero == coup.NumeroDuCoup)
+                    lignes[^1] = lignes[^1] with { Noir = i };
                 else
-                    lignes.Add([coup.NumeroDuCoup + ".", "...", coup.PgnFrSansNumero]);
+                    lignes.Add(new(coup.NumeroDuCoup, null, i));
             }
             return lignes;
-        }
-        public static bool CommenceParLesNoirs(IEnumerable<Coup> coups)
-        {   // Le premier coup joué est-il un coup noir ? (la feuille commence alors par "...")
-            foreach (Coup coup in coups)
-                if (!coup.EstPositionDeDepart)
-                    return !coup.EstCoupBlanc;
-            return false;
         }
     }
 
