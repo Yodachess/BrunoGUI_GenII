@@ -107,6 +107,8 @@ namespace BrunoGUI_GenII
             PenduleBlanc.Click += Pendule_Click;        // un clic sur une pendule : pause / reprise
             PenduleNoir.Click += Pendule_Click;
             PenduleBlanc.ReduitPourTenir = PenduleNoir.ReduitPourTenir = true;     // "1:30:00" toujours lisible en entier
+            _policeVariante2 = VarianteMoteurUci2.Font;                         // police normale de la 2e ligne de variante
+            VarianteMoteurUci2.TextChanged += VarianteMoteurUci2_TextChanged;   // (la ligne d'analyse d'un coup est centrée et en gras)
             FeuilleDesCoups.CoupClique += FeuilleDesCoups_CoupClique;           // clic sur un coup de la feuille : sa position
             FeuilleDesCoups.CoupCliqueDroit += FeuilleDesCoups_CoupCliqueDroit; // clic droit : annotations (!!, !, !?, ?!, ?, ??)
             AffichePendules();      // pas de pendule au départ : "-:--"
@@ -1973,18 +1975,45 @@ namespace BrunoGUI_GenII
                 ? "Position initiale" : TexteCoupJoue(index, _positionAffichee);
             // Coup analysé (analyse de partie) : son évaluation et le meilleur coup du moteur, sur la 2e ligne de variante
             if (index >= 0 && LogiqueMouvements.ListeCoups[index] is { EvaluationApres: Evaluation evaluation } coupAnalyse)
-                VarianteMoteurUci2.Text = $"   Analyse : {evaluation.Texte} ({evaluation.Symbole})"
-                    + (coupAnalyse.MeilleurJoue ? "   — meilleur coup du moteur"
-                       : coupAnalyse.MeilleurCoup != null
-                         // le meilleur coup avec SON évaluation (ex : un mat plus rapide), et "écart négligeable" si le coup joué ne
-                         // perd presque rien : sinon on croirait le coup joué moins bon qu'il n'est
-                         ? $"   — meilleur : {coupAnalyse.MeilleurCoup}" + (coupAnalyse.EvaluationMeilleur is Evaluation meilleure ? $" ({meilleure.Texte})" : "")
-                           + (coupAnalyse.PerteAnalyse < JugementCoups.SeuilImprecision ? ", écart négligeable" : "")
-                         : "")
-                    + (coupAnalyse.Annotation != "" ? $"   [{coupAnalyse.Annotation} {Annotations.Nom(coupAnalyse.Annotation)}]" : "");
+                AfficheLigneAnalyse(TexteAnalyseDuCoup(coupAnalyse, evaluation));
             AffichePendules();      // partie sans pendule en cours (ex : PGN chargé) : temps notés à cette position
             if (!PartieEnLectureSeule)
                 InformationsPartie.Text = "Parcours : Fin ou clic pour revenir";
+        }
+        private static string TexteAnalyseDuCoup(Coup coup, Evaluation evaluation) =>
+            // Ex : "Analyse : -9.05 (-+)   joué Dh2 [?? Gaffe]   — meilleur : Rd3 (0.00)" : le coup joué et son jugement, puis le
+            // meilleur coup avec SON évaluation, et "écart négligeable" si le coup joué ne perd presque rien (ex : mat en 3 au lieu de 2)
+            $"Analyse : {evaluation.Texte} ({evaluation.Symbole})   joué {coup.PgnFrSansNumero}"
+            + (coup.Annotation != "" ? $" [{coup.Annotation} {Annotations.Nom(coup.Annotation)}]" : "")
+            + (coup.MeilleurJoue ? "   — meilleur coup du moteur"
+               : coup.MeilleurCoup != null
+                 ? $"   — meilleur : {coup.MeilleurCoup}" + (coup.EvaluationMeilleur is Evaluation meilleure ? $" ({meilleure.Texte})" : "")
+                   + (coup.PerteAnalyse < JugementCoups.SeuilImprecision ? ", écart négligeable" : "")
+                 : "");
+
+        // La 2e ligne de variante sert aussi aux variantes du moteur (à gauche, police normale) : seule la ligne d'analyse d'un coup
+        // est centrée et en gras ; tout autre texte écrit ensuite la remet en forme normale (VarianteMoteurUci2_TextChanged)
+        private bool _ligneAnalyseEnCours;
+        private Font _policeVariante2, _policeVariante2Gras;
+        private void AfficheLigneAnalyse(string texte)
+        {
+            _ligneAnalyseEnCours = true;
+            VarianteMoteurUci2.Text = texte;
+            VarianteMoteurUci2.SelectAll();
+            VarianteMoteurUci2.SelectionAlignment = HorizontalAlignment.Center;
+            VarianteMoteurUci2.SelectionFont = _policeVariante2Gras ??= new Font(VarianteMoteurUci2.Font, FontStyle.Bold);
+            VarianteMoteurUci2.DeselectAll();
+            _ligneAnalyseEnCours = false;
+        }
+        private void VarianteMoteurUci2_TextChanged(object sender, EventArgs e)
+        {   // Un autre texte que la ligne d'analyse : alignement à gauche et police normale
+            if (_ligneAnalyseEnCours)
+                return;
+            _policeVariante2 ??= VarianteMoteurUci2.Font;
+            VarianteMoteurUci2.SelectAll();
+            VarianteMoteurUci2.SelectionAlignment = HorizontalAlignment.Left;
+            VarianteMoteurUci2.SelectionFont = _policeVariante2;
+            VarianteMoteurUci2.DeselectAll();
         }
         private static string TexteDuree(TimeSpan duree) =>
             // Temps de réflexion d'un coup ([%emt]) : "13 s", "30 min 11 s", "1 h 05 min"
