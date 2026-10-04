@@ -107,8 +107,11 @@ namespace BrunoGUI_GenII
             PenduleBlanc.Click += Pendule_Click;        // un clic sur une pendule : pause / reprise
             PenduleNoir.Click += Pendule_Click;
             PenduleBlanc.ReduitPourTenir = PenduleNoir.ReduitPourTenir = true;     // "1:30:00" toujours lisible en entier
-            _policeVariante2 = VarianteMoteurUci2.Font;                         // police normale de la 2e ligne de variante
-            VarianteMoteurUci2.TextChanged += VarianteMoteurUci2_TextChanged;   // (la ligne d'analyse d'un coup est centrée et en gras)
+            foreach (RichTextBox ligne in new[] { VarianteMoteurUci1, VarianteMoteurUci2 })
+            {   // lignes de variante 1 et 2 : centrées et en gras pour le coup regardé et son analyse (voir AfficheLigneCentree)
+                _policesLignes[ligne] = (ligne.Font, new Font(ligne.Font, FontStyle.Bold));
+                ligne.TextChanged += LigneVariante_TextChanged;
+            }
             FeuilleDesCoups.CoupClique += FeuilleDesCoups_CoupClique;           // clic sur un coup de la feuille : sa position
             FeuilleDesCoups.CoupCliqueDroit += FeuilleDesCoups_CoupCliqueDroit; // clic droit : annotations (!!, !, !?, ?!, ?, ??)
             AffichePendules();      // pas de pendule au départ : "-:--"
@@ -1966,16 +1969,16 @@ namespace BrunoGUI_GenII
             _vue.DessinePosition(_positionAffichee);
             AfficheCoupsBibliotheque(fen);
             InformationPourJoueur.Text = "Trait aux " + NomCamp(_positionAffichee.QuiJoue);
-            VarianteMoteurUci1.Text = index < 0 || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart
-                ? "   [ Position initiale ]" : $"   [ {TexteCoupJoue(index, _positionAffichee)} ]"
-                  + (LogiqueMouvements.ListeCoups[index].TempsReflexion is TimeSpan reflexion ? $"   (réflexion : {TexteDuree(reflexion)})" : "");
+            AfficheLigneCentree(VarianteMoteurUci1, index < 0 || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart
+                ? "[ Position initiale ]" : $"[ {TexteCoupJoue(index, _positionAffichee)} ]"
+                  + (LogiqueMouvements.ListeCoups[index].TempsReflexion is TimeSpan reflexion ? $"   (réflexion : {TexteDuree(reflexion)})" : ""));
             MiseaZeroParcours();
             // Dernière case de la barre d'état : le coup regardé, comme sur la 1re ligne de variante
             VarianteMoteurCourante.Text = index < 0 || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart
                 ? "Position initiale" : TexteCoupJoue(index, _positionAffichee);
             // Coup analysé (analyse de partie) : son évaluation et le meilleur coup du moteur, sur la 2e ligne de variante
             if (index >= 0 && LogiqueMouvements.ListeCoups[index] is { EvaluationApres: Evaluation evaluation } coupAnalyse)
-                AfficheLigneAnalyse(TexteAnalyseDuCoup(coupAnalyse, evaluation));
+                AfficheLigneCentree(VarianteMoteurUci2, TexteAnalyseDuCoup(coupAnalyse, evaluation));
             AffichePendules();      // partie sans pendule en cours (ex : PGN chargé) : temps notés à cette position
             if (!PartieEnLectureSeule)
                 InformationsPartie.Text = "Parcours : Fin ou clic pour revenir";
@@ -1991,29 +1994,29 @@ namespace BrunoGUI_GenII
                    + (coup.PerteAnalyse < JugementCoups.SeuilImprecision ? ", écart négligeable" : "")
                  : "");
 
-        // La 2e ligne de variante sert aussi aux variantes du moteur (à gauche, police normale) : seule la ligne d'analyse d'un coup
-        // est centrée et en gras ; tout autre texte écrit ensuite la remet en forme normale (VarianteMoteurUci2_TextChanged)
-        private bool _ligneAnalyseEnCours;
-        private Font _policeVariante2, _policeVariante2Gras;
-        private void AfficheLigneAnalyse(string texte)
+        // Les lignes de variante 1 et 2 servent aussi aux variantes du moteur (à gauche, police normale) : pendant le parcours, le coup
+        // regardé (ligne 1) et son analyse (ligne 2) y sont centrés et en gras (AfficheLigneCentree) ; tout autre texte écrit ensuite
+        // remet la ligne en forme normale (LigneVariante_TextChanged)
+        private bool _ecritureCentree;
+        private readonly Dictionary<RichTextBox, (Font Normale, Font Grasse)> _policesLignes = [];
+        private void AfficheLigneCentree(RichTextBox ligne, string texte)
         {
-            _ligneAnalyseEnCours = true;
-            VarianteMoteurUci2.Text = texte;
-            VarianteMoteurUci2.SelectAll();
-            VarianteMoteurUci2.SelectionAlignment = HorizontalAlignment.Center;
-            VarianteMoteurUci2.SelectionFont = _policeVariante2Gras ??= new Font(VarianteMoteurUci2.Font, FontStyle.Bold);
-            VarianteMoteurUci2.DeselectAll();
-            _ligneAnalyseEnCours = false;
+            _ecritureCentree = true;
+            ligne.Text = texte;
+            ligne.SelectAll();
+            ligne.SelectionAlignment = HorizontalAlignment.Center;
+            ligne.SelectionFont = _policesLignes[ligne].Grasse;
+            ligne.DeselectAll();
+            _ecritureCentree = false;
         }
-        private void VarianteMoteurUci2_TextChanged(object sender, EventArgs e)
-        {   // Un autre texte que la ligne d'analyse : alignement à gauche et police normale
-            if (_ligneAnalyseEnCours)
+        private void LigneVariante_TextChanged(object sender, EventArgs e)
+        {   // Un autre texte que le coup regardé ou son analyse : alignement à gauche et police normale
+            if (_ecritureCentree || sender is not RichTextBox ligne)
                 return;
-            _policeVariante2 ??= VarianteMoteurUci2.Font;
-            VarianteMoteurUci2.SelectAll();
-            VarianteMoteurUci2.SelectionAlignment = HorizontalAlignment.Left;
-            VarianteMoteurUci2.SelectionFont = _policeVariante2;
-            VarianteMoteurUci2.DeselectAll();
+            ligne.SelectAll();
+            ligne.SelectionAlignment = HorizontalAlignment.Left;
+            ligne.SelectionFont = _policesLignes[ligne].Normale;
+            ligne.DeselectAll();
         }
         private static string TexteDuree(TimeSpan duree) =>
             // Temps de réflexion d'un coup ([%emt]) : "13 s", "30 min 11 s", "1 h 05 min"
