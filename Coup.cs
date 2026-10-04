@@ -30,6 +30,12 @@ namespace BrunoGUI_GenII
         public TimeSpan? TempsNoirs { get; set; }
         public TimeSpan? TempsReflexion { get; set; }   // partie PGN chargée : temps passé sur ce coup ([%emt], ChessBase), null si inconnu
         public string Annotation { get; set; } = "";    // "!!", "!", "!?", "?!", "?", "??" (voir Annotations), "" : aucune
+        // Analyse de partie (AnalysePartie.cs) : annotation proposée par le moteur (affichée plus pâle, jusqu'à ce que le joueur
+        // en choisisse une), évaluation après le coup (point de vue des Blancs), meilleur coup du moteur dans la position d'avant
+        public bool AnnotationProposee { get; set; }
+        public Evaluation? EvaluationApres { get; set; }
+        public string MeilleurCoup { get; set; }
+        public bool MeilleurJoue { get; set; }
 
         public static Coup PositionDeDepart(string fen) => new() { Fen = fen, EstPositionDeDepart = true };
 

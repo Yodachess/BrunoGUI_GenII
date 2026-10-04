@@ -130,7 +130,10 @@ namespace BrunoGUI_GenII
             {   // L'annotation suit le coup, en couleur (comme sur Lichess)
                 int largeurCoup = TextRenderer.MeasureText(g, coup, Font, texte.Size, format).Width;
                 Rectangle zoneAnnotation = new(texte.X + largeurCoup + 1, texte.Y, Math.Max(0, texte.Width - largeurCoup - 1), texte.Height);
-                TextRenderer.DrawText(g, annotation, Font, zoneAnnotation, CouleurAnnotation(annotation), format);
+                Color couleur = CouleurAnnotation(annotation);
+                if (_coups[i].AnnotationProposee)       // proposée par l'analyse de partie : plus pâle, tant que le joueur ne l'a pas choisie
+                    couleur = Color.FromArgb((couleur.R + 2 * CouleurPapier.R) / 3, (couleur.G + 2 * CouleurPapier.G) / 3, (couleur.B + 2 * CouleurPapier.B) / 3);
+                TextRenderer.DrawText(g, annotation, Font, zoneAnnotation, couleur, format);
             }
         }
 

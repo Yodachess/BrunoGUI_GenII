@@ -58,7 +58,8 @@ namespace BrunoGUI_GenII
         public double? ChancesFinDePartie { get; init; }    // mat ou pat : +1, -1 ou 0, sans demander au moteur
         public Evaluation? Evaluation { get; set; }         // du point de vue des Blancs (null : pas encore analysée)
         public string MeilleurCoup { get; set; }            // premier coup de la meilleure variante, en notation française ("Cf3")
-        public bool Analysee => Evaluation != null || ChancesFinDePartie != null;
+        public bool Ignoree { get; set; }                   // le moteur n'a donné aucun score : position sautée (sinon l'analyse tournerait en rond)
+        public bool Analysee => Evaluation != null || ChancesFinDePartie != null || Ignoree;
         public double? Chances => ChancesFinDePartie ?? (Evaluation is Evaluation e ? JugementCoups.ChancesDeGain(e) : null);
     }
 
@@ -111,9 +112,12 @@ namespace BrunoGUI_GenII
         public bool Terminee => PositionSuivante == null;
 
         public void Enregistre(int indexPosition, LigneAnalyse meilleure)
-        {   // Résultat du moteur pour la position (sa meilleure variante) ; sans score (moteur interrompu), la position reste à analyser
+        {   // Résultat du moteur pour la position (sa meilleure variante) ; sans score, la position est sautée (ses coups ne seront pas jugés)
             if (meilleure?.Evaluation is not Evaluation evaluation)
+            {
+                _positions[indexPosition].Ignoree = true;
                 return;
+            }
             _positions[indexPosition].Evaluation = evaluation;
             _positions[indexPosition].MeilleurCoup = PremierCoup(meilleure.VariantePgn);
         }
@@ -138,6 +142,23 @@ namespace BrunoGUI_GenII
         private static string SansSymboles(string coup) => coup.TrimEnd('+', '#', '!', '?');
 
         public IEnumerable<JugementCoup> Jugements() => _indexCoups.Select(Jugement).Where(j => j != null);
+
+        public void AppliqueAuxCoups(IReadOnlyList<Coup> coups)
+        {   // Range les résultats dans les coups jugés (même liste qu'à la construction) : évaluation, meilleur coup, et annotation
+            // proposée, sauf si le joueur en a mis une lui-même (une annotation proposée par une analyse précédente est remplacée)
+            foreach (JugementCoup jugement in Jugements())
+            {
+                Coup coup = coups[jugement.IndexCoup];
+                coup.EvaluationApres = jugement.EvaluationApres;
+                coup.MeilleurCoup = jugement.MeilleurCoup;
+                coup.MeilleurJoue = jugement.MeilleurJoue;
+                if (coup.Annotation == "" || coup.AnnotationProposee)
+                {
+                    coup.Annotation = jugement.Annotation;
+                    coup.AnnotationProposee = jugement.Annotation != "";
+                }
+            }
+        }
 
         public BilanCamp Bilan(ColorPiece camp)
         {   // Imprécisions, erreurs, gaffes et perte moyenne (en centipions, à partir des chances de gain) des coups jugés du camp

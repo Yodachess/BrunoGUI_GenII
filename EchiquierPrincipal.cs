@@ -358,9 +358,13 @@ namespace BrunoGUI_GenII
                         if (mat)
                             LogiqueMouvements.EchecetMat = true;
                         VarianteMoteurCourante.Text = mat ? "Aucun coup légal : échec et mat" : "Aucun coup légal : pat";
-                        _pilote.ReponseRecue();     // la demande est terminée, sans coup à jouer (AfficheCoupMoteur n'est pas appelé)
+                        // la demande est terminée, sans coup à jouer (AfficheCoupMoteur n'est pas appelé) ; analyse de partie : position suivante
+                        if (_pilote.ReponseRecue() == TypeDemande.Analyse && _analyseDePartie != null)
+                            PositionAnalyseeParLeMoteur(null);
                         break;
                     }
+                    if (_analyseDePartie != null)
+                        break;      // analyse de partie : aucun coup n'est joué (la suite est dans AfficheCoupMoteur)
                     VarianteMoteurCourante.Text = "Coup joué : " + Outils.VarianteUciVersPgn(ligne.MeilleurCoup, LogiqueMouvements.DemiCoupAvant(PositionDesVariantes), false, PositionDesVariantes) +
                         (ligne.CoupConseil != null ? "   (Conseil : " + Outils.VarianteUciVersPgn(ligne.MeilleurCoup + " " + ligne.CoupConseil, LogiqueMouvements.DemiCoupAvant(PositionDesVariantes), true, PositionDesVariantes) + ")" : "");  // Le conseil (ponder) se joue après le coup du moteur
                     break;
@@ -458,7 +462,7 @@ namespace BrunoGUI_GenII
                 if (MoteurUci.LigneAbandonnee)
                     return;     // la demande a été abandonnée entre-temps (vérifié ici, sur le thread de l'interface) : coup ignoré
                 MiseaZéroTimer();
-                if (_emetUnSon)
+                if (_emetUnSon && _analyseDePartie == null)     // (pas de son à chaque position d'une analyse de partie)
                 {   // Son pour dire que le coup est joué (son système par défaut si le fichier de Windows est absent)
                     try
                     {
@@ -487,6 +491,8 @@ namespace BrunoGUI_GenII
                         InformationsPartie.Text = "Le moteur a joué : Fin pour revenir";
                     }
                 }
+                else if (demande == TypeDemande.Analyse && _analyseDePartie != null)
+                    PositionAnalyseeParLeMoteur(_pilote.Lignes.Meilleure);     // analyse de partie : position suivante
                 else if (demande == TypeDemande.Analyse)
                 {   // c'est une analyse : on affiche la meilleure variante (mémorisée par _pilote.Lignes, pas relue dans le texte affiché)
                     LigneAnalyse meilleure = _pilote.Lignes.Meilleure;
@@ -838,7 +844,7 @@ namespace BrunoGUI_GenII
         {   // Tous les dixièmes de seconde : reprise après une analyse, chute du drapeau, affichage
             if (_pendule == null)
                 return;
-            if (_pendule.EnPause && !_pilote.AnalyseEnCours && !_pauseJoueur)
+            if (_pendule.EnPause && !_pilote.AnalyseEnCours && !_pauseJoueur && _analyseDePartie == null)
             {   // L'analyse est finie (ou abandonnée) : la pendule repart ; si le moteur devait jouer, l'analyse a interrompu
                 // sa réflexion : on lui redemande son coup (sinon son temps s'écoulerait sans qu'il réfléchisse)
                 _pendule.Reprendre();
@@ -1730,8 +1736,8 @@ namespace BrunoGUI_GenII
             // Avant toute partie, le clic affiche "Veuillez choisir votre couleur"
             if (!_vue.CasesCreees)
                 return;     // cases pas encore créées
-            // Pendant la pause (clic sur une pendule), on ne joue pas : l'échiquier est bloqué
-            bool actif = !_pauseJoueur && (ParcoursEnCours
+            // Pendant la pause (clic sur une pendule) et l'analyse de la partie, on ne joue pas : l'échiquier est bloqué
+            bool actif = !_pauseJoueur && _analyseDePartie == null && (ParcoursEnCours
                 ? !PartieEnLectureSeule
                 : _plateauAutorise && (_partie.Mode == ModePartie.EnCours || _partie.Mode == ModePartie.AucunePartie));
             _vue.ActiverCases(actif);
@@ -1795,9 +1801,83 @@ namespace BrunoGUI_GenII
             element.Click += (s, e) =>
             {
                 coup.Annotation = annotation;
+                coup.AnnotationProposee = false;    // choisie par le joueur : plus une proposition de l'analyse
                 MetAJourFeuille();
             };
             return element;
+        }
+
+        // ═══ Analyse de partie (voir AnalysePartie.cs) : bouton, barre et bilan sous la feuille ═══
+        // Chaque position est analysée DureeAnalyseParPosition ms par l'analyse de position habituelle (_pilote.DemanderAnalyse),
+        // enchaînée à chaque réponse du moteur. Pendant l'analyse, l'échiquier est bloqué et la pendule en pause ; toute action qui
+        // change la partie l'interrompt (AbandonneReflexion) en gardant ce qui est analysé. On peut parcourir la partie pendant ce temps.
+        private const int DureeAnalyseParPosition = 3000;   // 3 s par position (choix de Bruno)
+        private AnalyseDePartie _analyseDePartie;           // analyse en cours (null : aucune)
+        private int _positionEnAnalyse = -1;                // position demandée au moteur (index dans _analyseDePartie.Positions)
+
+        private void BoutonAnalysePartie_Click(object sender, EventArgs e)
+        {   // Lance l'analyse de la partie, ou l'interrompt si elle est en cours
+            if (_analyseDePartie != null)
+            {
+                TermineAnalyseDePartie(interrompue: true);
+                return;
+            }
+            if (!LogiqueMouvements.ListeCoups.Any(c => !c.EstPositionDeDepart))
+            {
+                KryptonMessageBox.Show("Aucun coup à analyser.", "Analyse de la partie", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                return;
+            }
+            if (_pilote.Demande == TypeDemande.CoupDePartie)
+            {
+                KryptonMessageBox.Show(_nomMoteur + " réfléchit à son coup : attendez qu'il ait joué.", "Analyse de la partie",
+                    KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                return;
+            }
+            AbandonneReflexion();       // une analyse de position en cours est remplacée
+            _pendule?.Pause();          // le temps ne compte pas pendant l'analyse (reprise dans MinuteriePendule_Tick à la fin)
+            _analyseDePartie = new AnalyseDePartie(LogiqueMouvements.ListeCoups);
+            BarreAnalysePartie.Maximum = Math.Max(1, _analyseDePartie.NombreAAnalyser);
+            BarreAnalysePartie.Value = 0;
+            BarreAnalysePartie.Visible = true;
+            BilanAnalyse.Text = "";
+            InformationsPartie.Text = "Analyse de la partie...";
+            MetAJourCommandes();        // échiquier bloqué
+            AnalysePositionSuivante();
+        }
+        private void AnalysePositionSuivante()
+        {
+            if (_analyseDePartie.PositionSuivante is not int index)
+            {
+                TermineAnalyseDePartie(interrompue: false);
+                return;
+            }
+            _positionEnAnalyse = index;
+            int faites = _analyseDePartie.Positions.Count(p => p.ChancesFinDePartie == null && p.Analysee);
+            BarreAnalysePartie.Value = Math.Min(BarreAnalysePartie.Maximum, faites);
+            BoutonAnalysePartie.Values.Text = $"Interrompre ({faites + 1}/{_analyseDePartie.NombreAAnalyser})";
+            _pilote.DemanderAnalyse(LogiqueMouvements.PositionDepuisFen(_analyseDePartie.Positions[index].Fen), DureeAnalyseParPosition);
+        }
+        private void PositionAnalyseeParLeMoteur(LigneAnalyse meilleure)
+        {   // Réponse du moteur pour la position demandée (null : aucun score) : on l'enregistre et on passe à la suivante
+            _analyseDePartie.Enregistre(_positionEnAnalyse, meilleure);
+            AnalysePositionSuivante();
+        }
+        private void TermineAnalyseDePartie(bool interrompue)
+        {   // Fin (ou interruption) : les résultats vont dans les coups (annotations proposées, plus pâles), puis le bilan
+            AnalyseDePartie analyse = _analyseDePartie;
+            if (analyse == null)
+                return;
+            _analyseDePartie = null;        // avant AbandonneReflexion, qui sinon reviendrait ici
+            _positionEnAnalyse = -1;
+            AbandonneReflexion();           // la position en cours d'analyse (interruption) : sa réponse sera ignorée
+            analyse.AppliqueAuxCoups(LogiqueMouvements.ListeCoups);
+            BilanCamp blancs = analyse.Bilan(ColorPiece.Blanc), noirs = analyse.Bilan(ColorPiece.Noir);
+            BilanAnalyse.Text = $"Blancs : {blancs.Imprecisions} ?!  {blancs.Erreurs} ?  {blancs.Gaffes} ??   perte {blancs.PerteMoyenne}\n"
+                              + $"Noirs :  {noirs.Imprecisions} ?!  {noirs.Erreurs} ?  {noirs.Gaffes} ??   perte {noirs.PerteMoyenne}";
+            BarreAnalysePartie.Visible = false;
+            BoutonAnalysePartie.Values.Text = "Analyser la partie";
+            InformationsPartie.Text = interrompue ? "Analyse interrompue" : "Analyse de la partie terminée";
+            MetAJourCommandes();
         }
         private void TourneEchiquier()
         {   // Tourne l'échiquier de 180° (vue côté Blancs / côté Noirs) et redessine la position affichée :
@@ -1871,8 +1951,9 @@ namespace BrunoGUI_GenII
                 return;
             }
             index = Math.Max(index, IndexPremierePosition);
-            if (_pilote.AnalyseEnCours)
-                AbandonneReflexion();       // l'analyse portait sur la position affichée jusqu'ici (la réflexion du moteur pour son coup continue)
+            if (_pilote.AnalyseEnCours && _analyseDePartie == null)
+                AbandonneReflexion();       // l'analyse portait sur la position affichée jusqu'ici (la réflexion du moteur pour son coup continue ;
+                                            // l'analyse de la partie aussi : on peut parcourir la partie pendant qu'elle avance)
             string fen = index < 0 ? FenDepart : LogiqueMouvements.ListeCoups[index].Fen;
             _vue.DernierCoupMasque = true;  // le dernier coup de la partie n'a pas de sens sur une position passée
             _positionAffichee = LogiqueMouvements.PositionDepuisFen(fen);
@@ -1888,6 +1969,12 @@ namespace BrunoGUI_GenII
             // Dernière case de la barre d'état : le coup regardé, comme sur la 1re ligne de variante
             VarianteMoteurCourante.Text = index < 0 || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart
                 ? "Position initiale" : TexteCoupJoue(index, _positionAffichee);
+            // Coup analysé (analyse de partie) : son évaluation et le meilleur coup du moteur, sur la 2e ligne de variante
+            if (index >= 0 && LogiqueMouvements.ListeCoups[index] is { EvaluationApres: Evaluation evaluation } coupAnalyse)
+                VarianteMoteurUci2.Text = $"   Analyse : {evaluation.Texte} ({evaluation.Symbole})"
+                    + (coupAnalyse.MeilleurJoue ? "   — meilleur coup du moteur"
+                       : coupAnalyse.MeilleurCoup != null ? $"   — meilleur : {coupAnalyse.MeilleurCoup}" : "")
+                    + (coupAnalyse.Annotation != "" ? $"   [{coupAnalyse.Annotation} {Annotations.Nom(coupAnalyse.Annotation)}]" : "");
             AffichePendules();      // partie sans pendule en cours (ex : PGN chargé) : temps notés à cette position
             if (!PartieEnLectureSeule)
                 InformationsPartie.Text = "Parcours : Fin ou clic pour revenir";
@@ -1918,9 +2005,10 @@ namespace BrunoGUI_GenII
             AffichePendules();
         }
         private void QuitteParcours()
-        {   // La partie va être remplacée (nouvelle partie, chargement) : l'échiquier suivra la partie
+        {   // La partie va être remplacée (nouvelle partie, chargement, "Reprendre ici") : l'échiquier suivra la partie
             _positionAffichee = null;
             _vue.DernierCoupMasque = false;
+            BilanAnalyse.Text = "";     // le bilan de l'analyse portait sur l'ancienne partie
             MetAJourCommandes();
         }
         private void DessinePieceDeLaPartie(int IndexCase, LogiqueMouvements.TypePiece Piece)
@@ -1932,6 +2020,8 @@ namespace BrunoGUI_GenII
         private void AbandonneReflexion()
         {   // Rend périmée la réflexion en cours (partie ou analyse) : le moteur s'arrête et sa réponse sera ignorée.
             // A appeler avant toute action qui change la partie ou la position (retour arrière, résultat, nouvelle partie, chargement...)
+            if (_analyseDePartie != null)
+                TermineAnalyseDePartie(interrompue: true);  // la partie va changer : on garde ce qui est déjà analysé
             if (!_pilote.Abandonner())
                 return;     // le moteur ne réfléchissait pas : rien à signaler
             MiseaZéroTimer();
