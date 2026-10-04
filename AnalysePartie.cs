@@ -123,8 +123,9 @@ namespace BrunoGUI_GenII
         }
 
         public static string PremierCoup(string variantePgn) =>
-            // "12... Fe7 13. Cf3" -> "Fe7" (les numéros de coups sont sautés)
-            (variantePgn ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(m => !m.EndsWith('.'));
+            // "12. Cf3 Fe7" -> "Cf3" ; "19 ... Fa2 20. Cf3" (Noirs au trait) -> "Fa2" : le premier mot qui contient une lettre
+            // (les numéros "19", "19.", "19..." et les "..." sont sautés)
+            (variantePgn ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(m => m.Any(char.IsLetter));
 
         public JugementCoup Jugement(int indexCoup)
         {   // Le coup n° indexCoup de ListeCoups : null s'il n'en est pas un, ou si les positions avant et après ne sont pas analysées
