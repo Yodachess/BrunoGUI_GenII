@@ -80,6 +80,7 @@ namespace BrunoGUI_GenII
             Promo0 = new System.Windows.Forms.PictureBox();
             BoutonBalises = new Krypton.Toolkit.KryptonButton();
             RetourArriere = new Krypton.Toolkit.KryptonButton();
+            BoutonSetupPosition = new Krypton.Toolkit.KryptonButton();
             VisualisationPgn = new Krypton.Toolkit.KryptonButton();
             kryptonStatusStrip1 = new Krypton.Toolkit.KryptonStatusStrip();
             StatusProgramme = new System.Windows.Forms.ToolStripStatusLabel();
@@ -541,6 +542,25 @@ namespace BrunoGUI_GenII
             RetourArriere.Values.DropDownArrowColor = System.Drawing.Color.Empty;
             RetourArriere.Values.Text = "Retour Arrière";
             RetourArriere.Click += RetourArriere_Click;
+            // 
+            // BoutonSetupPosition
+            // 
+            BoutonSetupPosition.Location = new System.Drawing.Point(762, 186);
+            BoutonSetupPosition.Name = "BoutonSetupPosition";
+            BoutonSetupPosition.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
+            BoutonSetupPosition.Size = new System.Drawing.Size(130, 25);
+            BoutonSetupPosition.StateCommon.Back.Color1 = System.Drawing.Color.FromArgb(192, 192, 255);
+            BoutonSetupPosition.StateCommon.Border.Color1 = System.Drawing.Color.DarkGray;
+            BoutonSetupPosition.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
+            BoutonSetupPosition.StateCommon.Border.GraphicsHint = Krypton.Toolkit.PaletteGraphicsHint.AntiAlias;
+            BoutonSetupPosition.StateCommon.Border.Rounding = 20F;
+            BoutonSetupPosition.StateCommon.Border.Width = 3;
+            BoutonSetupPosition.StateCommon.Content.ShortText.Color1 = System.Drawing.Color.Black;
+            BoutonSetupPosition.StateCommon.Content.ShortText.Color2 = System.Drawing.Color.Black;
+            BoutonSetupPosition.TabIndex = 29;
+            BoutonSetupPosition.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            BoutonSetupPosition.Values.Text = "Setup position";
+            BoutonSetupPosition.Enabled = false;     // à venir : mise en place d'une position
             // 
             // VisualisationPgn
             // 
@@ -1168,6 +1188,7 @@ namespace BrunoGUI_GenII
             Controls.Add(kryptonStatusStrip1);
             Controls.Add(VisualisationPgn);
             Controls.Add(RetourArriere);
+            Controls.Add(BoutonSetupPosition);
             Controls.Add(BoutonBalises);
             Controls.Add(GroupPromo);
             Controls.Add(InverseEchiquier);
@@ -1245,6 +1266,7 @@ namespace BrunoGUI_GenII
         private System.Windows.Forms.ToolStripMenuItem ParametresAvances;
         private FeuilleCoups FeuilleDesCoups;
         public Krypton.Toolkit.KryptonButton RetourArriere;
+        private Krypton.Toolkit.KryptonButton BoutonSetupPosition;
         public Krypton.Toolkit.KryptonButton AnalysePosition;
         private System.Windows.Forms.ToolStripMenuItem VisualiserPgn;
         private System.Windows.Forms.ToolStripMenuItem ParametresDeBase;
