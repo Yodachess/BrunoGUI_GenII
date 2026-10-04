@@ -1852,6 +1852,9 @@ namespace BrunoGUI_GenII
                 ? "   [ Position initiale ]" : $"   [ {TexteCoupJoue(index, _positionAffichee)} ]"
                   + (LogiqueMouvements.ListeCoups[index].TempsReflexion is TimeSpan reflexion ? $"   (réflexion : {TexteDuree(reflexion)})" : "");
             MiseaZeroParcours();
+            // Barre d'état : le coup regardé, comme sur la 1re ligne de variante
+            StatusProgramme.Text = index < 0 || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart
+                ? "Position initiale" : TexteCoupJoue(index, _positionAffichee);
             AffichePendules();      // partie sans pendule en cours (ex : PGN chargé) : temps notés à cette position
             if (!PartieEnLectureSeule)
                 InformationsPartie.Text = "Parcours : Fin ou clic pour revenir";

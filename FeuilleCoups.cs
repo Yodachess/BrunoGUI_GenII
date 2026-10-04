@@ -30,18 +30,20 @@ namespace BrunoGUI_GenII
         public event Action<int> CoupClique;
         public event Action<int, Point> CoupCliqueDroit;    // place du coup, position de la souris (dans le composant)
 
-        private static readonly Color CouleurLignePaire = Color.FromArgb(246, 246, 246);
-        private static readonly Color CouleurSelection = Color.FromArgb(190, 215, 255);
-        private static readonly Color CouleurSurvol = Color.FromArgb(228, 238, 255);
-        private static readonly Color CouleurNumero = Color.Gray;
-        private static readonly Color CouleurBordure = Color.DarkGray;
+        // Couleurs d'une feuille de partie papier (jaune pâle, comme le double d'une feuille autocopiante)
+        private static readonly Color CouleurPapier = Color.FromArgb(255, 250, 222);
+        private static readonly Color CouleurLignePaire = Color.FromArgb(248, 240, 202);
+        private static readonly Color CouleurSelection = Color.FromArgb(180, 205, 250);
+        private static readonly Color CouleurSurvol = Color.FromArgb(232, 226, 190);
+        private static readonly Color CouleurNumero = Color.FromArgb(140, 120, 80);
+        private static readonly Color CouleurBordure = Color.FromArgb(190, 175, 130);
 
         public FeuilleCoups()
         {
             DoubleBuffered = true;
             ResizeRedraw = true;
             AutoScroll = true;
-            BackColor = Color.White;
+            BackColor = CouleurPapier;
             SetStyle(ControlStyles.Selectable, true);   // peut prendre le focus (molette de la souris)
             TabStop = false;
         }
