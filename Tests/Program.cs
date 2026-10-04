@@ -940,6 +940,13 @@ Verifie("Analyse appliquée aux coups : annotation proposée (marquée), évalua
     && L.ListeCoups[2].EvaluationApres == new Evaluation(-60, null) && L.ListeCoups[0].MeilleurJoue && L.ListeCoups[0].Annotation == ""
     && L.ListeCoups[5].Annotation == "!" && !L.ListeCoups[5].AnnotationProposee && L.ListeCoups[5].MeilleurCoup == "g6",
     $"Dh5 {L.ListeCoups[2].Annotation} (proposée : {L.ListeCoups[2].AnnotationProposee}), Cf6 {L.ListeCoups[5].Annotation}");
+Verifie("Analyse appliquée : évaluation du meilleur coup et perte gardées (pour « meilleur : Cf3 (0.35) »)",
+    L.ListeCoups[2].EvaluationMeilleur == new Evaluation(35, null) && L.ListeCoups[2].PerteAnalyse > JugementCoups.SeuilImprecision
+    && L.ListeCoups[0].PerteAnalyse == 0,
+    $"{L.ListeCoups[2].EvaluationMeilleur?.Texte}, perte {L.ListeCoups[2].PerteAnalyse:F3}");
+Verifie("Analyse : coup de ListeCoups qui mène à chaque position (affichage pendant l'analyse)",
+    analyseBerger.IndexDansListeCoups(0) == -1 && analyseBerger.IndexDansListeCoups(3) == 2 && analyseBerger.IndexDansListeCoups(7) == 6,
+    $"{analyseBerger.IndexDansListeCoups(0)} {analyseBerger.IndexDansListeCoups(3)}");
 AnalyseDePartie analyseSansScore = new(L.ListeCoups);
 analyseSansScore.Enregistre(0, null);
 Verifie("Analyse : une position sans score du moteur est sautée (pas de boucle), ses coups ne sont pas jugés",

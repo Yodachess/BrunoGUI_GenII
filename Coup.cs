@@ -36,6 +36,8 @@ namespace BrunoGUI_GenII
         public Evaluation? EvaluationApres { get; set; }
         public string MeilleurCoup { get; set; }
         public bool MeilleurJoue { get; set; }
+        public Evaluation? EvaluationMeilleur { get; set; }     // évaluation du meilleur coup du moteur (position avant le coup)
+        public double? PerteAnalyse { get; set; }               // chances de gain perdues par le coup (0 : aussi bon que le meilleur)
 
         public static Coup PositionDeDepart(string fen) => new() { Fen = fen, EstPositionDeDepart = true };
 

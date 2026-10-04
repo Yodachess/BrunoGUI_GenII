@@ -1852,6 +1852,7 @@ namespace BrunoGUI_GenII
                 return;
             }
             _positionEnAnalyse = index;
+            AfficheCoupDeLaPartie(_analyseDePartie.IndexDansListeCoups(index));    // l'échiquier montre la position analysée
             int faites = _analyseDePartie.Positions.Count(p => p.ChancesFinDePartie == null && p.Analysee);
             BarreAnalysePartie.Value = Math.Min(BarreAnalysePartie.Maximum, faites);
             BoutonAnalysePartie.Values.Text = $"Interrompre ({faites + 1}/{_analyseDePartie.NombreAAnalyser})";
@@ -1876,6 +1877,7 @@ namespace BrunoGUI_GenII
                               + $"Noirs :  {noirs.Imprecisions} ?!  {noirs.Erreurs} ?  {noirs.Gaffes} ??   perte {noirs.PerteMoyenne}";
             BarreAnalysePartie.Visible = false;
             BoutonAnalysePartie.Values.Text = "Analyser la partie";
+            RetourPositionCourante();       // l'échiquier, qui suivait l'analyse, revient à la partie
             InformationsPartie.Text = interrompue ? "Analyse interrompue" : "Analyse de la partie terminée";
             MetAJourCommandes();
         }
@@ -1973,7 +1975,12 @@ namespace BrunoGUI_GenII
             if (index >= 0 && LogiqueMouvements.ListeCoups[index] is { EvaluationApres: Evaluation evaluation } coupAnalyse)
                 VarianteMoteurUci2.Text = $"   Analyse : {evaluation.Texte} ({evaluation.Symbole})"
                     + (coupAnalyse.MeilleurJoue ? "   — meilleur coup du moteur"
-                       : coupAnalyse.MeilleurCoup != null ? $"   — meilleur : {coupAnalyse.MeilleurCoup}" : "")
+                       : coupAnalyse.MeilleurCoup != null
+                         // le meilleur coup avec SON évaluation (ex : un mat plus rapide), et "écart négligeable" si le coup joué ne
+                         // perd presque rien : sinon on croirait le coup joué moins bon qu'il n'est
+                         ? $"   — meilleur : {coupAnalyse.MeilleurCoup}" + (coupAnalyse.EvaluationMeilleur is Evaluation meilleure ? $" ({meilleure.Texte})" : "")
+                           + (coupAnalyse.PerteAnalyse < JugementCoups.SeuilImprecision ? ", écart négligeable" : "")
+                         : "")
                     + (coupAnalyse.Annotation != "" ? $"   [{coupAnalyse.Annotation} {Annotations.Nom(coupAnalyse.Annotation)}]" : "");
             AffichePendules();      // partie sans pendule en cours (ex : PGN chargé) : temps notés à cette position
             if (!PartieEnLectureSeule)
