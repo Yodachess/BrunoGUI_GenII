@@ -64,7 +64,6 @@ namespace BrunoGUI_GenII
         public PartieEchecsPGN PartieEnCours = new();
         public ParametresUciStockfish mesParametresUciStockfish;    // créée dans le constructeur (elle règle MoteurUci)
         public ParametresDeBase mesparametresDeBase;        // mesparametresDeBase est déclarée, mais elle n’est instanciée qu'après "InitializeComponent();"
-        private FenetrePartie mafenetrePartie;              // mafenetrePartie est déclarée, mais elle n’est pas encore instanciée. A instancier dans une méthode
         private AffichePgn affichePgn = new();   // affichePgn est à la fois déclarée et instanciée. Prêt à être utilisé dès le début
         private readonly FichierPartiePgn fichierPartiePgn = new();     // liste des parties d'un fichier PGN (masquée, jamais détruite)
         private readonly DonneesBrutesUci donneesBrutesUci = new();
@@ -108,6 +107,7 @@ namespace BrunoGUI_GenII
             PenduleBlanc.Click += Pendule_Click;        // un clic sur une pendule : pause / reprise
             PenduleNoir.Click += Pendule_Click;
             PenduleBlanc.ReduitPourTenir = PenduleNoir.ReduitPourTenir = true;     // "1:30:00" toujours lisible en entier
+            FeuilleDesCoups.CoupClique += FeuilleDesCoups_CoupClique;           // clic sur un coup de la feuille : sa position
             AffichePendules();      // pas de pendule au départ : "-:--"
             // Debug pour vérifier
             Debug.WriteLine($"Paramètres chargés : Biblio = {_bibliotheque}, Force = {_forceMoteurElo}, Nombre PV = {MoteurUci.NombreLignesPV}");
@@ -1042,39 +1042,6 @@ namespace BrunoGUI_GenII
             PartieEnCours.Result = "";
             ScoreMoteur.Text = EvaluationUci.Text = VarianteMoteurCourante.Text = "...";
         }
-        private void ListeCoupsBouton_Click(object sender, EventArgs e)
-        {   // Affiche la liste des coups joués dans une fenêtre dédiée
-            // Plus de blocage : parcourir la liste ne modifie que la position affichée (voir AfficheCoupDeLaPartie)
-            // Si la fenêtre n'existe pas ou est déjà fermée, la créer
-            if (mafenetrePartie == null || mafenetrePartie.IsDisposed)
-            {
-                mafenetrePartie = new FenetrePartie(this);
-                mafenetrePartie.Show();
-            }
-            else
-            {   // La fenêtre est déjà ouverte, lui redonner le focus
-                mafenetrePartie.FeuillePartie.Rows.Clear();
-                mafenetrePartie.BringToFront();
-                mafenetrePartie.Focus();
-            }
-            mafenetrePartie.LblJoueurBlanc.Text = PartieEnCours.White;
-            mafenetrePartie.LblJoueurNoir.Text = PartieEnCours.Black;
-            mafenetrePartie.LblEloBlanc.Text = PartieEnCours.WhiteElo;
-            mafenetrePartie.LblEloNoir.Text = PartieEnCours.BlackElo;
-            // Une ligne par coup complet (une partie FEN peut commencer par un coup noir : "n. | ... | coup")
-            List<string[]> lignes = FeuilleDePartie.Lignes(LogiqueMouvements.ListeCoups);
-            if (lignes.Count != 0)
-            {
-                foreach (string[] ligne in lignes)
-                    mafenetrePartie.FeuillePartie.Rows.Add(ligne[0], ligne[1], ligne[2]);
-                if (mafenetrePartie.FeuillePartie.Rows.Count > 0)
-                {   // Sélectionner la cellule du premier coup (colonne des Blancs, ou des Noirs si la partie commence par un coup noir)
-                    int colonne = FeuilleDePartie.CommenceParLesNoirs(LogiqueMouvements.ListeCoups) ? 2 : 1;
-                    mafenetrePartie.FeuillePartie.CurrentCell = mafenetrePartie.FeuillePartie.Rows[0].Cells[colonne];
-                    mafenetrePartie.FeuillePartie.Focus(); // Met le focus sur la DataGridView
-                }
-            }
-        }
         public void MontrePartiesPGN_Click(object sender, EventArgs e)
         {   // Affiche ou masque la liste des parties (la fenêtre n'est jamais détruite : voir FichierPartiePgn_FormClosing).
             // Le texte du bouton suit l'état réel de la fenêtre (MetAJourBoutonListeParties, sur VisibleChanged)
@@ -1345,8 +1312,6 @@ namespace BrunoGUI_GenII
                 return;
             AbandonneReflexion();   // la partie change
             bool etaitTerminee = _partie.Mode == ModePartie.Terminee;
-            if (mafenetrePartie != null && !mafenetrePartie.IsDisposed)
-                mafenetrePartie.Close();    // sa liste de coups ne correspond plus à la partie
             QuitteParcours();
             _vue.EffaceDernierCoup();
             if (_partie.ReprendreDepuis(index) == 0 && !etaitLectureSeule)
@@ -1780,7 +1745,7 @@ namespace BrunoGUI_GenII
             bool coupsJoues = LogiqueMouvements.ListeCoups.Count > IndexPremierePosition + 1;   // au moins un coup (hors position FEN de départ)
             // Retour arrière : annule le dernier coup de la partie, donc jamais pendant le parcours (il annulerait un coup autre que celui affiché)
             RetourArriere.Enabled = (enCours || _partie.Mode == ModePartie.Terminee) && coupsJoues && !ParcoursEnCours;
-            groupParcoursPartie.Enabled = ListeCoupsBouton.Enabled = coupsJoues;
+            groupParcoursPartie.Enabled = coupsJoues;
             // Reprendre ici : pendant le parcours (position passée), ou sur une partie PGN en lecture seule (y compris sa position finale)
             BoutonReprendreIci.Enabled = (ParcoursEnCours && _partie.Mode != ModePartie.AucunePartie) || PartieEnLectureSeule;
             _clavierActif = coupsJoues;     // flèches du clavier (Echap les coupe jusqu'au prochain calcul)
@@ -1789,6 +1754,17 @@ namespace BrunoGUI_GenII
             OrdinateurJoue.Enabled = enCours;
             BoutonBalises.Enabled = SaisiePartieBouton.Enabled = !PartieEnLectureSeule;
             MetAJourPlateau();
+            MetAJourFeuille();      // (appelée partout où la partie ou le parcours change : la feuille les suit d'ici)
+        }
+        private void MetAJourFeuille()
+        {   // Feuille de partie à droite de l'échiquier : tous les coups, et le coup de la position affichée surligné
+            // (pendant le parcours, le coup regardé ; sinon le dernier coup joué ; rien pour la position de départ)
+            int indexAffiche = ParcoursEnCours ? _indexAffiche : LogiqueMouvements.ListeCoups.Count - 1;
+            FeuilleDesCoups.MetAJour(LogiqueMouvements.ListeCoups, indexAffiche);
+        }
+        private void FeuilleDesCoups_CoupClique(int index)
+        {   // Clic sur un coup de la feuille : on affiche la position après ce coup (le dernier coup ramène à la partie)
+            AfficheCoupDeLaPartie(index);
         }
         private void TourneEchiquier()
         {   // Tourne l'échiquier de 180° (vue côté Blancs / côté Noirs) et redessine la position affichée :

@@ -602,11 +602,11 @@ Charger(fenNoirsAuTrait);
 L.AjoutePositionDeDepart(fenNoirsAuTrait);
 bool noirJoue = GestionPartiePgn.DecodeCoupPartie("Nf6");
 bool blancJoue = GestionPartiePgn.DecodeCoupPartie("Bc4");
-List<string[]> feuille = FeuilleDePartie.Lignes(L.ListeCoups);
-Verifie("Feuille de partie commençant par un coup noir : 3. | ... | Cf6, puis 4. | Fc4",
-    noirJoue && blancJoue && feuille.Count == 2 && feuille[0].SequenceEqual(new[] { "3.", "...", "Cf6" }) && feuille[1].SequenceEqual(new[] { "4.", "Fc4", "" })
-    && FeuilleDePartie.CommenceParLesNoirs(L.ListeCoups),
-    string.Join(" / ", feuille.Select(l => string.Join("|", l))));
+List<LigneFeuille> feuille = FeuilleDePartie.Lignes(L.ListeCoups);
+Verifie("Feuille de partie commençant par un coup noir : 3. | ... | Cf6, puis 4. | Fc4 (place des coups dans ListeCoups, départ FEN sauté)",
+    noirJoue && blancJoue && feuille.Count == 2 && feuille[0] == new LigneFeuille(3, null, 1) && feuille[1] == new LigneFeuille(4, 2, null)
+    && L.ListeCoups[1].PgnFrSansNumero == "Cf6" && L.ListeCoups[2].PgnFrSansNumero == "Fc4",
+    string.Join(" / ", feuille));
 string pgnEcrit = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "" }, "Intl");
 Verifie("PGN écrit : balises SetUp et FEN, premier coup noir numéroté, résultat * pour une partie en cours",
     pgnEcrit.Contains("[SetUp \"1\"]") && pgnEcrit.Contains("[FEN \"" + fenNoirsAuTrait + "\"]") && pgnEcrit.Contains("3... Nf6 4. Bc4") && pgnEcrit.TrimEnd().EndsWith("*")
@@ -624,6 +624,11 @@ for (int i = 0; i < coupsPendule.Length; i++)
     L.ListeCoups[^1].TempsBlancs = TimeSpan.FromSeconds(180 - 3 * i);
     L.ListeCoups[^1].TempsNoirs = TimeSpan.FromSeconds(180 - 2 * i);
 }
+List<LigneFeuille> feuilleNormale = FeuilleDePartie.Lignes(L.ListeCoups);
+Verifie("Feuille de partie : une ligne par coup complet, dernier coup noir pas encore joué",
+    feuilleNormale.Count == 7 && feuilleNormale[0] == new LigneFeuille(1, 0, 1) && feuilleNormale[6] == new LigneFeuille(7, 12, 13)
+    && FeuilleDePartie.Lignes([.. L.ListeCoups.Take(13)])[^1] == new LigneFeuille(7, 12, null),
+    string.Join(" / ", feuilleNormale.Take(2)));
 Verifie("Coup numéroté en français (cadre « Coup joué ») : blanc et noir",
     L.ListeCoups[0].PgnFrNumerote == "1. e4" && L.ListeCoups[1].PgnFrNumerote == "1... e5" && L.ListeCoups[^1].PgnFrNumerote == "7... d6",
     $"{L.ListeCoups[0].PgnFrNumerote} / {L.ListeCoups[1].PgnFrNumerote} / {L.ListeCoups[^1].PgnFrNumerote}");
