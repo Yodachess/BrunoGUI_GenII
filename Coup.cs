@@ -29,6 +29,7 @@ namespace BrunoGUI_GenII
         public TimeSpan? TempsBlancs { get; set; }
         public TimeSpan? TempsNoirs { get; set; }
         public TimeSpan? TempsReflexion { get; set; }   // partie PGN chargée : temps passé sur ce coup ([%emt], ChessBase), null si inconnu
+        public string Annotation { get; set; } = "";    // "!!", "!", "!?", "?!", "?", "??" (voir Annotations), "" : aucune
 
         public static Coup PositionDeDepart(string fen) => new() { Fen = fen, EstPositionDeDepart = true };
 
@@ -45,6 +46,32 @@ namespace BrunoGUI_GenII
                 string texte = PgnFr.Trim();
                 return EstCoupBlanc && texte.Contains(' ') ? texte[(texte.IndexOf(' ') + 1)..] : texte;
             }
+        }
+    }
+
+    public static class Annotations
+    {   // Annotations d'un coup (symboles du PGN) : saisies par clic droit sur la feuille, écrites après le coup ("Ng5?!"),
+        // relues depuis le coup lui-même ou depuis les codes $1 à $6 (Fritz, ChessBase)
+        public static readonly string[] Toutes = ["!!", "!", "!?", "?!", "?", "??"];
+
+        public static string DepuisNag(int nag) => nag switch
+        {   // Codes NAG du PGN : $1 = !, $2 = ?, $3 = !!, $4 = ??, $5 = !?, $6 = ?! (les autres, ex : $14 "léger avantage blanc", sont ignorés)
+            1 => "!", 2 => "?", 3 => "!!", 4 => "??", 5 => "!?", 6 => "?!", _ => ""
+        };
+
+        public static string Nom(string annotation) => annotation switch
+        {
+            "!!" => "Coup brillant", "!" => "Bon coup", "!?" => "Coup intéressant",
+            "?!" => "Coup douteux", "?" => "Mauvais coup", "??" => "Gaffe", _ => "Aucune annotation"
+        };
+
+        public static (string Coup, string Annotation) Separe(string coupPgn)
+        {   // "Ng5?!" -> ("Ng5", "?!") ; une suite de ! et ? qui n'est pas une annotation connue (ex : "!!!") est retirée sans être gardée
+            int fin = coupPgn.Length;
+            while (fin > 0 && coupPgn[fin - 1] is '!' or '?')
+                fin--;
+            string annotation = coupPgn[fin..];
+            return (coupPgn[..fin], Array.IndexOf(Toutes, annotation) >= 0 ? annotation : "");
         }
     }
 

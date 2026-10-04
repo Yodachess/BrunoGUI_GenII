@@ -121,9 +121,29 @@ namespace BrunoGUI_GenII
                 using (SolidBrush fond = new(i == _indexSelectionne ? CouleurSelection : CouleurSurvol))
                     g.FillRectangle(fond, zone.X, zone.Y + 1, zone.Width - 2, zone.Height - 2);
             Rectangle texte = new(zone.X + 4, zone.Y, zone.Width - 6, zone.Height);
-            TextRenderer.DrawText(g, _coups[i].PgnFrSansNumero, Font, texte, ForeColor,
-                TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+            TextFormatFlags format = TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix
+                                   | TextFormatFlags.NoPadding;
+            string coup = _coups[i].PgnFrSansNumero;
+            TextRenderer.DrawText(g, coup, Font, texte, ForeColor, format | TextFormatFlags.EndEllipsis);
+            string annotation = _coups[i].Annotation;
+            if (annotation != "")
+            {   // L'annotation suit le coup, en couleur (comme sur Lichess)
+                int largeurCoup = TextRenderer.MeasureText(g, coup, Font, texte.Size, format).Width;
+                Rectangle zoneAnnotation = new(texte.X + largeurCoup + 1, texte.Y, Math.Max(0, texte.Width - largeurCoup - 1), texte.Height);
+                TextRenderer.DrawText(g, annotation, Font, zoneAnnotation, CouleurAnnotation(annotation), format);
+            }
         }
+
+        public static Color CouleurAnnotation(string annotation) => annotation switch
+        {   // !! turquoise, ! vert, !? violet, ?! orange, ? orange foncé, ?? rouge
+            "!!" => Color.FromArgb(0, 150, 136),
+            "!" => Color.FromArgb(34, 139, 34),
+            "!?" => Color.FromArgb(120, 80, 200),
+            "?!" => Color.FromArgb(225, 135, 0),
+            "?" => Color.FromArgb(215, 75, 30),
+            "??" => Color.FromArgb(200, 0, 0),
+            _ => Color.Black
+        };
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
