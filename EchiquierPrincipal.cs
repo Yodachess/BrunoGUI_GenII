@@ -1125,7 +1125,10 @@ namespace BrunoGUI_GenII
             // Version 1.12 = coup du moteur affiché dans le cadre vert, pause par clic sur une pendule, cadence FIDE
             //                (90 + 30 min, +30 s, movestogo), temps %clk et %emt relus et affichés au parcours, PlyCount juste,
             //                fichiers PGN aux encodages mélangés lus ligne par ligne
-            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.12\n--  Bruno COURTOIS  -- " +
+            // Version 1.13 = feuille de partie intégrée à droite de l'échiquier (composant maison, couleur papier, clic sur un coup
+            //                pour l'afficher), annotations !! ! !? ?! ? ?? (clic droit, en couleur, écrites et relues dans le PGN,
+            //                codes $1 à $6 compris), coup de bibliothèque dans la barre d'état, bouton "Setup position" (à venir)
+            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.13\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", "A propos de",
                 KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
         }
