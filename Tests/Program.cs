@@ -889,6 +889,53 @@ Verifie("Variante avec promotion : la pièce est conservée", promo.VariantePgn.
 suiviAnalyse.Reinitialiser();
 Verifie("Nouvelle demande : plus de variante mémorisée", suiviAnalyse.Meilleure == null, "null");
 
+// ═══════════════ Analyse de partie ═══════════════
+Console.WriteLine("── Analyse de partie ──");
+
+Verifie("Chances de gain (formule de Lichess) : 0 à 0.00, symétriques, ±1 pour un mat",
+    JugementCoups.ChancesDeGain(new Evaluation(0, null)) == 0 && Math.Abs(JugementCoups.ChancesDeGain(new Evaluation(300, null)) - 0.5022) < 0.001
+    && JugementCoups.ChancesDeGain(new Evaluation(-300, null)) == -JugementCoups.ChancesDeGain(new Evaluation(300, null))
+    && JugementCoups.ChancesDeGain(new Evaluation(null, 3)) == 1 && JugementCoups.ChancesDeGain(new Evaluation(null, -2)) == -1
+    && JugementCoups.Centipions(JugementCoups.ChancesDeGain(new Evaluation(250, null))) == 250,
+    $"{JugementCoups.ChancesDeGain(new Evaluation(300, null)):F4}");
+Verifie("Annotation selon la perte de chances : ?! dès 0,1, ? dès 0,2, ?? dès 0,3",
+    JugementCoups.Annotation(0.05) == "" && JugementCoups.Annotation(0.1) == "?!" && JugementCoups.Annotation(0.25) == "?" && JugementCoups.Annotation(0.9) == "??", "");
+
+Charger(L.FenDepart);
+foreach (string coupBerger in new[] { "e2e4", "e7e5", "d1h5", "b8c6", "f1c4", "g8f6", "h5f7" })   // mat du berger
+    L.ExecutionCoup(coupBerger[..2], coupBerger[2..]);
+AnalyseDePartie analyseBerger = new(L.ListeCoups);
+Verifie("Analyse : une position par coup plus le départ, le mat final jugé sans le moteur",
+    analyseBerger.Positions.Count == 8 && analyseBerger.Positions[7].ChancesFinDePartie == 1 && analyseBerger.NombreAAnalyser == 7
+    && analyseBerger.PositionSuivante == 0 && !analyseBerger.Terminee,
+    $"{analyseBerger.Positions.Count} positions, {analyseBerger.NombreAAnalyser} à analyser");
+// Réponses simulées du moteur (meilleure variante de chaque position, score du point de vue des Blancs)
+(int cp, string variante)[] reponses = [(30, "1. e4 e5"), (30, "1... e5 2. Cf3"), (35, "2. Cf3 Cc6"), (-60, "2... Cc6 3. Fc4"),
+                                        (-40, "3. Fc4 Cf6"), (20, "3... g6 4. Df3"), (0, "")];
+for (int p = 0; p < 7; p++)
+{
+    Verifie($"Analyse : position {p} demandée dans l'ordre", analyseBerger.PositionSuivante == p, $"{analyseBerger.PositionSuivante}");
+    LigneAnalyse ligneMoteur = p == 6 ? new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(null, 1), VariantePgn = "4. Dxf7#" }
+                                      : new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(reponses[p].cp, null), VariantePgn = reponses[p].variante };
+    analyseBerger.Enregistre(p, ligneMoteur);
+}
+JugementCoup jugeE4 = analyseBerger.Jugement(0), jugeDh5 = analyseBerger.Jugement(2), jugeCf6 = analyseBerger.Jugement(5), jugeMat = analyseBerger.Jugement(6);
+Verifie("Analyse : finie, le meilleur coup joué ne perd rien (e4)",
+    analyseBerger.Terminee && analyseBerger.NombreAnalysees == 7 && jugeE4.MeilleurJoue && jugeE4.Perte == 0 && jugeE4.Annotation == "",
+    $"e4 : perte {jugeE4.Perte}");
+Verifie("Analyse : imprécision blanche 3. Dh5 ?! (de +0.35 à -0.60), meilleur coup Cf3",
+    jugeDh5.Camp == L.ColorPiece.Blanc && jugeDh5.Annotation == "?!" && jugeDh5.MeilleurCoup == "Cf3" && !jugeDh5.MeilleurJoue,
+    $"Dh5 : perte {jugeDh5.Perte:F3}, {jugeDh5.Annotation}, meilleur {jugeDh5.MeilleurCoup}");
+Verifie("Analyse : gaffe noire 3... Cf6 ?? (de +0.20 à mat en 1), meilleur coup g6 ; le mat final n'est pas une erreur",
+    jugeCf6.Camp == L.ColorPiece.Noir && jugeCf6.Annotation == "??" && jugeCf6.MeilleurCoup == "g6" && jugeMat.Annotation == "" && jugeMat.MeilleurJoue,
+    $"Cf6 : perte {jugeCf6.Perte:F3}, {jugeCf6.Annotation} ; Dxf7# : {jugeMat.Annotation}");
+BilanCamp bilanBlancs = analyseBerger.Bilan(L.ColorPiece.Blanc), bilanNoirs = analyseBerger.Bilan(L.ColorPiece.Noir);
+Verifie("Analyse : bilan par camp (imprécisions, erreurs, gaffes, perte moyenne en centipions)",
+    bilanBlancs == bilanBlancs with { Imprecisions = 1, Erreurs = 0, Gaffes = 0 } && bilanNoirs.Gaffes == 1 && bilanNoirs.PerteMoyenne > bilanBlancs.PerteMoyenne,
+    $"Blancs {bilanBlancs}, Noirs {bilanNoirs}");
+Verifie("Analyse : premier coup d'une variante (numéros sautés)",
+    AnalyseDePartie.PremierCoup("12... Fe7 13. Cf3") == "Fe7" && AnalyseDePartie.PremierCoup("") == null, "");
+
 // ═══════════════ Pendule ═══════════════
 Console.WriteLine("── Pendule ──");
 
