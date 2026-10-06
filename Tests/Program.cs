@@ -639,7 +639,7 @@ Verifie("Annotations : séparées du coup, codes NAG $1 à $6, autres ignorés",
 L.ListeCoups[6].Annotation = "?!";      // 4. Ba4?!
 L.ListeCoups[9].Annotation = "??";      // 5... Be7??
 string pgnSansTemps = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "" }, "Intl");
-string pgnAvecTemps = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "" }, "Intl", avecTemps: true);
+string pgnAvecTemps = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "" }, "Intl", pourFichier: true);
 string[] lignesCoups = pgnAvecTemps.Split('\n').Where(l => !l.StartsWith('[') && l.Trim() != "").ToArray();
 Verifie("PGN enregistré : temps après chaque coup, numéro repris devant les coups noirs, lignes de 80 caractères au plus",
     pgnAvecTemps.Contains("1. e4 {[%clk 0:03:00]} 1... e5 {[%clk 0:02:58]} 2. Nf3 {[%clk 0:02:54]}") && lignesCoups.All(l => l.Length <= 80) && lignesCoups.Length > 1,
@@ -650,7 +650,7 @@ ResultatChargementPgn relecturePendule = ChargementPartie.ChargerPartiePgn(Fichi
 Verifie("PGN avec les temps : relu sans erreur (commentaires ignorés)",
     relecturePendule.CoupIllisible == null && relecturePendule.DemiCoupsJoues == coupsPendule.Length, $"{relecturePendule.DemiCoupsJoues} demi-coups, illisible : {relecturePendule.CoupIllisible ?? "aucun"}");
 Verifie("PGN : annotations écrites collées au coup et relues",
-    pgnSansTemps.Contains("4. Ba4?! Nf6 5. O-O Be7??") && pgnAvecTemps.Contains("4. Ba4?! {[%clk")
+    pgnSansTemps.Contains("4. Ba4?! Nf6 5. O-O Be7??") && pgnAvecTemps.Replace("\n", " ").Contains("4. Ba4?! {[%clk")
     && L.ListeCoups[6].Annotation == "?!" && L.ListeCoups[9].Annotation == "??" && L.ListeCoups[8].Annotation == "",
     pgnSansTemps.Replace("\n", " "));
 Verifie("PGN avec les temps : chaque coup reprend son temps et le dernier temps de l'autre camp",
@@ -922,7 +922,7 @@ JugementCoup jugeE4 = analyseBerger.Jugement(0), jugeDh5 = analyseBerger.Jugemen
 Verifie("Analyse : finie, le meilleur coup joué ne perd rien (e4)",
     analyseBerger.Terminee && analyseBerger.NombreAnalysees == 7 && jugeE4.MeilleurJoue && jugeE4.Perte == 0 && jugeE4.Annotation == "",
     $"e4 : perte {jugeE4.Perte}");
-Verifie("Analyse : imprécision blanche 3. Dh5 ?! (de +0.35 à -0.60), meilleur coup Cf3",
+Verifie("Analyse : imprécision blanche 2. Dh5 ?! (de +0.35 à -0.60), meilleur coup Cf3",
     jugeDh5.Camp == L.ColorPiece.Blanc && jugeDh5.Annotation == "?!" && jugeDh5.MeilleurCoup == "Cf3" && !jugeDh5.MeilleurJoue,
     $"Dh5 : perte {jugeDh5.Perte:F3}, {jugeDh5.Annotation}, meilleur {jugeDh5.MeilleurCoup}");
 Verifie("Analyse : gaffe noire 3... Cf6 ?? (de +0.20 à mat en 1), meilleur coup g6 ; le mat final n'est pas une erreur",
@@ -944,6 +944,29 @@ Verifie("Analyse appliquée : évaluation du meilleur coup et perte gardées (po
     L.ListeCoups[2].EvaluationMeilleur == new Evaluation(35, null) && L.ListeCoups[2].PerteAnalyse > JugementCoups.SeuilImprecision
     && L.ListeCoups[0].PerteAnalyse == 0,
     $"{L.ListeCoups[2].EvaluationMeilleur?.Texte}, perte {L.ListeCoups[2].PerteAnalyse:F3}");
+string pgnAnalyseFichier = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "1-0" }, "Intl", pourFichier: true);
+string pgnAnalyseAffiche = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "1-0" }, "Intl");
+Verifie("PGN enregistré après analyse : %eval après chaque coup, meilleure variante (notation anglaise) après l'erreur, numéro repris",
+    pgnAnalyseFichier.Replace("\n", " ").Contains("2. Qh5?! {[%eval -0.60]} (2. Nf3 Nc6) 2... Nc6 {[%eval -0.40]}")
+    && pgnAnalyseFichier.Replace("\n", " ").Contains("3... Nf6! {[%eval #1]} 4. Qxf7#") && pgnAnalyseFichier.Contains("1. e4 {[%eval 0.30]} 1... e5"),
+    pgnAnalyseFichier.Replace("\n", " "));
+Verifie("PGN affiché après analyse : ni %eval ni variante",
+    !pgnAnalyseAffiche.Contains("%eval") && !pgnAnalyseAffiche.Contains('(') && pgnAnalyseAffiche.Contains("2. Qh5?! Nc6"),
+    pgnAnalyseAffiche.Replace("\n", " "));
+Partie partieAnalysee = new();
+Verifie("PGN enregistré après analyse : relu sans erreur (commentaires et variante ignorés), lignes de 80 caractères au plus",
+    ChargementPartie.ChargerPartiePgn(FichierPartiePgn.DecodePartiePGN(pgnAnalyseFichier), partieAnalysee) is { CoupIllisible: null, DemiCoupsJoues: 7 }
+    && pgnAnalyseFichier.Split('\n').All(ligne => ligne.Length <= 80), "");
+Verifie("Variante du moteur en notation PGN : lettres anglaises, « 19... » pour un coup noir, promotion",
+    GestionPartiePgn.VarianteInternationale("19 ... Tac8 20. Cf3 Rg7 21. e8=D") == "19... Rac8 20. Nf3 Kg7 21. e8=Q"
+    && GestionPartiePgn.TexteEvaluationPgn(new Evaluation(-905, null)) == "-9.05" && GestionPartiePgn.TexteEvaluationPgn(new Evaluation(null, -3)) == "#-3",
+    GestionPartiePgn.VarianteInternationale("19 ... Tac8 20. Cf3 Rg7 21. e8=D"));
+L.ViderCoups();     // (la relecture ci-dessus a remplacé la partie analysée : on repart de la même partie pour la suite)
+Charger(L.FenDepart);
+foreach (string coupBerger in new[] { "e2e4", "e7e5", "d1h5", "b8c6", "f1c4", "g8f6", "h5f7" })
+    L.ExecutionCoup(coupBerger[..2], coupBerger[2..]);
+L.ListeCoups[5].Annotation = "!";
+analyseBerger.AppliqueAuxCoups(L.ListeCoups);
 Verifie("Analyse : coup de ListeCoups qui mène à chaque position (affichage pendant l'analyse)",
     analyseBerger.IndexDansListeCoups(0) == -1 && analyseBerger.IndexDansListeCoups(3) == 2 && analyseBerger.IndexDansListeCoups(7) == 6,
     $"{analyseBerger.IndexDansListeCoups(0)} {analyseBerger.IndexDansListeCoups(3)}");
