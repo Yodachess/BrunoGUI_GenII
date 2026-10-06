@@ -10,10 +10,11 @@
 //  ├─ Classe "PositionAnalysee" : une position de la partie, son évaluation et le meilleur coup du moteur
 //  ├─ Record "JugementCoup"     : ce que le moteur pense d'un coup joué
 //  └─ Classe "AnalyseDePartie"  : les positions à faire analyser une par une, puis le jugement de chaque coup et le bilan
-//              ├─ "PositionSuivante"   prochaine position à demander au moteur (null : analyse finie)
+//              ├─ "PositionSuivante"   prochaine position à demander au moteur, de la FIN vers le début (null : analyse finie)
 //              ├─ "Enregistre"         résultat du moteur pour une position (sa meilleure variante)
-//              ├─ "Jugement"           le coup n° i de ListeCoups : perte, annotation proposée, meilleur coup
-//              └─ "Bilan"              imprécisions, erreurs, gaffes et perte moyenne d'un camp
+//              ├─ "Jugement"           le coup n° i de ListeCoups : perte, précision, annotation proposée, meilleur coup, variante
+//              ├─ "NotationLongue"     un coup UCI avec sa case de départ ("Dd8-d7")
+//              └─ "Bilan"              imprécisions, erreurs, gaffes et précision d'un camp
 // L'interface demande chaque position au moteur (PiloteMoteur.DemanderAnalyse) et enregistre sa meilleure variante.
 
 using System;
@@ -45,10 +46,12 @@ namespace BrunoGUI_GenII
             _ => ""
         };
 
-        public static int Centipions(double chances) =>
-            // Inverse de ChancesDeGain (pour la perte moyenne en centipions), borné à ±1000
-            Math.Abs(chances) >= 0.999 ? Math.Sign(chances) * 1000
-            : (int)Math.Clamp(Math.Round(-Math.Log(2 / (chances + 1) - 1) / 0.00368208), -1000, 1000);
+        public static double Precision(double chancesAvant, double chancesApres)
+        {   // Précision d'un coup en % (formule de Lichess), à partir des chances de gain du camp qui joue avant et après le coup :
+            // 100 % s'il ne perd rien, environ 60 % pour une gaffe dans une position égale
+            double gainAvant = 50 + 50 * chancesAvant, gainApres = 50 + 50 * chancesApres;     // en %
+            return Math.Clamp(103.1668 * Math.Exp(-0.04354 * (gainAvant - gainApres)) - 3.1669, 0, 100);
+        }
     }
 
     public sealed class PositionAnalysee
@@ -58,17 +61,22 @@ namespace BrunoGUI_GenII
         public double? ChancesFinDePartie { get; init; }    // mat ou pat : +1, -1 ou 0, sans demander au moteur
         public Evaluation? Evaluation { get; set; }         // du point de vue des Blancs (null : pas encore analysée)
         public string MeilleurCoup { get; set; }            // premier coup de la meilleure variante, en notation française ("Cf3")
+        public string MeilleurCoupUci { get; set; }         // le même au format UCI ("g1f3")
+        public string MeilleurCoupLong { get; set; }        // le même avec sa case de départ ("Cg1-f3")
+        public string VarianteMeilleure { get; set; }       // la meilleure variante en notation française ("12. Cf3 Fe7 13. ...")
         public bool Ignoree { get; set; }                   // le moteur n'a donné aucun score : position sautée (sinon l'analyse tournerait en rond)
         public bool Analysee => Evaluation != null || ChancesFinDePartie != null || Ignoree;
         public double? Chances => ChancesFinDePartie ?? (Evaluation is Evaluation e ? JugementCoups.ChancesDeGain(e) : null);
     }
 
-    // Ce que le moteur pense du coup n° IndexCoup de ListeCoups (Perte : chances de gain perdues par le camp qui l'a joué)
-    // (EvaluationMeilleur : évaluation de la position avant le coup, c'est-à-dire celle du meilleur coup du moteur)
+    // Ce que le moteur pense du coup n° IndexCoup de ListeCoups (Perte : chances de gain perdues par le camp qui l'a joué ;
+    // Precision : en %, voir JugementCoups.Precision). EvaluationMeilleur : évaluation de la position avant le coup, c'est-à-dire
+    // celle du meilleur coup du moteur ; MeilleurCoupLong : avec sa case de départ ; VarianteMeilleure : la suite prévue
     public record JugementCoup(int IndexCoup, ColorPiece Camp, double Perte, string Annotation, Evaluation? EvaluationApres,
-                               string MeilleurCoup, bool MeilleurJoue, Evaluation? EvaluationMeilleur = null);
+                               string MeilleurCoup, bool MeilleurJoue, Evaluation? EvaluationMeilleur, string MeilleurCoupLong,
+                               string VarianteMeilleure, double Precision);
 
-    public record BilanCamp(int Imprecisions, int Erreurs, int Gaffes, int PerteMoyenne);   // perte moyenne en centipions par coup
+    public record BilanCamp(int Imprecisions, int Erreurs, int Gaffes, int Precision);     // précision moyenne des coups, en %
 
     public class AnalyseDePartie
     {
@@ -106,10 +114,13 @@ namespace BrunoGUI_GenII
         }
 
         public int? PositionSuivante
-        {   // Prochaine position à faire analyser par le moteur (null : toutes le sont)
+        {   // Prochaine position à faire analyser par le moteur (null : toutes le sont). De la FIN vers le début, comme ChessBase :
+            // le moteur garde en mémoire (table de hachage) les positions des coups suivants, déjà analysées, qu'il retrouve
+            // dans sa recherche : il va plus profond et voit mieux les combinaisons (le gain de la dame au coup 28 est déjà connu
+            // quand il analyse le sacrifice du coup 25)
             get
             {
-                int index = _positions.FindIndex(p => !p.Analysee);
+                int index = _positions.FindLastIndex(p => !p.Analysee);
                 return index < 0 ? null : index;
             }
         }
@@ -124,9 +135,45 @@ namespace BrunoGUI_GenII
                 _positions[indexPosition].Ignoree = true;
                 return;
             }
-            _positions[indexPosition].Evaluation = evaluation;
-            _positions[indexPosition].MeilleurCoup = PremierCoup(meilleure.VariantePgn);
+            PositionAnalysee position = _positions[indexPosition];
+            position.Evaluation = evaluation;
+            position.MeilleurCoup = PremierCoup(meilleure.VariantePgn);
+            position.VarianteMeilleure = meilleure.VariantePgn;
+            position.MeilleurCoupUci = (meilleure.VarianteUci ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+            position.MeilleurCoupLong = NotationLongue(position.Fen, position.MeilleurCoupUci, position.MeilleurCoup);
         }
+
+        public static string NotationLongue(string fen, string coupUci, string coupPgn = null)
+        {   // Le coup avec sa case de départ, en notation française : "Dd8-d7", "Cf3xe5", "e2-e4", "e7-e8=D", "O-O" ;
+            // l'échec ou le mat ("+", "#") est repris de la notation courte du même coup s'il y en a une
+            if (coupUci == null || coupUci.Length < 4)
+                return null;
+            List<TypePiece> pieces = PositionDepuisFen(fen).Pieces;
+            string depart = coupUci[..2], arrivee = coupUci.Substring(2, 2);
+            TypePiece piece = pieces[RenvoieCaseIndex120(depart)];
+            bool pion = piece is TypePiece.PionBlanc or TypePiece.PionNoir;
+            string texte;
+            if (piece is TypePiece.RoiBlanc or TypePiece.RoiNoir && Math.Abs(depart[0] - arrivee[0]) == 2)
+                texte = arrivee[0] == 'g' ? "O-O" : "O-O-O";
+            else
+            {
+                bool prise = pieces[RenvoieCaseIndex120(arrivee)] != TypePiece.Vide || (pion && depart[0] != arrivee[0]);   // (en passant)
+                texte = LettrePiece(piece) + depart + (prise ? "x" : "-") + arrivee
+                      + (coupUci.Length >= 5 ? "=" + LettrePiece(PieceDePromotion(coupUci[4], ColorPiece.Blanc)) : "");
+            }
+            string fin = coupPgn?.TrimEnd('!', '?') ?? "";
+            return texte + (fin.EndsWith('#') ? "#" : fin.EndsWith('+') ? "+" : "");
+        }
+
+        private static string LettrePiece(TypePiece piece) => piece switch
+        {
+            TypePiece.RoiBlanc or TypePiece.RoiNoir => "R",
+            TypePiece.ReineBlanche or TypePiece.ReineNoire => "D",
+            TypePiece.TourBlanche or TypePiece.TourNoire => "T",
+            TypePiece.FouBlanc or TypePiece.FouNoir => "F",
+            TypePiece.CavalierBlanc or TypePiece.CavalierNoir => "C",
+            _ => ""
+        };
 
         public static string PremierCoup(string variantePgn) =>
             // "12. Cf3 Fe7" -> "Cf3" ; "19 ... Fa2 20. Cf3" (Noirs au trait) -> "Fa2" : le premier mot qui contient une lettre
@@ -138,13 +185,19 @@ namespace BrunoGUI_GenII
             int k = _indexCoups.IndexOf(indexCoup);
             if (k < 0 || _positions[k].Chances is not double avant || _positions[k + 1].Chances is not double apres)
                 return null;
-            ColorPiece camp = _positions[k].AuTrait;
-            string meilleur = _positions[k].MeilleurCoup;
-            bool meilleurJoue = meilleur != null && SansSymboles(meilleur) == SansSymboles(_coups[indexCoup].PgnFrSansNumero);
+            PositionAnalysee positionAvant = _positions[k];
+            ColorPiece camp = positionAvant.AuTrait;
+            string meilleur = positionAvant.MeilleurCoup;
+            // Meilleur coup joué ? Comparé au format UCI s'il est connu (sans ambiguïté), sinon en notation
+            bool meilleurJoue = positionAvant.MeilleurCoupUci != null
+                ? positionAvant.MeilleurCoupUci == _coups[indexCoup].Uci.Trim()
+                : meilleur != null && SansSymboles(meilleur) == SansSymboles(_coups[indexCoup].PgnFrSansNumero);
             // Le meilleur coup du moteur ne perd rien (l'écart d'évaluation entre deux recherches ne serait que du bruit)
-            double perte = meilleurJoue ? 0 : Math.Max(0, camp == ColorPiece.Blanc ? avant - apres : apres - avant);
+            double sens = camp == ColorPiece.Blanc ? 1 : -1;                // chances vues du camp qui joue
+            double perte = meilleurJoue ? 0 : Math.Max(0, sens * (avant - apres));
+            double precision = meilleurJoue ? 100 : JugementCoups.Precision(sens * avant, sens * apres);
             return new JugementCoup(indexCoup, camp, perte, JugementCoups.Annotation(perte), _positions[k + 1].Evaluation, meilleur, meilleurJoue,
-                                    _positions[k].Evaluation);
+                                    positionAvant.Evaluation, positionAvant.MeilleurCoupLong, positionAvant.VarianteMeilleure, precision);
         }
 
         private static string SansSymboles(string coup) => coup.TrimEnd('+', '#', '!', '?');
@@ -162,6 +215,10 @@ namespace BrunoGUI_GenII
                 coup.MeilleurJoue = jugement.MeilleurJoue;
                 coup.EvaluationMeilleur = jugement.EvaluationMeilleur;
                 coup.PerteAnalyse = jugement.Perte;
+                coup.MeilleurCoupLong = jugement.MeilleurCoupLong;
+                coup.VarianteMeilleure = jugement.VarianteMeilleure;
+                // (la notation NAL du coup est en lettres anglaises : la notation longue française est calculée ici)
+                coup.CoupJoueLong = NotationLongue(_positions[_indexCoups.IndexOf(jugement.IndexCoup)].Fen, coup.Uci.Trim(), coup.PgnFrSansNumero);
                 if (coup.Annotation == "" || coup.AnnotationProposee)
                 {
                     coup.Annotation = jugement.Annotation;
@@ -171,16 +228,11 @@ namespace BrunoGUI_GenII
         }
 
         public BilanCamp Bilan(ColorPiece camp)
-        {   // Imprécisions, erreurs, gaffes et perte moyenne (en centipions, à partir des chances de gain) des coups jugés du camp
+        {   // Imprécisions, erreurs, gaffes et précision moyenne (en %) des coups jugés du camp
             List<JugementCoup> jugements = [.. Jugements().Where(j => j.Camp == camp)];
-            int perteMoyenne = jugements.Count == 0 ? 0 : (int)Math.Round(jugements.Average(j =>
-            {
-                int k = _indexCoups.IndexOf(j.IndexCoup);
-                int avant = JugementCoups.Centipions(_positions[k].Chances.Value), apres = JugementCoups.Centipions(_positions[k + 1].Chances.Value);
-                return j.MeilleurJoue ? 0 : Math.Max(0, camp == ColorPiece.Blanc ? avant - apres : apres - avant);
-            }));
+            int precision = jugements.Count == 0 ? 0 : (int)Math.Round(jugements.Average(j => j.Precision));
             return new BilanCamp(jugements.Count(j => j.Annotation == "?!"), jugements.Count(j => j.Annotation == "?"),
-                                 jugements.Count(j => j.Annotation == "??"), perteMoyenne);
+                                 jugements.Count(j => j.Annotation == "??"), precision);
         }
     }
 }

@@ -107,8 +107,12 @@ namespace BrunoGUI_GenII
             PenduleBlanc.Click += Pendule_Click;        // un clic sur une pendule : pause / reprise
             PenduleNoir.Click += Pendule_Click;
             PenduleBlanc.ReduitPourTenir = PenduleNoir.ReduitPourTenir = true;     // "1:30:00" toujours lisible en entier
-            foreach (RichTextBox ligne in new[] { VarianteMoteurUci1, VarianteMoteurUci2 })
-            {   // lignes de variante 1 et 2 : centrées et en gras pour le coup regardé et son analyse (voir AfficheLigneCentree)
+            _infobulleBilan.SetToolTip(BilanAnalyse,
+                "Précision : 100 % = tous les coups aussi bons que ceux du moteur (formule de Lichess).\n" +
+                "Imprécision (?!), erreur (?), gaffe (??) : le coup fait perdre au moins 10, 20 ou 30 %\n" +
+                "des chances de gain (une perte dans une position déjà gagnée compte peu).");
+            foreach (RichTextBox ligne in new[] { VarianteMoteurUci1, VarianteMoteurUci2, VarianteMoteurUci3 })
+            {   // lignes de variante 1 à 3 : centrées et en gras pour le coup regardé, son analyse et la suite prévue (voir AfficheLigneCentree)
                 _policesLignes[ligne] = (ligne.Font, new Font(ligne.Font, FontStyle.Bold));
                 ligne.TextChanged += LigneVariante_TextChanged;
             }
@@ -1868,6 +1872,12 @@ namespace BrunoGUI_GenII
             _analyseDePartie.Enregistre(_positionEnAnalyse, meilleure);
             AnalysePositionSuivante();
         }
+        private static string TexteBilan(string camp, BilanCamp bilan) =>
+            // Ex : "Blancs — précision 87 %" puis "   1 imprécision, 0 erreur, 2 gaffes" (explications dans l'infobulle du bilan)
+            $"{camp} — précision {bilan.Precision} %\n   {Pluriel(bilan.Imprecisions, "imprécision")}, {Pluriel(bilan.Erreurs, "erreur")}, {Pluriel(bilan.Gaffes, "gaffe")}";
+        private static string Pluriel(int nombre, string mot) => $"{nombre} {mot}{(nombre > 1 ? "s" : "")}";
+        private readonly ToolTip _infobulleBilan = new() { AutoPopDelay = 20000 };
+
         private void TermineAnalyseDePartie(bool interrompue)
         {   // Fin (ou interruption) : les résultats vont dans les coups (annotations proposées, plus pâles), puis le bilan
             AnalyseDePartie analyse = _analyseDePartie;
@@ -1878,8 +1888,7 @@ namespace BrunoGUI_GenII
             AbandonneReflexion();           // la position en cours d'analyse (interruption) : sa réponse sera ignorée
             analyse.AppliqueAuxCoups(LogiqueMouvements.ListeCoups);
             BilanCamp blancs = analyse.Bilan(ColorPiece.Blanc), noirs = analyse.Bilan(ColorPiece.Noir);
-            BilanAnalyse.Text = $"Blancs : {blancs.Imprecisions} ?!  {blancs.Erreurs} ?  {blancs.Gaffes} ??   perte {blancs.PerteMoyenne}\n"
-                              + $"Noirs :  {noirs.Imprecisions} ?!  {noirs.Erreurs} ?  {noirs.Gaffes} ??   perte {noirs.PerteMoyenne}";
+            BilanAnalyse.Text = TexteBilan("Blancs", blancs) + "\n" + TexteBilan("Noirs", noirs);
             BarreAnalysePartie.Visible = false;
             BoutonAnalysePartie.Values.Text = "Analyser la partie";
             RetourPositionCourante();       // l'échiquier, qui suivait l'analyse, revient à la partie
@@ -1978,7 +1987,11 @@ namespace BrunoGUI_GenII
                 ? "Position initiale" : TexteCoupJoue(index, _positionAffichee);
             // Coup analysé (analyse de partie) : son évaluation et le meilleur coup du moteur, sur la 2e ligne de variante
             if (index >= 0 && LogiqueMouvements.ListeCoups[index] is { EvaluationApres: Evaluation evaluation } coupAnalyse)
+            {
                 AfficheLigneCentree(VarianteMoteurUci2, TexteAnalyseDuCoup(coupAnalyse, evaluation));
+                if (!string.IsNullOrEmpty(coupAnalyse.VarianteMeilleure))   // ligne 3 : la suite prévue par le moteur
+                    AfficheLigneCentree(VarianteMoteurUci3, (coupAnalyse.MeilleurJoue ? "Suite prévue : " : "Meilleure suite : ") + coupAnalyse.VarianteMeilleure);
+            }
             AffichePendules();      // partie sans pendule en cours (ex : PGN chargé) : temps notés à cette position
             if (!PartieEnLectureSeule)
                 InformationsPartie.Text = "Parcours : Fin ou clic pour revenir";
@@ -1986,11 +1999,12 @@ namespace BrunoGUI_GenII
         private static string TexteAnalyseDuCoup(Coup coup, Evaluation evaluation) =>
             // Ex : "Analyse : -9.05 (-+)   joué Dh2 [?? Gaffe]   — meilleur : Rd3 (0.00)" : le coup joué et son jugement, puis le
             // meilleur coup avec SON évaluation, et "écart négligeable" si le coup joué ne perd presque rien (ex : mat en 3 au lieu de 2)
-            $"Analyse : {evaluation.Texte} ({evaluation.Symbole})   joué {coup.PgnFrSansNumero}"
+            // (coups en notation longue, avec la case de départ : "Dd8-d7", "Ta8-c8")
+            $"Analyse : {evaluation.Texte} ({evaluation.Symbole})   joué {coup.CoupJoueLong ?? coup.PgnFrSansNumero}"
             + (coup.Annotation != "" ? $" [{coup.Annotation} {Annotations.Nom(coup.Annotation)}]" : "")
             + (coup.MeilleurJoue ? "   — meilleur coup du moteur"
                : coup.MeilleurCoup != null
-                 ? $"   — meilleur : {coup.MeilleurCoup}" + (coup.EvaluationMeilleur is Evaluation meilleure ? $" ({meilleure.Texte})" : "")
+                 ? $"   — meilleur : {coup.MeilleurCoupLong ?? coup.MeilleurCoup}" + (coup.EvaluationMeilleur is Evaluation meilleure ? $" ({meilleure.Texte})" : "")
                    + (coup.PerteAnalyse < JugementCoups.SeuilImprecision ? ", écart négligeable" : "")
                  : "");
 

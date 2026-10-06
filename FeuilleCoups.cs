@@ -127,14 +127,38 @@ namespace BrunoGUI_GenII
             TextRenderer.DrawText(g, coup, Font, texte, ForeColor, format | TextFormatFlags.EndEllipsis);
             string annotation = _coups[i].Annotation;
             if (annotation != "")
-            {   // L'annotation suit le coup, en couleur (comme sur Lichess)
+            {   // L'annotation suit le coup (collée, comme dans le PGN et les autres logiciels), sur une pastille de sa couleur,
+                // en blanc et gras pour être bien visible ; proposée par l'analyse de partie : pastille adoucie, tant que le joueur
+                // ne l'a pas choisie
                 int largeurCoup = TextRenderer.MeasureText(g, coup, Font, texte.Size, format).Width;
-                Rectangle zoneAnnotation = new(texte.X + largeurCoup + 1, texte.Y, Math.Max(0, texte.Width - largeurCoup - 1), texte.Height);
+                _policeAnnotation ??= new Font(Font.FontFamily, Font.Size * 0.9f, FontStyle.Bold);
+                Size taille = TextRenderer.MeasureText(g, annotation, _policeAnnotation, texte.Size, format);
+                Rectangle pastille = new(texte.X + largeurCoup + 2, zone.Y + (zone.Height - taille.Height - 2) / 2, taille.Width + 6, taille.Height + 2);
                 Color couleur = CouleurAnnotation(annotation);
-                if (_coups[i].AnnotationProposee)       // proposée par l'analyse de partie : plus pâle, tant que le joueur ne l'a pas choisie
-                    couleur = Color.FromArgb((couleur.R + 2 * CouleurPapier.R) / 3, (couleur.G + 2 * CouleurPapier.G) / 3, (couleur.B + 2 * CouleurPapier.B) / 3);
-                TextRenderer.DrawText(g, annotation, Font, zoneAnnotation, couleur, format);
+                if (_coups[i].AnnotationProposee)
+                    couleur = Color.FromArgb((couleur.R + CouleurPapier.R) / 2, (couleur.G + CouleurPapier.G) / 2, (couleur.B + CouleurPapier.B) / 2);
+                DessinePastille(g, pastille, couleur);
+                TextRenderer.DrawText(g, annotation, _policeAnnotation, pastille, Color.White,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPadding);
             }
+        }
+
+        private Font _policeAnnotation;     // police des pastilles d'annotation (créée une seule fois)
+
+        private static void DessinePastille(Graphics g, Rectangle zone, Color couleur)
+        {   // Rectangle aux coins arrondis, plein
+            int rayon = Math.Min(zone.Height, 8);
+            using System.Drawing.Drawing2D.GraphicsPath chemin = new();
+            chemin.AddArc(zone.X, zone.Y, rayon, rayon, 180, 90);
+            chemin.AddArc(zone.Right - rayon, zone.Y, rayon, rayon, 270, 90);
+            chemin.AddArc(zone.Right - rayon, zone.Bottom - rayon, rayon, rayon, 0, 90);
+            chemin.AddArc(zone.X, zone.Bottom - rayon, rayon, rayon, 90, 90);
+            chemin.CloseFigure();
+            var lissage = g.SmoothingMode;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            using (SolidBrush pinceau = new(couleur))
+                g.FillPath(pinceau, chemin);
+            g.SmoothingMode = lissage;
         }
 
         public static Color CouleurAnnotation(string annotation) => annotation switch

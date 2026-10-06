@@ -1,4 +1,4 @@
-// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
 // █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
 // █ Copyright (C) 2026 Bruno COURTOIS                                      █
 // █ SPDX-License-Identifier: GPL-3.0-or-later                              █
@@ -896,7 +896,7 @@ Verifie("Chances de gain (formule de Lichess) : 0 à 0.00, symétriques, ±1 pou
     JugementCoups.ChancesDeGain(new Evaluation(0, null)) == 0 && Math.Abs(JugementCoups.ChancesDeGain(new Evaluation(300, null)) - 0.5022) < 0.001
     && JugementCoups.ChancesDeGain(new Evaluation(-300, null)) == -JugementCoups.ChancesDeGain(new Evaluation(300, null))
     && JugementCoups.ChancesDeGain(new Evaluation(null, 3)) == 1 && JugementCoups.ChancesDeGain(new Evaluation(null, -2)) == -1
-    && JugementCoups.Centipions(JugementCoups.ChancesDeGain(new Evaluation(250, null))) == 250,
+    && JugementCoups.Precision(0, 0) > 99.9 && JugementCoups.Precision(0.2, -0.3) < 50 && JugementCoups.Precision(0.2, 0.25) == 100,
     $"{JugementCoups.ChancesDeGain(new Evaluation(300, null)):F4}");
 Verifie("Annotation selon la perte de chances : ?! dès 0,1, ? dès 0,2, ?? dès 0,3",
     JugementCoups.Annotation(0.05) == "" && JugementCoups.Annotation(0.1) == "?!" && JugementCoups.Annotation(0.25) == "?" && JugementCoups.Annotation(0.9) == "??", "");
@@ -907,17 +907,16 @@ foreach (string coupBerger in new[] { "e2e4", "e7e5", "d1h5", "b8c6", "f1c4", "g
 AnalyseDePartie analyseBerger = new(L.ListeCoups);
 Verifie("Analyse : une position par coup plus le départ, le mat final jugé sans le moteur",
     analyseBerger.Positions.Count == 8 && analyseBerger.Positions[7].ChancesFinDePartie == 1 && analyseBerger.NombreAAnalyser == 7
-    && analyseBerger.PositionSuivante == 0 && !analyseBerger.Terminee,
+    && analyseBerger.PositionSuivante == 6 && !analyseBerger.Terminee,
     $"{analyseBerger.Positions.Count} positions, {analyseBerger.NombreAAnalyser} à analyser");
 // Réponses simulées du moteur (meilleure variante de chaque position, score du point de vue des Blancs)
-(int cp, string variante)[] reponses = [(30, "1. e4 e5"), (30, "1... e5 2. Cf3"), (35, "2. Cf3 Cc6"), (-60, "2... Cc6 3. Fc4"),
-                                        (-40, "3. Fc4 Cf6"), (20, "3... g6 4. Df3"), (0, "")];
-for (int p = 0; p < 7; p++)
+(int cp, string variante, string uci)[] reponses = [(30, "1. e4 e5", "e2e4 e7e5"), (30, "1 ... e5 2. Cf3", "e7e5 g1f3"), (35, "2. Cf3 Cc6", "g1f3 b8c6"),
+    (-60, "2 ... Cc6 3. Fc4", "b8c6 f1c4"), (-40, "3. Fc4 Cf6", "f1c4 g8f6"), (20, "3 ... g6 4. Df3", "g7g6 h5f3"), (0, "4. Dxf7#", "h5f7")];
+for (int p = 6; p >= 0; p--)       // de la fin vers le début, comme ChessBase
 {
-    Verifie($"Analyse : position {p} demandée dans l'ordre", analyseBerger.PositionSuivante == p, $"{analyseBerger.PositionSuivante}");
-    LigneAnalyse ligneMoteur = p == 6 ? new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(null, 1), VariantePgn = "4. Dxf7#" }
-                                      : new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(reponses[p].cp, null), VariantePgn = reponses[p].variante };
-    analyseBerger.Enregistre(p, ligneMoteur);
+    Verifie($"Analyse : position {p} demandée, de la fin vers le début", analyseBerger.PositionSuivante == p, $"{analyseBerger.PositionSuivante}");
+    analyseBerger.Enregistre(p, new LigneAnalyse { Numero = 1, Evaluation = p == 6 ? new Evaluation(null, 1) : new Evaluation(reponses[p].cp, null),
+                                                   VariantePgn = reponses[p].variante, VarianteUci = reponses[p].uci });
 }
 JugementCoup jugeE4 = analyseBerger.Jugement(0), jugeDh5 = analyseBerger.Jugement(2), jugeCf6 = analyseBerger.Jugement(5), jugeMat = analyseBerger.Jugement(6);
 Verifie("Analyse : finie, le meilleur coup joué ne perd rien (e4)",
@@ -930,8 +929,9 @@ Verifie("Analyse : gaffe noire 3... Cf6 ?? (de +0.20 à mat en 1), meilleur coup
     jugeCf6.Camp == L.ColorPiece.Noir && jugeCf6.Annotation == "??" && jugeCf6.MeilleurCoup == "g6" && jugeMat.Annotation == "" && jugeMat.MeilleurJoue,
     $"Cf6 : perte {jugeCf6.Perte:F3}, {jugeCf6.Annotation} ; Dxf7# : {jugeMat.Annotation}");
 BilanCamp bilanBlancs = analyseBerger.Bilan(L.ColorPiece.Blanc), bilanNoirs = analyseBerger.Bilan(L.ColorPiece.Noir);
-Verifie("Analyse : bilan par camp (imprécisions, erreurs, gaffes, perte moyenne en centipions)",
-    bilanBlancs == bilanBlancs with { Imprecisions = 1, Erreurs = 0, Gaffes = 0 } && bilanNoirs.Gaffes == 1 && bilanNoirs.PerteMoyenne > bilanBlancs.PerteMoyenne,
+Verifie("Analyse : bilan par camp (imprécisions, erreurs, gaffes, précision en %)",
+    bilanBlancs == bilanBlancs with { Imprecisions = 1, Erreurs = 0, Gaffes = 0 } && bilanNoirs.Gaffes == 1 && bilanNoirs.Precision < bilanBlancs.Precision
+    && bilanBlancs.Precision is > 50 and < 100,
     $"Blancs {bilanBlancs}, Noirs {bilanNoirs}");
 L.ListeCoups[5].Annotation = "!";       // le joueur pense que 3... Cf6 est un bon coup : l'analyse ne doit pas l'écraser
 analyseBerger.AppliqueAuxCoups(L.ListeCoups);
@@ -950,7 +950,18 @@ Verifie("Analyse : coup de ListeCoups qui mène à chaque position (affichage pe
 AnalyseDePartie analyseSansScore = new(L.ListeCoups);
 analyseSansScore.Enregistre(0, null);
 Verifie("Analyse : une position sans score du moteur est sautée (pas de boucle), ses coups ne sont pas jugés",
-    analyseSansScore.PositionSuivante == 1 && analyseSansScore.Jugement(0) == null, $"{analyseSansScore.PositionSuivante}");
+    analyseSansScore.PositionSuivante == 6 && analyseSansScore.Jugement(0) == null, $"{analyseSansScore.PositionSuivante}");
+Verifie("Analyse : meilleur coup en notation longue (case de départ), variante gardée, coup joué en notation longue",
+    L.ListeCoups[2].MeilleurCoupLong == "Cg1-f3" && L.ListeCoups[5].MeilleurCoupLong == "g7-g6" && L.ListeCoups[2].VarianteMeilleure == "2. Cf3 Cc6"
+    && L.ListeCoups[2].CoupJoueLong == "Dd1-h5" && L.ListeCoups[5].CoupJoueLong == "Cg8-f6" && L.ListeCoups[6].CoupJoueLong == "Dh5xf7#",
+    $"{L.ListeCoups[2].MeilleurCoupLong} / {L.ListeCoups[5].MeilleurCoupLong} / {L.ListeCoups[2].CoupJoueLong} / {L.ListeCoups[5].CoupJoueLong} / {L.ListeCoups[6].CoupJoueLong}");
+Verifie("Notation longue : prise et mat, roques, promotion, prise en passant",
+    AnalyseDePartie.NotationLongue(L.ListeCoups[5].Fen, "h5f7", "Dxf7#") == "Dh5xf7#"
+    && AnalyseDePartie.NotationLongue("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1", "e1g1") == "O-O"
+    && AnalyseDePartie.NotationLongue("r3k2r/8/8/8/8/8/8/R3K2R b KQkq - 0 1", "e8c8") == "O-O-O"
+    && AnalyseDePartie.NotationLongue("8/4P2k/8/8/8/8/8/4K3 w - - 0 1", "e7e8q") == "e7-e8=D"
+    && AnalyseDePartie.NotationLongue("4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 2", "e5d6") == "e5xd6",
+    AnalyseDePartie.NotationLongue(L.ListeCoups[5].Fen, "h5f7", "Dxf7#"));
 Verifie("Analyse : premier coup d'une variante (numéros sautés)",
     AnalyseDePartie.PremierCoup("12... Fe7 13. Cf3") == "Fe7" && AnalyseDePartie.PremierCoup("19 ... Fa2 20. Cf3") == "Fa2"
     && AnalyseDePartie.PremierCoup("3. O-O Cf6") == "O-O" && AnalyseDePartie.PremierCoup("") == null,
