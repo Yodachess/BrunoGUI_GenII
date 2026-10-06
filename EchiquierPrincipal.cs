@@ -111,11 +111,11 @@ namespace BrunoGUI_GenII
                 "Précision : 100 % = tous les coups aussi bons que ceux du moteur (formule de Lichess).\n" +
                 "Imprécision (?!), erreur (?), gaffe (??) : le coup fait perdre au moins 10, 20 ou 30 %\n" +
                 "des chances de gain (une perte dans une position déjà gagnée compte peu).\n" +
-                "Analyse profonde : les coups douteux sont revus 10 s pour confirmer le jugement.\n" +
+                "Analyse complète : les coups douteux sont revus 10 s pour confirmer le jugement.\n" +
                 "Coup critique : celui où la partie a basculé (la plus grosse perte) ; un clic l'affiche.");
             BilanAnalyse.Click += BilanAnalyse_Click;
             BoutonAnalysePartie.MouseEnter += MetAJourInfobullesAnalyse;
-            BoutonAnalyseProfonde.MouseEnter += MetAJourInfobullesAnalyse;
+            BoutonAnalyseComplete.MouseEnter += MetAJourInfobullesAnalyse;
             foreach (RichTextBox ligne in new[] { VarianteMoteurUci1, VarianteMoteurUci2, VarianteMoteurUci3 })
             {   // lignes de variante 1 à 3 : centrées et en gras pour le coup regardé, son analyse et la suite prévue (voir AfficheLigneCentree)
                 _policesLignes[ligne] = (ligne.Font, new Font(ligne.Font, FontStyle.Bold));
@@ -1838,11 +1838,11 @@ namespace BrunoGUI_GenII
             if (_analyseDePartie != null)
                 TermineAnalyseDePartie(interrompue: true);
             else
-                LanceAnalyseDePartie(profonde: false);
+                LanceAnalyseDePartie(complete: false);
         }
-        private void BoutonAnalyseProfonde_Click(object sender, EventArgs e) =>
-            // "Analyse profonde" : la rapide, puis les coups douteux revus 10 s (masqué pendant une analyse)
-            LanceAnalyseDePartie(profonde: true);
+        private void BoutonAnalyseComplete_Click(object sender, EventArgs e) =>
+            // "Analyse complète" : la rapide, puis les coups douteux revus 10 s (masqué pendant une analyse)
+            LanceAnalyseDePartie(complete: true);
         private void MetAJourInfobullesAnalyse(object sender, EventArgs e)
         {   // Au survol des boutons : ce que fait chaque analyse et sa durée pour la partie en cours
             int positions = LogiqueMouvements.ListeCoups.Count(c => !c.EstPositionDeDepart) + 1;
@@ -1850,12 +1850,12 @@ namespace BrunoGUI_GenII
             _infobulleBilan.SetToolTip(BoutonAnalysePartie,
                 $"Analyse rapide : {DureeAnalyseParPosition / 1000} s par position, puis bilan et coup critique.\n" +
                 $"Environ {TexteDuree(rapide)} pour cette partie ({positions} positions).");
-            _infobulleBilan.SetToolTip(BoutonAnalyseProfonde,
-                $"Analyse profonde : l'analyse rapide, puis les positions avant et après chaque coup douteux\n" +
+            _infobulleBilan.SetToolTip(BoutonAnalyseComplete,
+                $"Analyse complète : l'analyse rapide, puis les positions avant et après chaque coup douteux\n" +
                 $"(?!, ?, ??) revues {DureeApprofondissement / 1000} s pour confirmer le jugement.\n" +
                 $"Environ {TexteDuree(rapide)}, plus {2 * DureeApprofondissement / 1000} s par coup douteux.");
         }
-        private void LanceAnalyseDePartie(bool profonde)
+        private void LanceAnalyseDePartie(bool complete)
         {
             if (!LogiqueMouvements.ListeCoups.Any(c => !c.EstPositionDeDepart))
             {
@@ -1870,9 +1870,9 @@ namespace BrunoGUI_GenII
             }
             AbandonneReflexion();       // une analyse de position en cours est remplacée
             _pendule?.Pause();          // le temps ne compte pas pendant l'analyse (reprise dans MinuteriePendule_Tick à la fin)
-            _analyseDePartie = new AnalyseDePartie(LogiqueMouvements.ListeCoups, approfondir: profonde);
-            BoutonAnalyseProfonde.Visible = false;      // un seul bouton "Interrompre (k/N)", sur toute la largeur
-            BoutonAnalysePartie.Width = BoutonAnalyseProfonde.Right - BoutonAnalysePartie.Left;
+            _analyseDePartie = new AnalyseDePartie(LogiqueMouvements.ListeCoups, approfondir: complete);
+            BoutonAnalyseComplete.Visible = false;      // un seul bouton "Interrompre (k/N)", sur toute la largeur
+            BoutonAnalysePartie.Width = BoutonAnalyseComplete.Right - BoutonAnalysePartie.Left;
             BarreAnalysePartie.Maximum = Math.Max(1, _analyseDePartie.NombreAAnalyser);
             BarreAnalysePartie.Value = 0;
             BarreAnalysePartie.Visible = true;
@@ -1912,9 +1912,9 @@ namespace BrunoGUI_GenII
         private static string Pluriel(int nombre, string mot) => $"{nombre} {mot}{(nombre > 1 ? "s" : "")}";
         private readonly ToolTip _infobulleBilan = new() { AutoPopDelay = 20000 };
         private static string TexteCoupCritique(Coup coup, JugementCoup critique) =>
-            // Ex : "Coup critique (clic) :" puis "   11... Cxe5??   2.42 → -1.98" (évaluation avant, avec le meilleur coup, et après)
+            // Ex : "Coup critique (clic) :" puis "   25... c5??   score -0.23 → 2.73" (évaluation avant, avec le meilleur coup, et après)
             "Coup critique (clic) :\n   " + coup.PgnFrNumerote + coup.Annotation
-            + (critique.EvaluationMeilleur is Evaluation avant && critique.EvaluationApres is Evaluation apres ? $"   {avant.Texte} → {apres.Texte}" : "");
+            + (critique.EvaluationMeilleur is Evaluation avant && critique.EvaluationApres is Evaluation apres ? $"   score {avant.Texte} → {apres.Texte}" : "");
         private void EffaceBilan()
         {
             BilanAnalyse.Text = "";
@@ -1939,15 +1939,15 @@ namespace BrunoGUI_GenII
             BilanCamp blancs = analyse.Bilan(ColorPiece.Blanc), noirs = analyse.Bilan(ColorPiece.Noir);
             BilanAnalyse.Text = TexteBilan("Blancs", blancs) + "\n" + TexteBilan("Noirs", noirs);
             if (analyse.CoupCritique() is JugementCoup critique)
-            {
+            {   // en tête du bilan : le moment où la partie a basculé
                 _coupCritique = critique.IndexCoup;
-                BilanAnalyse.Text += "\n" + TexteCoupCritique(LogiqueMouvements.ListeCoups[critique.IndexCoup], critique);
+                BilanAnalyse.Text = TexteCoupCritique(LogiqueMouvements.ListeCoups[critique.IndexCoup], critique) + "\n" + BilanAnalyse.Text;
                 BilanAnalyse.Cursor = Cursors.Hand;
             }
             BarreAnalysePartie.Visible = false;
             BoutonAnalysePartie.Values.Text = "Analyse rapide";
-            BoutonAnalysePartie.Width = BoutonAnalyseProfonde.Left - 4 - BoutonAnalysePartie.Left;
-            BoutonAnalyseProfonde.Visible = true;
+            BoutonAnalysePartie.Width = BoutonAnalyseComplete.Left - 4 - BoutonAnalysePartie.Left;
+            BoutonAnalyseComplete.Visible = true;
             RetourPositionCourante();       // l'échiquier, qui suivait l'analyse, revient à la partie
             InformationsPartie.Text = interrompue ? "Analyse interrompue" : "Analyse de la partie terminée";
             MetAJourCommandes();
@@ -2074,10 +2074,9 @@ namespace BrunoGUI_GenII
         }
         // Flèches d'un coup analysé : le meilleur coup du moteur en vert, comme le coup joué s'il était ce meilleur coup
         private static readonly Color CouleurFlecheMeilleurCoup = Color.FromArgb(21, 120, 27);
-        private static readonly Color CouleurFlecheCoupJoue = Color.FromArgb(70, 110, 170);
         private void MontreFlechesDuCoup(int index)
-        {   // Flèche du coup joué, sur tout coup regardé (elle montre ce qui a été joué) : verte si c'est le meilleur coup du moteur, de la
-            // couleur de son annotation s'il en a une, bleue sinon. Coup annoté (analysé) : aussi la flèche verte du meilleur coup du
+        {   // Flèche du coup joué, sur tout coup regardé (elle montre ce qui a été joué) : de la couleur de son annotation s'il en a une,
+            // verte sinon (choix de Bruno : une seule couleur hors annotations). Coup annoté (analysé) : aussi la flèche verte du meilleur coup du
             // moteur s'il en est un autre (choix de Bruno : pas sur un coup sans annotation, où l'écart est négligeable).
             // Les deux partent de la position d'avant le coup (l'échiquier montre celle d'après) ; rien pendant l'analyse elle-même
             _vue.EffaceFleches();
@@ -2089,8 +2088,7 @@ namespace BrunoGUI_GenII
                 return;
             bool analyse = coup.EvaluationApres != null;
             List<(int, int, Color)> fleches = [];
-            Color couleurJoue = analyse && coup.MeilleurJoue ? CouleurFlecheMeilleurCoup
-                : coup.Annotation != "" ? FeuilleCoups.CouleurAnnotation(coup.Annotation) : CouleurFlecheCoupJoue;
+            Color couleurJoue = coup.Annotation != "" ? FeuilleCoups.CouleurAnnotation(coup.Annotation) : CouleurFlecheMeilleurCoup;
             fleches.Add((RenvoieCaseIndex120(joue[..2]), RenvoieCaseIndex120(joue[2..4]), couleurJoue));
             if (analyse && coup.Annotation != "" && !coup.MeilleurJoue && coup.MeilleurCoupUci is { Length: >= 4 } meilleur)
                 fleches.Add((RenvoieCaseIndex120(meilleur[..2]), RenvoieCaseIndex120(meilleur[2..4]), CouleurFlecheMeilleurCoup));

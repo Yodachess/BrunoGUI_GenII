@@ -81,7 +81,7 @@ namespace BrunoGUI_GenII
             BoutonBalises = new Krypton.Toolkit.KryptonButton();
             RetourArriere = new Krypton.Toolkit.KryptonButton();
             BoutonAnalysePartie = new Krypton.Toolkit.KryptonButton();
-            BoutonAnalyseProfonde = new Krypton.Toolkit.KryptonButton();
+            BoutonAnalyseComplete = new Krypton.Toolkit.KryptonButton();
             BarreAnalysePartie = new System.Windows.Forms.ProgressBar();
             BilanAnalyse = new System.Windows.Forms.Label();
             BoutonSetupPosition = new Krypton.Toolkit.KryptonButton();
@@ -552,7 +552,7 @@ namespace BrunoGUI_GenII
             BoutonAnalysePartie.Location = new System.Drawing.Point(538, 616);
             BoutonAnalysePartie.Name = "BoutonAnalysePartie";
             BoutonAnalysePartie.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
-            BoutonAnalysePartie.Size = new System.Drawing.Size(96, 25);
+            BoutonAnalysePartie.Size = new System.Drawing.Size(120, 25);
             BoutonAnalysePartie.StateCommon.Back.Color1 = System.Drawing.Color.FromArgb(192, 192, 255);
             BoutonAnalysePartie.StateCommon.Border.Color1 = System.Drawing.Color.DarkGray;
             BoutonAnalysePartie.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
@@ -566,24 +566,24 @@ namespace BrunoGUI_GenII
             BoutonAnalysePartie.Values.Text = "Analyse rapide";
             BoutonAnalysePartie.Click += BoutonAnalysePartie_Click;
             //
-            // BoutonAnalyseProfonde
+            // BoutonAnalyseComplete
             //
-            BoutonAnalyseProfonde.Location = new System.Drawing.Point(638, 616);
-            BoutonAnalyseProfonde.Name = "BoutonAnalyseProfonde";
-            BoutonAnalyseProfonde.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
-            BoutonAnalyseProfonde.Size = new System.Drawing.Size(112, 25);
-            BoutonAnalyseProfonde.StateCommon.Back.Color1 = System.Drawing.Color.FromArgb(192, 192, 255);
-            BoutonAnalyseProfonde.StateCommon.Border.Color1 = System.Drawing.Color.DarkGray;
-            BoutonAnalyseProfonde.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
-            BoutonAnalyseProfonde.StateCommon.Border.GraphicsHint = Krypton.Toolkit.PaletteGraphicsHint.AntiAlias;
-            BoutonAnalyseProfonde.StateCommon.Border.Rounding = 20F;
-            BoutonAnalyseProfonde.StateCommon.Border.Width = 3;
-            BoutonAnalyseProfonde.StateCommon.Content.ShortText.Color1 = System.Drawing.Color.Black;
-            BoutonAnalyseProfonde.StateCommon.Content.ShortText.Color2 = System.Drawing.Color.Black;
-            BoutonAnalyseProfonde.TabIndex = 31;
-            BoutonAnalyseProfonde.Values.DropDownArrowColor = System.Drawing.Color.Empty;
-            BoutonAnalyseProfonde.Values.Text = "Analyse profonde";
-            BoutonAnalyseProfonde.Click += BoutonAnalyseProfonde_Click;
+            BoutonAnalyseComplete.Location = new System.Drawing.Point(662, 616);
+            BoutonAnalyseComplete.Name = "BoutonAnalyseComplete";
+            BoutonAnalyseComplete.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
+            BoutonAnalyseComplete.Size = new System.Drawing.Size(88, 25);
+            BoutonAnalyseComplete.StateCommon.Back.Color1 = System.Drawing.Color.FromArgb(192, 192, 255);
+            BoutonAnalyseComplete.StateCommon.Border.Color1 = System.Drawing.Color.DarkGray;
+            BoutonAnalyseComplete.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
+            BoutonAnalyseComplete.StateCommon.Border.GraphicsHint = Krypton.Toolkit.PaletteGraphicsHint.AntiAlias;
+            BoutonAnalyseComplete.StateCommon.Border.Rounding = 20F;
+            BoutonAnalyseComplete.StateCommon.Border.Width = 3;
+            BoutonAnalyseComplete.StateCommon.Content.ShortText.Color1 = System.Drawing.Color.Black;
+            BoutonAnalyseComplete.StateCommon.Content.ShortText.Color2 = System.Drawing.Color.Black;
+            BoutonAnalyseComplete.TabIndex = 31;
+            BoutonAnalyseComplete.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            BoutonAnalyseComplete.Values.Text = "Complète";
+            BoutonAnalyseComplete.Click += BoutonAnalyseComplete_Click;
             //
             // BarreAnalysePartie
             // 
@@ -1248,7 +1248,7 @@ namespace BrunoGUI_GenII
             Controls.Add(VisualisationPgn);
             Controls.Add(RetourArriere);
             Controls.Add(BoutonAnalysePartie);
-            Controls.Add(BoutonAnalyseProfonde);
+            Controls.Add(BoutonAnalyseComplete);
             Controls.Add(BarreAnalysePartie);
             Controls.Add(BilanAnalyse);
             Controls.Add(BoutonSetupPosition);
@@ -1330,7 +1330,7 @@ namespace BrunoGUI_GenII
         private FeuilleCoups FeuilleDesCoups;
         public Krypton.Toolkit.KryptonButton RetourArriere;
         private Krypton.Toolkit.KryptonButton BoutonAnalysePartie;
-        private Krypton.Toolkit.KryptonButton BoutonAnalyseProfonde;
+        private Krypton.Toolkit.KryptonButton BoutonAnalyseComplete;
         private System.Windows.Forms.ProgressBar BarreAnalysePartie;
         private System.Windows.Forms.Label BilanAnalyse;
         private Krypton.Toolkit.KryptonButton BoutonSetupPosition;
