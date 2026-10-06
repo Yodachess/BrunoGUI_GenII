@@ -1148,7 +1148,11 @@ namespace BrunoGUI_GenII
             // Version 1.13 = feuille de partie intégrée à droite de l'échiquier (composant maison, couleur papier, clic sur un coup
             //                pour l'afficher), annotations !! ! !? ?! ? ?? (clic droit, en couleur, écrites et relues dans le PGN,
             //                codes $1 à $6 compris), coup de bibliothèque dans la barre d'état, bouton "Setup position" (à venir)
-            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.13\n--  Bruno COURTOIS  -- " +
+            // Version 1.14 = analyse de partie (rapide 3 s par position, ou complète avec les coups douteux revus 10 s), de la fin vers
+            //                le début comme ChessBase, toujours à pleine force ; annotations proposées, précision en % et bilan,
+            //                coup critique (clic), flèches du coup joué et du meilleur coup, évaluation et meilleure suite au parcours,
+            //                PGN enregistré avec %eval et la meilleure variante après les erreurs
+            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.14\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", "A propos de",
                 KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
         }
