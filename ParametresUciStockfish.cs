@@ -53,7 +53,7 @@ namespace BrunoGUI_GenII
             MoteurUci.DefinitThreads((int)ThreadsUpDown.Value);
             MoteurUci.DefinitHachage((int)HashSizeUpDown.Value);
             MoteurUci.DefinitMultiPV((int)MultiPVUpDown.Value);
-            MoteurUci.StandardInputDataToUci("setoption name Skill Level value " + (int)SkillLevelUpDown.Value);
+            MoteurUci.DefinitNiveau((int)SkillLevelUpDown.Value);      // pour jouer (une analyse se fait au niveau maximal)
             MoteurUci.StandardInputDataToUci("setoption name Move Overhead value " + (int)MoveOverheadUpDown.Value);
             MoteurUci.StandardInputDataToUci("setoption name nodestime value " + (int)NodesTimeUpDown.Value);
             this.Hide();

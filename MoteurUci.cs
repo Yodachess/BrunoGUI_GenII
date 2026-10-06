@@ -15,7 +15,9 @@
 //                      ├─ "JeuMoteurUci"               Envoie au moteur UCI le Fen actuel
 //                      ├─ "ActiveLimiteElo"            Activation de la limitation du ELO
 //                      ├─ "DefinitLimiteElo"           Définition de la force ELO du moteur  
-//                      ├─ "DefinitMultiPV"             Nombre de variantes demandées au moteur
+//                      ├─ "DefinitNiveau"              "Skill Level" pour jouer
+//                      ├─ "AppliqueForce"              Force limitée pour jouer, pleine force pour analyser (avant chaque "go")
+//                      ├─ "DefinitMultiPV"            Nombre de variantes demandées au moteur
 //                      ├─ "DefinitThreads" / "DefinitHachage"   Threads et table de hachage (mémorisés pour les redémarrages)
 //                      ├─ "SpecialeSargon"            Profondeur = 6 sinon boucle infinie ...  
 //                      └─ "Quitte"
@@ -33,7 +35,7 @@ namespace BrunoGUI_GenII
     public class MoteurUci : IMoteur
     {
         // Le moteur vu par PiloteMoteur (qui ne connaît que IMoteur : un faux moteur le remplace dans les tests)
-        void IMoteur.Chercher(string fen, LimiteTemps limite) => JeuMoteurUci(fen, limite);
+        void IMoteur.Chercher(string fen, LimiteTemps limite, bool forceMaximale) => JeuMoteurUci(fen, limite, forceMaximale);
         void IMoteur.Abandonner() => AbandonneDemandeEnCours();
         bool IMoteur.EnReflexion => EnReflexion;
 
@@ -51,6 +53,14 @@ namespace BrunoGUI_GenII
         public int? TailleHachageMo { get; set; }
         private bool _optionsDemarrageEnvoyees;          // Threads/Hash ne sont envoyés qu'une fois par démarrage du moteur
         public string NomAnnonce { get; private set; }  // nom annoncé par le moteur ("id name ..."), ex : Stockfish 19
+
+        // Force du moteur : limitée pour jouer (Elo, niveau), jamais pour analyser. Ce qui est voulu pour jouer est mémorisé, et ce
+        // qui est actuellement réglé dans le moteur aussi : avant chaque "go", JeuMoteurUci n'envoie que ce qui doit changer
+        private bool _limiteEloVoulue;          // UCI_LimitStrength voulu pour jouer (ActiveLimiteElo)
+        private bool _limiteEloDansMoteur;      // valeur actuelle de UCI_LimitStrength dans le moteur
+        public int? NiveauVoulu { get; private set; }   // "Skill Level" réglé pour jouer (null : jamais réglé, 20 chez Stockfish)
+        private int? _niveauDansMoteur;
+        public const int NiveauMaximal = 20;
 
         // Numérotation des demandes ("go") : une réponse à une demande abandonnée (retour arrière, nouvelle partie, résultat...)
         // est ignorée, ce qui permet de laisser l'interface active pendant la réflexion du moteur
@@ -90,6 +100,8 @@ namespace BrunoGUI_GenII
             OptionsUci.Clear();
             NomAnnonce = null;
             _optionsDemarrageEnvoyees = false;
+            _limiteEloVoulue = _limiteEloDansMoteur = false;    // un moteur qui démarre a ses réglages par défaut
+            NiveauVoulu = _niveauDansMoteur = null;
             Demandes.Reinitialiser();
             StandardInputDataToUci("uci");  // On demande les infos au moteur (il répond par ses options puis "uciok")
         }
@@ -174,9 +186,11 @@ namespace BrunoGUI_GenII
         {   // Position Fen courante envoyée au Moteur UCI
             StandardInputDataToUci("position fen " + PositionFenActuel);
         }
-        public void JeuMoteurUci(string FenActuel, LimiteTemps limite)
+        public void JeuMoteurUci(string FenActuel, LimiteTemps limite, bool forceMaximale = false)
         {   // Envoie au moteur UCI le Fen actuel et invitation à jouer pour le moteur UCI (temps fixe, sans limite ou pendule : voir LimiteTemps)
+            // forceMaximale (analyse) : sans la limite de force réglée pour jouer
             AbandonneDemandeEnCours();      // une nouvelle demande remplace celle en cours (UCI interdit "position"/"go" pendant une recherche)
+            AppliqueForce(forceMaximale);
             StandardInputDataToUci("setoption name MultiPV value " + NombreLignesPV);   // On demande le nombre de variations choisi
             PositionFenUci(FenActuel);
             Demandes.DemandeEnvoyee();      // numéro de cette demande (compté avant l'envoi du "go", dont la réponse peut arriver très vite)
@@ -198,8 +212,33 @@ namespace BrunoGUI_GenII
             StandardInputDataToUci("setoption name Hash value " + tailleMo);
         }
         public void ActiveLimiteElo()
-        {   // Activation de la limitation du ELO
+        {   // Activation de la limitation du ELO (pour jouer : une analyse la retire le temps de sa recherche, voir AppliqueForce)
+            _limiteEloVoulue = _limiteEloDansMoteur = true;
             StandardInputDataToUci("setoption name UCI_LimitStrength value true");
+        }
+        public void DefinitNiveau(int niveau)
+        {   // "Skill Level" (0 à 20 chez Stockfish) pour jouer ; une analyse se fait toujours au niveau maximal
+            NiveauVoulu = _niveauDansMoteur = niveau;
+            StandardInputDataToUci("setoption name Skill Level value " + niveau);
+        }
+        private void AppliqueForce(bool forceMaximale)
+        {   // Avant un "go" : force limitée (Elo, niveau) pour jouer, pleine force pour analyser. Un moteur limité joue exprès un coup
+            // plus faible, et Stockfish annonce alors ce coup comme sa variante principale (souvent très courte, avec un score de 0.00)
+            bool limite = _limiteEloVoulue && !forceMaximale;
+            if (limite != _limiteEloDansMoteur && OptionsUci.Contains("UCI_LimitStrength"))
+            {
+                StandardInputDataToUci("setoption name UCI_LimitStrength value " + (limite ? "true" : "false"));
+                _limiteEloDansMoteur = limite;
+            }
+            if (NiveauVoulu is int niveauVoulu && OptionsUci.Contains("Skill Level"))
+            {
+                int niveau = forceMaximale ? NiveauMaximal : niveauVoulu;
+                if (niveau != _niveauDansMoteur)
+                {
+                    StandardInputDataToUci("setoption name Skill Level value " + niveau);
+                    _niveauDansMoteur = niveau;
+                }
+            }
         }
         public void DefinitLimiteElo(string ValeurElo)
         {   // Définition de la force ELO du moteur (default 1320 min 1320 max 3190 pour Stockfish)

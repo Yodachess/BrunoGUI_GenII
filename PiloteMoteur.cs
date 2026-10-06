@@ -63,7 +63,9 @@ namespace BrunoGUI_GenII
 
     public interface IMoteur
     {
-        void Chercher(string fen, LimiteTemps limite);      // "position fen ..." puis "go" (la demande précédente est abandonnée)
+        // "position fen ..." puis "go" (la demande précédente est abandonnée) ; forceMaximale : sans la limite de force réglée
+        // (Elo, niveau), pour une analyse
+        void Chercher(string fen, LimiteTemps limite, bool forceMaximale);
         void Abandonner();                                  // la demande en cours devient périmée ("stop")
         bool EnReflexion { get; }                           // le moteur réfléchit à une demande toujours valable
     }
@@ -103,17 +105,19 @@ namespace BrunoGUI_GenII
             }
             Demande = TypeDemande.CoupDePartie;
             Lignes.Reinitialiser();
-            _moteur.Chercher(fen, limite);
+            _moteur.Chercher(fen, limite, forceMaximale: false);     // le moteur joue à la force réglée
             return ResultatDemandeCoup.EnvoyeAuMoteur;
         }
 
         public void DemanderAnalyse(Position position, int dureeMilliSecondes)
-        {   // Analyse d'une position (celle affichée) : ses variantes seront converties sur PositionAnalysee
+        {   // Analyse d'une position (celle affichée) : ses variantes seront converties sur PositionAnalysee.
+            // Toujours à pleine force : un moteur limité (Elo, niveau) joue exprès des coups plus faibles, et Stockfish annonce alors
+            // ce coup faible comme sa variante principale, souvent avec une variante très courte et un score de 0.00
             Abandonner();
             PositionAnalysee = position.Copier();
             Demande = TypeDemande.Analyse;
             Lignes.Reinitialiser();
-            _moteur.Chercher(CalculerSur(position, RetourneChaineFenActuel), LimiteTemps.Duree(dureeMilliSecondes));
+            _moteur.Chercher(CalculerSur(position, RetourneChaineFenActuel), LimiteTemps.Duree(dureeMilliSecondes), forceMaximale: true);
         }
 
         public bool Abandonner()
