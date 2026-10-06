@@ -110,7 +110,10 @@ namespace BrunoGUI_GenII
             _infobulleBilan.SetToolTip(BilanAnalyse,
                 "Précision : 100 % = tous les coups aussi bons que ceux du moteur (formule de Lichess).\n" +
                 "Imprécision (?!), erreur (?), gaffe (??) : le coup fait perdre au moins 10, 20 ou 30 %\n" +
-                "des chances de gain (une perte dans une position déjà gagnée compte peu).");
+                "des chances de gain (une perte dans une position déjà gagnée compte peu).\n" +
+                "Les coups douteux sont revus 10 s pour confirmer le jugement.\n" +
+                "Coup critique : celui où la partie a basculé (la plus grosse perte) ; un clic l'affiche.");
+            BilanAnalyse.Click += BilanAnalyse_Click;
             foreach (RichTextBox ligne in new[] { VarianteMoteurUci1, VarianteMoteurUci2, VarianteMoteurUci3 })
             {   // lignes de variante 1 à 3 : centrées et en gras pour le coup regardé, son analyse et la suite prévue (voir AfficheLigneCentree)
                 _policesLignes[ligne] = (ligne.Font, new Font(ligne.Font, FontStyle.Bold));
@@ -1820,9 +1823,13 @@ namespace BrunoGUI_GenII
         // Chaque position est analysée DureeAnalyseParPosition ms par l'analyse de position habituelle (_pilote.DemanderAnalyse),
         // enchaînée à chaque réponse du moteur. Pendant l'analyse, l'échiquier est bloqué et la pendule en pause ; toute action qui
         // change la partie l'interrompt (AbandonneReflexion) en gardant ce qui est analysé. On peut parcourir la partie pendant ce temps.
+        // Puis 2e passage : les positions avant et après chaque coup douteux sont revues DureeApprofondissement ms (un ?? à 3 s
+        // peut n'être qu'une illusion d'une recherche trop courte). Le bilan donne ensuite le coup critique (clic : il est affiché)
         private const int DureeAnalyseParPosition = 3000;   // 3 s par position (choix de Bruno)
+        private const int DureeApprofondissement = 10000;   // 10 s par position revue
         private AnalyseDePartie _analyseDePartie;           // analyse en cours (null : aucune)
         private int _positionEnAnalyse = -1;                // position demandée au moteur (index dans _analyseDePartie.Positions)
+        private int? _coupCritique;                         // index dans ListeCoups du coup critique de la dernière analyse (clic sur le bilan)
 
         private void BoutonAnalysePartie_Click(object sender, EventArgs e)
         {   // Lance l'analyse de la partie, ou l'interrompt si elle est en cours
@@ -1844,11 +1851,11 @@ namespace BrunoGUI_GenII
             }
             AbandonneReflexion();       // une analyse de position en cours est remplacée
             _pendule?.Pause();          // le temps ne compte pas pendant l'analyse (reprise dans MinuteriePendule_Tick à la fin)
-            _analyseDePartie = new AnalyseDePartie(LogiqueMouvements.ListeCoups);
+            _analyseDePartie = new AnalyseDePartie(LogiqueMouvements.ListeCoups, approfondir: true);
             BarreAnalysePartie.Maximum = Math.Max(1, _analyseDePartie.NombreAAnalyser);
             BarreAnalysePartie.Value = 0;
             BarreAnalysePartie.Visible = true;
-            BilanAnalyse.Text = "";
+            EffaceBilan();
             InformationsPartie.Text = "Analyse de la partie...";
             MetAJourCommandes();        // échiquier bloqué
             AnalysePositionSuivante();
@@ -1862,10 +1869,16 @@ namespace BrunoGUI_GenII
             }
             _positionEnAnalyse = index;
             AfficheCoupDeLaPartie(_analyseDePartie.IndexDansListeCoups(index));    // l'échiquier montre la position analysée
-            int faites = _analyseDePartie.Positions.Count(p => p.ChancesFinDePartie == null && p.Analysee);
+            bool approfondissement = _analyseDePartie.EnApprofondissement;
+            int faites = approfondissement ? _analyseDePartie.NombreApprofondies
+                : _analyseDePartie.Positions.Count(p => p.ChancesFinDePartie == null && p.Analysee);
+            int total = approfondissement ? _analyseDePartie.NombreAApprofondir : _analyseDePartie.NombreAAnalyser;
+            BarreAnalysePartie.Maximum = Math.Max(1, total);
             BarreAnalysePartie.Value = Math.Min(BarreAnalysePartie.Maximum, faites);
-            BoutonAnalysePartie.Values.Text = $"Interrompre ({faites + 1}/{_analyseDePartie.NombreAAnalyser})";
-            _pilote.DemanderAnalyse(LogiqueMouvements.PositionDepuisFen(_analyseDePartie.Positions[index].Fen), DureeAnalyseParPosition);
+            BoutonAnalysePartie.Values.Text = approfondissement ? $"Interrompre (vérif. {faites + 1}/{total})" : $"Interrompre ({faites + 1}/{total})";
+            InformationsPartie.Text = approfondissement ? $"Vérification des coups douteux ({DureeApprofondissement / 1000} s)..." : "Analyse de la partie...";
+            _pilote.DemanderAnalyse(LogiqueMouvements.PositionDepuisFen(_analyseDePartie.Positions[index].Fen),
+                                    approfondissement ? DureeApprofondissement : DureeAnalyseParPosition);
         }
         private void PositionAnalyseeParLeMoteur(LigneAnalyse meilleure)
         {   // Réponse du moteur pour la position demandée (null : aucun score) : on l'enregistre et on passe à la suivante
@@ -1877,6 +1890,21 @@ namespace BrunoGUI_GenII
             $"{camp} — précision {bilan.Precision} %\n   {Pluriel(bilan.Imprecisions, "imprécision")}, {Pluriel(bilan.Erreurs, "erreur")}, {Pluriel(bilan.Gaffes, "gaffe")}";
         private static string Pluriel(int nombre, string mot) => $"{nombre} {mot}{(nombre > 1 ? "s" : "")}";
         private readonly ToolTip _infobulleBilan = new() { AutoPopDelay = 20000 };
+        private static string TexteCoupCritique(Coup coup, JugementCoup critique) =>
+            // Ex : "Coup critique (clic) :" puis "   11... Cxe5??   2.42 → -1.98" (évaluation avant, avec le meilleur coup, et après)
+            "Coup critique (clic) :\n   " + coup.PgnFrNumerote + coup.Annotation
+            + (critique.EvaluationMeilleur is Evaluation avant && critique.EvaluationApres is Evaluation apres ? $"   {avant.Texte} → {apres.Texte}" : "");
+        private void EffaceBilan()
+        {
+            BilanAnalyse.Text = "";
+            _coupCritique = null;
+            BilanAnalyse.Cursor = Cursors.Default;
+        }
+        private void BilanAnalyse_Click(object sender, EventArgs e)
+        {   // Clic sur le bilan : l'échiquier montre le coup critique (avec son analyse et ses flèches)
+            if (_coupCritique is int index && _analyseDePartie == null && index < LogiqueMouvements.ListeCoups.Count)
+                AfficheCoupDeLaPartie(index);
+        }
 
         private void TermineAnalyseDePartie(bool interrompue)
         {   // Fin (ou interruption) : les résultats vont dans les coups (annotations proposées, plus pâles), puis le bilan
@@ -1889,6 +1917,12 @@ namespace BrunoGUI_GenII
             analyse.AppliqueAuxCoups(LogiqueMouvements.ListeCoups);
             BilanCamp blancs = analyse.Bilan(ColorPiece.Blanc), noirs = analyse.Bilan(ColorPiece.Noir);
             BilanAnalyse.Text = TexteBilan("Blancs", blancs) + "\n" + TexteBilan("Noirs", noirs);
+            if (analyse.CoupCritique() is JugementCoup critique)
+            {
+                _coupCritique = critique.IndexCoup;
+                BilanAnalyse.Text += "\n" + TexteCoupCritique(LogiqueMouvements.ListeCoups[critique.IndexCoup], critique);
+                BilanAnalyse.Cursor = Cursors.Hand;
+            }
             BarreAnalysePartie.Visible = false;
             BoutonAnalysePartie.Values.Text = "Analyser la partie";
             RetourPositionCourante();       // l'échiquier, qui suivait l'analyse, revient à la partie
@@ -2103,7 +2137,7 @@ namespace BrunoGUI_GenII
             _positionAffichee = null;
             _vue.DernierCoupMasque = false;
             _vue.EffaceFleches();
-            BilanAnalyse.Text = "";     // le bilan de l'analyse portait sur l'ancienne partie
+            EffaceBilan();              // le bilan de l'analyse portait sur l'ancienne partie
             MetAJourCommandes();
         }
         private void DessinePieceDeLaPartie(int IndexCase, LogiqueMouvements.TypePiece Piece)
