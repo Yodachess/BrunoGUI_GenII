@@ -809,8 +809,8 @@ Charger(L.FenDepart);
 var resultatSansBiblio = pilote.DemanderCoup(L.FenDepart, LimiteTemps.Duree(1000));
 Verifie("Sans bibliothèque : la demande part au moteur",
     resultatSansBiblio == ResultatDemandeCoup.EnvoyeAuMoteur && faux.Recherches == 1 && faux.DerniereFen == L.FenDepart && pilote.Demande == TypeDemande.CoupDePartie
-    && faux.DerniereLimite.CommandeGo == "go movetime 1000",
-    $"{resultatSansBiblio}, {faux.Recherches} recherche(s), {faux.DerniereLimite?.CommandeGo}");
+    && faux.DerniereLimite.CommandeGo == "go movetime 1000" && !faux.DerniereForceMaximale,
+    $"{resultatSansBiblio}, {faux.Recherches} recherche(s), {faux.DerniereLimite?.CommandeGo}, force maximale {faux.DerniereForceMaximale}");
 faux.Repond();      // le bestmove arrive : le moteur ne réfléchit plus
 Verifie("Réponse reçue : c'était un coup de partie, plus rien en cours",
     pilote.ReponseRecue() == TypeDemande.CoupDePartie && pilote.Demande == TypeDemande.Aucune, pilote.Demande.ToString());
@@ -830,6 +830,7 @@ pilote.DemanderAnalyse(positionAnalysee, 2000);
 Verifie("Analyse : la demande précédente est abandonnée, la position analysée est une copie",
     faux.Abandons == 1 && pilote.AnalyseEnCours && pilote.PositionAnalysee != positionAnalysee && faux.DerniereFen == L.FenDepart && faux.DerniereLimite.CommandeGo == "go movetime 2000",
     $"{faux.Abandons} abandon(s), FEN envoyée {faux.DerniereFen}");
+Verifie("Analyse : toujours à pleine force (sans la limite d'Elo ou de niveau réglée pour jouer)", faux.DerniereForceMaximale, "force limitée");
 Verifie("Commande go : temps fixe (au moins 1 s), sans limite",
     LimiteTemps.Duree(5000).CommandeGo == "go movetime 5000" && LimiteTemps.Duree(0).CommandeGo == "go movetime 1000" && LimiteTemps.SansLimite.CommandeGo == "go infinite",
     $"{LimiteTemps.Duree(0).CommandeGo}");
@@ -1185,7 +1186,9 @@ class FauxMoteur : IMoteur
     public string DerniereFen;
     public LimiteTemps DerniereLimite;
     public bool EnReflexion { get; private set; }
-    public void Chercher(string fen, LimiteTemps limite) { Recherches++; DerniereFen = fen; DerniereLimite = limite; EnReflexion = true; }
+    public bool DerniereForceMaximale;
+    public void Chercher(string fen, LimiteTemps limite, bool forceMaximale)
+    { Recherches++; DerniereFen = fen; DerniereLimite = limite; DerniereForceMaximale = forceMaximale; EnReflexion = true; }
     public void Abandonner() { Abandons++; EnReflexion = false; }
     public void Repond() => EnReflexion = false;     // simule l'arrivée du bestmove
 }
