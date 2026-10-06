@@ -2017,21 +2017,19 @@ namespace BrunoGUI_GenII
         }
         // Flèches d'un coup analysé : le meilleur coup du moteur en vert, comme le coup joué s'il était ce meilleur coup
         private static readonly Color CouleurFlecheMeilleurCoup = Color.FromArgb(21, 120, 27);
-        private static readonly Color CouleurFlecheSansAnnotation = Color.FromArgb(70, 110, 170);
         private void MontreFlechesDuCoup(int index)
-        {   // Coup analysé (analyse de partie) : flèche du coup joué, de la couleur de son annotation (verte si c'est le meilleur coup du
-            // moteur, bleue s'il n'a pas d'annotation), et flèche verte du meilleur coup du moteur s'il en est un autre.
+        {   // Coup analysé et annoté (choix de Bruno : rien sur un coup sans annotation) : flèche du coup joué, de la couleur de son
+            // annotation (verte si c'est le meilleur coup du moteur), et flèche verte du meilleur coup du moteur s'il en est un autre.
             // Les deux partent de la position d'avant le coup (l'échiquier montre celle d'après) ; rien pendant l'analyse elle-même
             _vue.EffaceFleches();
             if (_analyseDePartie != null || index < 0 || index >= LogiqueMouvements.ListeCoups.Count)
                 return;
             Coup coup = LogiqueMouvements.ListeCoups[index];
             string joue = coup.Uci.Trim();
-            if (coup.EstPositionDeDepart || coup.EvaluationApres == null || joue.Length < 4)
+            if (coup.EstPositionDeDepart || coup.EvaluationApres == null || coup.Annotation == "" || joue.Length < 4)
                 return;
             List<(int, int, Color)> fleches = [];
-            Color couleurJoue = coup.MeilleurJoue ? CouleurFlecheMeilleurCoup
-                : coup.Annotation != "" ? FeuilleCoups.CouleurAnnotation(coup.Annotation) : CouleurFlecheSansAnnotation;
+            Color couleurJoue = coup.MeilleurJoue ? CouleurFlecheMeilleurCoup : FeuilleCoups.CouleurAnnotation(coup.Annotation);
             fleches.Add((RenvoieCaseIndex120(joue[..2]), RenvoieCaseIndex120(joue[2..4]), couleurJoue));
             if (!coup.MeilleurJoue && coup.MeilleurCoupUci is { Length: >= 4 } meilleur)
                 fleches.Add((RenvoieCaseIndex120(meilleur[..2]), RenvoieCaseIndex120(meilleur[2..4]), CouleurFlecheMeilleurCoup));
