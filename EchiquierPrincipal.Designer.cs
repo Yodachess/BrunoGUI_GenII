@@ -576,10 +576,10 @@ namespace BrunoGUI_GenII
             // 
             // BilanAnalyse
             // 
-            BilanAnalyse.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            BilanAnalyse.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             BilanAnalyse.Location = new System.Drawing.Point(538, 662);
             BilanAnalyse.Name = "BilanAnalyse";
-            BilanAnalyse.Size = new System.Drawing.Size(212, 44);
+            BilanAnalyse.Size = new System.Drawing.Size(212, 92);
             BilanAnalyse.TabIndex = 32;
             // 
             // BoutonSetupPosition

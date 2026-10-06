@@ -66,6 +66,7 @@ namespace BrunoGUI_GenII
         public int Numero { get; init; }                // numéro de variante (1 = la meilleure ; 1 aussi pour un moteur sans MultiPV)
         public Evaluation? Evaluation { get; init; }    // null si le moteur n'a pas encore donné de score pour cette variante
         public string VariantePgn { get; init; }        // coups en notation (limités à CoupsAffiches), null si la ligne n'a pas de variante
+        public string VarianteUci { get; init; }        // les mêmes coups au format UCI ("g1f3 b8c6"), null si la ligne n'a pas de variante
         public string Debut => VariantePgn == null ? "" : string.Join(" ", VariantePgn.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(3));
         public string Symbole => Evaluation?.Symbole ?? "?";
         public string TexteScore => Evaluation?.Texte ?? "?";
@@ -86,17 +87,18 @@ namespace BrunoGUI_GenII
             if (evaluation == null && ligne.Variante == null)
                 return null;
             _lignes.TryGetValue(numero, out LigneAnalyse precedente);
-            string variantePgn = precedente?.VariantePgn;
+            string variantePgn = precedente?.VariantePgn, varianteUci = precedente?.VarianteUci;
             if (ligne.Variante != null)
             {   // Coups entiers seulement (un coup coupé perdrait sa promotion), convertis en notation sur une copie de la position
-                string coups = string.Join(" ", ligne.Variante.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(CoupsAffiches));
-                variantePgn = Outils.VarianteUciVersPgn(coups, DemiCoupAvant(position), false, position).Trim();
+                varianteUci = string.Join(" ", ligne.Variante.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(CoupsAffiches));
+                variantePgn = Outils.VarianteUciVersPgn(varianteUci, DemiCoupAvant(position), false, position).Trim();
             }
             LigneAnalyse nouvelle = new()
             {
                 Numero = numero,
                 Evaluation = evaluation ?? precedente?.Evaluation,     // une ligne sans score garde le score de SA variante
-                VariantePgn = variantePgn
+                VariantePgn = variantePgn,
+                VarianteUci = varianteUci
             };
             _lignes[numero] = nouvelle;
             return nouvelle;
