@@ -638,7 +638,7 @@ namespace BrunoGUI_GenII
             StatusProgramme.AutoSize = false;
             StatusProgramme.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left | System.Windows.Forms.ToolStripStatusLabelBorderSides.Top | System.Windows.Forms.ToolStripStatusLabelBorderSides.Right | System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom;
             StatusProgramme.Name = "StatusProgramme";
-            StatusProgramme.Size = new System.Drawing.Size(200, 21);
+            StatusProgramme.Size = new System.Drawing.Size(220, 21);
             StatusProgramme.Text = "Status du Programme";
             // 
             // EvaluationUci
@@ -647,7 +647,7 @@ namespace BrunoGUI_GenII
             EvaluationUci.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left | System.Windows.Forms.ToolStripStatusLabelBorderSides.Top | System.Windows.Forms.ToolStripStatusLabelBorderSides.Right | System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom;
             EvaluationUci.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             EvaluationUci.Name = "EvaluationUci";
-            EvaluationUci.Size = new System.Drawing.Size(120, 21);
+            EvaluationUci.Size = new System.Drawing.Size(130, 21);
             EvaluationUci.Text = "Evaluation";
             // 
             // ScoreMoteur
@@ -656,7 +656,7 @@ namespace BrunoGUI_GenII
             ScoreMoteur.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left | System.Windows.Forms.ToolStripStatusLabelBorderSides.Top | System.Windows.Forms.ToolStripStatusLabelBorderSides.Right | System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom;
             ScoreMoteur.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             ScoreMoteur.Name = "ScoreMoteur";
-            ScoreMoteur.Size = new System.Drawing.Size(90, 21);
+            ScoreMoteur.Size = new System.Drawing.Size(100, 21);
             ScoreMoteur.Text = "Score Moteur";
             // 
             // VarianteMoteurCourante
@@ -664,7 +664,7 @@ namespace BrunoGUI_GenII
             VarianteMoteurCourante.AutoSize = false;
             VarianteMoteurCourante.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left | System.Windows.Forms.ToolStripStatusLabelBorderSides.Top | System.Windows.Forms.ToolStripStatusLabelBorderSides.Right | System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom;
             VarianteMoteurCourante.Name = "VarianteMoteurCourante";
-            VarianteMoteurCourante.Size = new System.Drawing.Size(260, 21);
+            VarianteMoteurCourante.Size = new System.Drawing.Size(299, 21);
             VarianteMoteurCourante.Text = "Variante en cours d'examen";
             // 
             // VarianteMoteurUci1

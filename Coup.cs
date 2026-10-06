@@ -39,6 +39,7 @@ namespace BrunoGUI_GenII
         public Evaluation? EvaluationMeilleur { get; set; }     // évaluation du meilleur coup du moteur (position avant le coup)
         public double? PerteAnalyse { get; set; }               // chances de gain perdues par le coup (0 : aussi bon que le meilleur)
         public string MeilleurCoupLong { get; set; }            // le meilleur coup avec sa case de départ ("Ta8-c8")
+        public string MeilleurCoupUci { get; set; }             // le meilleur coup au format UCI ("a8c8") : flèche sur l'échiquier
         public string VarianteMeilleure { get; set; }           // la suite prévue par le moteur après le meilleur coup ("19 ... Tac8 20. Cf3")
         public string CoupJoueLong { get; set; }                // le coup lui-même avec sa case de départ, en français ("Dd8-d7")
 
