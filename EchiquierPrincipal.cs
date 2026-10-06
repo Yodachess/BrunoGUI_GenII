@@ -1963,7 +1963,10 @@ namespace BrunoGUI_GenII
             int dernier = LogiqueMouvements.ListeCoups.Count - 1;
             if (index >= dernier)
             {
-                RetourPositionCourante();
+                if (ParcoursEnCours)
+                    RetourPositionCourante();
+                else
+                    AfficheDernierCoupSiPartieFinie();      // déjà à la position courante : clic sur le dernier coup de la feuille
                 return;
             }
             index = Math.Max(index, IndexPremierePosition);
@@ -1978,13 +1981,21 @@ namespace BrunoGUI_GenII
             _vue.DessinePosition(_positionAffichee);
             AfficheCoupsBibliotheque(fen);
             InformationPourJoueur.Text = "Trait aux " + NomCamp(_positionAffichee.QuiJoue);
-            AfficheLigneCentree(VarianteMoteurUci1, index < 0 || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart
-                ? "[ Position initiale ]" : $"[ {TexteCoupJoue(index, _positionAffichee)} ]"
-                  + (LogiqueMouvements.ListeCoups[index].TempsReflexion is TimeSpan reflexion ? $"   (réflexion : {TexteDuree(reflexion)})" : ""));
             MiseaZeroParcours();
-            // Dernière case de la barre d'état : le coup regardé, comme sur la 1re ligne de variante
-            VarianteMoteurCourante.Text = index < 0 || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart
-                ? "Position initiale" : TexteCoupJoue(index, _positionAffichee);
+            AfficheTextesDuCoup(index, _positionAffichee);
+            AffichePendules();      // partie sans pendule en cours (ex : PGN chargé) : temps notés à cette position
+            if (!PartieEnLectureSeule)
+                InformationsPartie.Text = "Parcours : Fin ou clic pour revenir";
+        }
+        private void AfficheTextesDuCoup(int index, Position positionApres)
+        {   // Le coup regardé (1re ligne de variante et dernière case de la barre d'état) et, s'il a été analysé, son analyse
+            // (lignes 2 et 3) et ses flèches. Pendant le parcours, et pour le dernier coup d'une partie finie (AfficheDernierCoupSiPartieFinie)
+            bool positionInitiale = index < 0 || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart;
+            AfficheLigneCentree(VarianteMoteurUci1, positionInitiale
+                ? "[ Position initiale ]" : $"[ {TexteCoupJoue(index, positionApres)} ]"
+                  + (LogiqueMouvements.ListeCoups[index].TempsReflexion is TimeSpan reflexion ? $"   (réflexion : {TexteDuree(reflexion)})" : ""));
+            VarianteMoteurUci2.Text = VarianteMoteurUci3.Text = "...";
+            VarianteMoteurCourante.Text = positionInitiale ? "Position initiale" : TexteCoupJoue(index, positionApres);
             // Coup analysé (analyse de partie) : son évaluation et le meilleur coup du moteur, sur la 2e ligne de variante
             if (index >= 0 && LogiqueMouvements.ListeCoups[index] is { EvaluationApres: Evaluation evaluation } coupAnalyse)
             {
@@ -1993,9 +2004,16 @@ namespace BrunoGUI_GenII
                     AfficheLigneCentree(VarianteMoteurUci3, (coupAnalyse.MeilleurJoue ? "Suite prévue : " : "Meilleure suite : ") + coupAnalyse.VarianteMeilleure);
             }
             MontreFlechesDuCoup(index);
-            AffichePendules();      // partie sans pendule en cours (ex : PGN chargé) : temps notés à cette position
-            if (!PartieEnLectureSeule)
-                InformationsPartie.Text = "Parcours : Fin ou clic pour revenir";
+        }
+        private void AfficheDernierCoupSiPartieFinie()
+        {   // Retour à la position courante : le dernier coup d'une partie qui ne continue plus (PGN chargé, partie terminée) est montré
+            // comme pendant le parcours (son analyse, ses flèches) ; sinon les flèches sont effacées (elles resteraient après le coup suivant)
+            int dernier = LogiqueMouvements.ListeCoups.Count - 1;
+            if ((PartieEnLectureSeule || _partie.Mode == ModePartie.Terminee) && _analyseDePartie == null     // (pendant l'analyse : ses lignes)
+                && dernier >= 0 && !LogiqueMouvements.ListeCoups[dernier].EstPositionDeDepart)
+                AfficheTextesDuCoup(dernier, LogiqueMouvements.PositionActuelle);
+            else
+                _vue.EffaceFleches();
         }
         // Flèches d'un coup analysé : le meilleur coup du moteur en vert, comme le coup joué s'il était ce meilleur coup
         private static readonly Color CouleurFlecheMeilleurCoup = Color.FromArgb(21, 120, 27);
@@ -2076,11 +2094,7 @@ namespace BrunoGUI_GenII
             MetAJourCommandes();
             LogiqueMouvements.DessinPieces();
             _vue.DernierCoupMasque = false;     // le dernier coup du moteur est de nouveau coloré
-            // Flèches du dernier coup analysé, seulement si la partie ne continue plus (sinon elles resteraient après le coup suivant)
-            if (PartieEnLectureSeule || _partie.Mode == ModePartie.Terminee)
-                MontreFlechesDuCoup(LogiqueMouvements.ListeCoups.Count - 1);
-            else
-                _vue.EffaceFleches();
+            AfficheDernierCoupSiPartieFinie();
             AfficheCoupsBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
             InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + NomCamp(QuiJoue);
             InformationsPartie.Text = PartieEnLectureSeule ? "Fin de la partie" : "";
