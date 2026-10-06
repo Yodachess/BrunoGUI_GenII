@@ -222,8 +222,16 @@ namespace BrunoGUI_GenII
             StandardInputDataToUci("setoption name Skill Level value " + niveau);
         }
         private void AppliqueForce(bool forceMaximale)
-        {   // Avant un "go" : force limitée (Elo, niveau) pour jouer, pleine force pour analyser. Un moteur limité joue exprès un coup
-            // plus faible, et Stockfish annonce alors ce coup comme sa variante principale (souvent très courte, avec un score de 0.00)
+        {   // Avant un "go" : force limitée (Elo, niveau) pour jouer, pleine force pour analyser.
+            // Comportement de Stockfish (vérifié dans stockfish\src\search.cpp) :
+            //  - UCI_Elo est une option à part, gardée par le moteur : "UCI_LimitStrength value false" ne fait que l'ignorer, et
+            //    "value true" la réutilise sans qu'il faille la renvoyer (à chaque recherche : Skill(Skill Level, LimitStrength ? UCI_Elo : 0)).
+            //    Elle n'est perdue qu'au redémarrage du moteur (retour à 1320).
+            //  - Avec une force limitée (Elo, ou Skill Level < 20), Stockfish cherche au moins 4 variantes en coulisse, choisit un coup
+            //    moins bon (Skill::pick_best), puis l'ÉCHANGE avec la vraie meilleure variante avant de l'afficher : la variante 1
+            //    annoncée est ce coup faible, souvent très courte, et son score vaut 0 si sa recherche n'est pas allée au bout
+            //    (-VALUE_INFINITE affiché VALUE_ZERO). Une analyse avec la limite donnait donc des "meilleurs coups" absurdes à 0.00.
+            // Les options ne sont envoyées que si elles changent (une fois au début d'une analyse, une fois quand le moteur rejoue)
             bool limite = _limiteEloVoulue && !forceMaximale;
             if (limite != _limiteEloDansMoteur && OptionsUci.Contains("UCI_LimitStrength"))
             {
