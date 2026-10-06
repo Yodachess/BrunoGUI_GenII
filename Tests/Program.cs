@@ -981,6 +981,28 @@ Verifie("Analyse : meilleur coup en notation longue (case de départ), variante 
     $"{L.ListeCoups[2].MeilleurCoupLong} / {L.ListeCoups[5].MeilleurCoupLong} / {L.ListeCoups[2].CoupJoueLong} / {L.ListeCoups[5].CoupJoueLong} / {L.ListeCoups[6].CoupJoueLong}");
 Verifie("Analyse : meilleur coup gardé au format UCI (flèche sur l'échiquier)",
     L.ListeCoups[2].MeilleurCoupUci == "g1f3" && L.ListeCoups[5].MeilleurCoupUci == "g7g6", $"{L.ListeCoups[2].MeilleurCoupUci} / {L.ListeCoups[5].MeilleurCoupUci}");
+Verifie("Coup critique : la plus grosse perte (3... Cf6??), et aucun 2e passage sans « approfondir »",
+    analyseBerger.CoupCritique()?.IndexCoup == 5 && analyseBerger.NombreAApprofondir == 0 && analyseBerger.Terminee, $"{analyseBerger.CoupCritique()?.IndexCoup}");
+LigneAnalyse ReponseBerger(int p) => new() { Numero = 1, Evaluation = p == 6 ? new Evaluation(null, 1) : new Evaluation(reponses[p].cp, null),
+                                             VariantePgn = reponses[p].variante, VarianteUci = reponses[p].uci };
+AnalyseDePartie analyseApprofondie = new(L.ListeCoups, approfondir: true);
+for (int p = 6; p >= 0; p--)
+    analyseApprofondie.Enregistre(p, ReponseBerger(p));
+List<int> revues = [];
+bool toujoursEnApprofondissement = true;
+while (analyseApprofondie.PositionSuivante is int revue)
+{   // 2e passage : la recherche plus longue voit que 2. Dh5 ne perd presque rien (+0.25) ; sans score, le 1er résultat est gardé
+    toujoursEnApprofondissement &= analyseApprofondie.EnApprofondissement;
+    revues.Add(revue);
+    analyseApprofondie.Enregistre(revue, revue == 3 ? new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(25, null), VariantePgn = "2 ... Cc6 3. Fc4", VarianteUci = "b8c6 f1c4" } : null);
+}
+Verifie("Analyse approfondie : positions avant et après chaque coup douteux revues, de la fin vers le début",
+    string.Join(",", revues) == "6,5,3,2" && toujoursEnApprofondissement && analyseApprofondie.NombreAApprofondir == 4
+    && analyseApprofondie.NombreApprofondies == 4 && analyseApprofondie.Terminee && !analyseApprofondie.EnApprofondissement,
+    string.Join(",", revues));
+Verifie("Analyse approfondie : le nouveau résultat remplace le premier (2. Dh5 n'est plus douteux), sans score le premier est gardé (Cf6 ??)",
+    analyseApprofondie.Jugement(2).Annotation == "" && analyseApprofondie.Jugement(5).Annotation == "??" && analyseApprofondie.CoupCritique()?.IndexCoup == 5,
+    $"Dh5 {analyseApprofondie.Jugement(2).Annotation} ({analyseApprofondie.Jugement(2).Perte:F3}), Cf6 {analyseApprofondie.Jugement(5).Annotation}");
 Verifie("Notation longue : prise et mat, roques, promotion, prise en passant",
     AnalyseDePartie.NotationLongue(L.ListeCoups[5].Fen, "h5f7", "Dxf7#") == "Dh5xf7#"
     && AnalyseDePartie.NotationLongue("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1", "e1g1") == "O-O"

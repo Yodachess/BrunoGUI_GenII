@@ -14,7 +14,9 @@
 //              ├─ "Enregistre"         résultat du moteur pour une position (sa meilleure variante)
 //              ├─ "Jugement"           le coup n° i de ListeCoups : perte, précision, annotation proposée, meilleur coup, variante
 //              ├─ "NotationLongue"     un coup UCI avec sa case de départ ("Dd8-d7")
-//              └─ "Bilan"              imprécisions, erreurs, gaffes et précision d'un camp
+//              ├─ "Bilan"              imprécisions, erreurs, gaffes et précision d'un camp
+//              └─ "CoupCritique"       le coup où la partie a basculé (la plus grosse perte, au moins une erreur)
+// Avec "approfondir", un 2e passage revoit plus longtemps les positions avant et après chaque coup douteux (EnApprofondissement).
 // L'interface demande chaque position au moteur (PiloteMoteur.DemanderAnalyse) et enregistre sa meilleure variante.
 
 using System;
@@ -65,6 +67,8 @@ namespace BrunoGUI_GenII
         public string MeilleurCoupLong { get; set; }        // le même avec sa case de départ ("Cg1-f3")
         public string VarianteMeilleure { get; set; }       // la meilleure variante en notation française ("12. Cf3 Fe7 13. ...")
         public bool Ignoree { get; set; }                   // le moteur n'a donné aucun score : position sautée (sinon l'analyse tournerait en rond)
+        public bool AApprofondir { get; set; }              // 2e passage : position avant ou après un coup douteux, à revoir plus longtemps
+        public bool Approfondie { get; set; }               // ... et revue (avec ou sans score : elle n'est pas redemandée)
         public bool Analysee => Evaluation != null || ChancesFinDePartie != null || Ignoree;
         public double? Chances => ChancesFinDePartie ?? (Evaluation is Evaluation e ? JugementCoups.ChancesDeGain(e) : null);
     }
@@ -83,6 +87,8 @@ namespace BrunoGUI_GenII
         private readonly List<PositionAnalysee> _positions = [];    // [0] : avant le 1er coup ; [k] : après le k-ième coup joué
         private readonly List<int> _indexCoups = [];                // place dans ListeCoups du k-ième coup joué
         private readonly List<Coup> _coups;
+        private readonly bool _approfondir;                         // 2e passage plus long sur les coups douteux
+        private bool _premierPassageFini;
 
         public IReadOnlyList<PositionAnalysee> Positions => _positions;
 
@@ -91,9 +97,12 @@ namespace BrunoGUI_GenII
             // "position de départ") pour une partie commencée depuis un FEN
             indexPosition > 0 ? _indexCoups[indexPosition - 1] : _coups.Count > 0 && _coups[0].EstPositionDeDepart ? 0 : -1;
 
-        public AnalyseDePartie(IReadOnlyList<Coup> coups)
-        {   // Les positions de la partie : celle de départ (position initiale ou FEN de départ), puis celle après chaque coup
+        public AnalyseDePartie(IReadOnlyList<Coup> coups, bool approfondir = false)
+        {   // Les positions de la partie : celle de départ (position initiale ou FEN de départ), puis celle après chaque coup.
+            // approfondir : après le 1er passage, les positions avant et après chaque coup douteux (?!, ?, ??) sont revues plus
+            // longtemps (voir EnApprofondissement) : un jugement sévère mérite d'être confirmé, et le temps n'est pas perdu sur les autres
             _coups = [.. coups];
+            _approfondir = approfondir;
             string fenDepart = _coups.Count > 0 && _coups[0].EstPositionDeDepart ? _coups[0].Fen : FenDepart;
             _positions.Add(NouvellePosition(fenDepart));
             for (int i = 0; i < _coups.Count; i++)
@@ -121,21 +130,49 @@ namespace BrunoGUI_GenII
             get
             {
                 int index = _positions.FindLastIndex(p => !p.Analysee);
+                if (index < 0)
+                {   // 2e passage (positions marquées à la fin du 1er), de la fin vers le début lui aussi
+                    MarqueCoupsDouteux();
+                    index = _positions.FindLastIndex(p => p.AApprofondir && !p.Approfondie);
+                }
                 return index < 0 ? null : index;
             }
         }
         public int NombreAAnalyser => _positions.Count(p => p.ChancesFinDePartie == null);
         public int NombreAnalysees => _positions.Count(p => p.ChancesFinDePartie == null && p.Evaluation != null);
+        public bool EnApprofondissement => _premierPassageFini && !Terminee;     // la position suivante est à revoir plus longtemps
+        public int NombreAApprofondir => _positions.Count(p => p.AApprofondir);
+        public int NombreApprofondies => _positions.Count(p => p.AApprofondir && p.Approfondie);
         public bool Terminee => PositionSuivante == null;
 
+        private void MarqueCoupsDouteux()
+        {   // Fin du 1er passage (une seule fois) : les positions avant et après chaque coup douteux sont à revoir. Celle d'avant
+            // confirme le meilleur coup et son évaluation, celle d'après l'évaluation du coup joué
+            if (_premierPassageFini)
+                return;
+            _premierPassageFini = true;
+            if (!_approfondir)
+                return;
+            foreach (JugementCoup jugement in Jugements().Where(j => j.Perte >= JugementCoups.SeuilImprecision).ToList())
+            {
+                int k = _indexCoups.IndexOf(jugement.IndexCoup);
+                foreach (PositionAnalysee position in new[] { _positions[k], _positions[k + 1] })
+                    position.AApprofondir = position.ChancesFinDePartie == null;   // (mat ou pat : rien à revoir)
+            }
+        }
+
         public void Enregistre(int indexPosition, LigneAnalyse meilleure)
-        {   // Résultat du moteur pour la position (sa meilleure variante) ; sans score, la position est sautée (ses coups ne seront pas jugés)
+        {   // Résultat du moteur pour la position (sa meilleure variante) ; sans score, la position est sautée (ses coups ne seront pas jugés).
+            // 2e passage : le nouveau résultat remplace le premier (sans score, le premier est gardé)
+            PositionAnalysee position = _positions[indexPosition];
+            if (_premierPassageFini && position.AApprofondir)
+                position.Approfondie = true;
             if (meilleure?.Evaluation is not Evaluation evaluation)
             {
-                _positions[indexPosition].Ignoree = true;
+                if (position.Evaluation == null)
+                    position.Ignoree = true;
                 return;
             }
-            PositionAnalysee position = _positions[indexPosition];
             position.Evaluation = evaluation;
             position.MeilleurCoup = PremierCoup(meilleure.VariantePgn);
             position.VarianteMeilleure = meilleure.VariantePgn;
@@ -236,5 +273,10 @@ namespace BrunoGUI_GenII
             return new BilanCamp(jugements.Count(j => j.Annotation == "?!"), jugements.Count(j => j.Annotation == "?"),
                                  jugements.Count(j => j.Annotation == "??"), precision);
         }
+
+        public JugementCoup CoupCritique() =>
+            // Le moment où la partie a basculé : le coup qui a fait perdre le plus de chances de gain, s'il est au moins une erreur (?)
+            // (null : aucun coup n'a vraiment changé le cours de la partie). À égalité, le premier
+            Jugements().Where(j => j.Perte >= JugementCoups.SeuilErreur).OrderByDescending(j => j.Perte).ThenBy(j => j.IndexCoup).FirstOrDefault();
     }
 }
