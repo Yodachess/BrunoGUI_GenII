@@ -231,7 +231,7 @@ namespace BrunoGUI_GenII
             foreach (var (source, destination, couleur) in _fleches)
             {
                 using System.Drawing.Drawing2D.GraphicsPath fleche = Fleche(Centre(source), Centre(destination));
-                using SolidBrush pinceau = new(Color.FromArgb(170, couleur));     // un peu transparente : la pièce reste visible
+                using SolidBrush pinceau = new(Color.FromArgb(220, couleur));     // presque opaque (fine, elle cache peu la pièce)
                 e.Graphics.FillPath(pinceau, fleche);
             }
         }
@@ -239,7 +239,8 @@ namespace BrunoGUI_GenII
         private static System.Drawing.Drawing2D.GraphicsPath Fleche(PointF depart, PointF arrivee)
         {   // Flèche pleine (corps + pointe) du centre de la case de départ vers celui de la case d'arrivée, construite
             // horizontalement puis tournée dans la bonne direction
-            const float demiLargeur = 6, demiLargeurPointe = 15, longueurPointe = 22, retraitArrivee = 8;
+            // Fine, à la façon de ChessBase (cases de 60 px) : corps de 4 px, pointe étroite qui s'arrête avant le centre
+            const float demiLargeur = 2, demiLargeurPointe = 8, longueurPointe = 16, retraitArrivee = 12;
             float dx = arrivee.X - depart.X, dy = arrivee.Y - depart.Y;
             float longueur = MathF.Sqrt(dx * dx + dy * dy) - retraitArrivee;
             float corps = Math.Max(0, longueur - longueurPointe);
