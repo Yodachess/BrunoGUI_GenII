@@ -979,6 +979,8 @@ Verifie("Analyse : meilleur coup en notation longue (case de départ), variante 
     L.ListeCoups[2].MeilleurCoupLong == "Cg1-f3" && L.ListeCoups[5].MeilleurCoupLong == "g7-g6" && L.ListeCoups[2].VarianteMeilleure == "2. Cf3 Cc6"
     && L.ListeCoups[2].CoupJoueLong == "Dd1-h5" && L.ListeCoups[5].CoupJoueLong == "Cg8-f6" && L.ListeCoups[6].CoupJoueLong == "Dh5xf7#",
     $"{L.ListeCoups[2].MeilleurCoupLong} / {L.ListeCoups[5].MeilleurCoupLong} / {L.ListeCoups[2].CoupJoueLong} / {L.ListeCoups[5].CoupJoueLong} / {L.ListeCoups[6].CoupJoueLong}");
+Verifie("Analyse : meilleur coup gardé au format UCI (flèche sur l'échiquier)",
+    L.ListeCoups[2].MeilleurCoupUci == "g1f3" && L.ListeCoups[5].MeilleurCoupUci == "g7g6", $"{L.ListeCoups[2].MeilleurCoupUci} / {L.ListeCoups[5].MeilleurCoupUci}");
 Verifie("Notation longue : prise et mat, roques, promotion, prise en passant",
     AnalyseDePartie.NotationLongue(L.ListeCoups[5].Fen, "h5f7", "Dxf7#") == "Dh5xf7#"
     && AnalyseDePartie.NotationLongue("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1", "e1g1") == "O-O"

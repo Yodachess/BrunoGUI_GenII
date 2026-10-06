@@ -218,7 +218,9 @@ namespace BrunoGUI_GenII
                 coup.MeilleurCoupLong = jugement.MeilleurCoupLong;
                 coup.VarianteMeilleure = jugement.VarianteMeilleure;
                 // (la notation NAL du coup est en lettres anglaises : la notation longue française est calculée ici)
-                coup.CoupJoueLong = NotationLongue(_positions[_indexCoups.IndexOf(jugement.IndexCoup)].Fen, coup.Uci.Trim(), coup.PgnFrSansNumero);
+                PositionAnalysee positionAvant = _positions[_indexCoups.IndexOf(jugement.IndexCoup)];
+                coup.MeilleurCoupUci = positionAvant.MeilleurCoupUci;
+                coup.CoupJoueLong = NotationLongue(positionAvant.Fen, coup.Uci.Trim(), coup.PgnFrSansNumero);
                 if (coup.Annotation == "" || coup.AnnotationProposee)
                 {
                     coup.Annotation = jugement.Annotation;

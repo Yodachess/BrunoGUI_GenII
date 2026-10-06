@@ -1992,9 +1992,33 @@ namespace BrunoGUI_GenII
                 if (!string.IsNullOrEmpty(coupAnalyse.VarianteMeilleure))   // ligne 3 : la suite prévue par le moteur
                     AfficheLigneCentree(VarianteMoteurUci3, (coupAnalyse.MeilleurJoue ? "Suite prévue : " : "Meilleure suite : ") + coupAnalyse.VarianteMeilleure);
             }
+            MontreFlechesDuCoup(index);
             AffichePendules();      // partie sans pendule en cours (ex : PGN chargé) : temps notés à cette position
             if (!PartieEnLectureSeule)
                 InformationsPartie.Text = "Parcours : Fin ou clic pour revenir";
+        }
+        // Flèches d'un coup analysé : le meilleur coup du moteur en vert, comme le coup joué s'il était ce meilleur coup
+        private static readonly Color CouleurFlecheMeilleurCoup = Color.FromArgb(21, 120, 27);
+        private static readonly Color CouleurFlecheSansAnnotation = Color.FromArgb(70, 110, 170);
+        private void MontreFlechesDuCoup(int index)
+        {   // Coup analysé (analyse de partie) : flèche du coup joué, de la couleur de son annotation (verte si c'est le meilleur coup du
+            // moteur, bleue s'il n'a pas d'annotation), et flèche verte du meilleur coup du moteur s'il en est un autre.
+            // Les deux partent de la position d'avant le coup (l'échiquier montre celle d'après) ; rien pendant l'analyse elle-même
+            _vue.EffaceFleches();
+            if (_analyseDePartie != null || index < 0 || index >= LogiqueMouvements.ListeCoups.Count)
+                return;
+            Coup coup = LogiqueMouvements.ListeCoups[index];
+            string joue = coup.Uci.Trim();
+            if (coup.EstPositionDeDepart || coup.EvaluationApres == null || joue.Length < 4)
+                return;
+            List<(int, int, Color)> fleches = [];
+            Color couleurJoue = coup.MeilleurJoue ? CouleurFlecheMeilleurCoup
+                : coup.Annotation != "" ? FeuilleCoups.CouleurAnnotation(coup.Annotation) : CouleurFlecheSansAnnotation;
+            fleches.Add((RenvoieCaseIndex120(joue[..2]), RenvoieCaseIndex120(joue[2..4]), couleurJoue));
+            if (!coup.MeilleurJoue && coup.MeilleurCoupUci is { Length: >= 4 } meilleur)
+                fleches.Add((RenvoieCaseIndex120(meilleur[..2]), RenvoieCaseIndex120(meilleur[2..4]), CouleurFlecheMeilleurCoup));
+            if (fleches.TrueForAll(f => f.Item1 > 0 && f.Item2 > 0))
+                _vue.MontreFleches([.. fleches]);
         }
         private static string TexteAnalyseDuCoup(Coup coup, Evaluation evaluation) =>
             // Ex : "Analyse : -9.05 (-+)   joué Dh2 [?? Gaffe]   — meilleur : Rd3 (0.00)" : le coup joué et son jugement, puis le
@@ -2052,6 +2076,11 @@ namespace BrunoGUI_GenII
             MetAJourCommandes();
             LogiqueMouvements.DessinPieces();
             _vue.DernierCoupMasque = false;     // le dernier coup du moteur est de nouveau coloré
+            // Flèches du dernier coup analysé, seulement si la partie ne continue plus (sinon elles resteraient après le coup suivant)
+            if (PartieEnLectureSeule || _partie.Mode == ModePartie.Terminee)
+                MontreFlechesDuCoup(LogiqueMouvements.ListeCoups.Count - 1);
+            else
+                _vue.EffaceFleches();
             AfficheCoupsBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
             InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + NomCamp(QuiJoue);
             InformationsPartie.Text = PartieEnLectureSeule ? "Fin de la partie" : "";
@@ -2061,6 +2090,7 @@ namespace BrunoGUI_GenII
         {   // La partie va être remplacée (nouvelle partie, chargement, "Reprendre ici") : l'échiquier suivra la partie
             _positionAffichee = null;
             _vue.DernierCoupMasque = false;
+            _vue.EffaceFleches();
             BilanAnalyse.Text = "";     // le bilan de l'analyse portait sur l'ancienne partie
             MetAJourCommandes();
         }

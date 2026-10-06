@@ -11,6 +11,7 @@
 //              ├─ "IndexDeLaCase"          index 120 de la case cliquée (en tenant compte de l'inversion)
 //              ├─ "DessinePiece", "DessineSymbole", "DessinePosition"
 //              ├─ "MontreDernierCoup", "EffaceDernierCoup", "DernierCoupMasque"   cases colorées du dernier coup du moteur
+//              ├─ "MontreFleches", "EffaceFleches"   flèches de couleur (analyse : coup joué, meilleur coup)
 //              ├─ "Tourner"                vue côté Blancs / côté Noirs
 //              ├─ "ChangeCouleurs"         couleurs des cases claires et sombres
 //              ├─ "ActiverCases"           cases cliquables ou non
@@ -92,6 +93,7 @@ namespace BrunoGUI_GenII
                     };
                     caseJeu.BringToFront();
                     caseJeu.MouseDown += clicSurCase;
+                    caseJeu.Paint += DessineFlechesSurLaCase;
                     _plateau.Controls.Add(caseJeu);
                     _cases.Add(caseJeu);
                 }
@@ -192,6 +194,66 @@ namespace BrunoGUI_GenII
         {
             _cases[_source].BackColor = CouleurNormale(_source);
             _cases[_destination].BackColor = CouleurNormale(_destination);
+        }
+
+        // ═══ Flèches (analyse de partie : coup joué, meilleur coup) ═══
+        // Les cases sont des contrôles posés sur le plateau : aucune ne peut dessiner par-dessus ses voisines. Chaque case dessine
+        // donc, après sa pièce, la partie des flèches qui la traverse (les flèches sont en coordonnées du plateau, la case les
+        // décale de sa propre position, et le dessin hors de la case est coupé). L'inversion de l'échiquier est prise en compte
+        // sans rien faire : la position à l'écran d'une case est lue au moment du dessin.
+        private readonly List<(int Source, int Destination, Color Couleur)> _fleches = [];
+        public void MontreFleches(params (int Source, int Destination, Color Couleur)[] fleches)
+        {
+            _fleches.Clear();
+            _fleches.AddRange(fleches);
+            RedessineCases();
+        }
+        public void EffaceFleches()
+        {
+            if (_fleches.Count == 0)
+                return;
+            _fleches.Clear();
+            RedessineCases();
+        }
+        private void RedessineCases()
+        {
+            foreach (PictureBox caseJeu in _cases)
+                if (caseJeu.Visible)
+                    caseJeu.Invalidate();
+        }
+        private void DessineFlechesSurLaCase(object sender, PaintEventArgs e)
+        {
+            if (_fleches.Count == 0)
+                return;
+            PictureBox caseJeu = (PictureBox)sender;
+            e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            e.Graphics.TranslateTransform(-caseJeu.Left, -caseJeu.Top);
+            foreach (var (source, destination, couleur) in _fleches)
+            {
+                using System.Drawing.Drawing2D.GraphicsPath fleche = Fleche(Centre(source), Centre(destination));
+                using SolidBrush pinceau = new(Color.FromArgb(170, couleur));     // un peu transparente : la pièce reste visible
+                e.Graphics.FillPath(pinceau, fleche);
+            }
+        }
+        private PointF Centre(int index) => new(_cases[index].Left + _cases[index].Width / 2f, _cases[index].Top + _cases[index].Height / 2f);
+        private static System.Drawing.Drawing2D.GraphicsPath Fleche(PointF depart, PointF arrivee)
+        {   // Flèche pleine (corps + pointe) du centre de la case de départ vers celui de la case d'arrivée, construite
+            // horizontalement puis tournée dans la bonne direction
+            const float demiLargeur = 6, demiLargeurPointe = 15, longueurPointe = 22, retraitArrivee = 8;
+            float dx = arrivee.X - depart.X, dy = arrivee.Y - depart.Y;
+            float longueur = MathF.Sqrt(dx * dx + dy * dy) - retraitArrivee;
+            float corps = Math.Max(0, longueur - longueurPointe);
+            System.Drawing.Drawing2D.GraphicsPath chemin = new();
+            chemin.AddPolygon(new PointF[]
+            {
+                new(0, -demiLargeur), new(corps, -demiLargeur), new(corps, -demiLargeurPointe), new(longueur, 0),
+                new(corps, demiLargeurPointe), new(corps, demiLargeur), new(0, demiLargeur)
+            });
+            using System.Drawing.Drawing2D.Matrix rotation = new();
+            rotation.Translate(depart.X, depart.Y);
+            rotation.Rotate(MathF.Atan2(dy, dx) * 180 / MathF.PI);
+            chemin.Transform(rotation);
+            return chemin;
         }
 
         // ═══ Vue, couleurs, activation ═══
