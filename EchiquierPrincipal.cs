@@ -111,9 +111,11 @@ namespace BrunoGUI_GenII
                 "Précision : 100 % = tous les coups aussi bons que ceux du moteur (formule de Lichess).\n" +
                 "Imprécision (?!), erreur (?), gaffe (??) : le coup fait perdre au moins 10, 20 ou 30 %\n" +
                 "des chances de gain (une perte dans une position déjà gagnée compte peu).\n" +
-                "Les coups douteux sont revus 10 s pour confirmer le jugement.\n" +
+                "Analyse profonde : les coups douteux sont revus 10 s pour confirmer le jugement.\n" +
                 "Coup critique : celui où la partie a basculé (la plus grosse perte) ; un clic l'affiche.");
             BilanAnalyse.Click += BilanAnalyse_Click;
+            BoutonAnalysePartie.MouseEnter += MetAJourInfobullesAnalyse;
+            BoutonAnalyseProfonde.MouseEnter += MetAJourInfobullesAnalyse;
             foreach (RichTextBox ligne in new[] { VarianteMoteurUci1, VarianteMoteurUci2, VarianteMoteurUci3 })
             {   // lignes de variante 1 à 3 : centrées et en gras pour le coup regardé, son analyse et la suite prévue (voir AfficheLigneCentree)
                 _policesLignes[ligne] = (ligne.Font, new Font(ligne.Font, FontStyle.Bold));
@@ -1832,12 +1834,29 @@ namespace BrunoGUI_GenII
         private int? _coupCritique;                         // index dans ListeCoups du coup critique de la dernière analyse (clic sur le bilan)
 
         private void BoutonAnalysePartie_Click(object sender, EventArgs e)
-        {   // Lance l'analyse de la partie, ou l'interrompt si elle est en cours
+        {   // "Analyse rapide" (3 s par position), ou "Interrompre" si une analyse est en cours (ce bouton occupe alors toute la largeur)
             if (_analyseDePartie != null)
-            {
                 TermineAnalyseDePartie(interrompue: true);
-                return;
-            }
+            else
+                LanceAnalyseDePartie(profonde: false);
+        }
+        private void BoutonAnalyseProfonde_Click(object sender, EventArgs e) =>
+            // "Analyse profonde" : la rapide, puis les coups douteux revus 10 s (masqué pendant une analyse)
+            LanceAnalyseDePartie(profonde: true);
+        private void MetAJourInfobullesAnalyse(object sender, EventArgs e)
+        {   // Au survol des boutons : ce que fait chaque analyse et sa durée pour la partie en cours
+            int positions = LogiqueMouvements.ListeCoups.Count(c => !c.EstPositionDeDepart) + 1;
+            TimeSpan rapide = TimeSpan.FromMilliseconds((double)positions * DureeAnalyseParPosition);
+            _infobulleBilan.SetToolTip(BoutonAnalysePartie,
+                $"Analyse rapide : {DureeAnalyseParPosition / 1000} s par position, puis bilan et coup critique.\n" +
+                $"Environ {TexteDuree(rapide)} pour cette partie ({positions} positions).");
+            _infobulleBilan.SetToolTip(BoutonAnalyseProfonde,
+                $"Analyse profonde : l'analyse rapide, puis les positions avant et après chaque coup douteux\n" +
+                $"(?!, ?, ??) revues {DureeApprofondissement / 1000} s pour confirmer le jugement.\n" +
+                $"Environ {TexteDuree(rapide)}, plus {2 * DureeApprofondissement / 1000} s par coup douteux.");
+        }
+        private void LanceAnalyseDePartie(bool profonde)
+        {
             if (!LogiqueMouvements.ListeCoups.Any(c => !c.EstPositionDeDepart))
             {
                 KryptonMessageBox.Show("Aucun coup à analyser.", "Analyse de la partie", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
@@ -1851,7 +1870,9 @@ namespace BrunoGUI_GenII
             }
             AbandonneReflexion();       // une analyse de position en cours est remplacée
             _pendule?.Pause();          // le temps ne compte pas pendant l'analyse (reprise dans MinuteriePendule_Tick à la fin)
-            _analyseDePartie = new AnalyseDePartie(LogiqueMouvements.ListeCoups, approfondir: true);
+            _analyseDePartie = new AnalyseDePartie(LogiqueMouvements.ListeCoups, approfondir: profonde);
+            BoutonAnalyseProfonde.Visible = false;      // un seul bouton "Interrompre (k/N)", sur toute la largeur
+            BoutonAnalysePartie.Width = BoutonAnalyseProfonde.Right - BoutonAnalysePartie.Left;
             BarreAnalysePartie.Maximum = Math.Max(1, _analyseDePartie.NombreAAnalyser);
             BarreAnalysePartie.Value = 0;
             BarreAnalysePartie.Visible = true;
@@ -1924,7 +1945,9 @@ namespace BrunoGUI_GenII
                 BilanAnalyse.Cursor = Cursors.Hand;
             }
             BarreAnalysePartie.Visible = false;
-            BoutonAnalysePartie.Values.Text = "Analyser la partie";
+            BoutonAnalysePartie.Values.Text = "Analyse rapide";
+            BoutonAnalysePartie.Width = BoutonAnalyseProfonde.Left - 4 - BoutonAnalysePartie.Left;
+            BoutonAnalyseProfonde.Visible = true;
             RetourPositionCourante();       // l'échiquier, qui suivait l'analyse, revient à la partie
             InformationsPartie.Text = interrompue ? "Analyse interrompue" : "Analyse de la partie terminée";
             MetAJourCommandes();
