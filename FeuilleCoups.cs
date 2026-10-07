@@ -9,13 +9,15 @@
 //  └─ Classe "FeuilleCoups" : composant dessiné à la main, une ligne "n° | coup blanc | coup noir" par coup complet
 //              ├─ "MetAJour"       les coups de la partie et le coup surligné (celui de la position affichée)
 //              ├─ "CoupClique"     clic gauche sur un coup : sa place dans ListeCoups
-//              └─ "CoupCliqueDroit" clic droit sur un coup (annotations)
+//              ├─ "CoupCliqueDroit" clic droit sur un coup (annotations)
+//              └─ "DessineBande"   courbe d'évaluation verticale à droite des coups, alignée sur les lignes
 // La mise en page (quel coup sur quelle ligne) vient de FeuilleDePartie.Lignes (Coup.cs, testée) ; ici, seulement le dessin
 // et la souris. Le composant ne connaît ni la partie ni le parcours : le formulaire lui dit quoi montrer.
 
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace BrunoGUI_GenII
@@ -51,7 +53,113 @@ namespace BrunoGUI_GenII
 
         private int HauteurLigne => Font.Height + 8;
         private int LargeurNumero => TextRenderer.MeasureText("888.", Font).Width + 4;
-        private int LargeurCoup => Math.Max(10, (ClientSize.Width - LargeurNumero - 2) / 2);
+        private int LargeurCoup => Math.Max(10, (ClientSize.Width - LargeurNumero - 2 - LargeurBande) / 2);
+
+        // ═══ Courbe d'évaluation : bande verticale à droite des coups, alignée sur les lignes (elle défile avec la feuille) ═══
+        // Chaque demi-coup analysé a un point à la hauteur de son coup (coup blanc : moitié haute de la ligne, coup noir : moitié
+        // basse) ; l'écart à la ligne centrale suit les chances de gain (comme les annotations : un +8 n'écrase pas le reste),
+        // l'avantage blanc vers la gauche en clair, l'avantage noir vers la droite en sombre. Points de couleur : annotations
+        public const int LargeurBande = 36;
+        private static readonly Color CouleurFondBande = Color.FromArgb(214, 219, 227);
+        private static readonly Color CouleurAvantageBlanc = Color.FromArgb(252, 252, 252);
+        private static readonly Color CouleurAvantageNoir = Color.FromArgb(70, 72, 78);
+        private static readonly Color CouleurLigneCentrale = Color.FromArgb(150, 155, 165);
+        private Rectangle ZoneBande => new(ClientSize.Width - LargeurBande - 1, 1, LargeurBande, ClientSize.Height - 2);
+
+        private float YDuDemiCoup(int ligne, bool noir) =>
+            1 + ligne * HauteurLigne + AutoScrollPosition.Y + HauteurLigne * (noir ? 0.75f : 0.25f);
+
+        private float XDesChances(double chances)
+        {   // Chances de gain (-1 à +1, point de vue des Blancs) -> abscisse dans la bande : +1 tout à gauche, -1 tout à droite
+            Rectangle bande = ZoneBande;
+            float demi = bande.Width / 2f - 2;
+            return bande.X + bande.Width / 2f - (float)chances * demi;
+        }
+
+        private IEnumerable<(int Index, PointF Point)> PointsDeLaCourbe()
+        {   // Les demi-coups analysés, dans l'ordre de la partie, avec leur point dans la bande
+            for (int ligne = 0; ligne < _lignes.Count; ligne++)
+                foreach ((int? index, bool noir) in new[] { (_lignes[ligne].Blanc, false), (_lignes[ligne].Noir, true) })
+                    if (index is int i && _coups[i].EvaluationApres is Evaluation evaluation)
+                        yield return (i, new PointF(XDesChances(JugementCoups.ChancesDeGain(evaluation)), YDuDemiCoup(ligne, noir)));
+        }
+
+        private void DessineBande(Graphics g)
+        {
+            Rectangle bande = ZoneBande;
+            using (SolidBrush fond = new(CouleurFondBande))
+                g.FillRectangle(fond, bande);
+            float centre = bande.X + bande.Width / 2f;
+            List<(int Index, PointF Point)> points = [.. PointsDeLaCourbe()];
+            var lissage = g.SmoothingMode;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            Region decoupageAvant = g.Clip;
+            g.SetClip(bande);
+            if (points.Count > 0)
+            {   // Surface entre la ligne centrale et la courbe : claire à gauche (Blancs mieux), sombre à droite (Noirs mieux)
+                List<PointF> contour = [new(centre, points[0].Point.Y), .. points.Select(p => p.Point), new(centre, points[^1].Point.Y)];
+                using System.Drawing.Drawing2D.GraphicsPath surface = new();
+                surface.AddPolygon(contour.ToArray());
+                foreach ((RectangleF moitie, Color couleur) in new[] {
+                    (new RectangleF(bande.X, bande.Y, centre - bande.X, bande.Height), CouleurAvantageBlanc),
+                    (new RectangleF(centre, bande.Y, bande.Right - centre, bande.Height), CouleurAvantageNoir) })
+                {
+                    g.SetClip(moitie);
+                    using SolidBrush pinceau = new(couleur);
+                    g.FillPath(pinceau, surface);
+                }
+                g.SetClip(bande);
+            }
+            using (Pen ligneCentrale = new(CouleurLigneCentrale))
+                g.DrawLine(ligneCentrale, centre, bande.Y, centre, bande.Bottom);
+            // Le demi-coup affiché : un trait bleu sur toute la largeur
+            int ligneSelection = LigneDuCoup(_indexSelectionne);
+            if (ligneSelection >= 0)
+            {
+                float y = YDuDemiCoup(ligneSelection, _lignes[ligneSelection].Noir == _indexSelectionne);
+                using Pen repere = new(Color.FromArgb(40, 100, 220), 2);
+                g.DrawLine(repere, bande.X, y, bande.Right, y);
+            }
+            foreach ((int index, PointF point) in points)
+                if (_coups[index].Annotation != "")
+                {   // Coup annoté : un point de sa couleur (bord blanc pour rester visible sur le clair comme sur le sombre)
+                    Color couleur = CouleurAnnotation(_coups[index].Annotation);
+                    using SolidBrush pinceau = new(couleur);
+                    using Pen bord = new(Color.White);
+                    g.FillEllipse(pinceau, point.X - 3.5f, point.Y - 3.5f, 7, 7);
+                    g.DrawEllipse(bord, point.X - 3.5f, point.Y - 3.5f, 7, 7);
+                }
+            g.Clip = decoupageAvant;
+            g.SmoothingMode = lissage;
+        }
+
+        private int DemiCoupDansLaBande(Point point)
+        {   // Demi-coup à cette hauteur de la bande (moitié haute de la ligne : coup blanc, basse : coup noir), -1 s'il n'y en a pas
+            if (!ZoneBande.Contains(point))
+                return -1;
+            int y = point.Y - AutoScrollPosition.Y - 1;
+            int ligne = y / HauteurLigne;
+            if (ligne < 0 || ligne >= _lignes.Count)
+                return -1;
+            bool noir = y % HauteurLigne >= HauteurLigne / 2;
+            return (noir ? _lignes[ligne].Noir : _lignes[ligne].Blanc) ?? -1;
+        }
+
+        private readonly ToolTip _infobulleBande = new() { InitialDelay = 200, ReshowDelay = 100 };
+        private int _demiCoupInfobulle = -2;
+        private void MetAJourInfobulleBande(Point point)
+        {   // Survol de la bande : le coup et son évaluation ("25... c5??  2.73"), ou une explication s'il n'est pas analysé
+            int index = DemiCoupDansLaBande(point);
+            if (!ZoneBande.Contains(point))
+                index = -2;
+            if (index == _demiCoupInfobulle)
+                return;
+            _demiCoupInfobulle = index;
+            string texte = index == -2 ? null
+                : index < 0 || _coups[index].EvaluationApres is not Evaluation evaluation ? "Courbe d'évaluation : analyser la partie pour la voir"
+                : $"{_coups[index].PgnFrNumerote}{_coups[index].Annotation}   {evaluation.Texte}";
+            _infobulleBande.SetToolTip(this, texte);
+        }
 
         private string _resultat;               // résultat écrit sous le dernier coup ("1-0", "0-1", "½-½"), null : partie en cours
 
@@ -87,6 +195,8 @@ namespace BrunoGUI_GenII
 
         private int CoupSous(Point point)
         {   // Place dans ListeCoups du coup sous ce point du composant, -1 s'il n'y en a pas (numéro, case vide, sous la dernière ligne)
+            if (point.X >= ZoneBande.X)
+                return DemiCoupDansLaBande(point);      // courbe d'évaluation : le demi-coup à cette hauteur
             int ligne = (point.Y - AutoScrollPosition.Y - 1) / HauteurLigne;
             if (point.Y < 1 || ligne < 0 || ligne >= _lignes.Count || point.X < LargeurNumero)
                 return -1;
@@ -120,6 +230,7 @@ namespace BrunoGUI_GenII
                 TextRenderer.DrawText(e.Graphics, _resultat, _policeResultat, new Rectangle(0, y, ClientSize.Width, hauteur), ForeColor,
                     TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
             }
+            DessineBande(e.Graphics);
             using Pen bordure = new(CouleurBordure);
             e.Graphics.DrawRectangle(bordure, 0, 0, ClientSize.Width - 1, ClientSize.Height - 1);
         }
@@ -192,6 +303,7 @@ namespace BrunoGUI_GenII
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
+            MetAJourInfobulleBande(e.Location);
             int survole = CoupSous(e.Location);
             Cursor = survole >= 0 ? Cursors.Hand : Cursors.Default;
             if (survole != _indexSurvole)
@@ -204,6 +316,8 @@ namespace BrunoGUI_GenII
         protected override void OnMouseLeave(EventArgs e)
         {
             base.OnMouseLeave(e);
+            _demiCoupInfobulle = -2;
+            _infobulleBande.SetToolTip(this, null);
             if (_indexSurvole >= 0)
             {
                 _indexSurvole = -1;

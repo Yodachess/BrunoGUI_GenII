@@ -163,7 +163,7 @@ namespace BrunoGUI_GenII
             // 
             // MontreDonneesUci
             // 
-            MontreDonneesUci.Location = new System.Drawing.Point(762, 666);
+            MontreDonneesUci.Location = new System.Drawing.Point(802, 666);
             MontreDonneesUci.Name = "MontreDonneesUci";
             MontreDonneesUci.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             MontreDonneesUci.Size = new System.Drawing.Size(130, 25);
@@ -182,7 +182,7 @@ namespace BrunoGUI_GenII
             // 
             // InverseEchiquier
             // 
-            InverseEchiquier.Location = new System.Drawing.Point(762, 124);
+            InverseEchiquier.Location = new System.Drawing.Point(802, 124);
             InverseEchiquier.Name = "InverseEchiquier";
             InverseEchiquier.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             InverseEchiquier.Size = new System.Drawing.Size(130, 25);
@@ -205,7 +205,7 @@ namespace BrunoGUI_GenII
             MenuInterfaceGraphique.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { FichierMenu, PartieMenu, nouvellePartieToolStripMenuItem, moteursBibliothèquesToolStripMenuItem, OptionsMenu, Apropos, toolStripMenuItem2 });
             MenuInterfaceGraphique.Location = new System.Drawing.Point(0, 0);
             MenuInterfaceGraphique.Name = "MenuInterfaceGraphique";
-            MenuInterfaceGraphique.Size = new System.Drawing.Size(904, 24);
+            MenuInterfaceGraphique.Size = new System.Drawing.Size(944, 24);
             MenuInterfaceGraphique.TabIndex = 6;
             MenuInterfaceGraphique.Text = "Menu Interface Graphique";
             // 
@@ -515,7 +515,7 @@ namespace BrunoGUI_GenII
             // 
             // BoutonBalises
             // 
-            BoutonBalises.Location = new System.Drawing.Point(760, 458);
+            BoutonBalises.Location = new System.Drawing.Point(800, 458);
             BoutonBalises.Name = "BoutonBalises";
             BoutonBalises.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             BoutonBalises.Size = new System.Drawing.Size(130, 25);
@@ -534,7 +534,7 @@ namespace BrunoGUI_GenII
             // 
             // RetourArriere
             // 
-            RetourArriere.Location = new System.Drawing.Point(762, 186);
+            RetourArriere.Location = new System.Drawing.Point(802, 186);
             RetourArriere.Name = "RetourArriere";
             RetourArriere.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             RetourArriere.Size = new System.Drawing.Size(130, 25);
@@ -556,7 +556,7 @@ namespace BrunoGUI_GenII
             BoutonAnalysePartie.Location = new System.Drawing.Point(538, 616);
             BoutonAnalysePartie.Name = "BoutonAnalysePartie";
             BoutonAnalysePartie.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
-            BoutonAnalysePartie.Size = new System.Drawing.Size(120, 25);
+            BoutonAnalysePartie.Size = new System.Drawing.Size(140, 25);
             BoutonAnalysePartie.StateCommon.Back.Color1 = System.Drawing.Color.FromArgb(192, 192, 255);
             BoutonAnalysePartie.StateCommon.Border.Color1 = System.Drawing.Color.DarkGray;
             BoutonAnalysePartie.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
@@ -572,10 +572,10 @@ namespace BrunoGUI_GenII
             //
             // BoutonAnalyseComplete
             //
-            BoutonAnalyseComplete.Location = new System.Drawing.Point(662, 616);
+            BoutonAnalyseComplete.Location = new System.Drawing.Point(682, 616);
             BoutonAnalyseComplete.Name = "BoutonAnalyseComplete";
             BoutonAnalyseComplete.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
-            BoutonAnalyseComplete.Size = new System.Drawing.Size(88, 25);
+            BoutonAnalyseComplete.Size = new System.Drawing.Size(104, 25);
             BoutonAnalyseComplete.StateCommon.Back.Color1 = System.Drawing.Color.FromArgb(192, 192, 255);
             BoutonAnalyseComplete.StateCommon.Border.Color1 = System.Drawing.Color.DarkGray;
             BoutonAnalyseComplete.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
@@ -593,7 +593,7 @@ namespace BrunoGUI_GenII
             // 
             BarreAnalysePartie.Location = new System.Drawing.Point(6, 20);
             BarreAnalysePartie.Name = "BarreAnalysePartie";
-            BarreAnalysePartie.Size = new System.Drawing.Size(200, 12);
+            BarreAnalysePartie.Size = new System.Drawing.Size(236, 12);
             BarreAnalysePartie.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
             BarreAnalysePartie.TabIndex = 31;
             BarreAnalysePartie.Visible = false;
@@ -603,7 +603,7 @@ namespace BrunoGUI_GenII
             BilanAnalyse.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             BilanAnalyse.Location = new System.Drawing.Point(4, 16);
             BilanAnalyse.Name = "BilanAnalyse";
-            BilanAnalyse.Size = new System.Drawing.Size(204, 92);
+            BilanAnalyse.Size = new System.Drawing.Size(240, 92);
             BilanAnalyse.TabIndex = 32;
             //
             // groupBilanPartie (la barre de progression de l'analyse, visible seulement pendant l'analyse, est par-dessus le bilan, vide alors)
@@ -613,14 +613,14 @@ namespace BrunoGUI_GenII
             groupBilanPartie.Controls.Add(BilanAnalyse);
             groupBilanPartie.Location = new System.Drawing.Point(538, 644);
             groupBilanPartie.Name = "groupBilanPartie";
-            groupBilanPartie.Size = new System.Drawing.Size(212, 112);
+            groupBilanPartie.Size = new System.Drawing.Size(248, 112);
             groupBilanPartie.TabIndex = 47;
             groupBilanPartie.TabStop = false;
             groupBilanPartie.Text = "Bilan partie";
             // 
             // BoutonSaisiePosition
             // 
-            BoutonSaisiePosition.Location = new System.Drawing.Point(762, 62);
+            BoutonSaisiePosition.Location = new System.Drawing.Point(802, 62);
             BoutonSaisiePosition.Name = "BoutonSaisiePosition";
             BoutonSaisiePosition.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             BoutonSaisiePosition.Size = new System.Drawing.Size(130, 25);
@@ -639,7 +639,7 @@ namespace BrunoGUI_GenII
             // 
             // VisualisationPgn
             // 
-            VisualisationPgn.Location = new System.Drawing.Point(760, 427);
+            VisualisationPgn.Location = new System.Drawing.Point(800, 427);
             VisualisationPgn.Name = "VisualisationPgn";
             VisualisationPgn.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             VisualisationPgn.Size = new System.Drawing.Size(130, 25);
@@ -665,7 +665,7 @@ namespace BrunoGUI_GenII
             kryptonStatusStrip1.Name = "kryptonStatusStrip1";
             kryptonStatusStrip1.ProgressBars = null;
             kryptonStatusStrip1.RenderMode = System.Windows.Forms.ToolStripRenderMode.ManagerRenderMode;
-            kryptonStatusStrip1.Size = new System.Drawing.Size(904, 26);
+            kryptonStatusStrip1.Size = new System.Drawing.Size(944, 26);
             kryptonStatusStrip1.TabIndex = 11;
             kryptonStatusStrip1.Text = "kryptonStatusStrip1";
             // 
@@ -700,7 +700,7 @@ namespace BrunoGUI_GenII
             VarianteMoteurCourante.AutoSize = false;
             VarianteMoteurCourante.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left | System.Windows.Forms.ToolStripStatusLabelBorderSides.Top | System.Windows.Forms.ToolStripStatusLabelBorderSides.Right | System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom;
             VarianteMoteurCourante.Name = "VarianteMoteurCourante";
-            VarianteMoteurCourante.Size = new System.Drawing.Size(299, 21);
+            VarianteMoteurCourante.Size = new System.Drawing.Size(335, 21);
             VarianteMoteurCourante.Text = "Variante en cours d'examen";
             // 
             // VarianteMoteurUci1
@@ -742,7 +742,7 @@ namespace BrunoGUI_GenII
             // 
             // AnalysePosition
             // 
-            AnalysePosition.Location = new System.Drawing.Point(762, 93);
+            AnalysePosition.Location = new System.Drawing.Point(802, 93);
             AnalysePosition.Name = "AnalysePosition";
             AnalysePosition.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             AnalysePosition.Size = new System.Drawing.Size(130, 25);
@@ -782,7 +782,7 @@ namespace BrunoGUI_GenII
             LabelTournoi.ForeColor = System.Drawing.Color.Black;
             LabelTournoi.Location = new System.Drawing.Point(538, 28);
             LabelTournoi.Name = "LabelTournoi";
-            LabelTournoi.Size = new System.Drawing.Size(212, 36);
+            LabelTournoi.Size = new System.Drawing.Size(248, 36);
             LabelTournoi.TabIndex = 45;
             LabelTournoi.Padding = new System.Windows.Forms.Padding(6, 0, 2, 0);
             LabelTournoi.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -795,7 +795,7 @@ namespace BrunoGUI_GenII
             LabelDetailsTournoi.ForeColor = System.Drawing.Color.FromArgb(90, 95, 105);
             LabelDetailsTournoi.Location = new System.Drawing.Point(538, 68);
             LabelDetailsTournoi.Name = "LabelDetailsTournoi";
-            LabelDetailsTournoi.Size = new System.Drawing.Size(212, 19);
+            LabelDetailsTournoi.Size = new System.Drawing.Size(248, 19);
             LabelDetailsTournoi.TabIndex = 46;
             LabelDetailsTournoi.Padding = new System.Windows.Forms.Padding(6, 0, 2, 0);
             LabelDetailsTournoi.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -855,7 +855,7 @@ namespace BrunoGUI_GenII
             // 
             // MontreVariantesUci
             // 
-            MontreVariantesUci.Location = new System.Drawing.Point(762, 635);
+            MontreVariantesUci.Location = new System.Drawing.Point(802, 635);
             MontreVariantesUci.Name = "MontreVariantesUci";
             MontreVariantesUci.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             MontreVariantesUci.Size = new System.Drawing.Size(130, 25);
@@ -877,7 +877,7 @@ namespace BrunoGUI_GenII
             FeuilleDesCoups.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             FeuilleDesCoups.Location = new System.Drawing.Point(538, 90);
             FeuilleDesCoups.Name = "FeuilleDesCoups";
-            FeuilleDesCoups.Size = new System.Drawing.Size(212, 520);
+            FeuilleDesCoups.Size = new System.Drawing.Size(248, 520);
             FeuilleDesCoups.TabIndex = 28;
             // 
             // Plateau
@@ -894,7 +894,7 @@ namespace BrunoGUI_GenII
             // 
             // BoutonGainBlanc
             // 
-            BoutonGainBlanc.Location = new System.Drawing.Point(790, 219);
+            BoutonGainBlanc.Location = new System.Drawing.Point(830, 219);
             BoutonGainBlanc.Name = "BoutonGainBlanc";
             BoutonGainBlanc.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             BoutonGainBlanc.Size = new System.Drawing.Size(78, 15);
@@ -910,7 +910,7 @@ namespace BrunoGUI_GenII
             // 
             // BoutonGainNoir
             // 
-            BoutonGainNoir.Location = new System.Drawing.Point(790, 240);
+            BoutonGainNoir.Location = new System.Drawing.Point(830, 240);
             BoutonGainNoir.Name = "BoutonGainNoir";
             BoutonGainNoir.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             BoutonGainNoir.Size = new System.Drawing.Size(78, 15);
@@ -926,7 +926,7 @@ namespace BrunoGUI_GenII
             // 
             // BoutonNulle
             // 
-            BoutonNulle.Location = new System.Drawing.Point(790, 261);
+            BoutonNulle.Location = new System.Drawing.Point(830, 261);
             BoutonNulle.Name = "BoutonNulle";
             BoutonNulle.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             BoutonNulle.Size = new System.Drawing.Size(78, 15);
@@ -942,7 +942,7 @@ namespace BrunoGUI_GenII
             // 
             // KryptonQuitter
             // 
-            KryptonQuitter.Location = new System.Drawing.Point(762, 726);
+            KryptonQuitter.Location = new System.Drawing.Point(802, 726);
             KryptonQuitter.Name = "KryptonQuitter";
             KryptonQuitter.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             KryptonQuitter.Size = new System.Drawing.Size(130, 25);
@@ -962,7 +962,7 @@ namespace BrunoGUI_GenII
             // CoupsBibliothèqueBox
             // 
             CoupsBibliothèqueBox.BackColor = System.Drawing.Color.WhiteSmoke;
-            CoupsBibliothèqueBox.Location = new System.Drawing.Point(762, 489);
+            CoupsBibliothèqueBox.Location = new System.Drawing.Point(802, 489);
             CoupsBibliothèqueBox.Name = "CoupsBibliothèqueBox";
             CoupsBibliothèqueBox.Size = new System.Drawing.Size(120, 137);
             CoupsBibliothèqueBox.TabIndex = 33;
@@ -992,7 +992,7 @@ namespace BrunoGUI_GenII
             // 
             // OrdinateurJoue
             // 
-            OrdinateurJoue.Location = new System.Drawing.Point(762, 155);
+            OrdinateurJoue.Location = new System.Drawing.Point(802, 155);
             OrdinateurJoue.Name = "OrdinateurJoue";
             OrdinateurJoue.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             OrdinateurJoue.Size = new System.Drawing.Size(130, 25);
@@ -1011,7 +1011,7 @@ namespace BrunoGUI_GenII
             // 
             // MontrePartiesPGN
             // 
-            MontrePartiesPGN.Location = new System.Drawing.Point(762, 282);
+            MontrePartiesPGN.Location = new System.Drawing.Point(802, 282);
             MontrePartiesPGN.Name = "MontrePartiesPGN";
             MontrePartiesPGN.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             MontrePartiesPGN.Size = new System.Drawing.Size(130, 25);
@@ -1042,7 +1042,7 @@ namespace BrunoGUI_GenII
             groupParcoursPartie.Controls.Add(BoutonSuivant);
             groupParcoursPartie.Controls.Add(BoutonPrecedent);
             groupParcoursPartie.ForeColor = System.Drawing.SystemColors.ControlText;
-            groupParcoursPartie.Location = new System.Drawing.Point(764, 313);
+            groupParcoursPartie.Location = new System.Drawing.Point(804, 313);
             groupParcoursPartie.Name = "groupParcoursPartie";
             groupParcoursPartie.Size = new System.Drawing.Size(128, 108);
             groupParcoursPartie.TabIndex = 37;
@@ -1204,7 +1204,7 @@ namespace BrunoGUI_GenII
             // 
             // KryptonApropos
             // 
-            KryptonApropos.Location = new System.Drawing.Point(762, 697);
+            KryptonApropos.Location = new System.Drawing.Point(802, 697);
             KryptonApropos.Name = "KryptonApropos";
             KryptonApropos.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             KryptonApropos.Size = new System.Drawing.Size(130, 25);
@@ -1235,7 +1235,7 @@ namespace BrunoGUI_GenII
             // 
             // SaisiePartieBouton
             // 
-            SaisiePartieBouton.Location = new System.Drawing.Point(762, 31);
+            SaisiePartieBouton.Location = new System.Drawing.Point(802, 31);
             SaisiePartieBouton.Name = "SaisiePartieBouton";
             SaisiePartieBouton.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             SaisiePartieBouton.Size = new System.Drawing.Size(130, 25);
@@ -1261,7 +1261,7 @@ namespace BrunoGUI_GenII
             // 
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             BackColor = System.Drawing.Color.LightGray;
-            ClientSize = new System.Drawing.Size(904, 785);
+            ClientSize = new System.Drawing.Size(944, 785);
             Controls.Add(SaisiePartieBouton);
             Controls.Add(ActiveAléatoire);
             Controls.Add(KryptonApropos);
