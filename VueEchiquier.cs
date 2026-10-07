@@ -117,8 +117,10 @@ namespace BrunoGUI_GenII
                     _plateau.Invoke(new MethodInvoker(() => DessinePiece(index, piece)));
                     return;
                 }
-                RemplaceImage(index, _images[piece]);       // (libère l'éventuelle image pièce + symbole)
-                Application.DoEvents();
+                // (libère l'éventuelle image pièce + symbole ; la case se redessine d'elle-même. Pas d'Application.DoEvents ici :
+                // appelé 64 fois par position, il laissait passer au milieu d'un dessin la réponse du moteur ou une touche, qui
+                // changeaient la position affichée en cours de route : NullReferenceException dans AfficheCoupDeLaPartie)
+                RemplaceImage(index, _images[piece]);
             }
             catch (Exception ex) when (ex is ObjectDisposedException || ex is InvalidOperationException)
             {   // fenêtre en cours de fermeture : rien à dessiner
