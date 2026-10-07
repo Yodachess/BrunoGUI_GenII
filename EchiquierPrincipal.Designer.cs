@@ -97,7 +97,7 @@ namespace BrunoGUI_GenII
             AnalysePosition = new Krypton.Toolkit.KryptonButton();
             LabelJoueurNoir = new EtiquetteUneLigne();
             LabelJoueurBlanc = new EtiquetteUneLigne();
-            LabelTournoi = new EtiquetteUneLigne();
+            LabelTournoi = new System.Windows.Forms.Label();
             LabelDetailsTournoi = new EtiquetteUneLigne();
             groupBilanPartie = new System.Windows.Forms.GroupBox();
             PenduleBlanc = new EtiquetteUneLigne();
@@ -777,7 +777,8 @@ namespace BrunoGUI_GenII
             //
             LabelTournoi.BackColor = System.Drawing.Color.FromArgb(255, 250, 222);
             LabelTournoi.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            LabelTournoi.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            LabelTournoi.AutoEllipsis = true;      // sur deux lignes au plus (le cadre a la hauteur des joueurs), « … » au-delà
+            LabelTournoi.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             LabelTournoi.ForeColor = System.Drawing.Color.Black;
             LabelTournoi.Location = new System.Drawing.Point(538, 28);
             LabelTournoi.Name = "LabelTournoi";
@@ -1223,6 +1224,7 @@ namespace BrunoGUI_GenII
             // ActiveAléatoire
             // 
             ActiveAléatoire.BackColor = System.Drawing.Color.WhiteSmoke;
+            ActiveAléatoire.Checked = true;
             ActiveAléatoire.Location = new System.Drawing.Point(10, 732);
             ActiveAléatoire.Name = "ActiveAléatoire";
             ActiveAléatoire.Size = new System.Drawing.Size(109, 24);
@@ -1368,7 +1370,7 @@ namespace BrunoGUI_GenII
         private System.Windows.Forms.ToolStripStatusLabel EvaluationUci;
         private EtiquetteUneLigne LabelJoueurNoir;
         private EtiquetteUneLigne LabelJoueurBlanc;
-        private EtiquetteUneLigne LabelTournoi;
+        private System.Windows.Forms.Label LabelTournoi;
         private EtiquetteUneLigne LabelDetailsTournoi;
         private System.Windows.Forms.GroupBox groupBilanPartie;
         private System.Windows.Forms.Label InformationsPartie;

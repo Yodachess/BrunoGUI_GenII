@@ -1798,22 +1798,23 @@ namespace BrunoGUI_GenII
             AfficheTournoi();
         }
         private void AfficheTournoi()
-        {   // Au-dessus de la feuille, à droite des joueurs : le tournoi (balise Event), puis la ronde, le lieu et la date
-            // (infobulle : le texte complet, s'il est coupé)
+        {   // Au-dessus de la feuille, à droite des joueurs : le tournoi (balise Event, sur deux lignes), puis la ronde et la date
+            // (choix de Bruno : le lieu ne tient pas ; infobulle : le tout, lieu compris)
             static string Valeur(string balise) => string.IsNullOrWhiteSpace(balise) || balise.Trim() is "?" or "-" ? "" : balise.Trim();
             string date = Valeur(PartieEnCours.Date);
             string[] morceaux = date.Split('.');            // "2026.04.19" -> "19/04/2026" (les parties inconnues "??" sont omises)
             if (morceaux.Length == 3)
                 date = string.Join("/", morceaux.Reverse().Where(m => m.All(char.IsDigit) && m != ""));
             string ronde = Valeur(PartieEnCours.Ronde);
-            string details = string.Join("  ·  ", new[] { ronde != "" ? "Ronde " + ronde : "", Valeur(PartieEnCours.Lieu), date }.Where(t => t != ""));
-            string tournoi = Valeur(PartieEnCours.Tournoi);
+            string details = string.Join("  ·  ", new[] { ronde != "" ? "Ronde " + ronde : "", date }.Where(t => t != ""));
+            string tournoi = Valeur(PartieEnCours.Tournoi), lieu = Valeur(PartieEnCours.Lieu);
             if (LabelTournoi.Text == tournoi && LabelDetailsTournoi.Text == details)
                 return;
             LabelTournoi.Text = tournoi;
             LabelDetailsTournoi.Text = details;
-            _infobulleBilan.SetToolTip(LabelTournoi, tournoi + (details != "" ? "\n" + details : ""));
-            _infobulleBilan.SetToolTip(LabelDetailsTournoi, tournoi + (details != "" ? "\n" + details : ""));
+            string complet = string.Join("\n", new[] { tournoi, lieu, details }.Where(t => t != ""));
+            _infobulleBilan.SetToolTip(LabelTournoi, complet);
+            _infobulleBilan.SetToolTip(LabelDetailsTournoi, complet);
         }
         private void FeuilleDesCoups_CoupClique(int index)
         {   // Clic sur un coup de la feuille : on affiche la position après ce coup (le dernier coup ramène à la partie)
