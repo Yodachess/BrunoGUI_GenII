@@ -31,16 +31,19 @@ namespace BrunoGUI_GenII
 
         // Cadences proposées dans l'interface ("Sans pendule" en premier : le moteur a un temps fixe par coup)
         public static readonly Cadence[] Proposees =
-            [SansPendule, Minutes(3, 2), Minutes(5, 3), Minutes(10, 5), Minutes(15, 10), Minutes(30), Fide];
+            [SansPendule, Minutes(3, 2), Minutes(5), Minutes(5, 3), Minutes(10, 5), Minutes(15, 10), Minutes(30), Fide];
 
         public bool EstSansPendule => TempsInitial <= TimeSpan.Zero;
         public bool ADeuxPeriodes => CoupsControle > 0 && TempsAjoute > TimeSpan.Zero;
+        // Cadences officielles de la FIDE (blitz 3 + 2, rapide 15 + 10, classique) : marquées d'une étoile dorée dans les listes
+        public bool EstOfficielle => this == Minutes(3, 2) || this == Minutes(15, 10) || this == Fide;
 
         private string TexteIncrement(string format) => Increment > TimeSpan.Zero ? string.Format(format, Increment.TotalSeconds) : "";
+        // Sans bonus, une seule période : "KO" (le temps est perdu au drapeau, sans rien gagner par coup)
         public string Nom => EstSansPendule ? "Sans pendule"
             : this == Fide ? "90 + 30 min (+30 s) FIDE"
             : ADeuxPeriodes ? $"{TempsInitial.TotalMinutes:0} min/{CoupsControle} coups + {TempsAjoute.TotalMinutes:0} min" + TexteIncrement(" (+{0:0} s)")
-            : $"{TempsInitial.TotalMinutes:0} min" + TexteIncrement(" + {0:0} s");
+            : $"{TempsInitial.TotalMinutes:0} min" + (Increment > TimeSpan.Zero ? TexteIncrement(" + {0:0} s") : " KO") + (EstOfficielle ? " FIDE" : "");
 
         // Balise PGN [TimeControl] et clé du .ini : "300+3" (secondes + bonus), "-" sans pendule ;
         // deux périodes : "40/5400+30:1800+30" (40 coups en 5400 s, puis 1800 s pour la suite, bonus de 30 s par coup)

@@ -1024,7 +1024,9 @@ Verifie("Analyse : meilleur coup noir tiré d'une vraie variante du moteur (« 1
 Console.WriteLine("── Pendule ──");
 
 Verifie("Cadence : nom, balise TimeControl et relecture",
-    Cadence.Minutes(5, 3).Nom == "5 min + 3 s" && Cadence.Minutes(30).Nom == "30 min" && Cadence.SansPendule.Nom == "Sans pendule"
+    Cadence.Minutes(5, 3).Nom == "5 min + 3 s" && Cadence.Minutes(30).Nom == "30 min KO" && Cadence.SansPendule.Nom == "Sans pendule"
+    && Cadence.Minutes(3, 2).Nom == "3 min + 2 s FIDE" && Cadence.Minutes(15, 10).Nom == "15 min + 10 s FIDE"
+    && Cadence.Minutes(3, 2).EstOfficielle && Cadence.Fide.EstOfficielle && !Cadence.Minutes(5).EstOfficielle
     && Cadence.Minutes(5, 3).TimeControl == "300+3" && Cadence.Minutes(30).TimeControl == "1800" && Cadence.SansPendule.TimeControl == "-"
     && Cadence.Lire("300+3") == Cadence.Minutes(5, 3) && Cadence.Lire("1800") == Cadence.Minutes(30),
     $"{Cadence.Minutes(5, 3).Nom} / {Cadence.Minutes(5, 3).TimeControl}");
