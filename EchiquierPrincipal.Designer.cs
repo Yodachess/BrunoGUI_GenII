@@ -84,7 +84,7 @@ namespace BrunoGUI_GenII
             BoutonAnalyseComplete = new Krypton.Toolkit.KryptonButton();
             BarreAnalysePartie = new System.Windows.Forms.ProgressBar();
             BilanAnalyse = new System.Windows.Forms.Label();
-            BoutonSetupPosition = new Krypton.Toolkit.KryptonButton();
+            BoutonSaisiePosition = new Krypton.Toolkit.KryptonButton();
             VisualisationPgn = new Krypton.Toolkit.KryptonButton();
             kryptonStatusStrip1 = new Krypton.Toolkit.KryptonStatusStrip();
             StatusProgramme = new System.Windows.Forms.ToolStripStatusLabel();
@@ -182,7 +182,7 @@ namespace BrunoGUI_GenII
             // 
             // InverseEchiquier
             // 
-            InverseEchiquier.Location = new System.Drawing.Point(762, 93);
+            InverseEchiquier.Location = new System.Drawing.Point(762, 124);
             InverseEchiquier.Name = "InverseEchiquier";
             InverseEchiquier.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             InverseEchiquier.Size = new System.Drawing.Size(130, 25);
@@ -534,7 +534,7 @@ namespace BrunoGUI_GenII
             // 
             // RetourArriere
             // 
-            RetourArriere.Location = new System.Drawing.Point(762, 155);
+            RetourArriere.Location = new System.Drawing.Point(762, 186);
             RetourArriere.Name = "RetourArriere";
             RetourArriere.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             RetourArriere.Size = new System.Drawing.Size(130, 25);
@@ -618,24 +618,24 @@ namespace BrunoGUI_GenII
             groupBilanPartie.TabStop = false;
             groupBilanPartie.Text = "Bilan partie";
             // 
-            // BoutonSetupPosition
+            // BoutonSaisiePosition
             // 
-            BoutonSetupPosition.Location = new System.Drawing.Point(762, 186);
-            BoutonSetupPosition.Name = "BoutonSetupPosition";
-            BoutonSetupPosition.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
-            BoutonSetupPosition.Size = new System.Drawing.Size(130, 25);
-            BoutonSetupPosition.StateCommon.Back.Color1 = System.Drawing.Color.FromArgb(192, 192, 255);
-            BoutonSetupPosition.StateCommon.Border.Color1 = System.Drawing.Color.DarkGray;
-            BoutonSetupPosition.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
-            BoutonSetupPosition.StateCommon.Border.GraphicsHint = Krypton.Toolkit.PaletteGraphicsHint.AntiAlias;
-            BoutonSetupPosition.StateCommon.Border.Rounding = 20F;
-            BoutonSetupPosition.StateCommon.Border.Width = 3;
-            BoutonSetupPosition.StateCommon.Content.ShortText.Color1 = System.Drawing.Color.Black;
-            BoutonSetupPosition.StateCommon.Content.ShortText.Color2 = System.Drawing.Color.Black;
-            BoutonSetupPosition.TabIndex = 29;
-            BoutonSetupPosition.Values.DropDownArrowColor = System.Drawing.Color.Empty;
-            BoutonSetupPosition.Values.Text = "Setup position";
-            BoutonSetupPosition.Enabled = false;     // à venir : mise en place d'une position
+            BoutonSaisiePosition.Location = new System.Drawing.Point(762, 62);
+            BoutonSaisiePosition.Name = "BoutonSaisiePosition";
+            BoutonSaisiePosition.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
+            BoutonSaisiePosition.Size = new System.Drawing.Size(130, 25);
+            BoutonSaisiePosition.StateCommon.Back.Color1 = System.Drawing.Color.FromArgb(192, 192, 255);
+            BoutonSaisiePosition.StateCommon.Border.Color1 = System.Drawing.Color.DarkGray;
+            BoutonSaisiePosition.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
+            BoutonSaisiePosition.StateCommon.Border.GraphicsHint = Krypton.Toolkit.PaletteGraphicsHint.AntiAlias;
+            BoutonSaisiePosition.StateCommon.Border.Rounding = 20F;
+            BoutonSaisiePosition.StateCommon.Border.Width = 3;
+            BoutonSaisiePosition.StateCommon.Content.ShortText.Color1 = System.Drawing.Color.Black;
+            BoutonSaisiePosition.StateCommon.Content.ShortText.Color2 = System.Drawing.Color.Black;
+            BoutonSaisiePosition.TabIndex = 29;
+            BoutonSaisiePosition.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            BoutonSaisiePosition.Values.Text = "Saisie position";
+            BoutonSaisiePosition.Enabled = false;     // à venir : saisie d'une position à la main
             // 
             // VisualisationPgn
             // 
@@ -742,7 +742,7 @@ namespace BrunoGUI_GenII
             // 
             // AnalysePosition
             // 
-            AnalysePosition.Location = new System.Drawing.Point(762, 62);
+            AnalysePosition.Location = new System.Drawing.Point(762, 93);
             AnalysePosition.Name = "AnalysePosition";
             AnalysePosition.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             AnalysePosition.Size = new System.Drawing.Size(130, 25);
@@ -775,7 +775,7 @@ namespace BrunoGUI_GenII
             //
             // LabelTournoi
             //
-            LabelTournoi.BackColor = System.Drawing.Color.FromArgb(255, 250, 222);
+            LabelTournoi.BackColor = System.Drawing.Color.White;
             LabelTournoi.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             LabelTournoi.AutoEllipsis = true;      // sur deux lignes au plus (le cadre a la hauteur des joueurs), « … » au-delà
             LabelTournoi.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
@@ -789,10 +789,10 @@ namespace BrunoGUI_GenII
             //
             // LabelDetailsTournoi
             //
-            LabelDetailsTournoi.BackColor = System.Drawing.Color.FromArgb(255, 250, 222);
+            LabelDetailsTournoi.BackColor = System.Drawing.Color.White;
             LabelDetailsTournoi.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             LabelDetailsTournoi.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            LabelDetailsTournoi.ForeColor = System.Drawing.Color.FromArgb(90, 75, 40);
+            LabelDetailsTournoi.ForeColor = System.Drawing.Color.FromArgb(90, 95, 105);
             LabelDetailsTournoi.Location = new System.Drawing.Point(538, 68);
             LabelDetailsTournoi.Name = "LabelDetailsTournoi";
             LabelDetailsTournoi.Size = new System.Drawing.Size(212, 19);
@@ -992,7 +992,7 @@ namespace BrunoGUI_GenII
             // 
             // OrdinateurJoue
             // 
-            OrdinateurJoue.Location = new System.Drawing.Point(762, 124);
+            OrdinateurJoue.Location = new System.Drawing.Point(762, 155);
             OrdinateurJoue.Name = "OrdinateurJoue";
             OrdinateurJoue.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             OrdinateurJoue.Size = new System.Drawing.Size(130, 25);
@@ -1296,7 +1296,7 @@ namespace BrunoGUI_GenII
             Controls.Add(RetourArriere);
             Controls.Add(BoutonAnalysePartie);
             Controls.Add(BoutonAnalyseComplete);
-            Controls.Add(BoutonSetupPosition);
+            Controls.Add(BoutonSaisiePosition);
             Controls.Add(BoutonBalises);
             Controls.Add(GroupPromo);
             Controls.Add(InverseEchiquier);
@@ -1382,7 +1382,7 @@ namespace BrunoGUI_GenII
         private Krypton.Toolkit.KryptonButton BoutonAnalyseComplete;
         private System.Windows.Forms.ProgressBar BarreAnalysePartie;
         private System.Windows.Forms.Label BilanAnalyse;
-        private Krypton.Toolkit.KryptonButton BoutonSetupPosition;
+        private Krypton.Toolkit.KryptonButton BoutonSaisiePosition;
         public Krypton.Toolkit.KryptonButton AnalysePosition;
         private System.Windows.Forms.ToolStripMenuItem VisualiserPgn;
         private System.Windows.Forms.ToolStripMenuItem ParametresDeBase;

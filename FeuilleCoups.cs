@@ -30,13 +30,14 @@ namespace BrunoGUI_GenII
         public event Action<int> CoupClique;
         public event Action<int, Point> CoupCliqueDroit;    // place du coup, position de la souris (dans le composant)
 
-        // Couleurs d'une feuille de partie papier (jaune pâle, comme le double d'une feuille autocopiante)
-        private static readonly Color CouleurPapier = Color.FromArgb(255, 250, 222);
-        private static readonly Color CouleurLignePaire = Color.FromArgb(248, 240, 202);
-        private static readonly Color CouleurSelection = Color.FromArgb(180, 205, 250);
-        private static readonly Color CouleurSurvol = Color.FromArgb(232, 226, 190);
-        private static readonly Color CouleurNumero = Color.FromArgb(140, 120, 80);
-        private static readonly Color CouleurBordure = Color.FromArgb(190, 175, 130);
+        // Couleurs de la feuille : fond blanc, une ligne sur deux gris-bleu très pâle, coup affiché en bleu (comme ChessBase ou
+        // Lichess ; le jaune pâle "papier" d'avant n'a pas plu à Bruno)
+        private static readonly Color CouleurPapier = Color.White;
+        private static readonly Color CouleurLignePaire = Color.FromArgb(243, 246, 250);
+        private static readonly Color CouleurSelection = Color.FromArgb(190, 212, 248);
+        private static readonly Color CouleurSurvol = Color.FromArgb(228, 235, 245);
+        private static readonly Color CouleurNumero = Color.FromArgb(120, 125, 135);
+        private static readonly Color CouleurBordure = Color.FromArgb(175, 182, 195);
 
         public FeuilleCoups()
         {
