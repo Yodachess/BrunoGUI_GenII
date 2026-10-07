@@ -97,6 +97,9 @@ namespace BrunoGUI_GenII
             AnalysePosition = new Krypton.Toolkit.KryptonButton();
             LabelJoueurNoir = new EtiquetteUneLigne();
             LabelJoueurBlanc = new EtiquetteUneLigne();
+            LabelTournoi = new EtiquetteUneLigne();
+            LabelDetailsTournoi = new EtiquetteUneLigne();
+            groupBilanPartie = new System.Windows.Forms.GroupBox();
             PenduleBlanc = new EtiquetteUneLigne();
             PenduleNoir = new EtiquetteUneLigne();
             InformationsPartie = new System.Windows.Forms.Label();
@@ -141,6 +144,7 @@ namespace BrunoGUI_GenII
             ((System.ComponentModel.ISupportInitialize)Plateau).BeginInit();
             groupParcoursPartie.SuspendLayout();
             groupBoxTempsReflexion.SuspendLayout();
+            groupBilanPartie.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)TempsReflexionSecondes).BeginInit();
             SuspendLayout();
             // 
@@ -587,9 +591,9 @@ namespace BrunoGUI_GenII
             //
             // BarreAnalysePartie
             // 
-            BarreAnalysePartie.Location = new System.Drawing.Point(538, 646);
+            BarreAnalysePartie.Location = new System.Drawing.Point(6, 20);
             BarreAnalysePartie.Name = "BarreAnalysePartie";
-            BarreAnalysePartie.Size = new System.Drawing.Size(212, 12);
+            BarreAnalysePartie.Size = new System.Drawing.Size(200, 12);
             BarreAnalysePartie.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
             BarreAnalysePartie.TabIndex = 31;
             BarreAnalysePartie.Visible = false;
@@ -597,10 +601,22 @@ namespace BrunoGUI_GenII
             // BilanAnalyse
             // 
             BilanAnalyse.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            BilanAnalyse.Location = new System.Drawing.Point(538, 662);
+            BilanAnalyse.Location = new System.Drawing.Point(4, 16);
             BilanAnalyse.Name = "BilanAnalyse";
-            BilanAnalyse.Size = new System.Drawing.Size(212, 92);
+            BilanAnalyse.Size = new System.Drawing.Size(204, 92);
             BilanAnalyse.TabIndex = 32;
+            //
+            // groupBilanPartie (la barre de progression de l'analyse, visible seulement pendant l'analyse, est par-dessus le bilan, vide alors)
+            //
+            groupBilanPartie.BackColor = System.Drawing.Color.WhiteSmoke;
+            groupBilanPartie.Controls.Add(BarreAnalysePartie);
+            groupBilanPartie.Controls.Add(BilanAnalyse);
+            groupBilanPartie.Location = new System.Drawing.Point(538, 644);
+            groupBilanPartie.Name = "groupBilanPartie";
+            groupBilanPartie.Size = new System.Drawing.Size(212, 112);
+            groupBilanPartie.TabIndex = 47;
+            groupBilanPartie.TabStop = false;
+            groupBilanPartie.Text = "Bilan partie";
             // 
             // BoutonSetupPosition
             // 
@@ -756,9 +772,35 @@ namespace BrunoGUI_GenII
             LabelJoueurBlanc.Text = "[Elo] Joueur Blanc";
             LabelJoueurBlanc.Padding = new System.Windows.Forms.Padding(6, 0, 2, 0);
             LabelJoueurBlanc.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
+            //
+            // LabelTournoi
+            //
+            LabelTournoi.BackColor = System.Drawing.Color.FromArgb(255, 250, 222);
+            LabelTournoi.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            LabelTournoi.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            LabelTournoi.ForeColor = System.Drawing.Color.Black;
+            LabelTournoi.Location = new System.Drawing.Point(538, 28);
+            LabelTournoi.Name = "LabelTournoi";
+            LabelTournoi.Size = new System.Drawing.Size(212, 36);
+            LabelTournoi.TabIndex = 45;
+            LabelTournoi.Padding = new System.Windows.Forms.Padding(6, 0, 2, 0);
+            LabelTournoi.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // LabelDetailsTournoi
+            //
+            LabelDetailsTournoi.BackColor = System.Drawing.Color.FromArgb(255, 250, 222);
+            LabelDetailsTournoi.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            LabelDetailsTournoi.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            LabelDetailsTournoi.ForeColor = System.Drawing.Color.FromArgb(90, 75, 40);
+            LabelDetailsTournoi.Location = new System.Drawing.Point(538, 68);
+            LabelDetailsTournoi.Name = "LabelDetailsTournoi";
+            LabelDetailsTournoi.Size = new System.Drawing.Size(212, 19);
+            LabelDetailsTournoi.TabIndex = 46;
+            LabelDetailsTournoi.Padding = new System.Windows.Forms.Padding(6, 0, 2, 0);
+            LabelDetailsTournoi.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
             // PenduleBlanc
-            // 
+            //
             PenduleBlanc.BackColor = System.Drawing.Color.White;
             PenduleBlanc.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             PenduleBlanc.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
@@ -1237,6 +1279,9 @@ namespace BrunoGUI_GenII
             Controls.Add(MontreVariantesUci);
             Controls.Add(InformationsPartie);
             Controls.Add(LabelJoueurBlanc);
+            Controls.Add(LabelTournoi);
+            Controls.Add(LabelDetailsTournoi);
+            Controls.Add(groupBilanPartie);
             Controls.Add(PenduleBlanc);
             Controls.Add(LabelJoueurNoir);
             Controls.Add(PenduleNoir);
@@ -1249,8 +1294,6 @@ namespace BrunoGUI_GenII
             Controls.Add(RetourArriere);
             Controls.Add(BoutonAnalysePartie);
             Controls.Add(BoutonAnalyseComplete);
-            Controls.Add(BarreAnalysePartie);
-            Controls.Add(BilanAnalyse);
             Controls.Add(BoutonSetupPosition);
             Controls.Add(BoutonBalises);
             Controls.Add(GroupPromo);
@@ -1279,6 +1322,7 @@ namespace BrunoGUI_GenII
             ((System.ComponentModel.ISupportInitialize)Plateau).EndInit();
             groupParcoursPartie.ResumeLayout(false);
             groupBoxTempsReflexion.ResumeLayout(false);
+            groupBilanPartie.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)TempsReflexionSecondes).EndInit();
             ResumeLayout(false);
             PerformLayout();
@@ -1324,6 +1368,9 @@ namespace BrunoGUI_GenII
         private System.Windows.Forms.ToolStripStatusLabel EvaluationUci;
         private EtiquetteUneLigne LabelJoueurNoir;
         private EtiquetteUneLigne LabelJoueurBlanc;
+        private EtiquetteUneLigne LabelTournoi;
+        private EtiquetteUneLigne LabelDetailsTournoi;
+        private System.Windows.Forms.GroupBox groupBilanPartie;
         private System.Windows.Forms.Label InformationsPartie;
         private Krypton.Toolkit.KryptonButton MontreVariantesUci;
         private System.Windows.Forms.ToolStripMenuItem ParametresAvances;

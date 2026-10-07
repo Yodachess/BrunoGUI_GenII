@@ -102,6 +102,8 @@ namespace BrunoGUI_GenII
             TempsReflexionSecondes.Value = Math.Clamp(parametres.DureeReflexionSeconde, (int)TempsReflexionSecondes.Minimum, (int)TempsReflexionSecondes.Maximum);
             foreach (Cadence cadence in Cadence.Proposees)
                 ListePendule.Items.Add(cadence);
+            ListePendule.DrawMode = DrawMode.OwnerDrawFixed;    // étoile dorée des cadences officielles
+            ListePendule.DrawItem += PartieForceModule.DessineCadence;
             ChoisitCadence(parametres.Cadence);
             _minuteriePendule.Tick += MinuteriePendule_Tick;
             PenduleBlanc.Click += Pendule_Click;        // un clic sur une pendule : pause / reprise
@@ -1047,6 +1049,9 @@ namespace BrunoGUI_GenII
                 AffichePendules();
                 AfficheCoupsBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
                 InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + NomCamp(QuiJoue);
+                // Dernière case de la barre d'état : le dernier coup qui reste (celui annulé y était encore)
+                Coup dernierCoup = LogiqueMouvements.ListeCoups.LastOrDefault(c => !c.EstPositionDeDepart);
+                VarianteMoteurCourante.Text = dernierCoup != null ? "Coup joué : " + dernierCoup.PgnFrNumerote : "Position de départ";
                 InformationsPartie.Text = _partie.Blancs == Joueur.Moteur ? "L'ordinateur joue les Blancs" :
                           _partie.Noirs == Joueur.Moteur ? "L'ordinateur joue les Noirs" :
                           "L'ordinateur ne joue pas cette partie";
@@ -1509,7 +1514,8 @@ namespace BrunoGUI_GenII
             try
             {
                 // La partie au format PGN, avec les temps de la pendule après chaque coup (seulement dans le fichier, pas à l'affichage)
-                string contenuPgn = GestionPartiePgn.RetourneContenuPgn(PartieEnCours, "Intl", pourFichier: true);
+                // Fins de ligne Windows (CRLF) dans le fichier : certains logiciels n'affichent pas un simple "\n" comme un retour à la ligne
+                string contenuPgn = GestionPartiePgn.RetourneContenuPgn(PartieEnCours, "Intl", pourFichier: true).Replace("\n", "\r\n");
                 // Ecriture du fichier PGN (Partie complète + en-tête)
                 {
                     SauvegardeFichier.OverwritePrompt = false;      // Permet d'éviter l'affichage de 2 boites de dialogue si le fichier choisi existe...
@@ -1528,10 +1534,9 @@ namespace BrunoGUI_GenII
                                 InformationPourJoueur.Text = "La partie est écrite dans le fichier " + Path.GetFileName(cheminPgn);
                             }
                             else if (resultat == DialogResult.Yes)
-                            {   // Ajoute la nouvelle partie à la fin du fichier existant
-                                string contenuExistant = File.ReadAllText(cheminPgn);
-                                contenuExistant += "\n\n" + contenuPgn;
-                                File.WriteAllText(cheminPgn, contenuExistant);
+                            {   // Ajoute la nouvelle partie à la fin du fichier existant, sans réécrire ce qu'il contient (relu puis réécrit
+                                // en UTF-8, un fichier aux lignes Latin-1 aurait perdu ses accents)
+                                File.AppendAllText(cheminPgn, "\r\n\r\n" + contenuPgn);
                                 InformationPourJoueur.Text = "La partie est ajoutée dans le fichier " + Path.GetFileName(cheminPgn);
                             }
                             else if (resultat == DialogResult.Cancel)
@@ -1787,8 +1792,28 @@ namespace BrunoGUI_GenII
         private void MetAJourFeuille()
         {   // Feuille de partie à droite de l'échiquier : tous les coups, et le coup de la position affichée surligné
             // (pendant le parcours, le coup regardé ; sinon le dernier coup joué ; rien pour la position de départ)
+            // Partie finie : son résultat sous le dernier coup, comme sur une feuille papier
             int indexAffiche = ParcoursEnCours ? _indexAffiche : LogiqueMouvements.ListeCoups.Count - 1;
-            FeuilleDesCoups.MetAJour(LogiqueMouvements.ListeCoups, indexAffiche);
+            FeuilleDesCoups.MetAJour(LogiqueMouvements.ListeCoups, indexAffiche, PartieEnCours.Result);
+            AfficheTournoi();
+        }
+        private void AfficheTournoi()
+        {   // Au-dessus de la feuille, à droite des joueurs : le tournoi (balise Event), puis la ronde, le lieu et la date
+            // (infobulle : le texte complet, s'il est coupé)
+            static string Valeur(string balise) => string.IsNullOrWhiteSpace(balise) || balise.Trim() is "?" or "-" ? "" : balise.Trim();
+            string date = Valeur(PartieEnCours.Date);
+            string[] morceaux = date.Split('.');            // "2026.04.19" -> "19/04/2026" (les parties inconnues "??" sont omises)
+            if (morceaux.Length == 3)
+                date = string.Join("/", morceaux.Reverse().Where(m => m.All(char.IsDigit) && m != ""));
+            string ronde = Valeur(PartieEnCours.Ronde);
+            string details = string.Join("  ·  ", new[] { ronde != "" ? "Ronde " + ronde : "", Valeur(PartieEnCours.Lieu), date }.Where(t => t != ""));
+            string tournoi = Valeur(PartieEnCours.Tournoi);
+            if (LabelTournoi.Text == tournoi && LabelDetailsTournoi.Text == details)
+                return;
+            LabelTournoi.Text = tournoi;
+            LabelDetailsTournoi.Text = details;
+            _infobulleBilan.SetToolTip(LabelTournoi, tournoi + (details != "" ? "\n" + details : ""));
+            _infobulleBilan.SetToolTip(LabelDetailsTournoi, tournoi + (details != "" ? "\n" + details : ""));
         }
         private void FeuilleDesCoups_CoupClique(int index)
         {   // Clic sur un coup de la feuille : on affiche la position après ce coup (le dernier coup ramène à la partie)
@@ -1908,6 +1933,9 @@ namespace BrunoGUI_GenII
         private void PositionAnalyseeParLeMoteur(LigneAnalyse meilleure)
         {   // Réponse du moteur pour la position demandée (null : aucun score) : on l'enregistre et on passe à la suivante
             _analyseDePartie.Enregistre(_positionEnAnalyse, meilleure);
+            // Annotations au fur et à mesure (choix de Bruno) : l'analyse allant de la fin vers le début, la position d'après est déjà
+            // analysée et le coup joué dans celle-ci peut être jugé tout de suite ; la feuille est redessinée avec la position suivante
+            _analyseDePartie.AppliqueAuxCoups(LogiqueMouvements.ListeCoups);
             AnalysePositionSuivante();
         }
         private static string TexteBilan(string camp, BilanCamp bilan) =>

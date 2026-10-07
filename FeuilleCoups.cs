@@ -52,29 +52,36 @@ namespace BrunoGUI_GenII
         private int LargeurNumero => TextRenderer.MeasureText("888.", Font).Width + 4;
         private int LargeurCoup => Math.Max(10, (ClientSize.Width - LargeurNumero - 2) / 2);
 
-        public void MetAJour(IReadOnlyList<Coup> coups, int indexSelectionne)
-        {   // Les coups de la partie, et le coup surligné (celui de la position affichée ; -1 : aucun, ex : position de départ)
+        private string _resultat;               // résultat écrit sous le dernier coup ("1-0", "0-1", "½-½"), null : partie en cours
+
+        public void MetAJour(IReadOnlyList<Coup> coups, int indexSelectionne, string resultat = null)
+        {   // Les coups de la partie, le coup surligné (celui de la position affichée ; -1 : aucun, ex : position de départ),
+            // et le résultat de la partie ("1-0", "0-1", "1/2-1/2" ; vide ou "*" : partie en cours, rien n'est écrit)
             _coups = [.. coups];
             _lignes = FeuilleDePartie.Lignes(_coups);
+            _resultat = resultat is "1-0" or "0-1" ? resultat : resultat == "1/2-1/2" ? "½-½" : null;
             _indexSelectionne = indexSelectionne;
             _indexSurvole = -1;
-            AutoScrollMinSize = new Size(0, _lignes.Count * HauteurLigne + 2);
+            AutoScrollMinSize = new Size(0, NombreLignes * HauteurLigne + 2);
             RendVisible(indexSelectionne);
             Invalidate();
         }
 
+        private int NombreLignes => _lignes.Count + (_resultat != null ? 1 : 0);     // avec la ligne du résultat
+
         private int LigneDuCoup(int index) => _lignes.FindIndex(l => l.Blanc == index || l.Noir == index);
 
         private void RendVisible(int index)
-        {   // Fait défiler la feuille pour que le coup soit visible (le dernier coup joué reste en vue)
+        {   // Fait défiler la feuille pour que le coup soit visible (le dernier coup joué reste en vue, avec le résultat en dessous)
             int ligne = LigneDuCoup(index);
             if (ligne < 0)
                 return;
+            int lignesVisibles = ligne == _lignes.Count - 1 && _resultat != null ? 2 : 1;
             int haut = ligne * HauteurLigne, decalage = -AutoScrollPosition.Y;
             if (haut < decalage)
                 AutoScrollPosition = new Point(0, haut);
-            else if (haut + HauteurLigne > decalage + ClientSize.Height)
-                AutoScrollPosition = new Point(0, haut + HauteurLigne - ClientSize.Height + 2);
+            else if (haut + lignesVisibles * HauteurLigne > decalage + ClientSize.Height)
+                AutoScrollPosition = new Point(0, haut + lignesVisibles * HauteurLigne - ClientSize.Height + 2);
         }
 
         private int CoupSous(Point point)
@@ -104,6 +111,13 @@ namespace BrunoGUI_GenII
                     TextFormatFlags.Right | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
                 DessineCase(e.Graphics, l.Blanc, l.Noir != null, new Rectangle(largeurNumero, y, largeurCoup, hauteur));
                 DessineCase(e.Graphics, l.Noir, false, new Rectangle(largeurNumero + largeurCoup, y, largeurCoup, hauteur));
+            }
+            if (_resultat != null)
+            {   // Le résultat, centré et en gras sous le dernier coup
+                int y = 1 + _lignes.Count * hauteur + AutoScrollPosition.Y;
+                _policeResultat ??= new Font(Font, FontStyle.Bold);
+                TextRenderer.DrawText(e.Graphics, _resultat, _policeResultat, new Rectangle(0, y, ClientSize.Width, hauteur), ForeColor,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
             }
             using Pen bordure = new(CouleurBordure);
             e.Graphics.DrawRectangle(bordure, 0, 0, ClientSize.Width - 1, ClientSize.Height - 1);
@@ -144,6 +158,7 @@ namespace BrunoGUI_GenII
         }
 
         private Font _policeAnnotation;     // police des pastilles d'annotation (créée une seule fois)
+        private Font _policeResultat;       // police du résultat de la partie (gras)
 
         private static void DessinePastille(Graphics g, Rectangle zone, Color couleur)
         {   // Rectangle aux coins arrondis, plein
@@ -162,12 +177,13 @@ namespace BrunoGUI_GenII
         }
 
         public static Color CouleurAnnotation(string annotation) => annotation switch
-        {   // !! turquoise, ! vert, !? violet, ?! orange, ? orange foncé, ?? rouge
+        {   // !! turquoise, ! vert, !? violet, ?! jaune ocre, ? orange, ?? rouge (? et ?? bien distincts : l'orange foncé
+            // d'avant se confondait avec le rouge)
             "!!" => Color.FromArgb(0, 150, 136),
             "!" => Color.FromArgb(34, 139, 34),
             "!?" => Color.FromArgb(120, 80, 200),
-            "?!" => Color.FromArgb(225, 135, 0),
-            "?" => Color.FromArgb(215, 75, 30),
+            "?!" => Color.FromArgb(200, 150, 0),
+            "?" => Color.FromArgb(240, 110, 0),
             "??" => Color.FromArgb(200, 0, 0),
             _ => Color.Black
         };
