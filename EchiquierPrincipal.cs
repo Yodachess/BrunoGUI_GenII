@@ -1157,7 +1157,11 @@ namespace BrunoGUI_GenII
             //                le début comme ChessBase, toujours à pleine force ; annotations proposées, précision en % et bilan,
             //                coup critique (clic), flèches du coup joué et du meilleur coup, évaluation et meilleure suite au parcours,
             //                PGN enregistré avec %eval et la meilleure variante après les erreurs
-            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.14\n--  Bruno COURTOIS  -- " +
+            // Version 1.15 = courbe d'évaluation verticale le long de la feuille (barres façon ChessBase), annotations pendant
+            //                l'analyse, cadre "Bilan partie", tournoi au-dessus de la feuille, résultat sur la feuille, feuille
+            //                sur fond blanc, cadences KO / FIDE (étoile dorée), PGN en CRLF ajouté sans réécrire le fichier,
+            //                bibliothèque aléatoire par défaut, plantage pendant le parcours d'une analyse corrigé
+            _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version 1.15\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", "A propos de",
                 KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
         }
