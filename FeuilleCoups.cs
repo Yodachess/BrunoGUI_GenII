@@ -56,32 +56,32 @@ namespace BrunoGUI_GenII
         private int LargeurCoup => Math.Max(10, (ClientSize.Width - LargeurNumero - 2 - LargeurBande) / 2);
 
         // ═══ Courbe d'évaluation : bande verticale à droite des coups, alignée sur les lignes (elle défile avec la feuille) ═══
-        // Chaque demi-coup analysé a un point à la hauteur de son coup (coup blanc : moitié haute de la ligne, coup noir : moitié
-        // basse) ; l'écart à la ligne centrale suit les chances de gain (comme les annotations : un +8 n'écrase pas le reste),
-        // l'avantage blanc vers la gauche en clair, l'avantage noir vers la droite en sombre. Points de couleur : annotations
+        // À la façon de ChessBase (choix de Bruno) : une barre par demi-coup analysé, à la hauteur de son coup (coup blanc : moitié
+        // haute de la ligne, coup noir : moitié basse), partant de la ligne centrale (0.00) ; VERTE vers la droite quand les Blancs
+        // sont mieux, ROUGE vers la gauche quand ce sont les Noirs, longueur en pions jusqu'à ±4 (au-delà : barre entière),
+        // JAUNE entière pour un mat. Repères discrets à ±1 et ±2 pions ; petit carré de couleur au bout d'une barre annotée
         public const int LargeurBande = 36;
-        private static readonly Color CouleurFondBande = Color.FromArgb(214, 219, 227);
-        private static readonly Color CouleurAvantageBlanc = Color.FromArgb(252, 252, 252);
-        private static readonly Color CouleurAvantageNoir = Color.FromArgb(70, 72, 78);
-        private static readonly Color CouleurLigneCentrale = Color.FromArgb(150, 155, 165);
+        private const double PionsMaximum = 4;
+        private static readonly Color CouleurFondBande = Color.FromArgb(246, 247, 249);
+        private static readonly Color CouleurBlancsMieux = Color.FromArgb(46, 160, 67);
+        private static readonly Color CouleurNoirsMieux = Color.FromArgb(214, 48, 49);
+        private static readonly Color CouleurMat = Color.FromArgb(240, 200, 0);
+        private static readonly Color CouleurLigneCentrale = Color.FromArgb(90, 95, 105);
+        private static readonly Color CouleurRepere = Color.FromArgb(222, 225, 232);
         private Rectangle ZoneBande => new(ClientSize.Width - LargeurBande - 1, 1, LargeurBande, ClientSize.Height - 2);
 
         private float YDuDemiCoup(int ligne, bool noir) =>
-            1 + ligne * HauteurLigne + AutoScrollPosition.Y + HauteurLigne * (noir ? 0.75f : 0.25f);
+            1 + ligne * HauteurLigne + AutoScrollPosition.Y + HauteurLigne * (noir ? 0.5f : 0f);
 
-        private float XDesChances(double chances)
-        {   // Chances de gain (-1 à +1, point de vue des Blancs) -> abscisse dans la bande : +1 tout à gauche, -1 tout à droite
-            Rectangle bande = ZoneBande;
-            float demi = bande.Width / 2f - 2;
-            return bande.X + bande.Width / 2f - (float)chances * demi;
-        }
+        private float DemiLargeurBande => LargeurBande / 2f - 2;
+        private float LongueurPions(double pions) => (float)(Math.Clamp(pions, -PionsMaximum, PionsMaximum) / PionsMaximum) * DemiLargeurBande;
 
-        private IEnumerable<(int Index, PointF Point)> PointsDeLaCourbe()
-        {   // Les demi-coups analysés, dans l'ordre de la partie, avec leur point dans la bande
+        private IEnumerable<(int Index, int Ligne, bool Noir, Evaluation Evaluation)> DemiCoupsAnalyses()
+        {   // Les demi-coups analysés, dans l'ordre de la partie, avec leur ligne
             for (int ligne = 0; ligne < _lignes.Count; ligne++)
                 foreach ((int? index, bool noir) in new[] { (_lignes[ligne].Blanc, false), (_lignes[ligne].Noir, true) })
                     if (index is int i && _coups[i].EvaluationApres is Evaluation evaluation)
-                        yield return (i, new PointF(XDesChances(JugementCoups.ChancesDeGain(evaluation)), YDuDemiCoup(ligne, noir)));
+                        yield return (i, ligne, noir, evaluation);
         }
 
         private void DessineBande(Graphics g)
@@ -89,50 +89,55 @@ namespace BrunoGUI_GenII
             Rectangle bande = ZoneBande;
             using (SolidBrush fond = new(CouleurFondBande))
                 g.FillRectangle(fond, bande);
-            float centre = bande.X + bande.Width / 2f;
-            List<(int Index, PointF Point)> points = [.. PointsDeLaCourbe()];
-            var lissage = g.SmoothingMode;
-            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             Region decoupageAvant = g.Clip;
             g.SetClip(bande);
-            if (points.Count > 0)
-            {   // Surface entre la ligne centrale et la courbe : claire à gauche (Blancs mieux), sombre à droite (Noirs mieux)
-                List<PointF> contour = [new(centre, points[0].Point.Y), .. points.Select(p => p.Point), new(centre, points[^1].Point.Y)];
-                using System.Drawing.Drawing2D.GraphicsPath surface = new();
-                surface.AddPolygon(contour.ToArray());
-                foreach ((RectangleF moitie, Color couleur) in new[] {
-                    (new RectangleF(bande.X, bande.Y, centre - bande.X, bande.Height), CouleurAvantageBlanc),
-                    (new RectangleF(centre, bande.Y, bande.Right - centre, bande.Height), CouleurAvantageNoir) })
+            float centre = bande.X + bande.Width / 2f;
+            using (Pen repere = new(CouleurRepere))
+                foreach (double pions in new[] { -2.0, -1.0, 1.0, 2.0 })
+                    g.DrawLine(repere, centre + LongueurPions(pions), bande.Y, centre + LongueurPions(pions), bande.Bottom);
+            float demiHauteur = HauteurLigne / 2f;
+            foreach ((int index, int ligne, bool noir, Evaluation evaluation) in DemiCoupsAnalyses())
+            {
+                float y = YDuDemiCoup(ligne, noir);
+                if (y > bande.Bottom || y + demiHauteur < bande.Y)
+                    continue;
+                float longueur;
+                Color couleur;
+                if (evaluation.MatEn is int mat)
                 {
-                    g.SetClip(moitie);
-                    using SolidBrush pinceau = new(couleur);
-                    g.FillPath(pinceau, surface);
+                    longueur = (mat >= 0 ? 1 : -1) * DemiLargeurBande;
+                    couleur = CouleurMat;
                 }
-                g.SetClip(bande);
+                else
+                {
+                    longueur = LongueurPions((evaluation.Centipions ?? 0) / 100.0);
+                    couleur = longueur >= 0 ? CouleurBlancsMieux : CouleurNoirsMieux;
+                }
+                RectangleF barre = new(Math.Min(centre, centre + longueur), y + 1, Math.Max(1, Math.Abs(longueur)), demiHauteur - 2);
+                using (SolidBrush pinceau = new(couleur))
+                    g.FillRectangle(pinceau, barre);
+                if (_coups[index].Annotation != "")
+                {   // Coup annoté : petit carré de sa couleur au bout de la barre, cerclé de blanc
+                    float bout = longueur >= 0 ? barre.Right : barre.Left;
+                    RectangleF marque = new(Math.Clamp(bout - 3, bande.X + 1, bande.Right - 7), y + demiHauteur / 2 - 3, 6, 6);
+                    using SolidBrush pinceau = new(CouleurAnnotation(_coups[index].Annotation));
+                    using Pen bord = new(Color.White);
+                    g.FillRectangle(pinceau, marque);
+                    g.DrawRectangle(bord, marque.X, marque.Y, marque.Width, marque.Height);
+                }
             }
             using (Pen ligneCentrale = new(CouleurLigneCentrale))
                 g.DrawLine(ligneCentrale, centre, bande.Y, centre, bande.Bottom);
-            // Le demi-coup affiché : un trait bleu sur toute la largeur
+            // Le demi-coup affiché : cadre bleu autour de sa barre, sur toute la largeur
             int ligneSelection = LigneDuCoup(_indexSelectionne);
             if (ligneSelection >= 0)
             {
                 float y = YDuDemiCoup(ligneSelection, _lignes[ligneSelection].Noir == _indexSelectionne);
-                using Pen repere = new(Color.FromArgb(40, 100, 220), 2);
-                g.DrawLine(repere, bande.X, y, bande.Right, y);
+                using Pen cadre = new(Color.FromArgb(40, 100, 220), 2);
+                g.DrawRectangle(cadre, bande.X + 1, y, bande.Width - 2, demiHauteur);
             }
-            foreach ((int index, PointF point) in points)
-                if (_coups[index].Annotation != "")
-                {   // Coup annoté : un point de sa couleur (bord blanc pour rester visible sur le clair comme sur le sombre)
-                    Color couleur = CouleurAnnotation(_coups[index].Annotation);
-                    using SolidBrush pinceau = new(couleur);
-                    using Pen bord = new(Color.White);
-                    g.FillEllipse(pinceau, point.X - 3.5f, point.Y - 3.5f, 7, 7);
-                    g.DrawEllipse(bord, point.X - 3.5f, point.Y - 3.5f, 7, 7);
-                }
             g.Clip = decoupageAvant;
-            g.SmoothingMode = lissage;
         }
-
         private int DemiCoupDansLaBande(Point point)
         {   // Demi-coup à cette hauteur de la bande (moitié haute de la ligne : coup blanc, basse : coup noir), -1 s'il n'y en a pas
             if (!ZoneBande.Contains(point))
