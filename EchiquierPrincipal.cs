@@ -2065,14 +2065,15 @@ namespace BrunoGUI_GenII
                                             // l'analyse de la partie aussi : on peut parcourir la partie pendant qu'elle avance)
             string fen = index < 0 ? FenDepart : LogiqueMouvements.ListeCoups[index].Fen;
             _vue.DernierCoupMasque = true;  // le dernier coup de la partie n'a pas de sens sur une position passée
-            _positionAffichee = LogiqueMouvements.PositionDepuisFen(fen);
+            Position position = LogiqueMouvements.PositionDepuisFen(fen);   // (variable locale : la suite ne dépend pas du champ)
+            _positionAffichee = position;
             _indexAffiche = index;
             MetAJourCommandes();
-            _vue.DessinePosition(_positionAffichee);
+            _vue.DessinePosition(position);
             AfficheCoupsBibliotheque(fen);
-            InformationPourJoueur.Text = "Trait aux " + NomCamp(_positionAffichee.QuiJoue);
+            InformationPourJoueur.Text = "Trait aux " + NomCamp(position.QuiJoue);
             MiseaZeroParcours();
-            AfficheTextesDuCoup(index, _positionAffichee);
+            AfficheTextesDuCoup(index, position);
             AffichePendules();      // partie sans pendule en cours (ex : PGN chargé) : temps notés à cette position
             if (!PartieEnLectureSeule)
                 InformationsPartie.Text = "Parcours : Fin ou clic pour revenir";
