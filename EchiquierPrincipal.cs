@@ -520,16 +520,16 @@ namespace BrunoGUI_GenII
                     PositionAnalyseeParLeMoteur(_pilote.Lignes.Meilleure);     // analyse de partie : position suivante
                 else if (demande == TypeDemande.Analyse)
                 {   // c'est une analyse : on affiche la meilleure variante (mémorisée par _pilote.Lignes, pas relue dans le texte affiché) :
-                    // dans une fenêtre placée SOUS l'échiquier (centrée, elle cachait la position : remarque de Bruno), sur la 1re ligne
-                    // de variante (centrée, en gras ; les autres variantes restent sur les lignes 2 et 3), dans la barre d'état, et une
-                    // flèche verte montre le coup conseillé sur l'échiquier (effacée par toute action qui change la position)
+                    // dans une boîte de message, sur la 1re ligne de variante (centrée, en gras ; les autres variantes restent sur les
+                    // lignes 2 et 3), dans la barre d'état, et une flèche verte montre le coup conseillé sur l'échiquier (effacée par
+                    // toute action qui change la position)
                     LigneAnalyse meilleure = _pilote.Lignes.Meilleure;
                     InformationPourJoueur.Text = StatusProgramme.Text = "Analyse terminée ... ";
                     string titre = "Analyse Moteur (" + _dureeReflexionMilliSeconde / 1000 + " sec.) par " + _nomMoteur;
                     if (meilleure?.VariantePgn == null)
                     {
                         InformationsPartie.Text = "Le moteur n'a donné aucune variante.";
-                        AfficheResultatSousEchiquier(titre, "Le moteur n'a donné aucune variante.");
+                        _ = KryptonMessageBox.Show("Le moteur n'a donné aucune variante.", titre, KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                     }
                     else
                     {
@@ -542,8 +542,9 @@ namespace BrunoGUI_GenII
                         if (conseil is { Length: >= 4 } && RenvoieCaseIndex120(conseil[..2]) > 0 && RenvoieCaseIndex120(conseil[2..4]) > 0)
                             _vue.MontreFleches((RenvoieCaseIndex120(conseil[..2]), RenvoieCaseIndex120(conseil[2..4]), CouleurFlecheMeilleurCoup));
                         MetAJourCommandes();
-                        AfficheResultatSousEchiquier(titre, "La meilleure suite est : " + meilleure.Debut +
-                            "\nEvaluation --- " + meilleure.TexteScore + " --- (" + appreciation + ")" + "\n" + meilleure.VariantePgn);
+                        _ = KryptonMessageBox.Show("La meilleure suite est : " + meilleure.Debut +
+                            "\n Evaluation --- " + meilleure.TexteScore + " --- (" + appreciation + ")" +
+                            "\n" + meilleure.VariantePgn, titre, KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                     }
                     MetAJourCommandes();
                 }
@@ -551,35 +552,6 @@ namespace BrunoGUI_GenII
             }
         }
 
-        private void AfficheResultatSousEchiquier(string titre, string message)
-        {   // Fenêtre de résultat (comme une boîte de message, avec OK) placée sous l'échiquier, à sa largeur, pour ne pas cacher la
-            // position ; remontée si elle sortait de l'écran
-            using KryptonForm fenetre = new()
-            {
-                Text = titre, FormBorderStyle = FormBorderStyle.FixedDialog, StartPosition = FormStartPosition.Manual,
-                MinimizeBox = false, MaximizeBox = false, ShowInTaskbar = false, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Padding = new Padding(12)
-            };
-            int largeur = Plateau.Width;
-            Label texte = new()
-            {   // (un Label simple : il passe à la ligne tout seul quand la variante est plus longue que la largeur)
-                Text = message, AutoSize = true, MaximumSize = new Size(largeur - 30, 0), Location = new Point(12, 12),
-                Font = new Font("Segoe UI", 10F), BackColor = Color.Transparent
-            };
-            KryptonButton ok = new() { Text = "OK", DialogResult = DialogResult.OK, Size = new Size(90, 28) };
-            fenetre.Controls.Add(texte);
-            fenetre.Controls.Add(ok);
-            fenetre.AcceptButton = fenetre.CancelButton = ok;
-            fenetre.MinimumSize = new Size(largeur, 0);
-            fenetre.Load += (s, e) =>
-            {   // (taille du texte connue après sa mise en page)
-                ok.Location = new Point((fenetre.ClientSize.Width - ok.Width) / 2, texte.Bottom + 14);
-                Point coin = PointToScreen(new Point(Plateau.Left, Plateau.Bottom + 4));
-                Rectangle ecran = Screen.FromControl(this).WorkingArea;
-                fenetre.Location = new Point(Math.Max(ecran.Left, coin.X), Math.Max(ecran.Top, Math.Min(coin.Y, ecran.Bottom - fenetre.Height)));
-            };
-            fenetre.ShowDialog(this);
-        }
         private void AfficheCoupDuMoteur()
         {   // Le moteur vient de jouer (réflexion ou bibliothèque) : son coup dans le cadre vert, ex : "Coup joué : 23. Ce6".
             // Pas si la partie vient de finir (le cadre montre alors le résultat)
@@ -2168,8 +2140,13 @@ namespace BrunoGUI_GenII
                     AfficheLigneCentree(VarianteMoteurUci2, commentaire);
                     commentaire = null;
                 }
-                if (!string.IsNullOrEmpty(coup.VarianteMeilleure))   // ligne 3 : la suite prévue
-                    AfficheLigneCentree(VarianteMoteurUci3, (coup.MeilleurJoue ? "Suite prévue : " : "Meilleure suite : ") + coup.VarianteMeilleure);
+                if (!string.IsNullOrEmpty(coup.VarianteMeilleure))
+                {   // ligne 3 : la suite prévue ; "meilleure" seulement si l'écart avec le coup joué compte (sinon c'est juste une
+                    // autre possibilité, remarque de Bruno)
+                    string libelle = coup.MeilleurJoue ? "Suite prévue : "
+                        : coup.PerteAnalyse < JugementCoups.SeuilImprecision ? "Suite du moteur : " : "Meilleure suite : ";
+                    AfficheLigneCentree(VarianteMoteurUci3, libelle + coup.VarianteMeilleure);
+                }
                 else if (commentaire != null)
                     AfficheLigneCentree(VarianteMoteurUci3, commentaire);
             }
