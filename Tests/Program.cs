@@ -986,6 +986,15 @@ analyseReprise.Enregistre(3, new LigneAnalyse { Numero = 1, Evaluation = new Eva
 Verifie("« ! » : pas pour une reprise immédiate (2... Dxd5 après 2. exd5), même si c'était le seul bon coup",
     analyseReprise.Jugement(3) is { MeilleurJoue: true, Annotation: "" }, $"« {analyseReprise.Jugement(3)?.Annotation} »");
 Charger(L.FenDepart);
+foreach (string coupCaroKann in new[] { "e2e4", "c7c6", "d2d4", "d7d5", "b1c3", "d5e4", "c3e4", "c8f5", "e4g3", "f5g6", "h2h4", "h7h6", "g1f3", "b8d7", "h4h5", "g6h7" })
+    L.ExecutionCoup(coupCaroKann[..2], coupCaroKann[2..]);
+AnalyseDePartie analyseFuite = new(L.ListeCoups);      // 8. h5 Fh7 : le fou attaqué par le pion se retire, seul bon coup mais évident
+analyseFuite.Enregistre(16, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(30, null), VariantePgn = "9. Fd3", VarianteUci = "f1d3" });
+analyseFuite.Enregistre(15, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(30, null), VariantePgn = "8 ... Fh7 9. Fd3", VarianteUci = "g6h7 f1d3" },
+                        new LigneAnalyse { Numero = 2, Evaluation = new Evaluation(300, null) });
+Verifie("« ! » : pas pour une pièce attaquée par une pièce de moindre valeur qui se retire (Caro-Kann, 8. h5 Fh7)",
+    analyseFuite.Jugement(15) is { MeilleurJoue: true, Annotation: "" }, $"« {analyseFuite.Jugement(15)?.Annotation} »");
+Charger(L.FenDepart);
 foreach (string coupSacrifice in new[] { "e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "g8f6", "c4f7" })   // 4. Fxf7+ Rxf7 : un fou pour un pion
     L.ExecutionCoup(coupSacrifice[..2], coupSacrifice[2..]);
 AnalyseDePartie analyseSacrifice = new(L.ListeCoups);
