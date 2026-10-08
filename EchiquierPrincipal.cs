@@ -519,14 +519,18 @@ namespace BrunoGUI_GenII
                 else if (demande == TypeDemande.Analyse && _analyseDePartie != null)
                     PositionAnalyseeParLeMoteur(_pilote.Lignes.Meilleure);     // analyse de partie : position suivante
                 else if (demande == TypeDemande.Analyse)
-                {   // c'est une analyse : on affiche la meilleure variante (mémorisée par _pilote.Lignes, pas relue dans le texte affiché).
-                    // Plus de boîte de message (elle cachait l'échiquier, remarque de Bruno) : le résultat va sous l'échiquier, sur la
-                    // 1re ligne de variante (centré, en gras ; les autres variantes restent sur les lignes 2 et 3), dans la barre d'état,
-                    // et une flèche verte montre le coup conseillé sur l'échiquier (effacée par toute action qui change la position)
+                {   // c'est une analyse : on affiche la meilleure variante (mémorisée par _pilote.Lignes, pas relue dans le texte affiché) :
+                    // dans une fenêtre placée SOUS l'échiquier (centrée, elle cachait la position : remarque de Bruno), sur la 1re ligne
+                    // de variante (centrée, en gras ; les autres variantes restent sur les lignes 2 et 3), dans la barre d'état, et une
+                    // flèche verte montre le coup conseillé sur l'échiquier (effacée par toute action qui change la position)
                     LigneAnalyse meilleure = _pilote.Lignes.Meilleure;
                     InformationPourJoueur.Text = StatusProgramme.Text = "Analyse terminée ... ";
+                    string titre = "Analyse Moteur (" + _dureeReflexionMilliSeconde / 1000 + " sec.) par " + _nomMoteur;
                     if (meilleure?.VariantePgn == null)
+                    {
                         InformationsPartie.Text = "Le moteur n'a donné aucune variante.";
+                        AfficheResultatSousEchiquier(titre, "Le moteur n'a donné aucune variante.");
+                    }
                     else
                     {
                         string appreciation = meilleure.Evaluation?.Appreciation ?? "évaluation inconnue";
@@ -537,6 +541,9 @@ namespace BrunoGUI_GenII
                         string conseil = (meilleure.VarianteUci ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
                         if (conseil is { Length: >= 4 } && RenvoieCaseIndex120(conseil[..2]) > 0 && RenvoieCaseIndex120(conseil[2..4]) > 0)
                             _vue.MontreFleches((RenvoieCaseIndex120(conseil[..2]), RenvoieCaseIndex120(conseil[2..4]), CouleurFlecheMeilleurCoup));
+                        MetAJourCommandes();
+                        AfficheResultatSousEchiquier(titre, "La meilleure suite est : " + meilleure.Debut +
+                            "\nEvaluation --- " + meilleure.TexteScore + " --- (" + appreciation + ")" + "\n" + meilleure.VariantePgn);
                     }
                     MetAJourCommandes();
                 }
@@ -544,6 +551,35 @@ namespace BrunoGUI_GenII
             }
         }
 
+        private void AfficheResultatSousEchiquier(string titre, string message)
+        {   // Fenêtre de résultat (comme une boîte de message, avec OK) placée sous l'échiquier, à sa largeur, pour ne pas cacher la
+            // position ; remontée si elle sortait de l'écran
+            using KryptonForm fenetre = new()
+            {
+                Text = titre, FormBorderStyle = FormBorderStyle.FixedDialog, StartPosition = FormStartPosition.Manual,
+                MinimizeBox = false, MaximizeBox = false, ShowInTaskbar = false, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(12)
+            };
+            int largeur = Plateau.Width;
+            Label texte = new()
+            {   // (un Label simple : il passe à la ligne tout seul quand la variante est plus longue que la largeur)
+                Text = message, AutoSize = true, MaximumSize = new Size(largeur - 30, 0), Location = new Point(12, 12),
+                Font = new Font("Segoe UI", 10F), BackColor = Color.Transparent
+            };
+            KryptonButton ok = new() { Text = "OK", DialogResult = DialogResult.OK, Size = new Size(90, 28) };
+            fenetre.Controls.Add(texte);
+            fenetre.Controls.Add(ok);
+            fenetre.AcceptButton = fenetre.CancelButton = ok;
+            fenetre.MinimumSize = new Size(largeur, 0);
+            fenetre.Load += (s, e) =>
+            {   // (taille du texte connue après sa mise en page)
+                ok.Location = new Point((fenetre.ClientSize.Width - ok.Width) / 2, texte.Bottom + 14);
+                Point coin = PointToScreen(new Point(Plateau.Left, Plateau.Bottom + 4));
+                Rectangle ecran = Screen.FromControl(this).WorkingArea;
+                fenetre.Location = new Point(Math.Max(ecran.Left, coin.X), Math.Max(ecran.Top, Math.Min(coin.Y, ecran.Bottom - fenetre.Height)));
+            };
+            fenetre.ShowDialog(this);
+        }
         private void AfficheCoupDuMoteur()
         {   // Le moteur vient de jouer (réflexion ou bibliothèque) : son coup dans le cadre vert, ex : "Coup joué : 23. Ce6".
             // Pas si la partie vient de finir (le cadre montre alors le résultat)
@@ -2112,7 +2148,13 @@ namespace BrunoGUI_GenII
                 foreach (RichTextBox ligne in new[] { VarianteMoteurUci1, VarianteMoteurUci2, VarianteMoteurUci3 })
                     _infobulleBilan.SetToolTip(ligne, commentaire != null ? "Commentaire : " + commentaire : null);
                 if (coup.EvaluationApres != null || coup.MeilleurCoup != null)
-                    AfficheLigneCentree(VarianteMoteurUci2, TexteAnalyseDuCoup(coup));
+                {   // Le texte le plus complet qui tient sur la ligne : sinon sans le nom de l'annotation, puis sans le symbole (-+)
+                    int largeur = VarianteMoteurUci2.ClientSize.Width - 14;
+                    string texte = new[] { TexteAnalyseDuCoup(coup, true, true), TexteAnalyseDuCoup(coup, false, true), TexteAnalyseDuCoup(coup, false, false) }
+                        .FirstOrDefault(t => TextRenderer.MeasureText(t, _policesLignes[VarianteMoteurUci2].Grasse).Width <= largeur)
+                        ?? TexteAnalyseDuCoup(coup, false, false);
+                    AfficheLigneCentree(VarianteMoteurUci2, texte);
+                }
                 else if (commentaire != null)
                 {
                     AfficheLigneCentree(VarianteMoteurUci2, commentaire);
@@ -2165,22 +2207,23 @@ namespace BrunoGUI_GenII
             if (fleches.TrueForAll(f => f.Item1 > 0 && f.Item2 > 0))
                 _vue.MontreFleches([.. fleches]);
         }
-        private static string TexteAnalyseDuCoup(Coup coup)
-        {   // Ex : "Analyse : -9.05 (-+)   joué Dh2 [?? Gaffe]   — meilleur : Rd3 (0.00)" : le coup joué et son jugement, puis le
-            // meilleur coup avec SON évaluation. Si le coup joué ne perd presque rien (ex : mat en 3 au lieu de 2), le meilleur
-            // n'est qu'une préférence : "— le moteur préférait Rd3 (0.00), écart négligeable" (proposition de Claude, Bruno trouvait
-            // "meilleur" inadapté). Coups en notation longue, avec la case de départ : "Dd8-d7", "Ta8-c8". Sans évaluation (PGN
-            // chargé sans [%eval]) : "Joué Fc8-e6 [?? Gaffe]   — meilleur : Fc8-b7"
-            string texte = (coup.EvaluationApres is Evaluation evaluation ? $"Analyse : {evaluation.Texte} ({evaluation.Symbole})   joué " : "Joué ")
+        private static string TexteAnalyseDuCoup(Coup coup, bool nomAnnotation, bool symbole)
+        {   // Ex : "-9.05 (-+)  joué Dh2 ?? [Gaffe]  — meilleur : Rd3 (0.00)" : l'évaluation après le coup, le coup joué et son jugement
+            // ("?? [Gaffe]", choix de Bruno), puis le meilleur coup avec SON évaluation. Si le coup joué ne perd presque rien (ex : mat
+            // en 3 au lieu de 2), le meilleur n'est qu'une préférence : "— moteur : Rd3 (0.00), écart négligeable" (Bruno trouvait
+            // "meilleur" inadapté). Coups en notation longue, avec la case de départ : "Dd8-d7", "Ta8-c8". Court pour tenir sur la
+            // ligne en police 10 (sans "Analyse :", deux espaces) ; nomAnnotation et symbole à false raccourcissent encore.
+            // Sans évaluation (PGN chargé sans [%eval]) : "Joué Fc8-e6 ?? [Gaffe]  — meilleur : Fc8-b7"
+            string texte = (coup.EvaluationApres is Evaluation evaluation ? evaluation.Texte + (symbole ? $" ({evaluation.Symbole})" : "") + "  joué " : "Joué ")
                 + (coup.CoupJoueLong ?? coup.PgnFrSansNumero)
-                + (coup.Annotation != "" ? $" {coup.Annotation} [{Annotations.Nom(coup.Annotation)}]" : "");     // "?? [Gaffe]" (choix de Bruno)
+                + (coup.Annotation != "" ? " " + coup.Annotation + (nomAnnotation ? $" [{Annotations.Nom(coup.Annotation)}]" : "") : "");
             if (coup.MeilleurJoue)
-                return texte + "   — meilleur coup du moteur";
+                return texte + "  — meilleur coup du moteur";
             if (coup.MeilleurCoup == null)
                 return texte;
             string meilleur = (coup.MeilleurCoupLong ?? coup.MeilleurCoup) + (coup.EvaluationMeilleur is Evaluation e ? $" ({e.Texte})" : "");
             return texte + (coup.PerteAnalyse < JugementCoups.SeuilImprecision
-                ? $"   — le moteur préférait {meilleur}, écart négligeable" : $"   — meilleur : {meilleur}");
+                ? $"  — moteur : {meilleur}, écart négligeable" : $"  — meilleur : {meilleur}");
         }
 
         // Les lignes de variante 1 et 2 servent aussi aux variantes du moteur (à gauche, police normale) : pendant le parcours, le coup
@@ -2204,22 +2247,13 @@ namespace BrunoGUI_GenII
             };
             SendMessage(ligne.Handle, EM_SETRECT, IntPtr.Zero, ref zone);
         }
-        private readonly Dictionary<float, Font> _policesReduites = [];
         private void AfficheLigneCentree(RichTextBox ligne, string texte)
-        {   // Texte centré en gras ; s'il est trop long pour la ligne, la police rétrécit (par demi-points, jusqu'à 7) pour qu'il tienne
-            Font police = _policesLignes[ligne].Grasse;
-            int largeurDisponible = ligne.ClientSize.Width - 14;
-            for (float taille = police.Size - 0.5f; taille >= 7f && TextRenderer.MeasureText(texte, police).Width > largeurDisponible; taille -= 0.5f)
-            {
-                if (!_policesReduites.TryGetValue(taille, out Font reduite))
-                    _policesReduites[taille] = reduite = new Font(police.FontFamily, taille, FontStyle.Bold);
-                police = reduite;
-            }
+        {   // Texte centré en gras, toujours dans la police de la ligne (Bruno ne veut pas de police réduite)
             _ecritureCentree = true;
             ligne.Text = texte;
             ligne.SelectAll();
             ligne.SelectionAlignment = HorizontalAlignment.Center;
-            ligne.SelectionFont = police;
+            ligne.SelectionFont = _policesLignes[ligne].Grasse;
             ligne.DeselectAll();
             _ecritureCentree = false;
         }
