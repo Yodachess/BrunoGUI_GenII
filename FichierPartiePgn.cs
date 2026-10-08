@@ -42,16 +42,21 @@ namespace BrunoGUI_GenII
         }
         public const string MarqueTemps = "%clk=";     // garderTemps : "{[%clk 0:02:51]}" devient le mot "%clk=0:02:51"
         public const string MarqueReflexion = "%emt="; // "{[%emt 0:30:11]}" (temps passé sur le coup, ChessBase) devient "%emt=0:30:11"
+        public const string MarqueEvaluation = "%eval=";   // "{[%eval -0.60]}" devient "%eval=-0.60" ("#-3" pour un mat)
+        public const string MarqueCommentaire = "%com=";   // texte d'un commentaire (sans ses [%...]), en base 64 (il contient des espaces)
+        public const string MarqueVariante = "%var=";      // une variante "( ... )" de la partie principale, en base 64
 
         public static string ExtraireCoups(string pgn, bool garderTemps = false)
         {   // Cette méthode parcourt le PGN caractère par caractère et utilise une machine à états
             // pour déterminer si elle se trouve dans les en-têtes, les coups, les commentaires ou les variantes.
             // Les variantes peuvent être imbriquées "( ... ( ... ) ... )" : on compte la profondeur, sinon la fin d'une variante
             // intérieure ferait reprendre la variante extérieure comme si c'étaient des coups de la partie.
-            // garderTemps : le temps de pendule d'un commentaire de la partie principale ([%clk h:mm:ss]) est gardé sous la forme
-            // d'un mot "%clk=h:mm:ss", placé juste après son coup (les autres commentaires disparaissent)
+            // garderTemps : chaque commentaire de la partie principale est gardé, juste après son coup, sous la forme de mots :
+            // temps de pendule "%clk=h:mm:ss", temps de réflexion "%emt=", évaluation "%eval=", et son texte "%com=" ;
+            // chaque variante de la partie principale (avec ses sous-variantes, sans ses commentaires) devient un mot "%var="
             StringBuilder sb = new();
             StringBuilder commentaire = new();
+            StringBuilder variante = new();     // variante de la partie principale en cours de lecture
             bool dansCommentaire = false;       // { ... }
             bool dansCommentaireLigne = false;  // ; ... jusqu'à la fin de la ligne
             int profondeurVariante = 0;
@@ -67,9 +72,7 @@ namespace BrunoGUI_GenII
                     }
                     dansCommentaire = false;
                     if (garderTemps && profondeurVariante == 0)
-                        // (sauts de ligne retirés : ChessBase coupe parfois le temps en fin de ligne, ex : "[%emt 0:⏎00:47]")
-                        foreach (Match temps in Regex.Matches(commentaire.ToString().Replace("\r", "").Replace("\n", ""), @"%(clk|emt)\s*(\d+:\d{1,2}:\d{1,2}(?:\.\d+)?)"))
-                            sb.Append(' ').Append(temps.Groups[1].Value == "clk" ? MarqueTemps : MarqueReflexion).Append(temps.Groups[2].Value).Append(' ');
+                        AjouteCommentaire(sb, commentaire.ToString());
                     commentaire.Clear();
                     continue;
                 }
@@ -80,10 +83,32 @@ namespace BrunoGUI_GenII
                 }
                 if (c == '{') { dansCommentaire = true; sb.Append(' '); continue; }   // espace : les coups de part et d'autre restent séparés
                 if (c == ';') { dansCommentaireLigne = true; continue; }
-                if (c == '(') { profondeurVariante++; sb.Append(' '); continue; }
-                if (c == ')') { if (profondeurVariante > 0) profondeurVariante--; continue; }
-                if (profondeurVariante > 0)
+                if (c == '(')
+                {
+                    if (profondeurVariante > 0)
+                        variante.Append(c);
+                    else
+                        variante.Clear();
+                    profondeurVariante++;
+                    sb.Append(' ');
                     continue;
+                }
+                if (c == ')')
+                {
+                    if (profondeurVariante == 0)
+                        continue;
+                    profondeurVariante--;
+                    if (profondeurVariante > 0)
+                        variante.Append(c);
+                    else if (garderTemps && variante.ToString().Trim() != "")
+                        sb.Append(' ').Append(MarqueVariante).Append(EnBase64(variante.ToString().Trim())).Append(' ');
+                    continue;
+                }
+                if (profondeurVariante > 0)
+                {
+                    variante.Append(c);
+                    continue;
+                }
                 if (c == '[')
                 {   // "enlève" les balises [Nom "valeur"]
                     while (i < pgn.Length && pgn[i] != ']')
@@ -93,6 +118,35 @@ namespace BrunoGUI_GenII
                 sb.Append(c);
             }
             return sb.ToString();
+        }
+
+        private static void AjouteCommentaire(StringBuilder sb, string commentaire)
+        {   // Un commentaire de la partie principale : ses commandes [%clk], [%emt], [%eval], puis son texte s'il en reste.
+            // (Sauts de ligne retirés : ChessBase coupe parfois le temps en fin de ligne, ex : "[%emt 0:⏎00:47]")
+            string texte = commentaire.Replace("\r", "").Replace("\n", " ");
+            foreach (Match temps in Regex.Matches(texte.Replace(" ", ""), @"%(clk|emt)(\d+:\d{1,2}:\d{1,2}(?:\.\d+)?)"))
+                sb.Append(' ').Append(temps.Groups[1].Value == "clk" ? MarqueTemps : MarqueReflexion).Append(temps.Groups[2].Value).Append(' ');
+            Match evaluation = Regex.Match(texte, @"\[%eval\s+(#?-?\d+(?:\.\d+)?)");
+            if (evaluation.Success)
+                sb.Append(' ').Append(MarqueEvaluation).Append(evaluation.Groups[1].Value).Append(' ');
+            string libre = Regex.Replace(Regex.Replace(texte, @"\[%[^\]]*\]", " "), @"\s+", " ").Trim();
+            if (libre != "")
+                sb.Append(' ').Append(MarqueCommentaire).Append(EnBase64(libre)).Append(' ');
+        }
+
+        private static string EnBase64(string texte) => Convert.ToBase64String(Encoding.UTF8.GetBytes(texte));
+        public static string DepuisBase64(string texte)
+        {
+            try { return Encoding.UTF8.GetString(Convert.FromBase64String(texte)); }
+            catch (FormatException) { return ""; }
+        }
+
+        public static Evaluation? LitEvaluation(string texte)
+        {   // "0.35", "-9.05" (pions, point de vue des Blancs) ou "#3", "#-3" (mat) : le format [%eval] de Lichess et ChessBase
+            if (texte.StartsWith('#'))
+                return int.TryParse(texte[1..], out int mat) ? new Evaluation(null, mat) : null;
+            return decimal.TryParse(texte, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out decimal pions)
+                ? new Evaluation((int)Math.Round(pions * 100), null) : null;
         }
     }
 
@@ -260,9 +314,28 @@ namespace BrunoGUI_GenII
             PartiePGN.TempsCoups = [];
             PartiePGN.TempsReflexion = [];
             PartiePGN.Annotations = [];
+            PartiePGN.Evaluations = [];
+            PartiePGN.Commentaires = [];
+            PartiePGN.Variantes = [];
             foreach (var t in tokens)
             {
                 string c = t;
+                if (c.StartsWith(ParseurPgn.MarqueEvaluation) || c.StartsWith(ParseurPgn.MarqueCommentaire) || c.StartsWith(ParseurPgn.MarqueVariante))
+                {   // Évaluation, commentaire ou variante du coup qui précède (avant le 1er coup : commentaire de la partie, ignoré) ;
+                    // plusieurs commentaires se suivent, seule la 1re variante compte (c'est l'alternative au coup joué)
+                    if (coupsPropres.Count == 0)
+                        continue;
+                    if (c.StartsWith(ParseurPgn.MarqueEvaluation))
+                        PartiePGN.Evaluations[^1] = ParseurPgn.LitEvaluation(c[ParseurPgn.MarqueEvaluation.Length..]);
+                    else if (c.StartsWith(ParseurPgn.MarqueCommentaire))
+                    {
+                        string texte = ParseurPgn.DepuisBase64(c[ParseurPgn.MarqueCommentaire.Length..]);
+                        PartiePGN.Commentaires[^1] = PartiePGN.Commentaires[^1] == null ? texte : PartiePGN.Commentaires[^1] + " " + texte;
+                    }
+                    else
+                        PartiePGN.Variantes[^1] ??= ParseurPgn.DepuisBase64(c[ParseurPgn.MarqueVariante.Length..]);
+                    continue;
+                }
                 if (c.StartsWith(ParseurPgn.MarqueTemps) || c.StartsWith(ParseurPgn.MarqueReflexion))
                 {   // Temps de pendule ([%clk h:mm:ss]) ou temps de réflexion ([%emt h:mm:ss]) du coup qui précède :
                     // un élément de TempsCoups et de TempsReflexion par coup gardé
@@ -296,6 +369,9 @@ namespace BrunoGUI_GenII
                 PartiePGN.TempsCoups.Add(null);
                 PartiePGN.TempsReflexion.Add(null);
                 PartiePGN.Annotations.Add(annotationDuCoup);
+                PartiePGN.Evaluations.Add(null);
+                PartiePGN.Commentaires.Add(null);
+                PartiePGN.Variantes.Add(null);
             }
 
             string final = string.Join(" ", coupsPropres);

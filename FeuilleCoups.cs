@@ -60,7 +60,7 @@ namespace BrunoGUI_GenII
         // haute de la ligne, coup noir : moitié basse), partant de la ligne centrale (0.00) ; VERTE vers la droite quand les Blancs
         // sont mieux, ROUGE vers la gauche quand ce sont les Noirs, longueur en pions jusqu'à ±4 (au-delà : barre entière),
         // JAUNE entière pour un mat. Repères discrets à ±1 et ±2 pions ; petit carré de couleur au bout d'une barre annotée
-        public const int LargeurBande = 36;
+        public const int LargeurBande = 54;      // élargie en empiétant sur les colonnes de coups (choix de Bruno)
         private const double PionsMaximum = 4;
         private static readonly Color CouleurFondBande = Color.FromArgb(246, 247, 249);
         private static readonly Color CouleurBlancsMieux = Color.FromArgb(46, 160, 67);

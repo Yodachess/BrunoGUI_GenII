@@ -2091,12 +2091,27 @@ namespace BrunoGUI_GenII
                   + (LogiqueMouvements.ListeCoups[index].TempsReflexion is TimeSpan reflexion ? $"   (réflexion : {TexteDuree(reflexion)})" : ""));
             VarianteMoteurUci2.Text = VarianteMoteurUci3.Text = "...";
             VarianteMoteurCourante.Text = positionInitiale ? "Position initiale" : TexteCoupJoue(index, positionApres);
-            // Coup analysé (analyse de partie) : son évaluation et le meilleur coup du moteur, sur la 2e ligne de variante
-            if (index >= 0 && LogiqueMouvements.ListeCoups[index] is { EvaluationApres: Evaluation evaluation } coupAnalyse)
-            {
-                AfficheLigneCentree(VarianteMoteurUci2, TexteAnalyseDuCoup(coupAnalyse, evaluation));
-                if (!string.IsNullOrEmpty(coupAnalyse.VarianteMeilleure))   // ligne 3 : la suite prévue par le moteur
-                    AfficheLigneCentree(VarianteMoteurUci3, (coupAnalyse.MeilleurJoue ? "Suite prévue : " : "Meilleure suite : ") + coupAnalyse.VarianteMeilleure);
+            if (!positionInitiale)
+            {   // Coup analysé (analyse de partie, ou [%eval] et variante du PGN chargé) : son évaluation et le meilleur coup sur la
+                // 2e ligne, la meilleure suite sur la 3e. Commentaire du PGN : sur une ligne restée libre (2e, puis 3e, sinon 1re)
+                Coup coup = LogiqueMouvements.ListeCoups[index];
+                string commentaire = string.IsNullOrWhiteSpace(coup.Commentaire) ? null : $"« {coup.Commentaire} »";
+                if (coup.EvaluationApres != null || coup.MeilleurCoup != null)
+                    AfficheLigneCentree(VarianteMoteurUci2, TexteAnalyseDuCoup(coup));
+                else if (commentaire != null)
+                {
+                    AfficheLigneCentree(VarianteMoteurUci2, commentaire);
+                    commentaire = null;
+                }
+                if (!string.IsNullOrEmpty(coup.VarianteMeilleure))   // ligne 3 : la suite prévue
+                    AfficheLigneCentree(VarianteMoteurUci3, (coup.MeilleurJoue ? "Suite prévue : " : "Meilleure suite : ") + coup.VarianteMeilleure);
+                else if (commentaire != null)
+                {
+                    AfficheLigneCentree(VarianteMoteurUci3, commentaire);
+                    commentaire = null;
+                }
+                if (commentaire != null)
+                    AfficheLigneCentree(VarianteMoteurUci1, VarianteMoteurUci1.Text + "   " + commentaire);
             }
             MontreFlechesDuCoup(index);
         }
@@ -2124,26 +2139,32 @@ namespace BrunoGUI_GenII
             string joue = coup.Uci.Trim();
             if (coup.EstPositionDeDepart || joue.Length < 4)
                 return;
-            bool analyse = coup.EvaluationApres != null;
             List<(int, int, Color)> fleches = [];
             Color couleurJoue = coup.Annotation != "" ? FeuilleCoups.CouleurAnnotation(coup.Annotation) : CouleurFlecheMeilleurCoup;
             fleches.Add((RenvoieCaseIndex120(joue[..2]), RenvoieCaseIndex120(joue[2..4]), couleurJoue));
-            if (analyse && coup.Annotation != "" && !coup.MeilleurJoue && coup.MeilleurCoupUci is { Length: >= 4 } meilleur)
+            // (meilleur coup : de l'analyse de partie, ou 1re variante du PGN chargé)
+            if (coup.Annotation != "" && !coup.MeilleurJoue && coup.MeilleurCoupUci is { Length: >= 4 } meilleur)
                 fleches.Add((RenvoieCaseIndex120(meilleur[..2]), RenvoieCaseIndex120(meilleur[2..4]), CouleurFlecheMeilleurCoup));
             if (fleches.TrueForAll(f => f.Item1 > 0 && f.Item2 > 0))
                 _vue.MontreFleches([.. fleches]);
         }
-        private static string TexteAnalyseDuCoup(Coup coup, Evaluation evaluation) =>
-            // Ex : "Analyse : -9.05 (-+)   joué Dh2 [?? Gaffe]   — meilleur : Rd3 (0.00)" : le coup joué et son jugement, puis le
-            // meilleur coup avec SON évaluation, et "écart négligeable" si le coup joué ne perd presque rien (ex : mat en 3 au lieu de 2)
-            // (coups en notation longue, avec la case de départ : "Dd8-d7", "Ta8-c8")
-            $"Analyse : {evaluation.Texte} ({evaluation.Symbole})   joué {coup.CoupJoueLong ?? coup.PgnFrSansNumero}"
-            + (coup.Annotation != "" ? $" [{coup.Annotation} {Annotations.Nom(coup.Annotation)}]" : "")
-            + (coup.MeilleurJoue ? "   — meilleur coup du moteur"
-               : coup.MeilleurCoup != null
-                 ? $"   — meilleur : {coup.MeilleurCoupLong ?? coup.MeilleurCoup}" + (coup.EvaluationMeilleur is Evaluation meilleure ? $" ({meilleure.Texte})" : "")
-                   + (coup.PerteAnalyse < JugementCoups.SeuilImprecision ? ", écart négligeable" : "")
-                 : "");
+        private static string TexteAnalyseDuCoup(Coup coup)
+        {   // Ex : "Analyse : -9.05 (-+)   joué Dh2 [?? Gaffe]   — meilleur : Rd3 (0.00)" : le coup joué et son jugement, puis le
+            // meilleur coup avec SON évaluation. Si le coup joué ne perd presque rien (ex : mat en 3 au lieu de 2), le meilleur
+            // n'est qu'une préférence : "— le moteur préférait Rd3 (0.00), écart négligeable" (proposition de Claude, Bruno trouvait
+            // "meilleur" inadapté). Coups en notation longue, avec la case de départ : "Dd8-d7", "Ta8-c8". Sans évaluation (PGN
+            // chargé sans [%eval]) : "Joué Fc8-e6 [?? Gaffe]   — meilleur : Fc8-b7"
+            string texte = (coup.EvaluationApres is Evaluation evaluation ? $"Analyse : {evaluation.Texte} ({evaluation.Symbole})   joué " : "Joué ")
+                + (coup.CoupJoueLong ?? coup.PgnFrSansNumero)
+                + (coup.Annotation != "" ? $" [{coup.Annotation} {Annotations.Nom(coup.Annotation)}]" : "");
+            if (coup.MeilleurJoue)
+                return texte + "   — meilleur coup du moteur";
+            if (coup.MeilleurCoup == null)
+                return texte;
+            string meilleur = (coup.MeilleurCoupLong ?? coup.MeilleurCoup) + (coup.EvaluationMeilleur is Evaluation e ? $" ({e.Texte})" : "");
+            return texte + (coup.PerteAnalyse < JugementCoups.SeuilImprecision
+                ? $"   — le moteur préférait {meilleur}, écart négligeable" : $"   — meilleur : {meilleur}");
+        }
 
         // Les lignes de variante 1 et 2 servent aussi aux variantes du moteur (à gauche, police normale) : pendant le parcours, le coup
         // regardé (ligne 1) et son analyse (ligne 2) y sont centrés et en gras (AfficheLigneCentree) ; tout autre texte écrit ensuite

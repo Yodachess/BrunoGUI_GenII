@@ -182,7 +182,7 @@ namespace BrunoGUI_GenII
             // 
             // InverseEchiquier
             // 
-            InverseEchiquier.Location = new System.Drawing.Point(802, 124);
+            InverseEchiquier.Location = new System.Drawing.Point(802, 251);
             InverseEchiquier.Name = "InverseEchiquier";
             InverseEchiquier.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             InverseEchiquier.Size = new System.Drawing.Size(130, 25);
@@ -534,7 +534,7 @@ namespace BrunoGUI_GenII
             // 
             // RetourArriere
             // 
-            RetourArriere.Location = new System.Drawing.Point(802, 186);
+            RetourArriere.Location = new System.Drawing.Point(802, 155);
             RetourArriere.Name = "RetourArriere";
             RetourArriere.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             RetourArriere.Size = new System.Drawing.Size(130, 25);
@@ -661,7 +661,7 @@ namespace BrunoGUI_GenII
             kryptonStatusStrip1.AutoSize = false;
             kryptonStatusStrip1.Font = new System.Drawing.Font("Segoe UI", 9F);
             kryptonStatusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { StatusProgramme, EvaluationUci, ScoreMoteur, VarianteMoteurCourante });
-            kryptonStatusStrip1.Location = new System.Drawing.Point(0, 759);
+            kryptonStatusStrip1.Location = new System.Drawing.Point(0, 789);
             kryptonStatusStrip1.Name = "kryptonStatusStrip1";
             kryptonStatusStrip1.ProgressBars = null;
             kryptonStatusStrip1.RenderMode = System.Windows.Forms.ToolStripRenderMode.ManagerRenderMode;
@@ -692,7 +692,7 @@ namespace BrunoGUI_GenII
             ScoreMoteur.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left | System.Windows.Forms.ToolStripStatusLabelBorderSides.Top | System.Windows.Forms.ToolStripStatusLabelBorderSides.Right | System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom;
             ScoreMoteur.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             ScoreMoteur.Name = "ScoreMoteur";
-            ScoreMoteur.Size = new System.Drawing.Size(100, 21);
+            ScoreMoteur.Size = new System.Drawing.Size(130, 21);
             ScoreMoteur.Text = "Score Moteur";
             // 
             // VarianteMoteurCourante
@@ -700,19 +700,19 @@ namespace BrunoGUI_GenII
             VarianteMoteurCourante.AutoSize = false;
             VarianteMoteurCourante.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left | System.Windows.Forms.ToolStripStatusLabelBorderSides.Top | System.Windows.Forms.ToolStripStatusLabelBorderSides.Right | System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom;
             VarianteMoteurCourante.Name = "VarianteMoteurCourante";
-            VarianteMoteurCourante.Size = new System.Drawing.Size(335, 21);
+            VarianteMoteurCourante.Size = new System.Drawing.Size(305, 21);
             VarianteMoteurCourante.Text = "Variante en cours d'examen";
             // 
             // VarianteMoteurUci1
             // 
             VarianteMoteurUci1.BackColor = System.Drawing.Color.WhiteSmoke;
-            VarianteMoteurUci1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            VarianteMoteurUci1.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             VarianteMoteurUci1.ForeColor = System.Drawing.Color.DarkGreen;
             VarianteMoteurUci1.Location = new System.Drawing.Point(10, 620);
             VarianteMoteurUci1.Multiline = false;
             VarianteMoteurUci1.Name = "VarianteMoteurUci1";
             VarianteMoteurUci1.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.None;
-            VarianteMoteurUci1.Size = new System.Drawing.Size(520, 20);
+            VarianteMoteurUci1.Size = new System.Drawing.Size(520, 30);
             VarianteMoteurUci1.TabIndex = 13;
             VarianteMoteurUci1.Text = "Affichage Variante UCI";
             // 
@@ -720,11 +720,12 @@ namespace BrunoGUI_GenII
             // 
             VarianteMoteurUci2.BackColor = System.Drawing.Color.WhiteSmoke;
             VarianteMoteurUci2.ForeColor = System.Drawing.Color.DarkBlue;
-            VarianteMoteurUci2.Location = new System.Drawing.Point(10, 640);
+            VarianteMoteurUci2.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            VarianteMoteurUci2.Location = new System.Drawing.Point(10, 650);
             VarianteMoteurUci2.Multiline = false;
             VarianteMoteurUci2.Name = "VarianteMoteurUci2";
             VarianteMoteurUci2.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.None;
-            VarianteMoteurUci2.Size = new System.Drawing.Size(520, 20);
+            VarianteMoteurUci2.Size = new System.Drawing.Size(520, 30);
             VarianteMoteurUci2.TabIndex = 21;
             VarianteMoteurUci2.Text = "Affichage Variante UCI";
             // 
@@ -732,11 +733,12 @@ namespace BrunoGUI_GenII
             // 
             VarianteMoteurUci3.BackColor = System.Drawing.Color.WhiteSmoke;
             VarianteMoteurUci3.ForeColor = System.Drawing.Color.DarkBlue;
-            VarianteMoteurUci3.Location = new System.Drawing.Point(10, 660);
+            VarianteMoteurUci3.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            VarianteMoteurUci3.Location = new System.Drawing.Point(10, 680);
             VarianteMoteurUci3.Multiline = false;
             VarianteMoteurUci3.Name = "VarianteMoteurUci3";
             VarianteMoteurUci3.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.None;
-            VarianteMoteurUci3.Size = new System.Drawing.Size(520, 20);
+            VarianteMoteurUci3.Size = new System.Drawing.Size(520, 30);
             VarianteMoteurUci3.TabIndex = 22;
             VarianteMoteurUci3.Text = "Affichage Variante UCI";
             // 
@@ -894,7 +896,7 @@ namespace BrunoGUI_GenII
             // 
             // BoutonGainBlanc
             // 
-            BoutonGainBlanc.Location = new System.Drawing.Point(830, 219);
+            BoutonGainBlanc.Location = new System.Drawing.Point(830, 188);
             BoutonGainBlanc.Name = "BoutonGainBlanc";
             BoutonGainBlanc.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             BoutonGainBlanc.Size = new System.Drawing.Size(78, 15);
@@ -910,7 +912,7 @@ namespace BrunoGUI_GenII
             // 
             // BoutonGainNoir
             // 
-            BoutonGainNoir.Location = new System.Drawing.Point(830, 240);
+            BoutonGainNoir.Location = new System.Drawing.Point(830, 209);
             BoutonGainNoir.Name = "BoutonGainNoir";
             BoutonGainNoir.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             BoutonGainNoir.Size = new System.Drawing.Size(78, 15);
@@ -926,7 +928,7 @@ namespace BrunoGUI_GenII
             // 
             // BoutonNulle
             // 
-            BoutonNulle.Location = new System.Drawing.Point(830, 261);
+            BoutonNulle.Location = new System.Drawing.Point(830, 230);
             BoutonNulle.Name = "BoutonNulle";
             BoutonNulle.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             BoutonNulle.Size = new System.Drawing.Size(78, 15);
@@ -982,7 +984,7 @@ namespace BrunoGUI_GenII
             // 
             CoupsBibliothèque.BackColor = System.Drawing.Color.Lavender;
             CoupsBibliothèque.ForeColor = System.Drawing.Color.DarkBlue;
-            CoupsBibliothèque.Location = new System.Drawing.Point(12, 686);
+            CoupsBibliothèque.Location = new System.Drawing.Point(12, 716);
             CoupsBibliothèque.Multiline = false;
             CoupsBibliothèque.Name = "CoupsBibliothèque";
             CoupsBibliothèque.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.None;
@@ -992,7 +994,7 @@ namespace BrunoGUI_GenII
             // 
             // OrdinateurJoue
             // 
-            OrdinateurJoue.Location = new System.Drawing.Point(802, 155);
+            OrdinateurJoue.Location = new System.Drawing.Point(802, 124);
             OrdinateurJoue.Name = "OrdinateurJoue";
             OrdinateurJoue.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             OrdinateurJoue.Size = new System.Drawing.Size(130, 25);
@@ -1129,7 +1131,7 @@ namespace BrunoGUI_GenII
             ActiveBibliothèque.BackColor = System.Drawing.Color.WhiteSmoke;
             ActiveBibliothèque.Checked = true;
             ActiveBibliothèque.CheckState = System.Windows.Forms.CheckState.Checked;
-            ActiveBibliothèque.Location = new System.Drawing.Point(12, 710);
+            ActiveBibliothèque.Location = new System.Drawing.Point(12, 740);
             ActiveBibliothèque.Name = "ActiveBibliothèque";
             ActiveBibliothèque.Size = new System.Drawing.Size(107, 24);
             ActiveBibliothèque.TabIndex = 38;
@@ -1142,7 +1144,7 @@ namespace BrunoGUI_GenII
             ActiveSon.BackColor = System.Drawing.Color.WhiteSmoke;
             ActiveSon.Checked = true;
             ActiveSon.CheckState = System.Windows.Forms.CheckState.Checked;
-            ActiveSon.Location = new System.Drawing.Point(125, 710);
+            ActiveSon.Location = new System.Drawing.Point(125, 740);
             ActiveSon.Name = "ActiveSon";
             ActiveSon.Size = new System.Drawing.Size(49, 24);
             ActiveSon.TabIndex = 39;
@@ -1157,7 +1159,7 @@ namespace BrunoGUI_GenII
             groupBoxTempsReflexion.Controls.Add(ListePendule);
             groupBoxTempsReflexion.Controls.Add(LabelCoupAnalyse);
             groupBoxTempsReflexion.Controls.Add(TempsReflexionSecondes);
-            groupBoxTempsReflexion.Location = new System.Drawing.Point(180, 710);
+            groupBoxTempsReflexion.Location = new System.Drawing.Point(180, 740);
             groupBoxTempsReflexion.Name = "groupBoxTempsReflexion";
             groupBoxTempsReflexion.Size = new System.Drawing.Size(350, 46);
             groupBoxTempsReflexion.TabIndex = 40;
@@ -1225,7 +1227,7 @@ namespace BrunoGUI_GenII
             // 
             ActiveAléatoire.BackColor = System.Drawing.Color.WhiteSmoke;
             ActiveAléatoire.Checked = true;
-            ActiveAléatoire.Location = new System.Drawing.Point(10, 732);
+            ActiveAléatoire.Location = new System.Drawing.Point(10, 762);
             ActiveAléatoire.Name = "ActiveAléatoire";
             ActiveAléatoire.Size = new System.Drawing.Size(109, 24);
             ActiveAléatoire.TabIndex = 42;
@@ -1261,7 +1263,7 @@ namespace BrunoGUI_GenII
             // 
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             BackColor = System.Drawing.Color.LightGray;
-            ClientSize = new System.Drawing.Size(944, 785);
+            ClientSize = new System.Drawing.Size(944, 815);
             Controls.Add(SaisiePartieBouton);
             Controls.Add(ActiveAléatoire);
             Controls.Add(KryptonApropos);
