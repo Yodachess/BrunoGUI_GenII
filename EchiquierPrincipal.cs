@@ -519,21 +519,24 @@ namespace BrunoGUI_GenII
                 else if (demande == TypeDemande.Analyse && _analyseDePartie != null)
                     PositionAnalyseeParLeMoteur(_pilote.Lignes.Meilleure);     // analyse de partie : position suivante
                 else if (demande == TypeDemande.Analyse)
-                {   // c'est une analyse : on affiche la meilleure variante (mémorisée par _pilote.Lignes, pas relue dans le texte affiché)
+                {   // c'est une analyse : on affiche la meilleure variante (mémorisée par _pilote.Lignes, pas relue dans le texte affiché).
+                    // Plus de boîte de message (elle cachait l'échiquier, remarque de Bruno) : le résultat va sous l'échiquier, sur la
+                    // 1re ligne de variante (centré, en gras ; les autres variantes restent sur les lignes 2 et 3), dans la barre d'état,
+                    // et une flèche verte montre le coup conseillé sur l'échiquier (effacée par toute action qui change la position)
                     LigneAnalyse meilleure = _pilote.Lignes.Meilleure;
                     InformationPourJoueur.Text = StatusProgramme.Text = "Analyse terminée ... ";
-                    string titre = "Analyse Moteur (" + _dureeReflexionMilliSeconde / 1000 + " sec.) par " + _nomMoteur;
                     if (meilleure?.VariantePgn == null)
-                        _ = KryptonMessageBox.Show("Le moteur n'a donné aucune variante.", titre, KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                        InformationsPartie.Text = "Le moteur n'a donné aucune variante.";
                     else
                     {
                         string appreciation = meilleure.Evaluation?.Appreciation ?? "évaluation inconnue";
                         ScoreMoteur.Text = "Score = " + meilleure.TexteScore;
                         EvaluationUci.Text = appreciation;
                         VarianteMoteurCourante.Text = InformationsPartie.Text = "Coup suggéré : " + meilleure.Debut;
-                        _ = KryptonMessageBox.Show("La meilleure suite est : " + meilleure.Debut +
-                                            "\n Evaluation --- " + meilleure.TexteScore + " --- (" + appreciation + ")" +
-                                            "\n" + meilleure.VariantePgn, titre, KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                        AfficheLigneCentree(VarianteMoteurUci1, $"Meilleure suite ({meilleure.TexteScore}, {appreciation}) : {meilleure.VariantePgn}");
+                        string conseil = (meilleure.VarianteUci ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+                        if (conseil is { Length: >= 4 } && RenvoieCaseIndex120(conseil[..2]) > 0 && RenvoieCaseIndex120(conseil[2..4]) > 0)
+                            _vue.MontreFleches((RenvoieCaseIndex120(conseil[..2]), RenvoieCaseIndex120(conseil[2..4]), CouleurFlecheMeilleurCoup));
                     }
                     MetAJourCommandes();
                 }
@@ -2260,6 +2263,7 @@ namespace BrunoGUI_GenII
             // A appeler avant toute action qui change la partie ou la position (retour arrière, résultat, nouvelle partie, chargement...)
             if (_analyseDePartie != null)
                 TermineAnalyseDePartie(interrompue: true);  // la partie va changer : on garde ce qui est déjà analysé
+            _vue?.EffaceFleches();      // (flèche du coup conseillé par une analyse : elle ne vaut plus ; le parcours remet les siennes)
             if (!_pilote.Abandonner())
                 return;     // le moteur ne réfléchissait pas : rien à signaler
             MiseaZéroTimer();
