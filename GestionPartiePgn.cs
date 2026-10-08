@@ -48,6 +48,10 @@ namespace BrunoGUI_GenII
         public List<TimeSpan?> TempsCoups { get; set; } = [];  // temps de pendule après chaque coup ({[%clk h:mm:ss]}), dans l'ordre ; null : inconnu
         public List<TimeSpan?> TempsReflexion { get; set; } = [];  // temps passé sur chaque coup ({[%emt h:mm:ss]}, ChessBase) ; null : inconnu
         public List<string> Annotations { get; set; } = [];        // annotation de chaque coup ("!?", "??"... ; "" : aucune), dans l'ordre
+        // Pour chaque coup (null : rien) : évaluation [%eval], texte de ses commentaires, et sa 1re variante "( ... )" telle qu'écrite
+        public List<Evaluation?> Evaluations { get; set; } = [];
+        public List<string> Commentaires { get; set; } = [];
+        public List<string> Variantes { get; set; } = [];
     }
 
     public class GestionPartiePgn
@@ -73,6 +77,8 @@ namespace BrunoGUI_GenII
                     texteCoup = coup.NumeroDuCoup + "... " + texteCoup;
                 apresCommentaire = false;
                 List<string> commentaires = [];
+                if (!string.IsNullOrWhiteSpace(coup.Commentaire))   // commentaire du PGN chargé : gardé (fichier et affichage)
+                    commentaires.Add(coup.Commentaire.Replace("{", "(").Replace("}", ")"));
                 TimeSpan? temps = coup.EstCoupBlanc ? coup.TempsBlancs : coup.TempsNoirs;     // pendule du camp qui vient de jouer
                 if (pourFichier && coup.EvaluationApres is Evaluation evaluation)
                     commentaires.Add($"[%eval {TexteEvaluationPgn(evaluation)}]");
@@ -83,8 +89,10 @@ namespace BrunoGUI_GenII
                     texteCoup += " {" + string.Join(" ", commentaires) + "}";
                     apresCommentaire = true;
                 }
-                if (pourFichier && !coup.MeilleurJoue && !string.IsNullOrEmpty(coup.VarianteMeilleure) && coup.Annotation is "?!" or "?" or "??")
-                {   // Erreur : ce qu'il fallait jouer (variante, qui part de la même position que le coup joué)
+                if (pourFichier && !coup.MeilleurJoue && !string.IsNullOrEmpty(coup.VarianteMeilleure)
+                    && (coup.VarianteLue || coup.Annotation is "?!" or "?" or "??"))
+                {   // Erreur : ce qu'il fallait jouer (variante, qui part de la même position que le coup joué) ; ou variante du PGN
+                    // chargé, gardée telle quelle (seule la 1re variante d'un coup est relue)
                     texteCoup += " (" + VarianteInternationale(coup.VarianteMeilleure) + ")";
                     apresCommentaire = true;
                 }

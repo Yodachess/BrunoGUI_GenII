@@ -955,9 +955,31 @@ Verifie("PGN affiché après analyse : ni %eval ni variante",
     !pgnAnalyseAffiche.Contains("%eval") && !pgnAnalyseAffiche.Contains('(') && pgnAnalyseAffiche.Contains("2. Qh5?! Nc6"),
     pgnAnalyseAffiche.Replace("\n", " "));
 Partie partieAnalysee = new();
-Verifie("PGN enregistré après analyse : relu sans erreur (commentaires et variante ignorés), lignes de 80 caractères au plus",
+Verifie("PGN enregistré après analyse : relu sans erreur, lignes de 80 caractères au plus",
     ChargementPartie.ChargerPartiePgn(FichierPartiePgn.DecodePartiePGN(pgnAnalyseFichier), partieAnalysee) is { CoupIllisible: null, DemiCoupsJoues: 7 }
     && pgnAnalyseFichier.Split('\n').All(ligne => ligne.Length <= 80), "");
+Coup dh5Relu = L.ListeCoups[2];
+Verifie("PGN relu : [%eval] et variante après l'erreur rangés comme une analyse (meilleur coup, suite, évaluation d'avant, perte)",
+    dh5Relu.EvaluationApres == new Evaluation(-60, null) && dh5Relu.VarianteLue && dh5Relu.MeilleurCoupUci == "g1f3" && dh5Relu.MeilleurCoup == "Cf3"
+    && dh5Relu.MeilleurCoupLong == "Cg1-f3" && dh5Relu.VarianteMeilleure == "2. Cf3 Cc6" && dh5Relu.EvaluationMeilleur == new Evaluation(35, null)
+    && dh5Relu.PerteAnalyse > JugementCoups.SeuilImprecision && !dh5Relu.MeilleurJoue && dh5Relu.CoupJoueLong == "Dd1-h5"
+    && L.ListeCoups[0].EvaluationApres == new Evaluation(30, null) && !L.ListeCoups[0].VarianteLue,
+    $"{dh5Relu.EvaluationApres?.Texte} / {dh5Relu.MeilleurCoupUci} / {dh5Relu.VarianteMeilleure} / {dh5Relu.EvaluationMeilleur?.Texte} / {dh5Relu.CoupJoueLong}");
+string pgnCommente = "[Event \"Test\"]\n[Result \"*\"]\n\n1. e4 {Le coup du roi\n des pions [%clk 0:01:00]} e5 (1... c5 2. Nf3 (2. c3) d6) 2. Nf3 {[%eval #-3]} *";
+Verifie("PGN relu : commentaire (texte seul, sur deux lignes), variante d'un coup noir (sous-variante sautée), mat en [%eval]",
+    ChargementPartie.ChargerPartiePgn(FichierPartiePgn.DecodePartiePGN(pgnCommente), new Partie()) is { CoupIllisible: null, DemiCoupsJoues: 3 }
+    && L.ListeCoups[0].Commentaire == "Le coup du roi des pions" && L.ListeCoups[0].TempsBlancs == TimeSpan.FromMinutes(1)
+    && L.ListeCoups[1].VarianteLue && L.ListeCoups[1].MeilleurCoupUci == "c7c5" && L.ListeCoups[1].VarianteMeilleure == "1 ... c5 2. Cf3 d6"
+    && L.ListeCoups[2].EvaluationApres == new Evaluation(null, -3) && L.ListeCoups[1].Commentaire == null,
+    $"« {L.ListeCoups[0].Commentaire} » / {L.ListeCoups[1].MeilleurCoupUci} / {L.ListeCoups[1].VarianteMeilleure} / {L.ListeCoups[2].EvaluationApres?.Texte}");
+string pgnCommenteReecrit = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "*" }, "Intl", pourFichier: true).Replace("\n", " ");
+Verifie("PGN relu puis réenregistré : commentaire et variante gardés",
+    pgnCommenteReecrit.Contains("1. e4 {Le coup du roi des pions [%clk 0:01:00]} 1... e5 (1... c5 2. Nf3 d6) 2. Nf3 {[%eval #-3]"), pgnCommenteReecrit);
+Verifie("Variante PGN vers UCI : roque, prise, promotion, coup illégal (arrêt)",
+    ChargementPartie.VarianteSanVersUci("1. O-O Kd7 2. exd5", L.PositionDepuisFen("r3k3/8/8/3p4/4P3/8/8/4K2R w K - 0 1")) == "e1g1 e8d7 e4d5"
+    && ChargementPartie.VarianteSanVersUci("1. e8=N+ Kh8", L.PositionDepuisFen("7k/4P3/8/8/8/8/8/4K3 w - - 0 1")) == "e7e8n"
+    && ChargementPartie.VarianteSanVersUci("1. Nf3 Nf6 2. Nh5", L.PositionDepuisFen(L.FenDepart)) == "g1f3 g8f6",
+    ChargementPartie.VarianteSanVersUci("1. O-O Kd7 2. exd5", L.PositionDepuisFen("r3k3/8/8/3p4/4P3/8/8/4K2R w K - 0 1")));
 Verifie("Variante du moteur en notation PGN : lettres anglaises, « 19... » pour un coup noir, promotion",
     GestionPartiePgn.VarianteInternationale("19 ... Tac8 20. Cf3 Rg7 21. e8=D") == "19... Rac8 20. Nf3 Kg7 21. e8=Q"
     && GestionPartiePgn.TexteEvaluationPgn(new Evaluation(-905, null)) == "-9.05" && GestionPartiePgn.TexteEvaluationPgn(new Evaluation(null, -3)) == "#-3",

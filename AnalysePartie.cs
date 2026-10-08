@@ -254,6 +254,7 @@ namespace BrunoGUI_GenII
                 coup.PerteAnalyse = jugement.Perte;
                 coup.MeilleurCoupLong = jugement.MeilleurCoupLong;
                 coup.VarianteMeilleure = jugement.VarianteMeilleure;
+                coup.VarianteLue = false;       // la variante est maintenant celle du moteur (plus celle du PGN chargé)
                 // (la notation NAL du coup est en lettres anglaises : la notation longue française est calculée ici)
                 PositionAnalysee positionAvant = _positions[_indexCoups.IndexOf(jugement.IndexCoup)];
                 coup.MeilleurCoupUci = positionAvant.MeilleurCoupUci;
