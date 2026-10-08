@@ -976,6 +976,15 @@ Verifie("PGN relu : commentaire (texte seul, sur deux lignes), variante d'un cou
 string pgnCommenteReecrit = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "*" }, "Intl", pourFichier: true).Replace("\n", " ");
 Verifie("PGN relu puis réenregistré : commentaire et variante gardés",
     pgnCommenteReecrit.Contains("1. e4 {Le coup du roi des pions [%clk 0:01:00]} 1... e5 (1... c5 2. Nf3 d6) 2. Nf3 {[%eval #-3]"), pgnCommenteReecrit);
+Charger(L.FenDepart);
+foreach (string coupReprise in new[] { "e2e4", "d7d5", "e4d5", "d8d5" })   // 2... Dxd5 reprend sur d5 : jamais « ! »
+    L.ExecutionCoup(coupReprise[..2], coupReprise[2..]);
+AnalyseDePartie analyseReprise = new(L.ListeCoups);
+analyseReprise.Enregistre(4, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(0, null), VariantePgn = "3. Cc3", VarianteUci = "b1c3" });
+analyseReprise.Enregistre(3, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(0, null), VariantePgn = "2 ... Dxd5", VarianteUci = "d8d5" },
+                          new LigneAnalyse { Numero = 2, Evaluation = new Evaluation(400, null) });
+Verifie("« ! » : pas pour une reprise immédiate (2... Dxd5 après 2. exd5), même si c'était le seul bon coup",
+    analyseReprise.Jugement(3) is { MeilleurJoue: true, Annotation: "" }, $"« {analyseReprise.Jugement(3)?.Annotation} »");
 Verifie("Variante PGN vers UCI : roque, prise, promotion, coup illégal (arrêt)",
     ChargementPartie.VarianteSanVersUci("1. O-O Kd7 2. exd5", L.PositionDepuisFen("r3k3/8/8/3p4/4P3/8/8/4K2R w K - 0 1")) == "e1g1 e8d7 e4d5"
     && ChargementPartie.VarianteSanVersUci("1. e8=N+ Kh8", L.PositionDepuisFen("7k/4P3/8/8/8/8/8/4K3 w - - 0 1")) == "e7e8n"
@@ -1023,6 +1032,12 @@ Verifie("Analyse approfondie : positions avant et après chaque coup douteux rev
     string.Join(",", revues) == "6,5,3,2" && toujoursEnApprofondissement && analyseApprofondie.NombreAApprofondir == 4
     && analyseApprofondie.NombreApprofondies == 4 && analyseApprofondie.Terminee && !analyseApprofondie.EnApprofondissement,
     string.Join(",", revues));
+AnalyseDePartie analyseBonCoup = new(L.ListeCoups);
+for (int p = 6; p >= 0; p--)       // 2e variante de la position 4 (avant 3. Fc4, meilleur coup joué) : -3.00, une gaffe
+    analyseBonCoup.Enregistre(p, ReponseBerger(p), p == 4 ? new LigneAnalyse { Numero = 2, Evaluation = new Evaluation(-300, null) } : null);
+Verifie("« ! » : le meilleur coup joué était le seul bon (la 2e variante aurait été une erreur) ; rien sans 2e variante",
+    analyseBonCoup.Jugement(4).Annotation == "!" && analyseBonCoup.Jugement(4).Perte == 0 && analyseBonCoup.Jugement(0).Annotation == ""
+    && analyseBonCoup.Bilan(L.ColorPiece.Blanc).Imprecisions == 1, $"Fc4 : « {analyseBonCoup.Jugement(4).Annotation} »");
 Verifie("Analyse approfondie : le nouveau résultat remplace le premier (2. Dh5 n'est plus douteux), sans score le premier est gardé (Cf6 ??)",
     analyseApprofondie.Jugement(2).Annotation == "" && analyseApprofondie.Jugement(5).Annotation == "??" && analyseApprofondie.CoupCritique()?.IndexCoup == 5,
     $"Dh5 {analyseApprofondie.Jugement(2).Annotation} ({analyseApprofondie.Jugement(2).Perte:F3}), Cf6 {analyseApprofondie.Jugement(5).Annotation}");

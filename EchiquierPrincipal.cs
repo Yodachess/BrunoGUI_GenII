@@ -1914,6 +1914,7 @@ namespace BrunoGUI_GenII
         private AnalyseDePartie _analyseDePartie;           // analyse en cours (null : aucune)
         private int _positionEnAnalyse = -1;                // position demandée au moteur (index dans _analyseDePartie.Positions)
         private int? _coupCritique;                         // index dans ListeCoups du coup critique de la dernière analyse (clic sur le bilan)
+        private int? _multiPvAvantAnalyse;                  // nombre de variantes à rétablir à la fin de l'analyse
 
         private void BoutonAnalysePartie_Click(object sender, EventArgs e)
         {   // "Analyse rapide" (3 s par position), ou "Interrompre" si une analyse est en cours (ce bouton occupe alors toute la largeur)
@@ -1953,6 +1954,10 @@ namespace BrunoGUI_GenII
             AbandonneReflexion();       // une analyse de position en cours est remplacée
             _pendule?.Pause();          // le temps ne compte pas pendant l'analyse (reprise dans MinuteriePendule_Tick à la fin)
             _analyseDePartie = new AnalyseDePartie(LogiqueMouvements.ListeCoups, approfondir: complete);
+            // Au moins 2 variantes pendant l'analyse : la 2e dit si le meilleur coup était le seul bon ("!") ; réglage rétabli à la fin
+            _multiPvAvantAnalyse = MoteurUci.NombreLignesPV;
+            if (MoteurUci.NombreLignesPV < 2)
+                MoteurUci.DefinitMultiPV(2);
             BoutonAnalyseComplete.Visible = false;      // un seul bouton "Interrompre (k/N)", sur toute la largeur
             BoutonAnalysePartie.Width = BoutonAnalyseComplete.Right - BoutonAnalysePartie.Left;
             BarreAnalysePartie.Maximum = Math.Max(1, _analyseDePartie.NombreAAnalyser);
@@ -1985,7 +1990,7 @@ namespace BrunoGUI_GenII
         }
         private void PositionAnalyseeParLeMoteur(LigneAnalyse meilleure)
         {   // Réponse du moteur pour la position demandée (null : aucun score) : on l'enregistre et on passe à la suivante
-            _analyseDePartie.Enregistre(_positionEnAnalyse, meilleure);
+            _analyseDePartie.Enregistre(_positionEnAnalyse, meilleure, meilleure != null ? _pilote.Lignes.Seconde : null);
             // Annotations au fur et à mesure (choix de Bruno) : l'analyse allant de la fin vers le début, la position d'après est déjà
             // analysée et le coup joué dans celle-ci peut être jugé tout de suite ; la feuille est redessinée avec la position suivante
             _analyseDePartie.AppliqueAuxCoups(LogiqueMouvements.ListeCoups);
@@ -2020,6 +2025,9 @@ namespace BrunoGUI_GenII
             _analyseDePartie = null;        // avant AbandonneReflexion, qui sinon reviendrait ici
             _positionEnAnalyse = -1;
             AbandonneReflexion();           // la position en cours d'analyse (interruption) : sa réponse sera ignorée
+            if (_multiPvAvantAnalyse is int multiPv && multiPv != MoteurUci.NombreLignesPV)
+                MoteurUci.DefinitMultiPV(multiPv);      // nombre de variantes choisi par l'utilisateur, forcé à 2 pendant l'analyse
+            _multiPvAvantAnalyse = null;
             analyse.AppliqueAuxCoups(LogiqueMouvements.ListeCoups);
             BilanCamp blancs = analyse.Bilan(ColorPiece.Blanc), noirs = analyse.Bilan(ColorPiece.Noir);
             BilanAnalyse.Text = TexteBilan("Blancs", blancs) + "\n" + TexteBilan("Noirs", noirs);

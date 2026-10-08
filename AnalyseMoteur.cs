@@ -91,6 +91,7 @@ namespace BrunoGUI_GenII
 
         public void Reinitialiser() => _lignes.Clear();
         public LigneAnalyse Meilleure => _lignes.GetValueOrDefault(1);
+        public LigneAnalyse Seconde => _lignes.GetValueOrDefault(2);    // 2e variante (MultiPV ≥ 2) : la meilleure alternative
 
         public LigneAnalyse Ajouter(LigneUci ligne, Position position)
         {   // Décode une ligne "info" sur la position analysée ; null si elle n'a ni score ni variante (ex : "info depth 12")
