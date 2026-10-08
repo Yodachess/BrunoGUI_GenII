@@ -139,6 +139,9 @@ namespace BrunoGUI_GenII
                     Coup coup = ListeCoups[^1];
                     coup.TempsReflexion = demiCoupsJoues < (pgn.TempsReflexion?.Count ?? 0) ? pgn.TempsReflexion[demiCoupsJoues] : null;
                     coup.Annotation = demiCoupsJoues < (pgn.Annotations?.Count ?? 0) ? pgn.Annotations[demiCoupsJoues] : "";
+                    // [%auto] : annotation posée par une analyse de BrunoGUI, de nouveau "proposée" (plus pâle, remplaçable par une
+                    // nouvelle analyse) ; sans cette marque, l'annotation est celle d'un joueur ou d'un auteur : jamais remplacée
+                    coup.AnnotationProposee = coup.Annotation != "" && Element(pgn.AnnotationsAuto, demiCoupsJoues);
                     RangeAnalyseLue(coup, fenAvant, Element(pgn.Commentaires, demiCoupsJoues), Element(pgn.Evaluations, demiCoupsJoues),
                                     Element(pgn.Variantes, demiCoupsJoues), evaluationAvant);
                     evaluationAvant = coup.EvaluationApres;

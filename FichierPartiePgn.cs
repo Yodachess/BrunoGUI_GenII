@@ -45,6 +45,7 @@ namespace BrunoGUI_GenII
         public const string MarqueEvaluation = "%eval=";   // "{[%eval -0.60]}" devient "%eval=-0.60" ("#-3" pour un mat)
         public const string MarqueCommentaire = "%com=";   // texte d'un commentaire (sans ses [%...]), en base 64 (il contient des espaces)
         public const string MarqueVariante = "%var=";      // une variante "( ... )" de la partie principale, en base 64
+        public const string MarqueAuto = "%auto=";         // "{[%auto]}" : annotation du coup posée par l'analyse de partie de BrunoGUI
 
         public static string ExtraireCoups(string pgn, bool garderTemps = false)
         {   // Cette méthode parcourt le PGN caractère par caractère et utilise une machine à états
@@ -126,6 +127,8 @@ namespace BrunoGUI_GenII
             string texte = commentaire.Replace("\r", "").Replace("\n", " ");
             foreach (Match temps in Regex.Matches(texte.Replace(" ", ""), @"%(clk|emt)(\d+:\d{1,2}:\d{1,2}(?:\.\d+)?)"))
                 sb.Append(' ').Append(temps.Groups[1].Value == "clk" ? MarqueTemps : MarqueReflexion).Append(temps.Groups[2].Value).Append(' ');
+            if (Regex.IsMatch(texte, @"\[%auto\]"))
+                sb.Append(' ').Append(MarqueAuto).Append("1 ");
             Match evaluation = Regex.Match(texte, @"\[%eval\s+(#?-?\d+(?:\.\d+)?)");
             if (evaluation.Success)
                 sb.Append(' ').Append(MarqueEvaluation).Append(evaluation.Groups[1].Value).Append(' ');
@@ -317,15 +320,19 @@ namespace BrunoGUI_GenII
             PartiePGN.Evaluations = [];
             PartiePGN.Commentaires = [];
             PartiePGN.Variantes = [];
+            PartiePGN.AnnotationsAuto = [];
             foreach (var t in tokens)
             {
                 string c = t;
-                if (c.StartsWith(ParseurPgn.MarqueEvaluation) || c.StartsWith(ParseurPgn.MarqueCommentaire) || c.StartsWith(ParseurPgn.MarqueVariante))
-                {   // Évaluation, commentaire ou variante du coup qui précède (avant le 1er coup : commentaire de la partie, ignoré) ;
-                    // plusieurs commentaires se suivent, seule la 1re variante compte (c'est l'alternative au coup joué)
+                if (c.StartsWith(ParseurPgn.MarqueEvaluation) || c.StartsWith(ParseurPgn.MarqueCommentaire) || c.StartsWith(ParseurPgn.MarqueVariante)
+                    || c.StartsWith(ParseurPgn.MarqueAuto))
+                {   // Évaluation, commentaire, variante ou marque [%auto] du coup qui précède (avant le 1er coup : commentaire de la
+                    // partie, ignoré) ; plusieurs commentaires se suivent, seule la 1re variante compte (c'est l'alternative au coup joué)
                     if (coupsPropres.Count == 0)
                         continue;
-                    if (c.StartsWith(ParseurPgn.MarqueEvaluation))
+                    if (c.StartsWith(ParseurPgn.MarqueAuto))
+                        PartiePGN.AnnotationsAuto[^1] = true;
+                    else if (c.StartsWith(ParseurPgn.MarqueEvaluation))
                         PartiePGN.Evaluations[^1] = ParseurPgn.LitEvaluation(c[ParseurPgn.MarqueEvaluation.Length..]);
                     else if (c.StartsWith(ParseurPgn.MarqueCommentaire))
                     {
@@ -372,6 +379,7 @@ namespace BrunoGUI_GenII
                 PartiePGN.Evaluations.Add(null);
                 PartiePGN.Commentaires.Add(null);
                 PartiePGN.Variantes.Add(null);
+                PartiePGN.AnnotationsAuto.Add(false);
             }
 
             string final = string.Join(" ", coupsPropres);

@@ -52,6 +52,7 @@ namespace BrunoGUI_GenII
         public List<Evaluation?> Evaluations { get; set; } = [];
         public List<string> Commentaires { get; set; } = [];
         public List<string> Variantes { get; set; } = [];
+        public List<bool> AnnotationsAuto { get; set; } = [];       // [%auto] : l'annotation du coup a été posée par l'analyse de partie
     }
 
     public class GestionPartiePgn
@@ -79,6 +80,8 @@ namespace BrunoGUI_GenII
                 List<string> commentaires = [];
                 if (!string.IsNullOrWhiteSpace(coup.Commentaire))   // commentaire du PGN chargé : gardé (fichier et affichage)
                     commentaires.Add(coup.Commentaire.Replace("{", "(").Replace("}", ")"));
+                if (pourFichier && coup.AnnotationProposee && coup.Annotation != "")
+                    commentaires.Add("[%auto]");    // annotation posée par l'analyse : elle redeviendra "proposée" à la relecture (remplaçable)
                 TimeSpan? temps = coup.EstCoupBlanc ? coup.TempsBlancs : coup.TempsNoirs;     // pendule du camp qui vient de jouer
                 if (pourFichier && coup.EvaluationApres is Evaluation evaluation)
                     commentaires.Add($"[%eval {TexteEvaluationPgn(evaluation)}]");

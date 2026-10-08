@@ -948,7 +948,7 @@ Verifie("Analyse appliquée : évaluation du meilleur coup et perte gardées (po
 string pgnAnalyseFichier = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "1-0" }, "Intl", pourFichier: true);
 string pgnAnalyseAffiche = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "1-0" }, "Intl");
 Verifie("PGN enregistré après analyse : %eval après chaque coup, meilleure variante (notation anglaise) après l'erreur, numéro repris",
-    pgnAnalyseFichier.Replace("\n", " ").Contains("2. Qh5?! {[%eval -0.60]} (2. Nf3 Nc6) 2... Nc6 {[%eval -0.40]}")
+    pgnAnalyseFichier.Replace("\n", " ").Contains("2. Qh5?! {[%auto] [%eval -0.60]} (2. Nf3 Nc6) 2... Nc6 {[%eval -0.40]}")
     && pgnAnalyseFichier.Replace("\n", " ").Contains("3... Nf6! {[%eval #1]} 4. Qxf7#") && pgnAnalyseFichier.Contains("1. e4 {[%eval 0.30]} 1... e5"),
     pgnAnalyseFichier.Replace("\n", " "));
 Verifie("PGN affiché après analyse : ni %eval ni variante",
@@ -963,7 +963,8 @@ Verifie("PGN relu : [%eval] et variante après l'erreur rangés comme une analys
     dh5Relu.EvaluationApres == new Evaluation(-60, null) && dh5Relu.VarianteLue && dh5Relu.MeilleurCoupUci == "g1f3" && dh5Relu.MeilleurCoup == "Cf3"
     && dh5Relu.MeilleurCoupLong == "Cg1-f3" && dh5Relu.VarianteMeilleure == "2. Cf3 Cc6" && dh5Relu.EvaluationMeilleur == new Evaluation(35, null)
     && dh5Relu.PerteAnalyse > JugementCoups.SeuilImprecision && !dh5Relu.MeilleurJoue && dh5Relu.CoupJoueLong == "Dd1-h5"
-    && L.ListeCoups[0].EvaluationApres == new Evaluation(30, null) && !L.ListeCoups[0].VarianteLue,
+    && L.ListeCoups[0].EvaluationApres == new Evaluation(30, null) && !L.ListeCoups[0].VarianteLue
+    && dh5Relu.Annotation == "?!" && dh5Relu.AnnotationProposee && L.ListeCoups[5].Annotation == "!" && !L.ListeCoups[5].AnnotationProposee,
     $"{dh5Relu.EvaluationApres?.Texte} / {dh5Relu.MeilleurCoupUci} / {dh5Relu.VarianteMeilleure} / {dh5Relu.EvaluationMeilleur?.Texte} / {dh5Relu.CoupJoueLong}");
 string pgnCommente = "[Event \"Test\"]\n[Result \"*\"]\n\n1. e4 {Le coup du roi\n des pions [%clk 0:01:00]} e5 (1... c5 2. Nf3 (2. c3) d6) 2. Nf3 {[%eval #-3]} *";
 Verifie("PGN relu : commentaire (texte seul, sur deux lignes), variante d'un coup noir (sous-variante sautée), mat en [%eval]",
