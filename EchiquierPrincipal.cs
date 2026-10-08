@@ -17,6 +17,7 @@ using System.IO;
 using System.Linq;
 using System.Media;
 using System.Reflection.Metadata;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -122,6 +123,14 @@ namespace BrunoGUI_GenII
             {   // lignes de variante 1 à 3 : centrées et en gras pour le coup regardé, son analyse et la suite prévue (voir AfficheLigneCentree)
                 _policesLignes[ligne] = (ligne.Font, new Font(ligne.Font, FontStyle.Bold));
                 ligne.TextChanged += LigneVariante_TextChanged;
+                // Texte centré en hauteur et décalé du bord gauche (choix de Bruno) : zone de texte réglée par EM_SETRECT, qui ne vaut
+                // que pour une zone multiligne (sans retour à la ligne automatique, elle reste sur une ligne)
+                ligne.Multiline = true;
+                ligne.WordWrap = false;
+                ligne.HandleCreated += (s, e) => MargesLigne((RichTextBox)s);
+                ligne.Resize += (s, e) => MargesLigne((RichTextBox)s);
+                if (ligne.IsHandleCreated)
+                    MargesLigne(ligne);
             }
             FeuilleDesCoups.CoupClique += FeuilleDesCoups_CoupClique;           // clic sur un coup de la feuille : sa position
             FeuilleDesCoups.CoupCliqueDroit += FeuilleDesCoups_CoupCliqueDroit; // clic droit : annotations (!!, !, !?, ?!, ?, ??)
@@ -2156,7 +2165,7 @@ namespace BrunoGUI_GenII
             // chargé sans [%eval]) : "Joué Fc8-e6 [?? Gaffe]   — meilleur : Fc8-b7"
             string texte = (coup.EvaluationApres is Evaluation evaluation ? $"Analyse : {evaluation.Texte} ({evaluation.Symbole})   joué " : "Joué ")
                 + (coup.CoupJoueLong ?? coup.PgnFrSansNumero)
-                + (coup.Annotation != "" ? $" [{coup.Annotation} {Annotations.Nom(coup.Annotation)}]" : "");
+                + (coup.Annotation != "" ? $" {coup.Annotation} [{Annotations.Nom(coup.Annotation)}]" : "");     // "?? [Gaffe]" (choix de Bruno)
             if (coup.MeilleurJoue)
                 return texte + "   — meilleur coup du moteur";
             if (coup.MeilleurCoup == null)
@@ -2171,6 +2180,22 @@ namespace BrunoGUI_GenII
         // remet la ligne en forme normale (LigneVariante_TextChanged)
         private bool _ecritureCentree;
         private readonly Dictionary<RichTextBox, (Font Normale, Font Grasse)> _policesLignes = [];
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct Rectangle32 { public int Gauche, Haut, Droite, Bas; }
+        [DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr fenetre, int message, IntPtr wParam, ref Rectangle32 zone);
+        private const int EM_SETRECT = 0xB3;
+        private static void MargesLigne(RichTextBox ligne)
+        {   // Zone du texte d'une ligne de variante : 6 px à gauche (jamais collé au bord), centrée en hauteur
+            int hauteurTexte = TextRenderer.MeasureText("Ag", ligne.Font).Height;
+            Rectangle32 zone = new()
+            {
+                Gauche = 6, Haut = Math.Max(0, (ligne.ClientSize.Height - hauteurTexte) / 2),
+                Droite = Math.Max(7, ligne.ClientSize.Width - 4), Bas = ligne.ClientSize.Height
+            };
+            SendMessage(ligne.Handle, EM_SETRECT, IntPtr.Zero, ref zone);
+        }
         private void AfficheLigneCentree(RichTextBox ligne, string texte)
         {
             _ecritureCentree = true;
