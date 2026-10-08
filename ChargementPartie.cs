@@ -269,7 +269,7 @@ namespace BrunoGUI_GenII
             return null;
         }
 
-        private static void JoueSurLaCopie(string uci)
+        public static void JoueSurLaCopie(string uci)
         {   // Joue un coup UCI sur la position actuelle (une copie) pour lire le coup suivant de la variante : pièces (roque, prise en
             // passant et promotion compris), case en passant, droits de roque du roi et des tours, et trait
             int source = RenvoieCaseIndex120(uci[..2]), destination = RenvoieCaseIndex120(uci.Substring(2, 2));

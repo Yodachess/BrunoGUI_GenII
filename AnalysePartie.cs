@@ -30,8 +30,22 @@ namespace BrunoGUI_GenII
     {
         // Perte de chances de gain (de -1 à +1) à partir de laquelle un coup est annoté (seuils de Lichess)
         public const double SeuilImprecision = 0.1, SeuilErreur = 0.2, SeuilGaffe = 0.3;
-        // "!" : le meilleur coup était le seul bon, la meilleure alternative (2e variante du moteur) aurait été au moins une erreur
-        public const double SeuilSeulBonCoup = SeuilErreur;
+        // "!" : le meilleur coup était le seul bon, la meilleure alternative (2e variante du moteur) aurait été au moins une erreur ;
+        // et la partie n'est pas déjà décidée après le coup (chances entre -0,6 et +0,6, environ ±2,5 pions : choix B de Bruno)
+        public const double SeuilSeulBonCoup = SeuilErreur, LimitePartieDecidee = 0.6;
+        // "!!" : un "!" qui sacrifie du matériel : dans la variante du moteur, après une réponse de l'adversaire, le joueur a au
+        // moins 2 points de matériel de moins qu'avant son coup (pion 1, cavalier et fou 3, tour 5, dame 9 : une pièce contre un pion,
+        // la qualité ; un échange ou un pion ne suffisent pas)
+        public const int SacrificeMinimum = 2, DemiCoupsSacrifice = 6;
+
+        public static int Valeur(TypePiece piece) => piece switch
+        {
+            TypePiece.PionBlanc or TypePiece.PionNoir => 1,
+            TypePiece.CavalierBlanc or TypePiece.CavalierNoir or TypePiece.FouBlanc or TypePiece.FouNoir => 3,
+            TypePiece.TourBlanche or TypePiece.TourNoire => 5,
+            TypePiece.ReineBlanche or TypePiece.ReineNoire => 9,
+            _ => 0
+        };
 
         public static double ChancesDeGain(Evaluation evaluation)
         {   // Chances de gain du point de vue des Blancs, de -1 (gain noir) à +1 (gain blanc), formule de Lichess :
@@ -68,6 +82,7 @@ namespace BrunoGUI_GenII
         public string MeilleurCoupUci { get; set; }         // le même au format UCI ("g1f3")
         public string MeilleurCoupLong { get; set; }        // le même avec sa case de départ ("Cg1-f3")
         public string VarianteMeilleure { get; set; }       // la meilleure variante en notation française ("12. Cf3 Fe7 13. ...")
+        public string VarianteMeilleureUci { get; set; }    // la même au format UCI ("g1f3 f8e7 ...") : sert à voir un sacrifice ("!!")
         public Evaluation? EvaluationSeconde { get; set; }  // évaluation de la 2e variante du moteur (la meilleure alternative), null : inconnue
         public int NombreCoupsLegaux { get; init; }          // 1 : coup forcé (jamais "!")
         public bool Ignoree { get; set; }                   // le moteur n'a donné aucun score : position sautée (sinon l'analyse tournerait en rond)
@@ -184,6 +199,7 @@ namespace BrunoGUI_GenII
             position.Evaluation = evaluation;
             position.MeilleurCoup = PremierCoup(meilleure.VariantePgn);
             position.VarianteMeilleure = meilleure.VariantePgn;
+            position.VarianteMeilleureUci = meilleure.VarianteUci;
             position.MeilleurCoupUci = (meilleure.VarianteUci ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
             position.MeilleurCoupLong = NotationLongue(position.Fen, position.MeilleurCoupUci, position.MeilleurCoup);
         }
@@ -241,7 +257,7 @@ namespace BrunoGUI_GenII
             double sens = camp == ColorPiece.Blanc ? 1 : -1;                // chances vues du camp qui joue
             double perte = meilleurJoue ? 0 : Math.Max(0, sens * (avant - apres));
             double precision = meilleurJoue ? 100 : JugementCoups.Precision(sens * avant, sens * apres);
-            string annotation = meilleurJoue && SeulBonCoup(k, indexCoup, sens) ? "!" : JugementCoups.Annotation(perte);
+            string annotation = meilleurJoue && SeulBonCoup(k, indexCoup, sens) ? (Sacrifie(k) ? "!!" : "!") : JugementCoups.Annotation(perte);
             return new JugementCoup(indexCoup, camp, perte, annotation, _positions[k + 1].Evaluation, meilleur, meilleurJoue,
                                     positionAvant.Evaluation, positionAvant.MeilleurCoupLong, positionAvant.VarianteMeilleure, precision);
         }
@@ -250,12 +266,54 @@ namespace BrunoGUI_GenII
         {   // "!" (bon coup, choix de Bruno) : le meilleur coup a été joué ET c'était le seul bon : la 2e variante du moteur aurait fait
             // perdre au moins JugementCoups.SeuilSeulBonCoup de chances de gain (une erreur). Exclus : un coup forcé (un seul coup
             // légal) et une reprise immédiate (on reprend sur la case où l'adversaire vient de prendre : rien de remarquable)
+            // Pas non plus quand la partie est déjà décidée après le coup (ex : la seule défense qui perd moins dans une position
+            // perdue) : chances hors de ±JugementCoups.LimitePartieDecidee
             PositionAnalysee avant = _positions[k];
             if (avant.EvaluationSeconde is not Evaluation seconde || avant.Chances is not double chances || avant.NombreCoupsLegaux <= 1)
+                return false;
+            if (_positions[k + 1].Chances is not double apres || Math.Abs(apres) > JugementCoups.LimitePartieDecidee)
                 return false;
             if (k > 0 && EstReprise(k, indexCoup))
                 return false;
             return sens * (chances - JugementCoups.ChancesDeGain(seconde)) >= JugementCoups.SeuilSeulBonCoup;
+        }
+
+        private bool Sacrifie(int k)
+        {   // "!!" : le seul bon coup sacrifie du matériel. La variante du moteur (qui commence par ce coup) est jouée sur une copie :
+            // après une réponse de l'adversaire (dans les DemiCoupsSacrifice premiers demi-coups), le joueur a au moins
+            // SacrificeMinimum points de matériel de moins qu'avant son coup (voir JugementCoups.SacrificeMinimum)
+            PositionAnalysee avant = _positions[k];
+            string[] variante = (avant.VarianteMeilleureUci ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (variante.Length < 2)
+                return false;
+            ColorPiece camp = avant.AuTrait;
+            return CalculerSur(PositionDepuisFen(avant.Fen), () =>
+            {
+                int depart = Materiel(camp);
+                for (int i = 0; i < Math.Min(variante.Length, JugementCoups.DemiCoupsSacrifice); i++)
+                {
+                    if (variante[i].Length < 4)
+                        return false;
+                    ChargementPartie.JoueSurLaCopie(variante[i]);
+                    if (i % 2 == 1 && Materiel(camp) <= depart - JugementCoups.SacrificeMinimum)
+                        return true;
+                }
+                return false;
+            });
+        }
+
+        private static int Materiel(ColorPiece camp)
+        {   // Matériel du camp moins celui de l'adversaire, sur la position actuelle (une copie) ; pièces blanches : valeurs impaires
+            int bilan = 0;
+            for (int i = 21; i <= 98; i++)
+            {
+                TypePiece piece = PiecesEchiquier[i];
+                if (piece is TypePiece.Vide or TypePiece.Bordure)
+                    continue;
+                bool blanche = (int)piece % 2 == 1;
+                bilan += (blanche == (camp == ColorPiece.Blanc) ? 1 : -1) * JugementCoups.Valeur(piece);
+            }
+            return bilan;
         }
 
         private bool EstReprise(int k, int indexCoup)
