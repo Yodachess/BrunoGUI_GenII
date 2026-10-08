@@ -275,7 +275,27 @@ namespace BrunoGUI_GenII
                 return false;
             if (k > 0 && EstReprise(k, indexCoup))
                 return false;
+            if (EstFuite(k, indexCoup))
+                return false;
             return sens * (chances - JugementCoups.ChancesDeGain(seconde)) >= JugementCoups.SeuilSeulBonCoup;
+        }
+
+        private bool EstFuite(int k, int indexCoup)
+        {   // La pièce jouée était attaquée par une pièce adverse de moindre valeur, et elle s'en va : retraite évidente, pas un "!"
+            // (ex : Caro-Kann, 8. h5 Fh7 : le fou attaqué par le pion n'a qu'une case, remarque de Bruno). Les attaques adverses sont
+            // les coups légaux de l'adversaire sur la case de départ, en lui donnant le trait sur une copie de la position
+            string joue = _coups[indexCoup].Uci.Trim();
+            if (joue.Length < 4)
+                return false;
+            string depart = joue[..2];
+            return CalculerSur(PositionDepuisFen(_positions[k].Fen), () =>
+            {
+                int valeur = JugementCoups.Valeur(PiecesEchiquier[RenvoieCaseIndex120(depart)]);
+                if (valeur <= 1)
+                    return false;       // pion (ou roi, valeur 0) : jamais une fuite au sens de cette règle
+                QuiJoue = Adversaire(QuiJoue);
+                return CoupsLegaux().Any(c => c.Destination == depart && JugementCoups.Valeur(PiecesEchiquier[RenvoieCaseIndex120(c.Source)]) < valeur);
+            });
         }
 
         private bool Sacrifie(int k)
