@@ -706,7 +706,7 @@ namespace BrunoGUI_GenII
             // VarianteMoteurUci1
             // 
             VarianteMoteurUci1.BackColor = System.Drawing.Color.WhiteSmoke;
-            VarianteMoteurUci1.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            VarianteMoteurUci1.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             VarianteMoteurUci1.ForeColor = System.Drawing.Color.DarkGreen;
             VarianteMoteurUci1.Location = new System.Drawing.Point(10, 620);
             VarianteMoteurUci1.Multiline = false;
@@ -720,7 +720,7 @@ namespace BrunoGUI_GenII
             // 
             VarianteMoteurUci2.BackColor = System.Drawing.Color.WhiteSmoke;
             VarianteMoteurUci2.ForeColor = System.Drawing.Color.DarkBlue;
-            VarianteMoteurUci2.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            VarianteMoteurUci2.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             VarianteMoteurUci2.Location = new System.Drawing.Point(10, 650);
             VarianteMoteurUci2.Multiline = false;
             VarianteMoteurUci2.Name = "VarianteMoteurUci2";
@@ -733,7 +733,7 @@ namespace BrunoGUI_GenII
             // 
             VarianteMoteurUci3.BackColor = System.Drawing.Color.WhiteSmoke;
             VarianteMoteurUci3.ForeColor = System.Drawing.Color.DarkBlue;
-            VarianteMoteurUci3.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            VarianteMoteurUci3.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             VarianteMoteurUci3.Location = new System.Drawing.Point(10, 680);
             VarianteMoteurUci3.Multiline = false;
             VarianteMoteurUci3.Name = "VarianteMoteurUci3";

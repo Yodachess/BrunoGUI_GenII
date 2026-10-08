@@ -2105,9 +2105,12 @@ namespace BrunoGUI_GenII
             VarianteMoteurCourante.Text = positionInitiale ? "Position initiale" : TexteCoupJoue(index, positionApres);
             if (!positionInitiale)
             {   // Coup analysé (analyse de partie, ou [%eval] et variante du PGN chargé) : son évaluation et le meilleur coup sur la
-                // 2e ligne, la meilleure suite sur la 3e. Commentaire du PGN : sur une ligne restée libre (2e, puis 3e, sinon 1re)
+                // 2e ligne, la meilleure suite sur la 3e. Commentaire du PGN : sur une ligne restée libre (2e, puis 3e), jamais à la
+                // suite du coup regardé (choix de Bruno) ; il est aussi, en entier, dans l'infobulle des trois lignes
                 Coup coup = LogiqueMouvements.ListeCoups[index];
                 string commentaire = string.IsNullOrWhiteSpace(coup.Commentaire) ? null : $"« {coup.Commentaire} »";
+                foreach (RichTextBox ligne in new[] { VarianteMoteurUci1, VarianteMoteurUci2, VarianteMoteurUci3 })
+                    _infobulleBilan.SetToolTip(ligne, commentaire != null ? "Commentaire : " + commentaire : null);
                 if (coup.EvaluationApres != null || coup.MeilleurCoup != null)
                     AfficheLigneCentree(VarianteMoteurUci2, TexteAnalyseDuCoup(coup));
                 else if (commentaire != null)
@@ -2118,13 +2121,11 @@ namespace BrunoGUI_GenII
                 if (!string.IsNullOrEmpty(coup.VarianteMeilleure))   // ligne 3 : la suite prévue
                     AfficheLigneCentree(VarianteMoteurUci3, (coup.MeilleurJoue ? "Suite prévue : " : "Meilleure suite : ") + coup.VarianteMeilleure);
                 else if (commentaire != null)
-                {
                     AfficheLigneCentree(VarianteMoteurUci3, commentaire);
-                    commentaire = null;
-                }
-                if (commentaire != null)
-                    AfficheLigneCentree(VarianteMoteurUci1, VarianteMoteurUci1.Text + "   " + commentaire);
             }
+            else
+                foreach (RichTextBox ligne in new[] { VarianteMoteurUci1, VarianteMoteurUci2, VarianteMoteurUci3 })
+                    _infobulleBilan.SetToolTip(ligne, null);
             MontreFlechesDuCoup(index);
         }
         private void AfficheDernierCoupSiPartieFinie()
@@ -2135,7 +2136,11 @@ namespace BrunoGUI_GenII
                 && dernier >= 0 && !LogiqueMouvements.ListeCoups[dernier].EstPositionDeDepart)
                 AfficheTextesDuCoup(dernier, LogiqueMouvements.PositionActuelle);
             else
+            {
                 _vue.EffaceFleches();
+                foreach (RichTextBox ligne in new[] { VarianteMoteurUci1, VarianteMoteurUci2, VarianteMoteurUci3 })
+                    _infobulleBilan.SetToolTip(ligne, null);    // (commentaire du coup regardé pendant le parcours)
+            }
         }
         // Flèches d'un coup analysé : le meilleur coup du moteur en vert, comme le coup joué s'il était ce meilleur coup
         private static readonly Color CouleurFlecheMeilleurCoup = Color.FromArgb(21, 120, 27);
@@ -2199,13 +2204,22 @@ namespace BrunoGUI_GenII
             };
             SendMessage(ligne.Handle, EM_SETRECT, IntPtr.Zero, ref zone);
         }
+        private readonly Dictionary<float, Font> _policesReduites = [];
         private void AfficheLigneCentree(RichTextBox ligne, string texte)
-        {
+        {   // Texte centré en gras ; s'il est trop long pour la ligne, la police rétrécit (par demi-points, jusqu'à 7) pour qu'il tienne
+            Font police = _policesLignes[ligne].Grasse;
+            int largeurDisponible = ligne.ClientSize.Width - 14;
+            for (float taille = police.Size - 0.5f; taille >= 7f && TextRenderer.MeasureText(texte, police).Width > largeurDisponible; taille -= 0.5f)
+            {
+                if (!_policesReduites.TryGetValue(taille, out Font reduite))
+                    _policesReduites[taille] = reduite = new Font(police.FontFamily, taille, FontStyle.Bold);
+                police = reduite;
+            }
             _ecritureCentree = true;
             ligne.Text = texte;
             ligne.SelectAll();
             ligne.SelectionAlignment = HorizontalAlignment.Center;
-            ligne.SelectionFont = _policesLignes[ligne].Grasse;
+            ligne.SelectionFont = police;
             ligne.DeselectAll();
             _ecritureCentree = false;
         }
