@@ -30,6 +30,8 @@ namespace BrunoGUI_GenII
     {
         // Perte de chances de gain (de -1 à +1) à partir de laquelle un coup est annoté (seuils de Lichess)
         public const double SeuilImprecision = 0.1, SeuilErreur = 0.2, SeuilGaffe = 0.3;
+        // "!" : le meilleur coup était le seul bon, la meilleure alternative (2e variante du moteur) aurait été au moins une erreur
+        public const double SeuilSeulBonCoup = SeuilErreur;
 
         public static double ChancesDeGain(Evaluation evaluation)
         {   // Chances de gain du point de vue des Blancs, de -1 (gain noir) à +1 (gain blanc), formule de Lichess :
@@ -66,6 +68,8 @@ namespace BrunoGUI_GenII
         public string MeilleurCoupUci { get; set; }         // le même au format UCI ("g1f3")
         public string MeilleurCoupLong { get; set; }        // le même avec sa case de départ ("Cg1-f3")
         public string VarianteMeilleure { get; set; }       // la meilleure variante en notation française ("12. Cf3 Fe7 13. ...")
+        public Evaluation? EvaluationSeconde { get; set; }  // évaluation de la 2e variante du moteur (la meilleure alternative), null : inconnue
+        public int NombreCoupsLegaux { get; init; }          // 1 : coup forcé (jamais "!")
         public bool Ignoree { get; set; }                   // le moteur n'a donné aucun score : position sautée (sinon l'analyse tournerait en rond)
         public bool AApprofondir { get; set; }              // 2e passage : position avant ou après un coup douteux, à revoir plus longtemps
         public bool Approfondie { get; set; }               // ... et revue (avec ou sans score : elle n'est pas redemandée)
@@ -119,7 +123,8 @@ namespace BrunoGUI_GenII
             double? fin = null;
             if (CalculerSur(position, () => !ResteCoupsValidesJouables()))
                 fin = !CalculerSur(position, CampAuTraitEnEchec) ? 0 : position.QuiJoue == ColorPiece.Blanc ? -1 : 1;
-            return new PositionAnalysee { Fen = fen, AuTrait = position.QuiJoue, ChancesFinDePartie = fin };
+            return new PositionAnalysee { Fen = fen, AuTrait = position.QuiJoue, ChancesFinDePartie = fin,
+                                          NombreCoupsLegaux = CalculerSur(position, () => CoupsLegaux().Count) };
         }
 
         public int? PositionSuivante
@@ -161,12 +166,15 @@ namespace BrunoGUI_GenII
             }
         }
 
-        public void Enregistre(int indexPosition, LigneAnalyse meilleure)
-        {   // Résultat du moteur pour la position (sa meilleure variante) ; sans score, la position est sautée (ses coups ne seront pas jugés).
+        public void Enregistre(int indexPosition, LigneAnalyse meilleure, LigneAnalyse seconde = null)
+        {   // Résultat du moteur pour la position (sa meilleure variante, et la 2e s'il en a donné une : elle dit si le meilleur coup
+            // était le seul bon) ; sans score, la position est sautée (ses coups ne seront pas jugés).
             // 2e passage : le nouveau résultat remplace le premier (sans score, le premier est gardé)
             PositionAnalysee position = _positions[indexPosition];
             if (_premierPassageFini && position.AApprofondir)
                 position.Approfondie = true;
+            if (seconde?.Evaluation is Evaluation evaluationSeconde && meilleure?.Evaluation != null)
+                position.EvaluationSeconde = evaluationSeconde;
             if (meilleure?.Evaluation is not Evaluation evaluation)
             {
                 if (position.Evaluation == null)
@@ -233,8 +241,30 @@ namespace BrunoGUI_GenII
             double sens = camp == ColorPiece.Blanc ? 1 : -1;                // chances vues du camp qui joue
             double perte = meilleurJoue ? 0 : Math.Max(0, sens * (avant - apres));
             double precision = meilleurJoue ? 100 : JugementCoups.Precision(sens * avant, sens * apres);
-            return new JugementCoup(indexCoup, camp, perte, JugementCoups.Annotation(perte), _positions[k + 1].Evaluation, meilleur, meilleurJoue,
+            string annotation = meilleurJoue && SeulBonCoup(k, indexCoup, sens) ? "!" : JugementCoups.Annotation(perte);
+            return new JugementCoup(indexCoup, camp, perte, annotation, _positions[k + 1].Evaluation, meilleur, meilleurJoue,
                                     positionAvant.Evaluation, positionAvant.MeilleurCoupLong, positionAvant.VarianteMeilleure, precision);
+        }
+
+        private bool SeulBonCoup(int k, int indexCoup, double sens)
+        {   // "!" (bon coup, choix de Bruno) : le meilleur coup a été joué ET c'était le seul bon : la 2e variante du moteur aurait fait
+            // perdre au moins JugementCoups.SeuilSeulBonCoup de chances de gain (une erreur). Exclus : un coup forcé (un seul coup
+            // légal) et une reprise immédiate (on reprend sur la case où l'adversaire vient de prendre : rien de remarquable)
+            PositionAnalysee avant = _positions[k];
+            if (avant.EvaluationSeconde is not Evaluation seconde || avant.Chances is not double chances || avant.NombreCoupsLegaux <= 1)
+                return false;
+            if (k > 0 && EstReprise(k, indexCoup))
+                return false;
+            return sens * (chances - JugementCoups.ChancesDeGain(seconde)) >= JugementCoups.SeuilSeulBonCoup;
+        }
+
+        private bool EstReprise(int k, int indexCoup)
+        {   // Le coup joué arrive sur la case où l'adversaire vient de prendre une pièce (ex : 3... Fxe4 4. Dxe4)
+            string joue = _coups[indexCoup].Uci.Trim(), precedent = _coups[_indexCoups[k - 1]].Uci.Trim();
+            if (joue.Length < 4 || precedent.Length < 4 || joue.Substring(2, 2) != precedent.Substring(2, 2))
+                return false;
+            List<TypePiece> piecesAvantPrecedent = PositionDepuisFen(_positions[k - 1].Fen).Pieces;     // avant le coup de l'adversaire
+            return piecesAvantPrecedent[RenvoieCaseIndex120(precedent.Substring(2, 2))] != TypePiece.Vide;
         }
 
         private static string SansSymboles(string coup) => coup.TrimEnd('+', '#', '!', '?');
