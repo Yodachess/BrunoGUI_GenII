@@ -878,7 +878,7 @@ Verifie("Ligne sans score ni variante ignorée", suiviAnalyse.Ajouter(LigneUci.A
 suiviAnalyse.Ajouter(LigneUci.Analyser("info depth 10 multipv 2 score cp 10 pv d2d4"), depart);
 LigneAnalyse l1 = suiviAnalyse.Ajouter(LigneUci.Analyser("info depth 10 multipv 1 score cp 30 pv e2e4 e7e5 g1f3"), depart);
 Verifie("Variante convertie en notation, début = 3 premiers éléments",
-    l1.VariantePgn == "1. e4 e5 2. Cf3" && l1.Debut == "1. e4 e5" && suiviAnalyse.Meilleure == l1 && l1.TexteScore == "0.30", $"'{l1.VariantePgn}' / '{l1.Debut}'");
+    l1.VariantePgn == "1. e4 e5 2. Cf3" && l1.Debut == "1. e4" && suiviAnalyse.Meilleure == l1 && l1.TexteScore == "0.30", $"'{l1.VariantePgn}' / '{l1.Debut}'");
 LigneAnalyse l2 = suiviAnalyse.Ajouter(LigneUci.Analyser("info depth 11 multipv 2 pv d2d4 d7d5"), depart);
 Verifie("Ligne sans score : garde le score de SA variante (pas celui d'une autre)", l2.TexteScore == "0.10" && l2.VariantePgn == "1. d4 d5", $"{l2.TexteScore} '{l2.VariantePgn}'");
 string quatorzeCoups = "g1f3 g8f6 f3g1 f6g8 g1f3 g8f6 f3g1 f6g8 g1f3 g8f6 f3g1 f6g8 g1f3 g8f6";
@@ -1042,6 +1042,8 @@ SuiviAnalyse suiviNoirs = new();
 LigneAnalyse ligneNoirs = suiviNoirs.Ajouter(LigneUci.Analyser("info multipv 1 score cp -20 pv c7c5 g1f3"), L.PositionDepuisFen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"));
 Verifie("Analyse : meilleur coup noir tiré d'une vraie variante du moteur (« 1 ... c5 2. Cf3 »)",
     AnalyseDePartie.PremierCoup(ligneNoirs.VariantePgn) == "c5", ligneNoirs.VariantePgn);
+Verifie("Variante : début = le premier coup seul (« 1 ... c5 » pour les Noirs, « 1. e4 » sans la réponse noire pour les Blancs)",
+    ligneNoirs.Debut == "1 ... c5", ligneNoirs.Debut);
 
 // ═══════════════ Pendule ═══════════════
 Console.WriteLine("── Pendule ──");

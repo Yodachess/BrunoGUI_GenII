@@ -67,7 +67,19 @@ namespace BrunoGUI_GenII
         public Evaluation? Evaluation { get; init; }    // null si le moteur n'a pas encore donné de score pour cette variante
         public string VariantePgn { get; init; }        // coups en notation (limités à CoupsAffiches), null si la ligne n'a pas de variante
         public string VarianteUci { get; init; }        // les mêmes coups au format UCI ("g1f3 b8c6"), null si la ligne n'a pas de variante
-        public string Debut => VariantePgn == null ? "" : string.Join(" ", VariantePgn.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(3));
+        // Le premier coup seul, avec son numéro : "15. Dxe4" (Blancs au trait) ou "15 ... Fxf5" (Noirs au trait) ; avant, les 3
+        // premiers mots, ce qui donnait aussi la réponse noire après un coup blanc ("15. Dxe4 Fxf5")
+        public string Debut
+        {
+            get
+            {
+                if (VariantePgn == null)
+                    return "";
+                string[] mots = VariantePgn.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                int premierCoup = Array.FindIndex(mots, m => m.Any(char.IsLetter));
+                return string.Join(" ", mots.Take(premierCoup < 0 ? mots.Length : premierCoup + 1));
+            }
+        }
         public string Symbole => Evaluation?.Symbole ?? "?";
         public string TexteScore => Evaluation?.Texte ?? "?";
     }
