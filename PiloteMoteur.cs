@@ -19,6 +19,8 @@
 using System;
 using static BrunoGUI_GenII.LogiqueMouvements;
 
+#nullable enable
+
 namespace BrunoGUI_GenII
 {
     public sealed record LimiteTemps
@@ -84,20 +86,20 @@ namespace BrunoGUI_GenII
         public PiloteMoteur(IMoteur moteur) => _moteur = moteur;
 
         public TypeDemande Demande { get; private set; } = TypeDemande.Aucune;     // ce que le moteur est en train de chercher
-        public Position PositionAnalysee { get; private set; }                      // position de l'analyse en cours (copie)
+        public Position? PositionAnalysee { get; private set; }                      // position de l'analyse en cours (copie)
         public bool AnalyseEnCours => Demande == TypeDemande.Analyse;
-        public string DernierCoupBibliotheque { get; private set; }                 // dernier coup joué depuis la bibliothèque
+        public string? DernierCoupBibliotheque { get; private set; }                 // dernier coup joué depuis la bibliothèque
         public SuiviAnalyse Lignes { get; } = new();    // variantes et scores reçus pour la demande en cours (voir AnalyseMoteur.cs)
 
         // Choix dans la bibliothèque d'ouvertures : FEN -> coup UCI, ou null/vide s'il n'y en a pas (null : pas de bibliothèque)
-        public Func<string, string> ChoixBibliotheque { get; set; }
+        public Func<string, string?>? ChoixBibliotheque { get; set; }
 
         public ResultatDemandeCoup DemanderCoup(string fen, LimiteTemps limite)
         {   // Coup de la partie pour le camp au trait : la bibliothèque d'abord (coup joué tout de suite), sinon le moteur
             // (avec un temps fixe, ou les temps de la pendule).
             // Un coup de bibliothèque illégal (bibliothèque qui ne correspond pas à la position) laisse la main au moteur
             Abandonner();
-            string coup = ChoixBibliotheque?.Invoke(fen);
+            string? coup = ChoixBibliotheque?.Invoke(fen);
             if (!string.IsNullOrEmpty(coup) && JouerCoupUci(coup))
             {
                 DernierCoupBibliotheque = coup;
@@ -136,7 +138,7 @@ namespace BrunoGUI_GenII
             return demande;
         }
 
-        public static bool JouerCoupUci(string coupUci)
+        public static bool JouerCoupUci(string? coupUci)
         {   // Joue un coup au format UCI ("e2e4", "e7e8q" : le 5e caractère est la pièce de promotion) ; renvoie false s'il est illégal
             if (string.IsNullOrEmpty(coupUci) || coupUci.Length < 4 || EchecetMat)
                 return false;

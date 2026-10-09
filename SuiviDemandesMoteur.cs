@@ -1,4 +1,4 @@
-// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
 // █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
 // █ Copyright (C) 2026 Bruno COURTOIS                                      █
 // █ SPDX-License-Identifier: GPL-3.0-or-later                              █
@@ -15,6 +15,8 @@
 // Le protocole UCI ne numérote pas les réponses, mais il garantit exactement un "bestmove" par "go", dans l'ordre d'envoi
 // (même après "stop") : le n-ième "bestmove" reçu répond donc au n-ième "go" envoyé.
 // Appelée depuis deux threads (interface et lecture du moteur) : toutes les opérations sont protégées par un verrou.
+
+#nullable enable
 
 namespace BrunoGUI_GenII
 {
