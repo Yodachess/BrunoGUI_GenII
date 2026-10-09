@@ -992,8 +992,19 @@ AnalyseDePartie analyseFuite = new(L.ListeCoups);      // 8. h5 Fh7 : le fou att
 analyseFuite.Enregistre(16, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(30, null), VariantePgn = "9. Fd3", VarianteUci = "f1d3" });
 analyseFuite.Enregistre(15, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(30, null), VariantePgn = "8 ... Fh7 9. Fd3", VarianteUci = "g6h7 f1d3" },
                         new LigneAnalyse { Numero = 2, Evaluation = new Evaluation(300, null) });
-Verifie("« ! » : pas pour une pièce attaquée par une pièce de moindre valeur qui se retire (Caro-Kann, 8. h5 Fh7)",
+Verifie("« ! » : pas pour une pièce attaquée par une pièce de moindre valeur qui va sur sa seule case sûre (Caro-Kann, 8. h5 Fh7)",
     analyseFuite.Jugement(15) is { MeilleurJoue: true, Annotation: "" }, $"« {analyseFuite.Jugement(15)?.Annotation} »");
+Charger("4k3/8/8/3p4/4N3/8/8/4K3 w - - 0 1");      // cavalier e4 attaqué par le pion d5, mais plusieurs cases sûres : g3 est un vrai choix
+L.ExecutionCoup("e4", "g3");
+int indexCg3 = L.ListeCoups.Count - 1;
+AnalyseDePartie analyseChoix = new(L.ListeCoups, approfondir: true);
+analyseChoix.Enregistre(1, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(0, null), VariantePgn = "1 ... Re7", VarianteUci = "e8e7" });
+analyseChoix.Enregistre(0, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(0, null), VariantePgn = "1. Cg3", VarianteUci = "e4g3" },
+                        new LigneAnalyse { Numero = 2, Evaluation = new Evaluation(-300, null) });
+Verifie("« ! » : gardé pour une pièce attaquée qui avait plusieurs cases sûres (le seul bon choix parmi elles)",
+    analyseChoix.Jugement(indexCg3)?.Annotation == "!", $"« {analyseChoix.Jugement(indexCg3)?.Annotation} »");
+Verifie("Analyse complète : les positions d'un « ! » sont aussi revues plus longtemps",
+    analyseChoix.PositionSuivante == 1 && analyseChoix.EnApprofondissement && analyseChoix.NombreAApprofondir == 2, $"{analyseChoix.PositionSuivante} / {analyseChoix.NombreAApprofondir}");
 Charger(L.FenDepart);
 foreach (string coupSacrifice in new[] { "e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "g8f6", "c4f7" })   // 4. Fxf7+ Rxf7 : un fou pour un pion
     L.ExecutionCoup(coupSacrifice[..2], coupSacrifice[2..]);
