@@ -32,12 +32,12 @@ namespace BrunoGUI_GenII
 
         private const int TailleCase = 52, TaillePalette = 44;
         private readonly EditeurPosition _editeur;
-        private readonly Func<TypePiece, Image> _image;
+        private readonly Func<TypePiece, Image?> _image;
         private readonly Color _caseClaire, _caseSombre;
         private bool _coteNoir;
         private TypePiece _pieceChoisie = TypePiece.PionBlanc;
         private bool _miseAJour;                                   // contrôles remplis par le programme : leurs événements sont ignorés
-        private string _message;                                   // message ponctuel (ex : pion refusé sur la 1re rangée)
+        private string? _message;                                   // message ponctuel (ex : pion refusé sur la 1re rangée)
 
         private readonly Zone _plateau = new() { Location = new Point(12, 12), Size = new Size(8 * TailleCase, 8 * TailleCase), Cursor = Cursors.Hand };
         private readonly List<(TypePiece Piece, Zone Case)> _palette = [];
@@ -62,7 +62,7 @@ namespace BrunoGUI_GenII
 
         public string FenSaisie => _editeur.Fen;   // la position saisie (lue après OK)
 
-        public SaisiePosition(string fenDeDepart, Func<TypePiece, Image> image, Color caseClaire, Color caseSombre, bool coteNoir)
+        public SaisiePosition(string fenDeDepart, Func<TypePiece, Image?> image, Color caseClaire, Color caseSombre, bool coteNoir)
         {
             _editeur = new EditeurPosition(fenDeDepart);
             _image = image;
@@ -130,7 +130,7 @@ namespace BrunoGUI_GenII
 
         private static KryptonLabel Libelle(string texte, int x, int y) => new() { Text = texte, Location = new Point(x, y), AutoSize = true };
 
-        private static KryptonButton Bouton(string texte, int x, int y, int largeur, EventHandler clic)
+        private static KryptonButton Bouton(string texte, int x, int y, int largeur, EventHandler? clic)
         {
             KryptonButton bouton = new() { Text = texte, Location = new Point(x, y), Size = new Size(largeur, 28) };
             if (clic != null)
@@ -181,7 +181,7 @@ namespace BrunoGUI_GenII
             return (rangee + 1) * 10 + colonne;
         }
 
-        private void DessinePlateau(object sender, PaintEventArgs e)
+        private void DessinePlateau(object? sender, PaintEventArgs e)
         {
             using Font police = new("Segoe UI", 7.5f, FontStyle.Bold);
             for (int ligne = 0; ligne < 8; ligne++)
@@ -203,7 +203,7 @@ namespace BrunoGUI_GenII
                 }
         }
 
-        private void ClicSurPlateau(object sender, MouseEventArgs e)
+        private void ClicSurPlateau(object? sender, MouseEventArgs e)
         {
             int colonne = e.X / TailleCase, ligne = e.Y / TailleCase;
             if (colonne < 0 || colonne > 7 || ligne < 0 || ligne > 7)
@@ -230,7 +230,7 @@ namespace BrunoGUI_GenII
         private void CollerFen()
         {
             string texte = Clipboard.ContainsText() ? Clipboard.GetText().Trim() : "";
-            string erreur = texte == "" ? "le presse-papiers ne contient pas de texte" : _editeur.ChargerFen(texte.Split('\n')[0]);
+            string? erreur = texte == "" ? "le presse-papiers ne contient pas de texte" : _editeur.ChargerFen(texte.Split('\n')[0]);
             _message = erreur != null ? $"FEN refusée : {erreur}." : "FEN collée.";
             MetAJour();
         }
@@ -253,7 +253,7 @@ namespace BrunoGUI_GenII
             _enPassant.Enabled = _enPassant.Items.Count > 1;
             _numero.Value = Math.Clamp(_editeur.NumeroCoup, (int)_numero.Minimum, (int)_numero.Maximum);
             _fen.Text = _editeur.Fen;
-            string erreur = _editeur.Erreur;
+            string? erreur = _editeur.Erreur;
             _etat.Text = _message ?? (erreur == null ? "Position correcte : OK pour la jouer." : $"Position incorrecte : {erreur}.");
             _etat.ForeColor = _message == null && erreur == null ? Color.DarkGreen : Color.Firebrick;
             _miseAJour = false;
@@ -262,7 +262,7 @@ namespace BrunoGUI_GenII
 
         private void Valider()
         {   // OK : seulement si la position peut être jouée (sinon la raison s'affiche et la fenêtre reste ouverte)
-            string erreur = _editeur.Erreur;
+            string? erreur = _editeur.Erreur;
             if (erreur != null)
             {
                 _message = $"Impossible de jouer cette position : {erreur}.";

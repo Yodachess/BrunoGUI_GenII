@@ -24,7 +24,7 @@ namespace BrunoGUI_GenII
             InitializeComponent();
         }
 
-        private void FenetreAide_Load(object sender, EventArgs e)
+        private void FenetreAide_Load(object? sender, EventArgs e)
         {   // Chargement du fichier d'aide
             ContenuAide.LoadFile(System.IO.Path.Combine(Chemins.RepertoireRacine, "AideBrunoGUI.rtf"));   // à côté de l'exécutable
             // Ajouter une petite marge à gauche

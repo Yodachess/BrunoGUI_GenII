@@ -50,10 +50,10 @@ namespace BrunoGUI_GenII
         public Partie PartieCourante => _partie;
         private int _indexSource120, _forceMoteurElo;
         private bool _plateauAutorise = true;   // c'est au joueur de bouger les pièces (voir PlateauEnable et MetAJourPlateau)
-        private string _caseSource, _caseDestination;
+        private string _caseSource = "", _caseDestination = "";
         private string _nomHumain, _joueurElo, _nomMoteur, _moteurElo;
         private bool _nomsHumainMoteur;     // les joueurs affichés sont l'humain et le moteur (voir AfficheJoueursDeLaPartie)
-        private string _cheminMoteur, _nomMoteurChoisi;
+        private string _cheminMoteur = "", _nomMoteurChoisi = "";
         private string _bibliotheque = "rodent.bin";
         private bool _clickCaseSource, _visuSymbole, _montreDonneesBrutesUci, _montre3VariantesUci;
         private bool _clavierActif, _emetUnSon, _bibliothequeAleatoire;
@@ -70,7 +70,7 @@ namespace BrunoGUI_GenII
         public PartieEchecsPGN PartieEnCours = new();
         public ParametresUciStockfish mesParametresUciStockfish;    // créée dans le constructeur (elle règle MoteurUci)
         public ParametresDeBase mesparametresDeBase;        // mesparametresDeBase est déclarée, mais elle n’est instanciée qu'après "InitializeComponent();"
-        private AffichePgn affichePgn = new();   // affichePgn est à la fois déclarée et instanciée. Prêt à être utilisé dès le début
+        private AffichePgn? affichePgn = new();   // affichePgn est à la fois déclarée et instanciée. Prêt à être utilisé dès le début
         private readonly FichierPartiePgn fichierPartiePgn = new();     // liste des parties d'un fichier PGN (masquée, jamais détruite)
         private readonly DonneesBrutesUci donneesBrutesUci = new();
         private readonly Parametres parametres;
@@ -132,8 +132,8 @@ namespace BrunoGUI_GenII
                 // que pour une zone multiligne (sans retour à la ligne automatique, elle reste sur une ligne)
                 ligne.Multiline = true;
                 ligne.WordWrap = false;
-                ligne.HandleCreated += (s, e) => MargesLigne((RichTextBox)s);
-                ligne.Resize += (s, e) => MargesLigne((RichTextBox)s);
+                ligne.HandleCreated += (s, e) => MargesLigne(ligne);
+                ligne.Resize += (s, e) => MargesLigne(ligne);
                 if (ligne.IsHandleCreated)
                     MargesLigne(ligne);
             }
@@ -163,7 +163,7 @@ namespace BrunoGUI_GenII
             _bibliothequeAleatoire = ActiveAleatoire.Checked;
         }
 
-        private void BrunoInterfaceGraphique_Load(object sender, EventArgs e)
+        private void BrunoInterfaceGraphique_Load(object? sender, EventArgs e)
         {   // Forme Interface graphique
             // les évènements dans les classes
             LogiqueMouvements.AfficheCoupNoir += CoupJoue;
@@ -221,7 +221,7 @@ namespace BrunoGUI_GenII
             // VarianteMoteurUci2.Text = "[INFO] Fin de la vérification de mise à jour de Stockfish...";
         }
 
-        private void NouvellePartieStockfish_Click(object sender, EventArgs e)
+        private void NouvellePartieStockfish_Click(object? sender, EventArgs e)
         {   // Nouvelle partie contre Stockfish, avec la possibilité de régler la force du moteur et le temps de réflexion.
             // Rien ne change avant la validation : "Annuler" laisse la partie en cours intacte (et le moteur continue à réfléchir)
             if (maNouvellePartieForceModule.ShowDialog() == DialogResult.OK)
@@ -294,7 +294,7 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         // Gestion du click de la souris
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-        private void CaseMouseDown(object sender, MouseEventArgs e)
+        private void CaseMouseDown(object? sender, MouseEventArgs e)
         {   // Le joueur sélectionne la case source ou destination avec la souris
             try
             {
@@ -440,15 +440,15 @@ namespace BrunoGUI_GenII
             return _selectionPromotion;
         }
 
-        private void BoutonGainBlanc_Click(object sender, EventArgs e)
+        private void BoutonGainBlanc_Click(object? sender, EventArgs e)
         {   // Si un des joueurs abandonne, c'est la règle de l'abandon
             GestionResultat("1-0", " Gain Blanc");
         }
-        private void BoutonGainNoir_Click(object sender, EventArgs e)
+        private void BoutonGainNoir_Click(object? sender, EventArgs e)
         {   // Si un des joueurs abandonne, c'est la règle de l'abandon
             GestionResultat("0-1", " Gain Noir");
         }
-        private void BoutonNulle_Click(object sender, EventArgs e)
+        private void BoutonNulle_Click(object? sender, EventArgs e)
         {   // Si un des joueurs propose la nulle et que l'autre accepte, c'est la règle de la nulle par accord mutuel
             GestionResultat("1/2-1/2", " Nulle");
         }
@@ -471,7 +471,7 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         // Gestion des menus
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-        private void HumainOrdinateur_Click(object sender, EventArgs e)
+        private void HumainOrdinateur_Click(object? sender, EventArgs e)
         {   // L'humain joue les blancs, l'ordinateur les noirs.
             // On demande d'abord confirmation (la partie est remise à zéro) : "Annuler" laisse la partie en cours intacte
             string confirmation = "Vous aurez les Blancs contre " + _nomMoteur + ". " + "\nToute position précédente sera effacée,\n confirmez avec OK, sinon Annuler";
@@ -490,7 +490,7 @@ namespace BrunoGUI_GenII
                 PlateauEnable(true);                                            // On lui permet de bouger les pièces
             }
         }
-        private void OrdinateurHumain_Click(object sender, EventArgs e)
+        private void OrdinateurHumain_Click(object? sender, EventArgs e)
         {   // L'ordinateur joue les blancs, l'humain les noirs.
             // On demande d'abord confirmation (la partie est remise à zéro) : "Annuler" laisse la partie en cours intacte
             string confirmation = "Vous aurez les Noirs contre " + _nomMoteur + ". " + "\nToute position précédente sera effacée,\n confirmez avec OK, sinon Annuler";
@@ -508,7 +508,7 @@ namespace BrunoGUI_GenII
                 JeuMoteurAvecBibliotheque(FenDepart);
             }
         }
-        private void HumainContreHumain_Click(object sender, EventArgs e)
+        private void HumainContreHumain_Click(object? sender, EventArgs e)
         {   // 2 joueurs humains s'affrontent, pas de moteur UCI.
             // On demande d'abord confirmation (la partie est remise à zéro) : "Annuler" laisse la partie en cours intacte
             string confirmation = "Vous jouez contre votre ami/partenaire,\n" + "ou vous saisissez une partie ...\n" +
@@ -528,7 +528,7 @@ namespace BrunoGUI_GenII
                 CommencerPartie(Joueur.Humain, Joueur.Humain);
             }
         }
-        private void SelectionAutreMoteur_Click(object sender, EventArgs e)
+        private void SelectionAutreMoteur_Click(object? sender, EventArgs e)
         {   // l'utilisateur doit sélectionner le répertoire et fichier du moteur UCI
             DialogResult Reponse = OuvertureChoixMoteur.ShowDialog();
             if (Reponse == DialogResult.OK)     // On ne sauvegarde que si l'utilisateur a choisi un fichier
@@ -538,7 +538,7 @@ namespace BrunoGUI_GenII
                 DemarrageMoteur();
             }
         }
-        private void SelectionBibliotheque_Click(object sender, EventArgs e)
+        private void SelectionBibliotheque_Click(object? sender, EventArgs e)
         {   // l'utilisateur doit sélectionner le répertoire et fichier de la bibliothèque d'ouvertures
             DialogResult Reponse = OuvertureChoixBibliotheque.ShowDialog();
             if (Reponse == DialogResult.OK)     // l'utilisateur doit sélectionner le répertoire et fichier
@@ -549,14 +549,14 @@ namespace BrunoGUI_GenII
                     _bibliotheque = precedente;     // fichier illisible : on garde la bibliothèque précédente (et son nom dans les préférences)
             }
         }
-        private void RodentIV_Click(object sender, EventArgs e)
+        private void RodentIV_Click(object? sender, EventArgs e)
         {   //  https://echecs-et-informatique.franceserv.com/rodent-iv.html
             _moteurElo = "+- 3000";
             _cheminMoteur = Path.Combine(Chemins.MoteursUCI + @"\Rodent_IV", "rodent-iv-x64.exe");
             Debug.WriteLine("Chemin Rodent IV = " + _cheminMoteur);
             DemarrageMoteur();
         }
-        private void Sargon1_1978_Click(object sender, EventArgs e)
+        private void Sargon1_1978_Click(object? sender, EventArgs e)
         {   // https://echecs-et-informatique.franceserv.com/sargon-1978.html
             _moteurElo = "1678";
             _cheminMoteur = Path.Combine(Chemins.MoteursUCI + @"\sargon1978", "sargon1978_1_01b.exe");
@@ -625,27 +625,27 @@ namespace BrunoGUI_GenII
             _moteurElo = elo;
             AfficheMoteurDansLaPartie();
         }
-        private void ParametresDeBase_Click(object sender, EventArgs e)
+        private void ParametresDeBase_Click(object? sender, EventArgs e)
         {   // Affiche les paramètres de base du moteur UCI
             mesparametresDeBase.Show();
         }
-        private void ParametresAvances_Click(object sender, EventArgs e)
+        private void ParametresAvances_Click(object? sender, EventArgs e)
         {   // Affiche les paramètres avancés du moteur UCI
             mesParametresUciStockfish.Show();
         }
-        private void StopMoteur_Click(object sender, EventArgs e)
+        private void StopMoteur_Click(object? sender, EventArgs e)
         {   // Arrête le moteur UCI (utilise si réflexion infinie)
             timer.Stop();
             MoteurUci.StandardInputDataToUci("stop");
             InformationPourJoueur.Text = "Arrêt réflexion Moteur ";
         }
 
-        private void CaseSombre_Click(object sender, EventArgs e)
+        private void CaseSombre_Click(object? sender, EventArgs e)
         {   // Permet de choisir la couleur des cases sombres de l'échiquier (enregistrée dans les préférences à la fermeture)
             if (CouleurDialogue.ShowDialog() == DialogResult.OK)
                 _vue.ChangeCouleurs(_vue.CaseClaire, CouleurDialogue.Color);
         }
-        private void CaseClaire_Click(object sender, EventArgs e)
+        private void CaseClaire_Click(object? sender, EventArgs e)
         {   // Permet de choisir la couleur des cases claires de l'échiquier (enregistrée dans les préférences à la fermeture)
             if (CouleurDialogue.ShowDialog() == DialogResult.OK)
                 _vue.ChangeCouleurs(CouleurDialogue.Color, _vue.CaseSombre);
@@ -654,11 +654,11 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         // Gestion des boutons
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-        private void SaisiePartieBouton_Click(object sender, EventArgs e)
+        private void SaisiePartieBouton_Click(object? sender, EventArgs e)
         {   // Permet de saisir une partie en cours, ou terminée, pour l'analyser ou la faire rejouer
             HumainContreHumain_Click(sender, e);
         }
-        private void AnalysePosition_Click(object sender, EventArgs e)
+        private void AnalysePosition_Click(object? sender, EventArgs e)
         {   // Analyse la position affichée : la position courante de la partie, ou le coup passé que l'on regarde (parcours)
             AbandonneReflexion();   // une nouvelle analyse remplace la réflexion en cours
             Position position = _positionAffichee ?? LogiqueMouvements.PositionActuelle;
@@ -677,11 +677,11 @@ namespace BrunoGUI_GenII
             AffichePendules();
             LancerReflexion();  // Décompte le temps de réflexion
         }
-        private void InverseEchiquier_Click(object sender, EventArgs e)
+        private void InverseEchiquier_Click(object? sender, EventArgs e)
         {   // Permet d'inverser la vue de l'échiquier (côté Blanc ou côté Noir) : ne change pas le droit de jouer
             TourneEchiquier();
         }
-        private void OrdinateurJoue_Click(object sender, EventArgs e)
+        private void OrdinateurJoue_Click(object? sender, EventArgs e)
         {   // Permet de faire jouer l'ordinateur UCI, sans que ce soit son tour (pour tester une position par exemple)
             AbandonneReflexion();   // une nouvelle demande remplace la réflexion en cours
             FinPause();                     // faire jouer le moteur met fin à une pause
@@ -693,7 +693,7 @@ namespace BrunoGUI_GenII
             PlateauEnable(!_partie.MoteurAuTrait);
             _clickCaseSource = _visuSymbole = true;    // L'ordinateur ayant joué, c'est indispensable !
         }
-        private void RetourArriere_Click(object sender, EventArgs e)
+        private void RetourArriere_Click(object? sender, EventArgs e)
         {   // Permet de revenir en arrière d'un demi-coup (coup des blancs ou des noirs)
             if (ParcoursEnCours)
                 return;             // sécurité : le bouton est grisé pendant le parcours (voir MetAJourCommandes)
@@ -716,7 +716,7 @@ namespace BrunoGUI_GenII
                 AfficheCoupsBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
                 InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + NomCamp(QuiJoue);
                 // Dernière case de la barre d'état : le dernier coup qui reste (celui annulé y était encore)
-                Coup dernierCoup = LogiqueMouvements.ListeCoups.LastOrDefault(c => !c.EstPositionDeDepart);
+                Coup? dernierCoup = LogiqueMouvements.ListeCoups.LastOrDefault(c => !c.EstPositionDeDepart);
                 VarianteMoteurCourante.Text = dernierCoup != null ? "Coup joué : " + dernierCoup.PgnFrNumerote : "Position de départ";
                 InformationsPartie.Text = _partie.Blancs == Joueur.Moteur ? "L'ordinateur joue les Blancs" :
                           _partie.Noirs == Joueur.Moteur ? "L'ordinateur joue les Noirs" :
@@ -734,7 +734,7 @@ namespace BrunoGUI_GenII
             PartieEnCours.Result = "";
             ScoreMoteur.Text = EvaluationUci.Text = VarianteMoteurCourante.Text = "...";
         }
-        public void MontrePartiesPGN_Click(object sender, EventArgs e)
+        public void MontrePartiesPGN_Click(object? sender, EventArgs e)
         {   // Affiche ou masque la liste des parties (la fenêtre n'est jamais détruite : voir FichierPartiePgn_FormClosing).
             // Le texte du bouton suit l'état réel de la fenêtre (MetAJourBoutonListeParties, sur VisibleChanged)
             if (fichierPartiePgn.Visible)
@@ -744,7 +744,7 @@ namespace BrunoGUI_GenII
         }
         private void MetAJourBoutonListeParties() =>
             MontrePartiesPGN.Text = fichierPartiePgn.Visible ? "Masque liste parties" : "Affiche liste parties";
-        private void VisualisationPgn_Click(object sender, EventArgs e)
+        private void VisualisationPgn_Click(object? sender, EventArgs e)
         {   // Bouton pour voir la partie en PGN
             if (affichePgn == null || affichePgn.IsDisposed)
             {   // Traitement pour prendre en compte la fermeture par croix rouge en haut à droite ...
@@ -759,24 +759,24 @@ namespace BrunoGUI_GenII
             string contenuPgnFr = GestionPartiePgn.RetourneContenuPgn(PartieEnCours, "Fr");
             affichePgn.AffichePgnDansZone(contenuPgnIntl, contenuPgnFr);
         }
-        private void VisualiserPgn_Click(object sender, EventArgs e)
+        private void VisualiserPgn_Click(object? sender, EventArgs e)
         {   // Option de menu  pour voir la partie en PGN
             VisualisationPgn_Click(sender, e);
         }
-        private void BoutonBalises_Click(object sender, EventArgs e)
+        private void BoutonBalises_Click(object? sender, EventArgs e)
         {   // Ouvre la fenêtre de l'en-tête PGN
             SaisieBalises SaisieBalises = new(PartieEnCours);
             SaisieBalises.ShowDialog();
             // On affiche les noms et Elo des joueurs qui sont dans l'en-tête PGN
             AfficheJoueurs(PartieEnCours.White, PartieEnCours.WhiteElo, PartieEnCours.Black, PartieEnCours.BlackElo);
         }
-        private void MontreVariantesUci_Click(object sender, EventArgs e)
+        private void MontreVariantesUci_Click(object? sender, EventArgs e)
         {   // Affiche ou masque les 3 variantes UCI (info multiPV) à chaque clic
             _montre3VariantesUci = !_montre3VariantesUci;
             MontreVariantesUci.Text = _montre3VariantesUci ? "Affiche variantes UCI" : "Masque variantes UCI";
             VarianteMoteurUci1.Visible = VarianteMoteurUci2.Visible = VarianteMoteurUci3.Visible = !_montre3VariantesUci;
         }
-        private void MontreDonneesUci_Click(object sender, EventArgs e)
+        private void MontreDonneesUci_Click(object? sender, EventArgs e)
         {   // Affiche ou masque les données brutes UCI (info, bestmove, etc.) à chaque clic
             _montreDonneesBrutesUci = !_montreDonneesBrutesUci;
             MontreDonneesUci.Text = _montreDonneesBrutesUci ? "Masque protocole UCI" : "Affiche protocole UCI";
@@ -784,7 +784,7 @@ namespace BrunoGUI_GenII
             else donneesBrutesUci.Hide();                           // On masque les données brutes UCI
             donneesBrutesUci.DonneesBrutesVue.ScrollToCaret();      // Pour garder l'affichage dans toute la fenêtre
         }
-        private void AideDocumentation_Click(object sender, EventArgs e)
+        private void AideDocumentation_Click(object? sender, EventArgs e)
         {   // Ouvre la fenêtre d'aide et documentation
             var fenetreAide = new FenetreAide();
             fenetreAide.ShowDialog();
@@ -798,7 +798,7 @@ namespace BrunoGUI_GenII
                 return $"{version.Major}.{version.Minor:00}";
             }
         }
-        private void Apropos_Click(object sender, EventArgs e)
+        private void Apropos_Click(object? sender, EventArgs e)
         {   // Option de menu "A propos"
             // Version 1.01 = gestion des fichiers réseaux neuronaux dans même répertoire que le moteur UCI (Stockfish NNUE)
             // Version 1.02 = corrections des règles (roque, prise en passant, promotion, 50 coups, lecture FEN), classe Position,
@@ -844,7 +844,7 @@ namespace BrunoGUI_GenII
                                                                     "\n Copyright © 2026", "A propos de",
                 KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
         }
-        private void KryptonApropos_Click(object sender, EventArgs e)
+        private void KryptonApropos_Click(object? sender, EventArgs e)
         {   // Bouton "A propos"
             Apropos_Click(sender, e);
         }
@@ -872,7 +872,7 @@ namespace BrunoGUI_GenII
             DialogResult reponse = InvokeRequired ? (DialogResult)Invoke(new Func<DialogResult>(Demander)) : Demander();
             return reponse == DialogResult.Yes;
         }
-        private async void BtnMiseAJour_Click(object sender, EventArgs e)
+        private async void BtnMiseAJour_Click(object? sender, EventArgs e)
         {   // 1. On prépare l'UI
             BtnMiseAJour.Enabled = false;
             Cursor = Cursors.WaitCursor;
@@ -926,7 +926,7 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         //  Fermeture Programme
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-        private void EchiquierPrincipal_FormClosing(object sender, FormClosingEventArgs e)
+        private void EchiquierPrincipal_FormClosing(object? sender, FormClosingEventArgs e)
         {   // Demande de confirmation avant de quitter l'application
             if (KryptonMessageBox.Show("Quitter l'application ?", "Confirmer",
                 KryptonMessageBoxButtons.YesNo, KryptonMessageBoxIcon.Question) == DialogResult.No)
@@ -966,7 +966,7 @@ namespace BrunoGUI_GenII
                 Journal.Info("Préférences non enregistrées : " + ex.Message);
             }
         }
-        private void KryptonQuitter_Click(object sender, EventArgs e)
+        private void KryptonQuitter_Click(object? sender, EventArgs e)
         {   // Note : Envoie l’événement FormClosing puis l’événement FormClosed (après la fermeture complète)
             // Et détruit les contrôles du formulaire
             Close();
@@ -986,20 +986,20 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         //  Diverses méthodes
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-        private void TempsReflexionSecondes_ValueChanged(object sender, EventArgs e)
+        private void TempsReflexionSecondes_ValueChanged(object? sender, EventArgs e)
         {   // Temps de réflexion (secondes) : analyses, et coups du moteur dans une partie sans pendule
             _dureeReflexionMilliSeconde = (int)TempsReflexionSecondes.Value * 1000;
             InformationsPartie.Text = "Temps de réflexion = " + (_dureeReflexionMilliSeconde / 1000).ToString() + " secondes";
         }
-        private void ActiveBibliotheque_CheckedChanged(object sender, EventArgs e)
+        private void ActiveBibliotheque_CheckedChanged(object? sender, EventArgs e)
         {   // Activer ou non la bibliothèque (on lit la case : une bascule se décalerait si l'état initial différait)
             _bibliothequeActive = ActiveBibliotheque.Checked;
         }
-        private void ActiveAleatoire_CheckedChanged(object sender, EventArgs e)
+        private void ActiveAleatoire_CheckedChanged(object? sender, EventArgs e)
         {   // Choisir un coup aléatoire ou le meilleur coup dans la bibliothèque
             _bibliothequeAleatoire = ActiveAleatoire.Checked;
         }
-        private void ActiveSon_CheckedChanged(object sender, EventArgs e)
+        private void ActiveSon_CheckedChanged(object? sender, EventArgs e)
         {   // Mettre ou enlever le son
             _emetUnSon = ActiveSon.Checked;
         }
@@ -1028,9 +1028,10 @@ namespace BrunoGUI_GenII
                 return;
             MenuInterfaceGraphique.Enabled = actif;
         }
-        private void Promo0_Click(object sender, EventArgs e)
+        private void Promo0_Click(object? sender, EventArgs e)
         {   //  Gestion de la promotion de Pion
-            PictureBox Promotion = (PictureBox)sender;
+            if (sender is not PictureBox Promotion)
+                return;
             int indexSelect = Convert.ToInt32(Promotion.Name[5..]);
             _selectionPromotion = LogiqueMouvements.QuiJoue == LogiqueMouvements.ColorPiece.Blanc ? ListeBlanche[indexSelect] : ListeNoire[indexSelect];
         }
@@ -1119,7 +1120,7 @@ namespace BrunoGUI_GenII
             menu.Closed += (s, e) => BeginInvoke(new Action(menu.Dispose));     // libéré après le traitement du clic
             menu.Show(FeuilleDesCoups, position);
         }
-        private Font _policeMenuAnnotations;    // créée une seule fois (une police par élément et par clic droit ne serait jamais libérée)
+        private Font? _policeMenuAnnotations;    // créée une seule fois (une police par élément et par clic droit ne serait jamais libérée)
         private ToolStripMenuItem ElementAnnotation(Coup coup, string annotation, string texte)
         {
             _policeMenuAnnotations ??= new Font(Font, FontStyle.Bold);

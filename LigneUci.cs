@@ -15,8 +15,6 @@
 
 using System;
 
-#nullable enable
-
 namespace BrunoGUI_GenII
 {
     public class LigneUci

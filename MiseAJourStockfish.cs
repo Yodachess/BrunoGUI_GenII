@@ -47,18 +47,18 @@ namespace BrunoGUI_GenII
             return client;
         }
 
-        public async Task<VersionStockfish> RechercherNouvelleVersion()
+        public async Task<VersionStockfish?> RechercherNouvelleVersion()
         {   // Compare la version installée à la dernière version publiée sur GitHub, sans rien arrêter ni télécharger.
             // Retourne null si Stockfish est déjà à jour (exception en cas d'erreur, ex : pas de connexion)
             string versionLocale = await ObtenirVersionLocale();
             using JsonDocument document = JsonDocument.Parse(await Client.GetStringAsync(UrlDerniereVersion));
             JsonElement publication = document.RootElement;
-            string tag = publication.GetProperty("tag_name").GetString();
+            string tag = publication.GetProperty("tag_name").GetString() ?? "";
             Debug.WriteLine($"[MAJ] Installée : {versionLocale}, publiée : {tag}");
             if (string.Equals(tag, versionLocale, StringComparison.OrdinalIgnoreCase))
                 return null;
             var archives = publication.GetProperty("assets").EnumerateArray()
-                .Select(a => (Nom: a.GetProperty("name").GetString(), Url: a.GetProperty("browser_download_url").GetString(), Taille: a.GetProperty("size").GetInt64()))
+                .Select(a => (Nom: a.GetProperty("name").GetString() ?? "", Url: a.GetProperty("browser_download_url").GetString() ?? "", Taille: a.GetProperty("size").GetInt64()))
                 .ToList();
             string nomChoisi = ChoisirArchive(archives.Select(a => a.Nom), RuntimeInformation.OSArchitecture)
                 ?? throw new Exception("Aucune archive Windows adaptée à ce processeur dans la publication " + tag + ".");
@@ -66,11 +66,11 @@ namespace BrunoGUI_GenII
             return new VersionStockfish(tag, archive.Url, archive.Taille);
         }
 
-        public static string ChoisirArchive(IEnumerable<string> nomsArchives, Architecture processeur)
+        public static string? ChoisirArchive(IEnumerable<string> nomsArchives, Architecture processeur)
         {   // Archive Windows à télécharger : la version ARM sur un processeur ARM, sinon la version x86-64 ("universal" de préférence,
             // en attendant d'éventuelles anciennes publications aux noms plus détaillés) ; null si aucune ne convient
             List<string> windows = nomsArchives.Where(n => n.Contains("windows", StringComparison.OrdinalIgnoreCase)).ToList();
-            string Premiere(string morceau) =>
+            string? Premiere(string morceau) =>
                 windows.Where(n => n.Contains(morceau, StringComparison.OrdinalIgnoreCase))
                        .OrderByDescending(n => n.Contains("universal", StringComparison.OrdinalIgnoreCase))
                        .FirstOrDefault();
@@ -117,7 +117,7 @@ namespace BrunoGUI_GenII
             if (!File.Exists(_cheminExe))
                 return "sf_0";
             string sortie = await LireSortieUci(_cheminExe);
-            string ligne = sortie.Split('\n').Select(l => l.Trim()).FirstOrDefault(l => l.StartsWith("id name Stockfish"));
+            string? ligne = sortie.Split('\n').Select(l => l.Trim()).FirstOrDefault(l => l.StartsWith("id name Stockfish"));
             return ligne == null ? "sf_inconnue" : "sf_" + ligne.Split(' ').Last();
         }
         private async Task<bool> DemarreCorrectement() => (await LireSortieUci(_cheminExe)).Contains("uciok");
@@ -131,7 +131,7 @@ namespace BrunoGUI_GenII
                 CreateNoWindow = true,
                 WorkingDirectory = Path.GetDirectoryName(exe)
             };
-            using Process processus = Process.Start(infos);
+            using Process? processus = Process.Start(infos);
             if (processus == null)
                 return "";
             Task<string> lecture = processus.StandardOutput.ReadToEndAsync();

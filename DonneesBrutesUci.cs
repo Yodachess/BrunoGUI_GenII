@@ -36,7 +36,7 @@ namespace BrunoGUI_GenII
             if (Visible)
                 DonneesBrutesVue.ScrollToCaret();   // la fenêtre montre toujours les dernières lignes
         }
-        private void DonneesBrutesUci_FormClosing(object sender, FormClosingEventArgs e)
+        private void DonneesBrutesUci_FormClosing(object? sender, FormClosingEventArgs e)
         {   // Gestion du click sur la croix rouge en haut à droite ...
             e.Cancel = true;
             this.Hide();

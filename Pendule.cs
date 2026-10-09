@@ -18,8 +18,6 @@
 using System;
 using static BrunoGUI_GenII.LogiqueMouvements;
 
-#nullable enable
-
 namespace BrunoGUI_GenII
 {
     // Cadence : temps initial et bonus par coup. Cadence à deux périodes (tournoi) : au coup n° CoupsControle, chaque camp

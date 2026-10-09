@@ -44,7 +44,7 @@ namespace BrunoGUI_GenII
                 ├─ "mainForm.ChargerPartieDepuisPgn(partie)"
                 └─ "mainForm.ParcoursPartie(coupsPartie)
         */
-        private void ChargePartiesPgn_Click(object sender, EventArgs e)
+        private void ChargePartiesPgn_Click(object? sender, EventArgs e)
         {   // --- Affiche la boîte de dialogue et traite le fichier PGN sélectionné  ---
             // Ouvrir un fichier ne change pas la partie en cours (ni la réflexion du moteur) : seul le choix d'une partie
             // dans la liste la remplace (ChargerPartieDepuisPgn). "Annuler" ne change donc rien
@@ -73,7 +73,7 @@ namespace BrunoGUI_GenII
                     KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
             }
         }
-        private void ChargePositionFen_Click(object sender, EventArgs e)
+        private void ChargePositionFen_Click(object? sender, EventArgs e)
         {
             if (ChargerPositionFen.ShowDialog() != DialogResult.OK)
                 return;     // annulé : la partie en cours ne change pas
@@ -89,7 +89,7 @@ namespace BrunoGUI_GenII
                 return;
             }
             string contenuFen = positions.Length > 0 ? ChargementPartie.NormaliseFen(positions[0]) : "";
-            string erreur = ChargementPartie.ErreurFen(contenuFen);
+            string? erreur = ChargementPartie.ErreurFen(contenuFen);
             if (erreur != null)
             {   // FEN mal formée : on ne la lit pas (elle ferait planter la lecture ou donnerait une position incohérente)
                 KryptonMessageBox.Show($"Position FEN refusée : {erreur}.\n\n{contenuFen}", "Chargement FEN",
@@ -98,7 +98,7 @@ namespace BrunoGUI_GenII
             }
             ChargeFenDansLaPartie(contenuFen, "Fen chargé : ", positions.Length > 1 ? $"   Fichier de {positions.Length} positions : la première est chargée" : "...");
         }
-        private void BoutonSaisiePosition_Click(object sender, EventArgs e)
+        private void BoutonSaisiePosition_Click(object? sender, EventArgs e)
         {   // Saisie d'une position à la main (fenêtre SaisiePosition), en partant de la position affichée ; OK : elle est jouée
             // comme une FEN chargée (nouvelle partie, l'humain au trait) ; Annuler ne change rien
             string fenAffichee = LogiqueMouvements.CalculerSur(_positionAffichee ?? LogiqueMouvements.PositionActuelle, LogiqueMouvements.RetourneChaineFenActuel);
@@ -131,7 +131,7 @@ namespace BrunoGUI_GenII
             VarianteMoteurUci3.Text = _pendule != null ? $"   Pendule {_pendule.Cadence.Nom} : elle démarre au premier coup" : "...";
             MetAJourCommandes();
         }
-        private void EnregistrerPgn_Click(object sender, EventArgs e)
+        private void EnregistrerPgn_Click(object? sender, EventArgs e)
         {   // Enregistre la partie au format PGN
             try
             {
@@ -180,7 +180,7 @@ namespace BrunoGUI_GenII
                 Debug.WriteLine($"StackTrace : {ex.StackTrace}");
             }
         }
-        private void EnregistrerFen_Click(object sender, EventArgs e)
+        private void EnregistrerFen_Click(object? sender, EventArgs e)
         {   // Ecriture du fichier FEN (position courante)
             {
                 DialogResult Reponse = SauvegardeFen.ShowDialog();      // l'utilisateur doit rentrer le nom du fichier FEN

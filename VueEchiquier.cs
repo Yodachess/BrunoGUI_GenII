@@ -32,7 +32,7 @@ namespace BrunoGUI_GenII
         private readonly PictureBox _plateau;           // l'image de l'échiquier, sur laquelle sont posées les cases
         private readonly Control _proprietaireCurseur;   // la fenêtre dont le curseur devient la pièce déplacée
         private readonly List<PictureBox> _cases = [];   // les 120 cases, indexées comme le tableau "mailbox" (a1 = 21, h8 = 98)
-        private readonly Dictionary<TypePiece, Bitmap> _images = new()
+        private readonly Dictionary<TypePiece, Bitmap?> _images = new()
         {
             [TypePiece.PionBlanc] = new(Properties.Resources.PionBlanc),
             [TypePiece.TourBlanche] = new(Properties.Resources.TourBlanche),
@@ -72,7 +72,7 @@ namespace BrunoGUI_GenII
             CaseDestination = destination;
         }
 
-        public Image ImagePiece(TypePiece piece) => _images[piece];
+        public Image? ImagePiece(TypePiece piece) => _images[piece];
         public Image ImageCase(int index) => _cases[index].Image;
 
         public void CreerCases(MouseEventHandler clicSurCase)
@@ -149,7 +149,7 @@ namespace BrunoGUI_GenII
         // Images composées (pièce + symbole) : à libérer quand une case change d'image
         // (les images des pièces et des symboles, partagées par toutes les cases, ne sont jamais libérées)
         private readonly HashSet<Image> _imagesComposees = [];
-        private void RemplaceImage(int index, Image nouvelle)
+        private void RemplaceImage(int index, Image? nouvelle)
         {
             Image ancienne = _cases[index].Image;
             _cases[index].Image = nouvelle;
@@ -223,11 +223,12 @@ namespace BrunoGUI_GenII
                 if (caseJeu.Visible)
                     caseJeu.Invalidate();
         }
-        private void DessineFlechesSurLaCase(object sender, PaintEventArgs e)
+        private void DessineFlechesSurLaCase(object? sender, PaintEventArgs e)
         {
             if (_fleches.Count == 0)
                 return;
-            PictureBox caseJeu = (PictureBox)sender;
+            if (sender is not PictureBox caseJeu)
+                return;
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             e.Graphics.TranslateTransform(-caseJeu.Left, -caseJeu.Top);
             foreach (var (source, destination, couleur) in _fleches)
@@ -291,7 +292,7 @@ namespace BrunoGUI_GenII
         // ═══ Curseur "pièce" pendant un déplacement : l'icône Windows et le curseur sont libérés quand on en change ═══
         [DllImport("user32.dll")]
         private static extern bool DestroyIcon(IntPtr icone);
-        private Cursor _curseurPiece;
+        private Cursor? _curseurPiece;
         private IntPtr _iconeCurseurPiece;
         public void MetCurseurPiece(Image piece)
         {

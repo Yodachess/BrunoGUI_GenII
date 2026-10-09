@@ -34,13 +34,13 @@ namespace BrunoGUI_GenII
         // Pendule (voir Pendule.cs)
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private Cadence _cadence = Cadence.SansPendule;     // cadence choisie : elle vaut pour la PROCHAINE nouvelle partie
-        private Pendule _pendule;                           // pendule de la partie en cours (null : sans pendule, temps fixe par coup)
+        private Pendule? _pendule;                           // pendule de la partie en cours (null : sans pendule, temps fixe par coup)
         private readonly Stopwatch _chrono = Stopwatch.StartNew();      // heure de la pendule (précise, indépendante des tics)
         private readonly System.Windows.Forms.Timer _minuteriePendule = new() { Interval = 100 };   // affichage et chute du drapeau
 
         private bool _pauseJoueur;      // pause demandée par un clic sur une pendule (à distinguer de la pause pendant une analyse)
 
-        private void Pendule_Click(object sender, EventArgs e)
+        private void Pendule_Click(object? sender, EventArgs e)
         {   // Un clic sur l'une des deux pendules met la partie en pause, un autre la reprend (comme le bouton d'une vraie pendule).
             // Sans pendule, ou hors d'une partie en cours, le clic ne fait rien
             if (_pendule == null || !_partie.EnCours)
@@ -79,7 +79,7 @@ namespace BrunoGUI_GenII
                 ListePendule.Items.Add(cadence);
             ListePendule.SelectedItem = cadence;
         }
-        private void ListePendule_SelectedIndexChanged(object sender, EventArgs e)
+        private void ListePendule_SelectedIndexChanged(object? sender, EventArgs e)
         {   // Nouvelle cadence : pour la partie suivante (la partie en cours garde la sienne)
             if (ListePendule.SelectedItem is not Cadence cadence || cadence == _cadence)
                 return;
@@ -106,7 +106,7 @@ namespace BrunoGUI_GenII
             _minuteriePendule.Stop();
             AffichePendules();
         }
-        private void MinuteriePendule_Tick(object sender, EventArgs e)
+        private void MinuteriePendule_Tick(object? sender, EventArgs e)
         {   // Tous les dixièmes de seconde : reprise après une analyse, chute du drapeau, affichage
             if (_pendule == null)
                 return;
@@ -144,8 +144,8 @@ namespace BrunoGUI_GenII
                 PenduleNoir.BackColor = PenduleBlanc.ForeColor = Color.Black;
                 return;
             }
-            AffichePendule(PenduleBlanc, ColorPiece.Blanc, Color.White, Color.Black);
-            AffichePendule(PenduleNoir, ColorPiece.Noir, Color.Black, Color.White);
+            AffichePendule(_pendule, PenduleBlanc, ColorPiece.Blanc, Color.White, Color.Black);
+            AffichePendule(_pendule, PenduleNoir, ColorPiece.Noir, Color.Black, Color.White);
         }
         private (TimeSpan? Blancs, TimeSpan? Noirs) TempsDeLaPositionAffichee()
         {   // Temps notés dans le coup de la position affichée (parcours) ou du dernier coup ; position de départ : temps initial
@@ -159,10 +159,10 @@ namespace BrunoGUI_GenII
             Cadence cadence = Cadence.Lire(PartieEnCours.TimeControl);
             return cadence.EstSansPendule ? (null, null) : (cadence.TempsInitial, cadence.TempsInitial);
         }
-        private void AffichePendule(Label affichage, ColorPiece camp, Color fond, Color texte)
+        private void AffichePendule(Pendule pendule, Label affichage, ColorPiece camp, Color fond, Color texte)
         {
-            TimeSpan restant = _pendule.TempsRestant(camp);
-            bool decompte = _pendule.Tourne && _pendule.CampQuiDecompte == camp;
+            TimeSpan restant = pendule.TempsRestant(camp);
+            bool decompte = pendule.Tourne && pendule.CampQuiDecompte == camp;
             affichage.Text = Pendule.Texte(restant);    // ("1:30:00" : la pendule réduit sa police pour qu'il tienne, voir ReduitPourTenir)
             affichage.BackColor = _pauseJoueur ? Color.Silver : decompte ? Color.LightGreen : fond;     // gris : partie en pause
             affichage.ForeColor = restant < TimeSpan.FromSeconds(10) ? Color.Red : decompte ? Color.Black : texte;

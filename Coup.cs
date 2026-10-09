@@ -14,8 +14,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-#nullable enable
-
 namespace BrunoGUI_GenII
 {
     public class Coup

@@ -13,8 +13,6 @@
 using System.Collections.Generic;
 using static BrunoGUI_GenII.LogiqueMouvements;
 
-#nullable enable
-
 namespace BrunoGUI_GenII
 {
     public class Position

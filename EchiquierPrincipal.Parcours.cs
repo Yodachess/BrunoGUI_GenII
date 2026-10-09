@@ -33,7 +33,7 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         // Gestion des boutons et flèches pour parcours de partie
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-        private void BoutonPrecedent_Click(object sender, EventArgs e)
+        private void BoutonPrecedent_Click(object? sender, EventArgs e)
         {   // On recule d'un demi-coup dans l'affichage (la partie n'est pas modifiée)
             if (LogiqueMouvements.ListeCoups.Count == 0)
             {
@@ -46,7 +46,7 @@ namespace BrunoGUI_GenII
             else
                 AfficheCoupDeLaPartie(indexActuel - 1);
         }
-        private void BoutonSuivant_Click(object sender, EventArgs e)
+        private void BoutonSuivant_Click(object? sender, EventArgs e)
         {   // On avance d'un demi-coup dans l'affichage ; après le dernier coup, on revient à la position courante de la partie
             if (ParcoursEnCours)
                 AfficheCoupDeLaPartie(_indexAffiche + 1);
@@ -55,16 +55,16 @@ namespace BrunoGUI_GenII
             else
                 KryptonMessageBox.Show("Vous êtes à la fin de la partie.", "Fin de partie", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
         }
-        private void BoutonDebut_Click(object sender, EventArgs e)
+        private void BoutonDebut_Click(object? sender, EventArgs e)
         {   // On affiche la position initiale de la partie (ou la position FEN de départ)
             if (LogiqueMouvements.ListeCoups.Count > 0)
                 AfficheCoupDeLaPartie(IndexPremierePosition);
         }
-        private void BoutonFin_Click(object sender, EventArgs e)
+        private void BoutonFin_Click(object? sender, EventArgs e)
         {   // On revient à la position courante de la partie
             RetourPositionCourante();
         }
-        private void BoutonReprendreIci_Click(object sender, EventArgs e)
+        private void BoutonReprendreIci_Click(object? sender, EventArgs e)
         {   // "Reprendre la partie d'ici" : la partie est coupée à la position affichée (parcours) et reprend depuis cette position.
             // Une partie PGN en lecture seule peut aussi être reprise à sa position finale (rien n'est supprimé)
             bool etaitLectureSeule = PartieEnLectureSeule;
@@ -167,13 +167,13 @@ namespace BrunoGUI_GenII
         // L'échiquier montre soit la partie (LogiqueMouvements.PositionActuelle), soit une position passée (_positionAffichee).
         // Parcourir ne modifie jamais la partie : le moteur peut jouer pendant le parcours, et l'humain rejoue après être revenu
         // à la position courante (clic sur l'échiquier ou "Fin").
-        private Position _positionAffichee;     // null : l'échiquier montre la partie
+        private Position? _positionAffichee;     // null : l'échiquier montre la partie
         private int _indexAffiche;              // index dans ListeCoups de la position affichée (-1 : position initiale FenDepart)
         private bool ParcoursEnCours => _positionAffichee != null;
         private static int IndexPremierePosition =>     // -1 : position initiale ; 0 : partie commencée depuis un FEN
             LogiqueMouvements.ListeCoups.Count > 0 && LogiqueMouvements.ListeCoups[0].EstPositionDeDepart ? 0 : -1;
         private Position PositionDesVariantes =>        // position sur laquelle sont convertis les coups du moteur (variantes, conseil)
-            _pilote.AnalyseEnCours ? _pilote.PositionAnalysee : LogiqueMouvements.PositionActuelle;
+            _pilote.AnalyseEnCours ? _pilote.PositionAnalysee ?? LogiqueMouvements.PositionActuelle : LogiqueMouvements.PositionActuelle;
 
         public void AfficheCoupDeLaPartie(int index)
         {   // Affiche la position après le coup n° index de ListeCoups (-1 : position initiale), sans modifier la partie.
@@ -220,7 +220,7 @@ namespace BrunoGUI_GenII
                 // 2e ligne, la meilleure suite sur la 3e. Commentaire du PGN : sur une ligne restée libre (2e, puis 3e), jamais à la
                 // suite du coup regardé (choix de Bruno) ; il est aussi, en entier, dans l'infobulle des trois lignes
                 Coup coup = LogiqueMouvements.ListeCoups[index];
-                string commentaire = string.IsNullOrWhiteSpace(coup.Commentaire) ? null : $"« {coup.Commentaire} »";
+                string? commentaire = string.IsNullOrWhiteSpace(coup.Commentaire) ? null : $"« {coup.Commentaire} »";
                 foreach (RichTextBox ligne in new[] { VarianteMoteurUci1, VarianteMoteurUci2, VarianteMoteurUci3 })
                     _infobulleBilan.SetToolTip(ligne, commentaire != null ? "Commentaire : " + commentaire : null);
                 if (coup.EvaluationApres != null || coup.MeilleurCoup != null)
@@ -338,7 +338,7 @@ namespace BrunoGUI_GenII
             ligne.DeselectAll();
             _ecritureCentree = false;
         }
-        private void LigneVariante_TextChanged(object sender, EventArgs e)
+        private void LigneVariante_TextChanged(object? sender, EventArgs e)
         {   // Un autre texte que le coup regardé ou son analyse : alignement à gauche et police normale
             if (_ecritureCentree || sender is not RichTextBox ligne)
                 return;

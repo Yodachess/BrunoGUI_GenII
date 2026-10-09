@@ -29,8 +29,8 @@ namespace BrunoGUI_GenII
     public partial class AffichePgn : Form
     {
         private readonly AffichePgn afficheZone;
-        private string partieFormatPgnIntl;
-        private string partieFormatPgnFr;
+        private string partieFormatPgnIntl = "";
+        private string partieFormatPgnFr = "";
 
         public AffichePgn()
         {
@@ -43,17 +43,17 @@ namespace BrunoGUI_GenII
             partieFormatPgnFr = contenuPgnFr;
             ZoneAffichage.Text = partieFormatPgnIntl;
         }
-        private void AffichePgnIntl_Click(object sender, EventArgs e)
+        private void AffichePgnIntl_Click(object? sender, EventArgs e)
         {   // Affiche la partie au format PGN international
             afficheZone.Show();
             afficheZone.ZoneAffichage.Text = partieFormatPgnIntl;
         }
-        private void AffichePgnFr_Click(object sender, EventArgs e)
+        private void AffichePgnFr_Click(object? sender, EventArgs e)
         {   // Affiche la partie au format PGN francais
             afficheZone.Show();
             afficheZone.ZoneAffichage.Text = partieFormatPgnFr;
         }
-        private void ListeNalAfficheNal_Click(object sender, EventArgs e)
+        private void ListeNalAfficheNal_Click(object? sender, EventArgs e)
         {   // Affiche les coups au format Algébrique long + entête PGN
             afficheZone.Show();
             string contenuNal;
@@ -71,7 +71,7 @@ namespace BrunoGUI_GenII
             afficheZone.ZoneAffichage.Text = contenuNal;
             Debug.WriteLine(contenuNal);
         }
-        private void AfficheCoupsUci_Click(object sender, EventArgs e)
+        private void AfficheCoupsUci_Click(object? sender, EventArgs e)
         {   // Affiche les coups au format UCI + entête PGN
             afficheZone.Show();
             string contenuUci;
@@ -84,7 +84,7 @@ namespace BrunoGUI_GenII
             afficheZone.ZoneAffichage.Text = contenuUci;
             Debug.WriteLine(contenuUci);
         }
-        private void ListeFenAffichePgn_Click(object sender, EventArgs e)
+        private void ListeFenAffichePgn_Click(object? sender, EventArgs e)
         {   // Affiche la liste des FEN de la partie
             afficheZone.Show();
             string contenuFen;
@@ -109,11 +109,11 @@ namespace BrunoGUI_GenII
             }
             return string.Join("\n", entete);
         }
-        private void MasqueAffichePgn_Click(object sender, EventArgs e)
+        private void MasqueAffichePgn_Click(object? sender, EventArgs e)
         {   // Masque la fenêtre sans la fermer
             this.Hide();
         }
-        private void AffichePgn_FormClosing(object sender, FormClosingEventArgs e)
+        private void AffichePgn_FormClosing(object? sender, FormClosingEventArgs e)
         {   // le formulaire n’est jamais fermé, juste masqué.
             e.Cancel = true;  // Annule la fermeture de la fenêtre
             this.Hide();      // Masque la fenêtre au lieu de la fermer;

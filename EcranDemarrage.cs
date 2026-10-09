@@ -46,7 +46,7 @@ namespace BrunoGUI_GenII
             horlogeDeProgression.Interval = 50;           // Vitesse de progression
             horlogeDeProgression.Tick += HorlogeDeProgression_Tick;
         }
-        private void HorlogeDeFondu_Tick(object sender, EventArgs e)
+        private void HorlogeDeFondu_Tick(object? sender, EventArgs e)
         {
             if (!disparition)
             {   // Effet de fondu entrant
@@ -66,7 +66,7 @@ namespace BrunoGUI_GenII
                 }
             }
         }
-        private void HorlogeDeProgression_Tick(object sender, EventArgs e)
+        private void HorlogeDeProgression_Tick(object? sender, EventArgs e)
         {
             valeurProgression += 10;    // 10 pas de 50 ms
             if (valeurProgression <= 100)

@@ -38,22 +38,22 @@ namespace BrunoGUI_GenII
         // peut n'être qu'une illusion d'une recherche trop courte). Le bilan donne ensuite le coup critique (clic : il est affiché)
         private const int DureeAnalyseParPosition = 3000;   // 3 s par position (choix de Bruno)
         private const int DureeApprofondissement = 10000;   // 10 s par position revue
-        private AnalyseDePartie _analyseDePartie;           // analyse en cours (null : aucune)
+        private AnalyseDePartie? _analyseDePartie;           // analyse en cours (null : aucune)
         private int _positionEnAnalyse = -1;                // position demandée au moteur (index dans _analyseDePartie.Positions)
         private int? _coupCritique;                         // index dans ListeCoups du coup critique de la dernière analyse (clic sur le bilan)
         private int? _multiPvAvantAnalyse;                  // nombre de variantes à rétablir à la fin de l'analyse
 
-        private void BoutonAnalysePartie_Click(object sender, EventArgs e)
+        private void BoutonAnalysePartie_Click(object? sender, EventArgs e)
         {   // "Analyse rapide" (3 s par position), ou "Interrompre" si une analyse est en cours (ce bouton occupe alors toute la largeur)
             if (_analyseDePartie != null)
                 TermineAnalyseDePartie(interrompue: true);
             else
                 LanceAnalyseDePartie(complete: false);
         }
-        private void BoutonAnalyseComplete_Click(object sender, EventArgs e) =>
+        private void BoutonAnalyseComplete_Click(object? sender, EventArgs e) =>
             // "Analyse complète" : la rapide, puis les coups douteux revus 10 s (masqué pendant une analyse)
             LanceAnalyseDePartie(complete: true);
-        private void MetAJourInfobullesAnalyse(object sender, EventArgs e)
+        private void MetAJourInfobullesAnalyse(object? sender, EventArgs e)
         {   // Au survol des boutons : ce que fait chaque analyse et sa durée pour la partie en cours
             int positions = LogiqueMouvements.ListeCoups.Count(c => !c.EstPositionDeDepart) + 1;
             TimeSpan rapide = TimeSpan.FromMilliseconds((double)positions * DureeAnalyseParPosition);
@@ -97,7 +97,7 @@ namespace BrunoGUI_GenII
         }
         private void AnalysePositionSuivante()
         {
-            if (_analyseDePartie.PositionSuivante is not int index)
+            if (_analyseDePartie?.PositionSuivante is not int index)
             {
                 TermineAnalyseDePartie(interrompue: false);
                 return;
@@ -115,8 +115,10 @@ namespace BrunoGUI_GenII
             _pilote.DemanderAnalyse(LogiqueMouvements.PositionDepuisFen(_analyseDePartie.Positions[index].Fen),
                                     approfondissement ? DureeApprofondissement : DureeAnalyseParPosition);
         }
-        private void PositionAnalyseeParLeMoteur(LigneAnalyse meilleure)
+        private void PositionAnalyseeParLeMoteur(LigneAnalyse? meilleure)
         {   // Réponse du moteur pour la position demandée (null : aucun score) : on l'enregistre et on passe à la suivante
+            if (_analyseDePartie == null)
+                return;
             _analyseDePartie.Enregistre(_positionEnAnalyse, meilleure, meilleure != null ? _pilote.Lignes.Seconde : null);
             // Annotations au fur et à mesure (choix de Bruno) : l'analyse allant de la fin vers le début, la position d'après est déjà
             // analysée et le coup joué dans celle-ci peut être jugé tout de suite ; la feuille est redessinée avec la position suivante
@@ -138,7 +140,7 @@ namespace BrunoGUI_GenII
             _coupCritique = null;
             BilanAnalyse.Cursor = Cursors.Default;
         }
-        private void BilanAnalyse_Click(object sender, EventArgs e)
+        private void BilanAnalyse_Click(object? sender, EventArgs e)
         {   // Clic sur le bilan : l'échiquier montre le coup critique (avec son analyse et ses flèches)
             if (_coupCritique is int index && _analyseDePartie == null && index < LogiqueMouvements.ListeCoups.Count)
                 AfficheCoupDeLaPartie(index);
@@ -146,7 +148,7 @@ namespace BrunoGUI_GenII
 
         private void TermineAnalyseDePartie(bool interrompue)
         {   // Fin (ou interruption) : les résultats vont dans les coups (annotations proposées, plus pâles), puis le bilan
-            AnalyseDePartie analyse = _analyseDePartie;
+            AnalyseDePartie? analyse = _analyseDePartie;
             if (analyse == null)
                 return;
             _analyseDePartie = null;        // avant AbandonneReflexion, qui sinon reviendrait ici

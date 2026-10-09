@@ -29,8 +29,8 @@ namespace BrunoGUI_GenII
         private int _indexSelectionne = -1;     // coup surligné (place dans ListeCoups), -1 : aucun
         private int _indexSurvole = -1;         // coup sous la souris
 
-        public event Action<int> CoupClique;
-        public event Action<int, Point> CoupCliqueDroit;    // place du coup, position de la souris (dans le composant)
+        public event Action<int>? CoupClique;
+        public event Action<int, Point>? CoupCliqueDroit;    // place du coup, position de la souris (dans le composant)
 
         // Couleurs de la feuille : fond blanc, une ligne sur deux gris-bleu très pâle, coup affiché en bleu (comme ChessBase ou
         // Lichess ; le jaune pâle "papier" d'avant n'a pas plu à Bruno)
@@ -160,15 +160,15 @@ namespace BrunoGUI_GenII
             if (index == _demiCoupInfobulle)
                 return;
             _demiCoupInfobulle = index;
-            string texte = index == -2 ? null
+            string? texte = index == -2 ? null
                 : index < 0 || _coups[index].EvaluationApres is not Evaluation evaluation ? "Courbe d'évaluation : analyser la partie pour la voir"
                 : $"{_coups[index].PgnFrNumerote}{_coups[index].Annotation}   {evaluation.Texte}";
             _infobulleBande.SetToolTip(this, texte);
         }
 
-        private string _resultat;               // résultat écrit sous le dernier coup ("1-0", "0-1", "½-½"), null : partie en cours
+        private string? _resultat;               // résultat écrit sous le dernier coup ("1-0", "0-1", "½-½"), null : partie en cours
 
-        public void MetAJour(IReadOnlyList<Coup> coups, int indexSelectionne, string resultat = null)
+        public void MetAJour(IReadOnlyList<Coup> coups, int indexSelectionne, string? resultat = null)
         {   // Les coups de la partie, le coup surligné (celui de la position affichée ; -1 : aucun, ex : position de départ),
             // et le résultat de la partie ("1-0", "0-1", "1/2-1/2" ; vide ou "*" : partie en cours, rien n'est écrit)
             _coups = [.. coups];
@@ -274,8 +274,8 @@ namespace BrunoGUI_GenII
             }
         }
 
-        private Font _policeAnnotation;     // police des pastilles d'annotation (créée une seule fois)
-        private Font _policeResultat;       // police du résultat de la partie (gras)
+        private Font? _policeAnnotation;     // police des pastilles d'annotation (créée une seule fois)
+        private Font? _policeResultat;       // police du résultat de la partie (gras)
 
         private static void DessinePastille(Graphics g, Rectangle zone, Color couleur)
         {   // Rectangle aux coins arrondis, plein

@@ -39,20 +39,20 @@ namespace BrunoGUI_GenII
         void IMoteur.Abandonner() => AbandonneDemandeEnCours();
         bool IMoteur.EnReflexion => EnReflexion;
 
-        public event AfficheMoteurUci AfficheUci;
-        public event AfficheDonneesBrutesUci  AfficheDonneesBrutes;
-        public event AfficheCoupMoteurUci AfficheCoupMoteur;
+        public event AfficheMoteurUci? AfficheUci;
+        public event AfficheDonneesBrutesUci? AfficheDonneesBrutes;
+        public event AfficheCoupMoteurUci? AfficheCoupMoteur;
         public List<string> OptionsUci = [];  // Noms des options déclarées par le moteur (lignes "option name ...")
-        public string DataUci { get; set; }              // dernière ligne reçue du moteur, telle quelle
+        public string DataUci { get; set; } = "";            // dernière ligne reçue du moteur, telle quelle
         public LigneUci DerniereLigne { get; private set; } = new();   // la même ligne, décodée
-        public string DataVersUci { get; set; }
-        public string CoupAuFormatUci { get; set; }
+        public string DataVersUci { get; set; } = "";
+        public string CoupAuFormatUci { get; set; } = "";
         public bool UciVersGui { get; set; }
         public int NombreLignesPV { get; set; } = 3;     // Nombre de variantes (MultiPV) demandées au moteur
         public int? NombreThreads { get; set; }          // Threads et Hash (Mo) envoyés au démarrage du moteur (null : valeur du moteur)
         public int? TailleHachageMo { get; set; }
         private bool _optionsDemarrageEnvoyees;          // Threads/Hash ne sont envoyés qu'une fois par démarrage du moteur
-        public string NomAnnonce { get; private set; }  // nom annoncé par le moteur ("id name ..."), ex : Stockfish 19
+        public string? NomAnnonce { get; private set; }  // nom annoncé par le moteur ("id name ..."), ex : Stockfish 19
 
         // Force du moteur : limitée pour jouer (Elo, niveau), jamais pour analyser. Ce qui est voulu pour jouer est mémorisé, et ce
         // qui est actuellement réglé dans le moteur aussi : avant chaque "go", JeuMoteurUci n'envoie que ce qui doit changer
@@ -73,7 +73,7 @@ namespace BrunoGUI_GenII
             if (Demandes.Abandonner())
                 StandardInputDataToUci("stop");
         }
-        private Process Proc;
+        private Process? Proc;
 
         public void Start(string fichierMoteurUci)
         {   // Démarrage du moteur Uci dont le chemin est passé en paramêtre
@@ -106,7 +106,7 @@ namespace BrunoGUI_GenII
             StandardInputDataToUci("uci");  // On demande les infos au moteur (il répond par ses options puis "uciok")
         }
 
-        private void ProcOutputDataReceived(object sender, DataReceivedEventArgs e)
+        private void ProcOutputDataReceived(object? sender, DataReceivedEventArgs e)
         {   // Evènement de sortie de données du processus UCI vers l'interface pour jouer le coup du moteur UCI
             if (sender != Proc)
                 return;     // ligne d'un ancien processus moteur (arrêté par un changement de moteur ou une nouvelle partie) : ignorée
@@ -131,7 +131,7 @@ namespace BrunoGUI_GenII
                         // Ce cas est traité par l'interface (AfficheUci, sur son thread), pas ici sur le thread du moteur
                         if (!DerniereLigne.AucunCoupLegal && !LigneAbandonnee)     // réponse périmée : ignorée
                         {
-                            CoupAuFormatUci = DerniereLigne.MeilleurCoup;
+                            CoupAuFormatUci = DerniereLigne.MeilleurCoup ?? "";     // (jamais null ici : AucunCoupLegal est faux)
                             AfficheCoupMoteur?.Invoke();
                         }
                         break;

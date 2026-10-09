@@ -16,8 +16,6 @@
 // (même après "stop") : le n-ième "bestmove" reçu répond donc au n-ième "go" envoyé.
 // Appelée depuis deux threads (interface et lecture du moteur) : toutes les opérations sont protégées par un verrou.
 
-#nullable enable
-
 namespace BrunoGUI_GenII
 {
     public class SuiviDemandesMoteur
