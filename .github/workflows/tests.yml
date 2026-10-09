@@ -26,3 +26,7 @@ jobs:
 
       - name: Tests (règles, notation, UCI, perft complets)
         run: dotnet run --project Tests -c Release --no-build -- --complet
+
+      # Les mêmes vérifications vues comme tests xUnit (un test par vérification) : contrôle que le kit de test les trouve
+      - name: Tests xUnit
+        run: dotnet test Tests -c Release --no-build
