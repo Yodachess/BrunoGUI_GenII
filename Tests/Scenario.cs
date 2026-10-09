@@ -112,6 +112,15 @@ public static class Scenario
         Charger("8/4P2k/8/8/8/8/8/4K3 w - - 0 1");
         Verifie("Promotion PGN : la pièce du coup est posée",
             GestionPartiePgn.DecodeCoupPartie("e8=N") && L.PiecesEchiquier[L.RenvoieCaseIndex120("e8")] == L.TypePiece.CavalierBlanc, DernierCoupPgn());
+        // Promotion sans "=" (vieux fichiers PGN) : "e8Q", "dxe8N"
+        Charger("8/4P2k/8/8/8/8/8/4K3 w - - 0 1");
+        bool promoSansEgal = GestionPartiePgn.DecodeCoupPartie("e8Q");
+        Verifie("Promotion PGN sans « = » : e8Q", promoSansEgal && L.PiecesEchiquier[L.RenvoieCaseIndex120("e8")] == L.TypePiece.ReineBlanche
+            && L.ListeCoups.Count > 0 && L.ListeCoups[^1].Uci.Trim() == "e7e8q", $"{promoSansEgal} {DernierCoupPgn()}");
+        Charger("4r2k/3P4/8/8/8/8/8/4K3 w - - 0 1");
+        bool prisePromoSansEgal = GestionPartiePgn.DecodeCoupPartie("dxe8N");
+        Verifie("Promotion PGN sans « = » avec prise : dxe8N", prisePromoSansEgal && L.PiecesEchiquier[L.RenvoieCaseIndex120("e8")] == L.TypePiece.CavalierBlanc,
+            $"{prisePromoSansEgal} {DernierCoupPgn()}");
 
         L.ColorPiece? campMate = null, campPat = null, campAuTrait = null;
         L.AfficheEchecEtMat += c => campMate = c;
