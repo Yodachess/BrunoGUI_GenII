@@ -31,9 +31,9 @@ namespace BrunoGUI_GenII
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             // *** Splash Screen ***
-            EcranDemarrage Démarrage = new();
-            Démarrage.Show();
-            Démarrage.Demarrer();
+            EcranDemarrage demarrage = new();
+            demarrage.Show();
+            demarrage.Demarrer();
             DateTime debut = DateTime.Now;
             while ((DateTime.Now - debut).TotalSeconds < 1)
             {   // Boucle d'événements temporaire pour permettre au splash de s'afficher

@@ -56,9 +56,9 @@ namespace BrunoGUI_GenII
             OrdinateurHumain = new System.Windows.Forms.ToolStripMenuItem();
             HumainContreHumain = new System.Windows.Forms.ToolStripMenuItem();
             StopMoteur = new System.Windows.Forms.ToolStripMenuItem();
-            moteursBibliothèquesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            moteursBibliothequesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             SelectionAutreMoteur = new System.Windows.Forms.ToolStripMenuItem();
-            SelectionBibliothèque = new System.Windows.Forms.ToolStripMenuItem();
+            SelectionBibliotheque = new System.Windows.Forms.ToolStripMenuItem();
             RodentIV = new System.Windows.Forms.ToolStripMenuItem();
             Sargon1_1978 = new System.Windows.Forms.ToolStripMenuItem();
             OptionsMenu = new System.Windows.Forms.ToolStripMenuItem();
@@ -110,10 +110,10 @@ namespace BrunoGUI_GenII
             BoutonGainNoir = new Krypton.Toolkit.KryptonButton();
             BoutonNulle = new Krypton.Toolkit.KryptonButton();
             KryptonQuitter = new Krypton.Toolkit.KryptonButton();
-            CoupsBibliothèqueBox = new System.Windows.Forms.RichTextBox();
-            OuvertureChoixBibliothèque = new System.Windows.Forms.OpenFileDialog();
+            CoupsBibliothequeBox = new System.Windows.Forms.RichTextBox();
+            OuvertureChoixBibliotheque = new System.Windows.Forms.OpenFileDialog();
             OuvertureChoixMoteur = new System.Windows.Forms.OpenFileDialog();
-            CoupsBibliothèque = new System.Windows.Forms.RichTextBox();
+            CoupsBibliotheque = new System.Windows.Forms.RichTextBox();
             OrdinateurJoue = new Krypton.Toolkit.KryptonButton();
             MontrePartiesPGN = new Krypton.Toolkit.KryptonButton();
             ChargerPartiesPgn = new System.Windows.Forms.OpenFileDialog();
@@ -123,7 +123,7 @@ namespace BrunoGUI_GenII
             BoutonDebut = new Krypton.Toolkit.KryptonButton();
             BoutonSuivant = new Krypton.Toolkit.KryptonButton();
             BoutonPrecedent = new Krypton.Toolkit.KryptonButton();
-            ActiveBibliothèque = new System.Windows.Forms.CheckBox();
+            ActiveBibliotheque = new System.Windows.Forms.CheckBox();
             ActiveSon = new System.Windows.Forms.CheckBox();
             groupBoxTempsReflexion = new System.Windows.Forms.GroupBox();
             BarreReflexion = new System.Windows.Forms.ProgressBar();
@@ -131,7 +131,7 @@ namespace BrunoGUI_GenII
             LabelCoupAnalyse = new System.Windows.Forms.Label();
             TempsReflexionSecondes = new System.Windows.Forms.NumericUpDown();
             KryptonApropos = new Krypton.Toolkit.KryptonButton();
-            ActiveAléatoire = new System.Windows.Forms.CheckBox();
+            ActiveAleatoire = new System.Windows.Forms.CheckBox();
             SaisiePartieBouton = new Krypton.Toolkit.KryptonButton();
             ChargerPositionFen = new System.Windows.Forms.OpenFileDialog();
             MenuInterfaceGraphique.SuspendLayout();
@@ -202,7 +202,7 @@ namespace BrunoGUI_GenII
             // MenuInterfaceGraphique
             // 
             MenuInterfaceGraphique.Font = new System.Drawing.Font("Segoe UI", 9F);
-            MenuInterfaceGraphique.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { FichierMenu, PartieMenu, nouvellePartieToolStripMenuItem, moteursBibliothèquesToolStripMenuItem, OptionsMenu, Apropos, toolStripMenuItem2 });
+            MenuInterfaceGraphique.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { FichierMenu, PartieMenu, nouvellePartieToolStripMenuItem, moteursBibliothequesToolStripMenuItem, OptionsMenu, Apropos, toolStripMenuItem2 });
             MenuInterfaceGraphique.Location = new System.Drawing.Point(0, 0);
             MenuInterfaceGraphique.Name = "MenuInterfaceGraphique";
             MenuInterfaceGraphique.Size = new System.Drawing.Size(944, 24);
@@ -338,12 +338,12 @@ namespace BrunoGUI_GenII
             StopMoteur.Text = "Stoppe le Moteur";
             StopMoteur.Click += StopMoteur_Click;
             // 
-            // moteursBibliothèquesToolStripMenuItem
+            // moteursBibliothequesToolStripMenuItem
             // 
-            moteursBibliothèquesToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { SelectionAutreMoteur, SelectionBibliothèque, RodentIV, Sargon1_1978 });
-            moteursBibliothèquesToolStripMenuItem.Name = "moteursBibliothèquesToolStripMenuItem";
-            moteursBibliothèquesToolStripMenuItem.Size = new System.Drawing.Size(140, 20);
-            moteursBibliothèquesToolStripMenuItem.Text = "Moteurs/Bibliothèques";
+            moteursBibliothequesToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { SelectionAutreMoteur, SelectionBibliotheque, RodentIV, Sargon1_1978 });
+            moteursBibliothequesToolStripMenuItem.Name = "moteursBibliothequesToolStripMenuItem";
+            moteursBibliothequesToolStripMenuItem.Size = new System.Drawing.Size(140, 20);
+            moteursBibliothequesToolStripMenuItem.Text = "Moteurs/Bibliothèques";
             // 
             // SelectionAutreMoteur
             // 
@@ -353,13 +353,13 @@ namespace BrunoGUI_GenII
             SelectionAutreMoteur.Text = "Sélectionnez un moteur";
             SelectionAutreMoteur.Click += SelectionAutreMoteur_Click;
             // 
-            // SelectionBibliothèque
+            // SelectionBibliotheque
             // 
-            SelectionBibliothèque.Image = (System.Drawing.Image)resources.GetObject("SelectionBibliothèque.Image");
-            SelectionBibliothèque.Name = "SelectionBibliothèque";
-            SelectionBibliothèque.Size = new System.Drawing.Size(233, 22);
-            SelectionBibliothèque.Text = "Sélectionnez une bibliothèque";
-            SelectionBibliothèque.Click += SelectionBibliothèque_Click;
+            SelectionBibliotheque.Image = (System.Drawing.Image)resources.GetObject("SelectionBibliotheque.Image");
+            SelectionBibliotheque.Name = "SelectionBibliotheque";
+            SelectionBibliotheque.Size = new System.Drawing.Size(233, 22);
+            SelectionBibliotheque.Text = "Sélectionnez une bibliothèque";
+            SelectionBibliotheque.Click += SelectionBibliotheque_Click;
             // 
             // RodentIV
             // 
@@ -961,36 +961,36 @@ namespace BrunoGUI_GenII
             KryptonQuitter.Values.Text = "Quitter";
             KryptonQuitter.Click += KryptonQuitter_Click;
             // 
-            // CoupsBibliothèqueBox
+            // CoupsBibliothequeBox
             // 
-            CoupsBibliothèqueBox.BackColor = System.Drawing.Color.WhiteSmoke;
-            CoupsBibliothèqueBox.Location = new System.Drawing.Point(802, 489);
-            CoupsBibliothèqueBox.Name = "CoupsBibliothèqueBox";
-            CoupsBibliothèqueBox.Size = new System.Drawing.Size(120, 137);
-            CoupsBibliothèqueBox.TabIndex = 33;
-            CoupsBibliothèqueBox.Text = "";
+            CoupsBibliothequeBox.BackColor = System.Drawing.Color.WhiteSmoke;
+            CoupsBibliothequeBox.Location = new System.Drawing.Point(802, 489);
+            CoupsBibliothequeBox.Name = "CoupsBibliothequeBox";
+            CoupsBibliothequeBox.Size = new System.Drawing.Size(120, 137);
+            CoupsBibliothequeBox.TabIndex = 33;
+            CoupsBibliothequeBox.Text = "";
             // 
-            // OuvertureChoixBibliothèque
+            // OuvertureChoixBibliotheque
             // 
-            OuvertureChoixBibliothèque.FileName = "bibliothèque";
-            OuvertureChoixBibliothèque.Filter = "Fichier BIN (*.bin)|*.bin";
+            OuvertureChoixBibliotheque.FileName = "bibliothèque";
+            OuvertureChoixBibliotheque.Filter = "Fichier BIN (*.bin)|*.bin";
             // 
             // OuvertureChoixMoteur
             // 
             OuvertureChoixMoteur.FileName = "moteur";
             OuvertureChoixMoteur.Filter = "Fichier EXE (*.exe)|*.exe";
             // 
-            // CoupsBibliothèque
+            // CoupsBibliotheque
             // 
-            CoupsBibliothèque.BackColor = System.Drawing.Color.Lavender;
-            CoupsBibliothèque.ForeColor = System.Drawing.Color.DarkBlue;
-            CoupsBibliothèque.Location = new System.Drawing.Point(12, 716);
-            CoupsBibliothèque.Multiline = false;
-            CoupsBibliothèque.Name = "CoupsBibliothèque";
-            CoupsBibliothèque.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.None;
-            CoupsBibliothèque.Size = new System.Drawing.Size(520, 20);
-            CoupsBibliothèque.TabIndex = 34;
-            CoupsBibliothèque.Text = "Bibliothèque d'ouverture sélectionnée";
+            CoupsBibliotheque.BackColor = System.Drawing.Color.Lavender;
+            CoupsBibliotheque.ForeColor = System.Drawing.Color.DarkBlue;
+            CoupsBibliotheque.Location = new System.Drawing.Point(12, 716);
+            CoupsBibliotheque.Multiline = false;
+            CoupsBibliotheque.Name = "CoupsBibliotheque";
+            CoupsBibliotheque.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.None;
+            CoupsBibliotheque.Size = new System.Drawing.Size(520, 20);
+            CoupsBibliotheque.TabIndex = 34;
+            CoupsBibliotheque.Text = "Bibliothèque d'ouverture sélectionnée";
             // 
             // OrdinateurJoue
             // 
@@ -1126,18 +1126,18 @@ namespace BrunoGUI_GenII
             BoutonPrecedent.Values.Text = "Préc.";
             BoutonPrecedent.Click += BoutonPrecedent_Click;
             // 
-            // ActiveBibliothèque
+            // ActiveBibliotheque
             // 
-            ActiveBibliothèque.BackColor = System.Drawing.Color.WhiteSmoke;
-            ActiveBibliothèque.Checked = true;
-            ActiveBibliothèque.CheckState = System.Windows.Forms.CheckState.Checked;
-            ActiveBibliothèque.Location = new System.Drawing.Point(12, 740);
-            ActiveBibliothèque.Name = "ActiveBibliothèque";
-            ActiveBibliothèque.Size = new System.Drawing.Size(107, 24);
-            ActiveBibliothèque.TabIndex = 38;
-            ActiveBibliothèque.Text = "Bibliothèque";
-            ActiveBibliothèque.UseVisualStyleBackColor = false;
-            ActiveBibliothèque.CheckedChanged += ActiveBibliothèque_CheckedChanged;
+            ActiveBibliotheque.BackColor = System.Drawing.Color.WhiteSmoke;
+            ActiveBibliotheque.Checked = true;
+            ActiveBibliotheque.CheckState = System.Windows.Forms.CheckState.Checked;
+            ActiveBibliotheque.Location = new System.Drawing.Point(12, 740);
+            ActiveBibliotheque.Name = "ActiveBibliotheque";
+            ActiveBibliotheque.Size = new System.Drawing.Size(107, 24);
+            ActiveBibliotheque.TabIndex = 38;
+            ActiveBibliotheque.Text = "Bibliothèque";
+            ActiveBibliotheque.UseVisualStyleBackColor = false;
+            ActiveBibliotheque.CheckedChanged += ActiveBibliotheque_CheckedChanged;
             // 
             // ActiveSon
             // 
@@ -1223,17 +1223,17 @@ namespace BrunoGUI_GenII
             KryptonApropos.Values.Text = "A propos";
             KryptonApropos.Click += KryptonApropos_Click;
             // 
-            // ActiveAléatoire
+            // ActiveAleatoire
             // 
-            ActiveAléatoire.BackColor = System.Drawing.Color.WhiteSmoke;
-            ActiveAléatoire.Checked = true;
-            ActiveAléatoire.Location = new System.Drawing.Point(10, 762);
-            ActiveAléatoire.Name = "ActiveAléatoire";
-            ActiveAléatoire.Size = new System.Drawing.Size(109, 24);
-            ActiveAléatoire.TabIndex = 42;
-            ActiveAléatoire.Text = "Aléatoire";
-            ActiveAléatoire.UseVisualStyleBackColor = false;
-            ActiveAléatoire.CheckedChanged += ActiveAléatoire_CheckedChanged;
+            ActiveAleatoire.BackColor = System.Drawing.Color.WhiteSmoke;
+            ActiveAleatoire.Checked = true;
+            ActiveAleatoire.Location = new System.Drawing.Point(10, 762);
+            ActiveAleatoire.Name = "ActiveAleatoire";
+            ActiveAleatoire.Size = new System.Drawing.Size(109, 24);
+            ActiveAleatoire.TabIndex = 42;
+            ActiveAleatoire.Text = "Aléatoire";
+            ActiveAleatoire.UseVisualStyleBackColor = false;
+            ActiveAleatoire.CheckedChanged += ActiveAleatoire_CheckedChanged;
             // 
             // SaisiePartieBouton
             // 
@@ -1265,16 +1265,16 @@ namespace BrunoGUI_GenII
             BackColor = System.Drawing.Color.LightGray;
             ClientSize = new System.Drawing.Size(944, 815);
             Controls.Add(SaisiePartieBouton);
-            Controls.Add(ActiveAléatoire);
+            Controls.Add(ActiveAleatoire);
             Controls.Add(KryptonApropos);
             Controls.Add(groupBoxTempsReflexion);
             Controls.Add(ActiveSon);
-            Controls.Add(ActiveBibliothèque);
+            Controls.Add(ActiveBibliotheque);
             Controls.Add(groupParcoursPartie);
             Controls.Add(MontrePartiesPGN);
             Controls.Add(OrdinateurJoue);
-            Controls.Add(CoupsBibliothèque);
-            Controls.Add(CoupsBibliothèqueBox);
+            Controls.Add(CoupsBibliotheque);
+            Controls.Add(CoupsBibliothequeBox);
             Controls.Add(KryptonQuitter);
             Controls.Add(BoutonNulle);
             Controls.Add(BoutonGainNoir);
@@ -1392,15 +1392,15 @@ namespace BrunoGUI_GenII
         private Krypton.Toolkit.KryptonButton BoutonGainNoir;
         private Krypton.Toolkit.KryptonButton BoutonNulle;
         private Krypton.Toolkit.KryptonButton KryptonQuitter;
-        private System.Windows.Forms.RichTextBox CoupsBibliothèqueBox;
-        private System.Windows.Forms.ToolStripMenuItem moteursBibliothèquesToolStripMenuItem;
+        private System.Windows.Forms.RichTextBox CoupsBibliothequeBox;
+        private System.Windows.Forms.ToolStripMenuItem moteursBibliothequesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem SelectionAutreMoteur;
-        private System.Windows.Forms.ToolStripMenuItem SelectionBibliothèque;
+        private System.Windows.Forms.ToolStripMenuItem SelectionBibliotheque;
         private System.Windows.Forms.ToolStripMenuItem RodentIV;
         private System.Windows.Forms.ToolStripMenuItem Sargon1_1978;
-        private System.Windows.Forms.OpenFileDialog OuvertureChoixBibliothèque;
+        private System.Windows.Forms.OpenFileDialog OuvertureChoixBibliotheque;
         private System.Windows.Forms.OpenFileDialog OuvertureChoixMoteur;
-        private System.Windows.Forms.RichTextBox CoupsBibliothèque;
+        private System.Windows.Forms.RichTextBox CoupsBibliotheque;
         private System.Windows.Forms.ToolStripMenuItem nouvellePartieToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem HumainOrdinateur;
         private System.Windows.Forms.ToolStripMenuItem OrdinateurHumain;
@@ -1414,12 +1414,12 @@ namespace BrunoGUI_GenII
         private Krypton.Toolkit.KryptonButton BoutonFin;
         private Krypton.Toolkit.KryptonButton BoutonDebut;
         private Krypton.Toolkit.KryptonButton BoutonReprendreIci;
-        private System.Windows.Forms.CheckBox ActiveBibliothèque;
+        private System.Windows.Forms.CheckBox ActiveBibliotheque;
         private System.Windows.Forms.CheckBox ActiveSon;
         private System.Windows.Forms.GroupBox groupBoxTempsReflexion;
         private System.Windows.Forms.ProgressBar BarreReflexion;
         private Krypton.Toolkit.KryptonButton KryptonApropos;
-        private System.Windows.Forms.CheckBox ActiveAléatoire;
+        private System.Windows.Forms.CheckBox ActiveAleatoire;
         public System.Windows.Forms.NumericUpDown TempsReflexionSecondes;
         private System.Windows.Forms.ComboBox ListePendule;
         private System.Windows.Forms.Label LabelCoupAnalyse;
