@@ -210,6 +210,8 @@ namespace BrunoGUI_GenII
                     CoupPGN = CoupPGN.TrimEnd('+', '#');
                 if (CoupPGN.Length < 2)
                     return false;
+                if (CoupPGN.Length >= 3 && char.IsLower(CoupPGN[0]) && "QRBN".Contains(CoupPGN[^1]) && !CoupPGN.Contains('='))
+                    CoupPGN = CoupPGN[..^1] + "=" + CoupPGN[^1];    // promotion sans "=" (vieux fichiers : "e8Q", "dxe8N") : "e8=Q"
                 // Début du traitement du coup, il faut trouver la case de départ et de destination pour pouvoir executer le coup sur l'échiquier-
                 switch (CoupPGN[0])                         // Coup de PIECE, car la 1ère lettre est une majuscule
                 {                                           // On traite d'abord le Roi et le Roque, car plus simple
