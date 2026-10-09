@@ -1090,6 +1090,41 @@ Verifie("Analyse : meilleur coup noir tiré d'une vraie variante du moteur (« 1
 Verifie("Variante : début = le premier coup seul (« 1 ... c5 » pour les Noirs, « 1. e4 » sans la réponse noire pour les Blancs)",
     ligneNoirs.Debut == "1 ... c5", ligneNoirs.Debut);
 
+// ═══════════════ Saisie d'une position ═══════════════
+Console.WriteLine("── Saisie d'une position ──");
+
+EditeurPosition editeur = new();
+Verifie("Saisie : départ sur la position initiale, roques accordés, FEN complète",
+    editeur.Fen == L.FenDepart && editeur.Erreur == null && editeur.Roque(DroitRoque.GrandNoir), editeur.Fen);
+editeur.Vider();
+Verifie("Saisie : échiquier vidé (refusé : pas de roi), trait aux Blancs, coup n° 1",
+    editeur.Fen == "8/8/8/8/8/8/8/8 w - - 0 1" && editeur.Erreur != null, $"{editeur.Fen} / {editeur.Erreur}");
+editeur.Poser(25, L.TypePiece.RoiBlanc);
+editeur.Poser(28, L.TypePiece.TourBlanche);
+editeur.Poser(95, L.TypePiece.RoiNoir);
+Verifie("Saisie : roi et tour sur leurs cases : le petit roque est accordé d'office, pas le grand (pas de tour en a1)",
+    editeur.Erreur == null && editeur.Fen == "4k3/8/8/8/8/8/8/4K2R w K - 0 1" && !editeur.RoquePossible(DroitRoque.GrandBlanc), editeur.Fen);
+editeur.DefinitRoque(DroitRoque.PetitBlanc, false);
+editeur.Poser(21, L.TypePiece.TourBlanche);
+Verifie("Saisie : un roque retiré par l'utilisateur le reste ; celui qui devient possible (tour en a1) est accordé",
+    editeur.Fen.Split(' ')[2] == "Q", editeur.Fen);
+editeur.Poser(28, L.TypePiece.Vide);
+editeur.Poser(24, L.TypePiece.RoiBlanc);   // le roi quitte e1 : plus aucun roque blanc ; un seul roi blanc (celui de e1 est retiré)
+Verifie("Saisie : un seul roi par camp, roque retiré quand le roi quitte sa case",
+    editeur.Fen == "4k3/8/8/8/8/8/8/R2K4 w - - 0 1" && editeur.Erreur == null, editeur.Fen);
+editeur.Poser(65, L.TypePiece.PionNoir);        // pion noir en e5 (e6 et e7 vides) : il a pu avancer de deux cases
+editeur.Poser(64, L.TypePiece.PionBlanc);
+Verifie("Saisie : case en passant possible (Blancs au trait, pion noir en e5) puis retirée si le trait change",
+    editeur.CasesEnPassantPossibles().SequenceEqual(["e6"]) && (editeur.EnPassant = "e6") == "e6" && editeur.Fen.Contains(" w - e6 ")
+    && (editeur.Trait = L.ColorPiece.Noir) == L.ColorPiece.Noir && editeur.EnPassant == "-", editeur.Fen);
+editeur.NumeroCoup = 25;
+Verifie("Saisie : trait aux Noirs et numéro du coup gardés (« b … 25 »)", editeur.Fen.EndsWith(" b - - 0 25"), editeur.Fen);
+Verifie("Saisie : une FEN refusée ne change rien, une FEN valable est chargée",
+    editeur.ChargerFen("8/8/8/8 w - - 0 1") != null && editeur.Fen.EndsWith(" b - - 0 25")
+    && editeur.ChargerFen("r3k2r/8/8/8/8/8/8/R3K2R  b  KQkq  -  3 40") == null && editeur.Fen == "r3k2r/8/8/8/8/8/8/R3K2R b KQkq - 3 40", editeur.Fen);
+editeur.Poser(23, L.TypePiece.PionBlanc);       // pion blanc en c1 : refusé par le contrôle de la FEN
+Verifie("Saisie : un pion sur la 1re rangée rend la position refusée (raison donnée)", editeur.Erreur != null, editeur.Erreur ?? "");
+
 // ═══════════════ Pendule ═══════════════
 Console.WriteLine("── Pendule ──");
 
