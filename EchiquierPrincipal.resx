@@ -1280,7 +1280,7 @@
         kcUTFNeJyEdEZGZa56Y1rWlNa1rTmvaraj8H2iVyyFmGKowAAAAASUVORK5CYII=
 </value>
   </data>
-  <data name="SelectionBibliothèque.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+  <data name="SelectionBibliotheque.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
         JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAACXBIWXMAAFiUAABYlAELKtU3AAAAB3RJ
@@ -3348,7 +3348,7 @@
         p2lszGPERBLNBeHPJANhYNva1vknfa5JEQf/2Q==
 </value>
   </data>
-  <metadata name="OuvertureChoixBibliothèque.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+  <metadata name="OuvertureChoixBibliotheque.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>774, 20</value>
   </metadata>
   <metadata name="OuvertureChoixMoteur.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">

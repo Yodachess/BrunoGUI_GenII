@@ -120,7 +120,7 @@ namespace BrunoGUI_GenII
             {   // C'est au moteur de jouer à partir de cette position
                 PlateauEnable(false);
                 MetAJourCommandes();
-                JeuMoteurAvecBibliothèque(fen);
+                JeuMoteurAvecBibliotheque(fen);
             }
             else
             {

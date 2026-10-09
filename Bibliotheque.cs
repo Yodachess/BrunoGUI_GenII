@@ -1,4 +1,4 @@
-// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
 // █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
 // █ Copyright (C) 2026 Bruno COURTOIS                                      █
 // █ SPDX-License-Identifier: GPL-3.0-or-later                              █
@@ -6,13 +6,13 @@
 // └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 
 // Contient les fonctions pour la gestion de bibliothèque d'ouvertures
-// ├─ Classe "EntréePolyglot" contient la structure d'une entrée Polyglot
-// └─ Classe "PolyglotBibliothèque"  
-//                  ├─ "PolyglotBibliothèqueLecture"  
+// ├─ Classe "EntreePolyglot" contient la structure d'une entrée Polyglot
+// └─ Classe "PolyglotBibliotheque"  
+//                  ├─ "PolyglotBibliothequeLecture"  
 //                  ├─ "LireLeFichier"
 //                  ├─ "DecodeCoup"  
 //                  ├─ "CalculeClefPolyglot"
-//                  ├─ "TrouverLesEntrées"
+//                  ├─ "TrouverLesEntrees"
 //                  ├─ "LectureUInt64BigEndianFromBytes"
 //                  ├─ "LectureUInt32BigEndianFromBytes"  
 //                  ├─ "LectureUInt16BigEndianFromBytes"  
@@ -64,59 +64,59 @@ namespace BrunoGUI_GenII
     Toutes les entrées avec la même clé = versus les coups possibles dans la position correspondante
     L’usage normal = calculer clé ZoBrist → chercher entrées → choisir coup selon Weight.    
     */
-    public class EntréePolyglot
+    public class EntreePolyglot
     {   // Structure d'une entrée Polyglot de la bibliothèque
         public ulong Clef { get; set; }         // Clé Zobrist 64 bits de la position
         public ushort CoupBiblio { get; set; }  // Coup encodé (aPartirDe/vers/promotion)
         public ushort Poids { get; set; }       // Poids statistique du coup
         public uint Apprentissage { get; set; } // Champ pour des fonctions d'apprentissage (rarement utilisé)
     }
-    public class PolyglotBibliothèque
+    public class PolyglotBibliotheque
     {   // Classe pour gérer la bibliothèque d'ouvertures Polyglot
-        private static string _cheminBibliothèque;
-        public static bool Disponible => !string.IsNullOrEmpty(_cheminBibliothèque) && File.Exists(_cheminBibliothèque);
+        private static string _cheminBibliotheque;
+        public static bool Disponible => !string.IsNullOrEmpty(_cheminBibliotheque) && File.Exists(_cheminBibliotheque);
         public event Action<string> MessageLog;
-        public void PolyglotBibliothèqueLecture(string fichier)
+        public void PolyglotBibliothequeLecture(string fichier)
         {
             if (string.IsNullOrWhiteSpace(fichier))
                 throw new ArgumentNullException(nameof(fichier));
 
             // → Chemin complet portable (un chemin complet, choisi par l'utilisateur, est gardé tel quel par Path.Combine)
-            string chemin = Path.Combine(Chemins.BibliothèquesPolyglot, fichier);
+            string chemin = Path.Combine(Chemins.BibliothequesPolyglot, fichier);
             if (!File.Exists(chemin))       // la bibliothèque précédente (s'il y en a une) reste active
                 throw new FileNotFoundException("Bibliothèque d'ouvertures introuvable : " + chemin, chemin);
-            _cheminBibliothèque = chemin;
+            _cheminBibliotheque = chemin;
 
             LireLeFichier();
 
             Debug.WriteLine($"Le fichier {fichier} a été chargé");
-            Debug.WriteLine($"Le chemin est : {_cheminBibliothèque}");
+            Debug.WriteLine($"Le chemin est : {_cheminBibliotheque}");
         }
         public void LireLeFichier()
         {   // Lit le fichier Polyglot et affiche le nombre d'entrées
-            if (string.IsNullOrEmpty(_cheminBibliothèque))
-            {   // Vérifie si _cheminBibliothèque est null avant d'utiliser FileStream  
+            if (string.IsNullOrEmpty(_cheminBibliotheque))
+            {   // Vérifie si _cheminBibliotheque est null avant d'utiliser FileStream  
                 throw new InvalidOperationException("Le chemin du fichier n'a pas été initialisé.");
             }
             try
             {
-                using var stream = new FileStream(_cheminBibliothèque, FileMode.Open, FileAccess.Read);
+                using var stream = new FileStream(_cheminBibliotheque, FileMode.Open, FileAccess.Read);
                 using var reader = new BinaryReader(stream);
                 // Le fichier Polyglot est composé d'entrées de 16 octets  
-                long fileSize = new FileInfo(_cheminBibliothèque).Length;
-                int nombreEntrées = (int)fileSize / 16;
-                string nomBiblio = Path.GetFileName(_cheminBibliothèque);   // Evite d'afficher le chemin complet
-                MessageLog?.Invoke($"Bibliothèque {nomBiblio} chargée  ({nombreEntrées} entrées)");
-                Debug.WriteLine($"Bibliothèque {nomBiblio} chargée. Nombre d'entrées : {nombreEntrées}");
-                Debug.WriteLine($"[LireLeFichier] Le chemin est : {_cheminBibliothèque}");
+                long fileSize = new FileInfo(_cheminBibliotheque).Length;
+                int nombreEntrees = (int)fileSize / 16;
+                string nomBiblio = Path.GetFileName(_cheminBibliotheque);   // Evite d'afficher le chemin complet
+                MessageLog?.Invoke($"Bibliothèque {nomBiblio} chargée  ({nombreEntrees} entrées)");
+                Debug.WriteLine($"Bibliothèque {nomBiblio} chargée. Nombre d'entrées : {nombreEntrees}");
+                Debug.WriteLine($"[LireLeFichier] Le chemin est : {_cheminBibliotheque}");
             }
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
             {   // fichier inaccessible ou illisible : noté dans le journal (la bibliothèque ne donnera aucun coup)
-                Journal.Erreur($"Lecture de la bibliothèque {_cheminBibliothèque}", ex);
+                Journal.Erreur($"Lecture de la bibliothèque {_cheminBibliotheque}", ex);
             }
         }
 
-        public static EntréePolyglot ChoisirEntree(IReadOnlyList<EntréePolyglot> entrees, bool aleatoire, Random hasard)
+        public static EntreePolyglot ChoisirEntree(IReadOnlyList<EntreePolyglot> entrees, bool aleatoire, Random hasard)
         {   // Coup de bibliothèque à jouer : au hasard parmi tous (aleatoire), sinon au hasard parmi ceux de plus grand poids ;
             // null s'il n'y a aucune entrée
             if (entrees.Count == 0)
@@ -124,28 +124,28 @@ namespace BrunoGUI_GenII
             if (aleatoire)
                 return entrees[hasard.Next(entrees.Count)];
             ushort poidsMaximum = entrees.Max(e => e.Poids);
-            List<EntréePolyglot> meilleures = entrees.Where(e => e.Poids == poidsMaximum).ToList();
+            List<EntreePolyglot> meilleures = entrees.Where(e => e.Poids == poidsMaximum).ToList();
             return meilleures[hasard.Next(meilleures.Count)];
         }
 
-        public static IEnumerable<EntréePolyglot> TrouverLesEntrées(ulong clefPolyglot)
+        public static IEnumerable<EntreePolyglot> TrouverLesEntrees(ulong clefPolyglot)
         {   // Trouve toutes les entrées dans le fichier Polyglot correspondant à la clé donnée
 
             if (!Disponible)
                 yield break;    // pas de bibliothèque (introuvable ou jamais chargée) : aucun coup, sans exception
 
             byte[] buffer = new byte[16];
-            // Debug.WriteLine($"[TrouverLesEntrées] Le chemin est : {_cheminBibliothèque}");
-            using var fs = new FileStream(_cheminBibliothèque!, FileMode.Open, FileAccess.Read, FileShare.Read);
+            // Debug.WriteLine($"[TrouverLesEntrees] Le chemin est : {_cheminBibliotheque}");
+            using var fs = new FileStream(_cheminBibliotheque!, FileMode.Open, FileAccess.Read, FileShare.Read);
 
-            long nombreEntrées = fs.Length / 16;
-            if (nombreEntrées == 0)
+            long nombreEntrees = fs.Length / 16;
+            if (nombreEntrees == 0)
             {   // Fichier vide, on s'arrête là
                 yield break;
             }
 
-            long bas = 0, haut = nombreEntrées - 1;
-            long positionTrouvée = -1;
+            long bas = 0, haut = nombreEntrees - 1;
+            long positionTrouvee = -1;
 
             while (bas <= haut)
             {   // Recherche binaire pour trouver une entrée avec la clé donnée
@@ -166,25 +166,25 @@ namespace BrunoGUI_GenII
                 }
                 else
                 {   // Clé trouvée
-                    positionTrouvée = milieu;
+                    positionTrouvee = milieu;
                     break;
                 }
             }
 
-            if (positionTrouvée == -1)
+            if (positionTrouvee == -1)
             {   // Clé non trouvée, on s'arrête là
                 yield break;
             }
 
-            long pos = positionTrouvée;
+            long pos = positionTrouvee;
             while (pos > 0)
             {   // On recule pour trouver le début des entrées avec la même clé
                 // (il peut y en avoir plusieurs)
                 fs.Seek((pos - 1) * 16, SeekOrigin.Begin);
                 fs.Read(buffer, 0, 16);
 
-                ulong clefPrécédente = BinaryPrimitives.ReadUInt64BigEndian(buffer);
-                if (clefPrécédente != clefPolyglot)
+                ulong clefPrecedente = BinaryPrimitives.ReadUInt64BigEndian(buffer);
+                if (clefPrecedente != clefPolyglot)
                 {   // On a trouvé le début
                     break;
                 }
@@ -203,7 +203,7 @@ namespace BrunoGUI_GenII
                 ushort weight = LectureUInt16BigEndianFromBytes(buffer, 10);
                 uint learn = LectureUInt32BigEndianFromBytes(buffer, 12);
 
-                yield return new EntréePolyglot
+                yield return new EntreePolyglot
                 {   // Retourne l'entrée trouvée
                     Clef = entryKey,
                     CoupBiblio = move,

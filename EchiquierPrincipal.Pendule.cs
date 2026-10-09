@@ -50,7 +50,7 @@ namespace BrunoGUI_GenII
                 FinPause();
                 InformationsPartie.Text = "Partie reprise";
                 if (_partie.MoteurAuTrait && _pilote.Demande == TypeDemande.Aucune)
-                    JeuMoteurAvecBibliothèque(LogiqueMouvements.RetourneChaineFenActuel());     // sa réflexion avait été interrompue
+                    JeuMoteurAvecBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());     // sa réflexion avait été interrompue
             }
             else if (_pendule.Tourne)
             {
@@ -115,7 +115,7 @@ namespace BrunoGUI_GenII
                 // sa réflexion : on lui redemande son coup (sinon son temps s'écoulerait sans qu'il réfléchisse)
                 _pendule.Reprendre();
                 if (_partie.MoteurAuTrait && _pilote.Demande == TypeDemande.Aucune)
-                    JeuMoteurAvecBibliothèque(LogiqueMouvements.RetourneChaineFenActuel());
+                    JeuMoteurAvecBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
             }
             // (pendant le choix d'une promotion, le coup n'est pas fini : la chute du drapeau est traitée juste après, par CoupJoue)
             if (_partie.EnCours && !GroupPromo.Visible && _pendule.TempsEcoule() is ColorPiece campSansTemps)

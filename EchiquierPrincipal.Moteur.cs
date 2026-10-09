@@ -156,7 +156,7 @@ namespace BrunoGUI_GenII
             {
                 if (MoteurUci.LigneAbandonnee)
                     return;     // la demande a été abandonnée entre-temps (vérifié ici, sur le thread de l'interface) : coup ignoré
-                MiseaZéroTimer();
+                MiseaZeroTimer();
                 if (_emetUnSon && _analyseDePartie == null)     // (pas de son à chaque position d'une analyse de partie)
                 {   // Son pour dire que le coup est joué (son système par défaut si le fichier de Windows est absent)
                     try
@@ -178,7 +178,7 @@ namespace BrunoGUI_GenII
                     PiloteMoteur.JouerCoupUci(MoteurUci.CoupAuFormatUci);      // (rien n'est joué si la position est déjà un mat)
                     // Cases de départ et d'arrivée du coup colorées (pendant le parcours : seulement au retour à la partie)
                     _vue.MontreDernierCoup(RenvoieCaseIndex120(_caseSource), RenvoieCaseIndex120(_caseDestination));
-                    LeMoteurARépondu();      // On réautorise si le moteur a fini de réfléchir
+                    LeMoteurARepondu();      // On réautorise si le moteur a fini de réfléchir
                     AfficheCoupDuMoteur();
                     if (ParcoursEnCours)
                     {   // Le coup est joué dans la partie, mais l'affichage reste sur la position passée que l'utilisateur regarde
@@ -255,7 +255,7 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         //  Bibliothèque d'ouvertures
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-        private void JeuMoteurAvecBibliothèque(string chaineFen)
+        private void JeuMoteurAvecBibliotheque(string chaineFen)
         {   // Coup du moteur pour la partie : bibliothèque d'ouvertures d'abord (voir _pilote.ChoixBibliotheque), sinon réflexion du moteur
             // Avec une pendule, le moteur reçoit les temps restants et gère son temps ; sinon, un temps fixe par coup
             // (numéro du coup à jouer : pour une cadence à deux périodes, le moteur sait combien de coups restent avant le contrôle)
@@ -287,39 +287,39 @@ namespace BrunoGUI_GenII
         private static readonly Random _hasard = new();
         private Font _policeBiblioNormale, _policeBiblioGras;     // créées une seule fois (une police par ligne serait une fuite)
         private string ChoisirCoupBibliotheque(string fen)
-        {   // Le moteur doit jouer : coup choisi dans la bibliothèque (PolyglotBibliothèque.ChoisirEntree), marqué ⭐ dans la liste ;
+        {   // Le moteur doit jouer : coup choisi dans la bibliothèque (PolyglotBibliotheque.ChoisirEntree), marqué ⭐ dans la liste ;
             // null s'il n'y en a pas
-            List<EntréePolyglot> entrees = PolyglotBibliothèque.TrouverLesEntrées(PolyglotBibliothèque.CalculeClefPolyglot(fen)).ToList();
-            EntréePolyglot choisie = PolyglotBibliothèque.ChoisirEntree(entrees, _bibliothèqueAléatoire, _hasard);
+            List<EntreePolyglot> entrees = PolyglotBibliotheque.TrouverLesEntrees(PolyglotBibliotheque.CalculeClefPolyglot(fen)).ToList();
+            EntreePolyglot choisie = PolyglotBibliotheque.ChoisirEntree(entrees, _bibliothequeAleatoire, _hasard);
             AfficheCoupsBibliotheque(entrees, choisie);
-            return choisie == null ? null : PolyglotBibliothèque.DecodeCoup(choisie.CoupBiblio);
+            return choisie == null ? null : PolyglotBibliotheque.DecodeCoup(choisie.CoupBiblio);
         }
         private void AfficheCoupsBibliotheque(string fen)
         {   // Coups connus de la bibliothèque pour cette position (sans en choisir aucun)
-            AfficheCoupsBibliotheque(PolyglotBibliothèque.TrouverLesEntrées(PolyglotBibliothèque.CalculeClefPolyglot(fen)).ToList(), null);
+            AfficheCoupsBibliotheque(PolyglotBibliotheque.TrouverLesEntrees(PolyglotBibliotheque.CalculeClefPolyglot(fen)).ToList(), null);
         }
-        private void AfficheCoupsBibliotheque(List<EntréePolyglot> entrees, EntréePolyglot choisie)
+        private void AfficheCoupsBibliotheque(List<EntreePolyglot> entrees, EntreePolyglot choisie)
         {   // Liste des coups, par poids décroissant ; le coup choisi (s'il y en a un) est marqué ⭐ en vert
-            _policeBiblioNormale ??= new Font(CoupsBibliothèqueBox.Font, FontStyle.Regular);
-            _policeBiblioGras ??= new Font(CoupsBibliothèqueBox.Font, FontStyle.Bold);
-            CoupsBibliothèqueBox.Clear();
-            CoupsBibliothèqueBox.SelectionAlignment = HorizontalAlignment.Center;
-            CoupsBibliothèqueBox.SelectionColor = Color.Black;
-            CoupsBibliothèqueBox.SelectionFont = _policeBiblioGras;
-            CoupsBibliothèqueBox.AppendText("Bibliothèque\n--------------\n");
-            CoupsBibliothèqueBox.SelectionAlignment = HorizontalAlignment.Left;
+            _policeBiblioNormale ??= new Font(CoupsBibliothequeBox.Font, FontStyle.Regular);
+            _policeBiblioGras ??= new Font(CoupsBibliothequeBox.Font, FontStyle.Bold);
+            CoupsBibliothequeBox.Clear();
+            CoupsBibliothequeBox.SelectionAlignment = HorizontalAlignment.Center;
+            CoupsBibliothequeBox.SelectionColor = Color.Black;
+            CoupsBibliothequeBox.SelectionFont = _policeBiblioGras;
+            CoupsBibliothequeBox.AppendText("Bibliothèque\n--------------\n");
+            CoupsBibliothequeBox.SelectionAlignment = HorizontalAlignment.Left;
             if (entrees.Count == 0)
             {
-                CoupsBibliothèqueBox.SelectionFont = _policeBiblioNormale;
-                CoupsBibliothèqueBox.AppendText("Aucun coup trouvé dans la bibliothèque.\n");
+                CoupsBibliothequeBox.SelectionFont = _policeBiblioNormale;
+                CoupsBibliothequeBox.AppendText("Aucun coup trouvé dans la bibliothèque.\n");
                 return;
             }
-            foreach (EntréePolyglot entree in entrees.OrderByDescending(e => e.Poids))
+            foreach (EntreePolyglot entree in entrees.OrderByDescending(e => e.Poids))
             {
                 bool estChoisie = entree == choisie;
-                CoupsBibliothèqueBox.SelectionFont = estChoisie ? _policeBiblioGras : _policeBiblioNormale;
-                CoupsBibliothèqueBox.SelectionColor = estChoisie ? Color.Green : Color.Black;
-                CoupsBibliothèqueBox.AppendText($"{(estChoisie ? "⭐ " : " *  ")}{PolyglotBibliothèque.DecodeCoup(entree.CoupBiblio)} ({entree.Poids})\n");
+                CoupsBibliothequeBox.SelectionFont = estChoisie ? _policeBiblioGras : _policeBiblioNormale;
+                CoupsBibliothequeBox.SelectionColor = estChoisie ? Color.Green : Color.Black;
+                CoupsBibliothequeBox.AppendText($"{(estChoisie ? "⭐ " : " *  ")}{PolyglotBibliotheque.DecodeCoup(entree.CoupBiblio)} ({entree.Poids})\n");
             }
         }
 
@@ -331,11 +331,11 @@ namespace BrunoGUI_GenII
             _vue?.EffaceFleches();      // (flèche du coup conseillé par une analyse : elle ne vaut plus ; le parcours remet les siennes)
             if (!_pilote.Abandonner())
                 return;     // le moteur ne réfléchissait pas : rien à signaler
-            MiseaZéroTimer();
-            LeMoteurARépondu();
+            MiseaZeroTimer();
+            LeMoteurARepondu();
             InformationPourJoueur.Text = StatusProgramme.Text = "Réflexion du moteur interrompue";
         }
-        private void LeMoteurARépondu()
+        private void LeMoteurARepondu()
         {   // Après que le moteur a répondu (ou a été interrompu) : état des commandes
             MetAJourCommandes();
         }
@@ -359,7 +359,7 @@ namespace BrunoGUI_GenII
             if (ecoule >= 1)
                 timer.Stop();
         }
-        private void MiseaZéroTimer()
+        private void MiseaZeroTimer()
         {   // Le moteur a répondu (ou la réflexion est abandonnée) : plus de barre
             timer.Stop();
             BarreReflexion.Visible = false;

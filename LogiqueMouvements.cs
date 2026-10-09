@@ -824,7 +824,7 @@ namespace BrunoGUI_GenII
             // Mat si le roi est en échec et que l'adversaire n'a plus de coup (trait changé sur une copie seulement)
             EchecetMat = Echec && CalculerSurCopie(() =>
             {
-                Outils.ChangerDeCoté();
+                Outils.ChangerDeCote();
                 return !ResteCoupsValidesJouables();
             });
         }
@@ -846,7 +846,7 @@ namespace BrunoGUI_GenII
         {   // Le roi du camp qui a le trait est-il en échec ? (CalculeEchec regarde le roi adverse : on change le trait sur une copie)
             return CalculerSurCopie(() =>
             {
-                Outils.ChangerDeCoté();
+                Outils.ChangerDeCote();
                 CalculeEchec();
                 return Echec;
             });
@@ -1004,7 +1004,7 @@ namespace BrunoGUI_GenII
                     // *******Traitement promotion *********
                 }
                 // Changement de joueur
-                Outils.ChangerDeCoté();
+                Outils.ChangerDeCote();
                 AfficheTour?.Invoke(QuiJoue);
                 NombreCoupsJoues += Convert.ToSingle(0.5);      // On incrémente d'un demi-coup
             }

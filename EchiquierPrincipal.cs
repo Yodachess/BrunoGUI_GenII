@@ -51,8 +51,8 @@ namespace BrunoGUI_GenII
         private string _cheminMoteur, _nomMoteurChoisi;
         private string _bibliotheque = "rodent.bin";
         private bool _clickCaseSource, _visuSymbole, _montreDonneesBrutesUci, _montre3VariantesUci;
-        private bool _clavierActif, _emetUnSon, _bibliothèqueAléatoire;
-        private bool _bibliothèqueActive = true;
+        private bool _clavierActif, _emetUnSon, _bibliothequeAleatoire;
+        private bool _bibliothequeActive = true;
         private int _dureeReflexionMilliSeconde = 5000;
         private LogiqueMouvements.TypePiece _selectionPromotion, _pieceSource;
 
@@ -143,7 +143,7 @@ namespace BrunoGUI_GenII
             _montreDonneesBrutesUci = _clavierActif = false;
             _pilote = new PiloteMoteur(MoteurUci)
             {   // Bibliothèque d'ouvertures (si elle est active) : le coup choisi est aussi affiché dans la liste de la bibliothèque
-                ChoixBibliotheque = fen => _bibliothèqueActive ? ChoisirCoupBibliotheque(fen) : null
+                ChoixBibliotheque = fen => _bibliothequeActive ? ChoisirCoupBibliotheque(fen) : null
             };
             PartieEnCours.Date = Aujourdhui.ToString("yyyy.MM.dd");
             PartieEnCours.Lieu = "Maison"; PartieEnCours.Tournoi = "Entrainement";
@@ -154,8 +154,8 @@ namespace BrunoGUI_GenII
             fichierPartiePgn.VisibleChanged += (s, e) => MetAJourBoutonListeParties();   // bouton "Affiche/Masque liste parties"
             // Les options suivent l'état initial des cases à cocher du designer (le son était inversé : case cochée, son coupé)
             _emetUnSon = ActiveSon.Checked;
-            _bibliothèqueActive = ActiveBibliothèque.Checked;
-            _bibliothèqueAléatoire = ActiveAléatoire.Checked;
+            _bibliothequeActive = ActiveBibliotheque.Checked;
+            _bibliothequeAleatoire = ActiveAleatoire.Checked;
         }
 
         private void BrunoInterfaceGraphique_Load(object sender, EventArgs e)
@@ -179,13 +179,13 @@ namespace BrunoGUI_GenII
             _cheminMoteur = CheminStockfish;            // moteur lancé au démarrage
             Debug.WriteLine("Dossier Racine = " + Chemins.RepertoireRacine);
             Debug.WriteLine("Chemin moteurs = " + Chemins.MoteursUCI);
-            Debug.WriteLine("Chemin Polyglot = " + Chemins.BibliothèquesPolyglot);
+            Debug.WriteLine("Chemin Polyglot = " + Chemins.BibliothequesPolyglot);
 
             InformationPourJoueur.Text = "   Bienvenue   ";
 
             _vue.CreerCases(CaseMouseDown);     // les 120 cases (64 visibles), indexées comme le tableau "mailbox"
             LogiqueMouvements.InitialisationEchiquier();
-            RécupèreBibliothèque();
+            RecupereBibliotheque();
             MiseaZeroAffichages();
             QuiJoue = ColorPiece.Blanc;
             this.ActiveControl = Plateau;       // Met le focus sur le plateau pour éviter le Bug des radiobutton "Résultat"
@@ -223,7 +223,7 @@ namespace BrunoGUI_GenII
             {   // Utilise les sélections faites par l'utilisateur
                 AbandonneReflexion();   // nouvelle partie
                 QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
-                DémarreStockfish();
+                DemarreStockfish();
                 ColorPiece couleurMoteur = maNouvellePartieForceModule.ChoixCouleur;
                 bool forceMaximale = maNouvellePartieForceModule.ForceMaximale;
                 _forceMoteurElo = maNouvellePartieForceModule.ForceModule;
@@ -248,7 +248,7 @@ namespace BrunoGUI_GenII
                     if (!_vue.CoteNoir)
                         TourneEchiquier();      // On met la vue côté Noir
                     ParametresJoueurHumain("Le moteur UCI joue");      // On fait jouer le moteur côté blanc
-                    JeuMoteurAvecBibliothèque(FenDepart);
+                    JeuMoteurAvecBibliotheque(FenDepart);
                 }
                 else
                 {   // Le moteur joue les noirs
@@ -271,7 +271,7 @@ namespace BrunoGUI_GenII
             PartieEnCours.Tournoi = "Entrainement";
             PartieEnCours.Lieu = "Maison";
             MiseaZeroAffichages();
-            MiseaZéroTimer();
+            MiseaZeroTimer();
             VarianteMoteurUci1.Text = string.Empty;
             if (!_partie.EntreHumains)
                 InformationPourJoueur.Visible = true;     // le message est donné ensuite par ParametresJoueurHumain
@@ -336,7 +336,7 @@ namespace BrunoGUI_GenII
                                 AfficheCoupsBibliotheque(chaineFen);
                                 if (_partie.MoteurAuTrait)      // c'est au moteur de répondre (pas après un mat ou un pat : partie terminée)
                                 {
-                                    JeuMoteurAvecBibliothèque(chaineFen);
+                                    JeuMoteurAvecBibliotheque(chaineFen);
                                 }
                             }
                             else
@@ -500,7 +500,7 @@ namespace BrunoGUI_GenII
                 if (!_vue.CoteNoir)
                     TourneEchiquier();                                          // On met la vue côté Noir
                 ParametresJoueurHumain("Le moteur UCI joue");
-                JeuMoteurAvecBibliothèque(FenDepart);
+                JeuMoteurAvecBibliotheque(FenDepart);
             }
         }
         private void HumainContreHumain_Click(object sender, EventArgs e)
@@ -530,17 +530,17 @@ namespace BrunoGUI_GenII
             {
                 _cheminMoteur = OuvertureChoixMoteur.FileName;         // Récupère le chemin du moteur UCI
                 Debug.WriteLine("Chemin Sélection Moteur = " + _cheminMoteur);
-                DémarrageMoteur();
+                DemarrageMoteur();
             }
         }
-        private void SelectionBibliothèque_Click(object sender, EventArgs e)
+        private void SelectionBibliotheque_Click(object sender, EventArgs e)
         {   // l'utilisateur doit sélectionner le répertoire et fichier de la bibliothèque d'ouvertures
-            DialogResult Reponse = OuvertureChoixBibliothèque.ShowDialog();
+            DialogResult Reponse = OuvertureChoixBibliotheque.ShowDialog();
             if (Reponse == DialogResult.OK)     // l'utilisateur doit sélectionner le répertoire et fichier
             {
                 string precedente = _bibliotheque;
-                _bibliotheque = OuvertureChoixBibliothèque.FileName;
-                if (!RécupèreBibliothèque())
+                _bibliotheque = OuvertureChoixBibliotheque.FileName;
+                if (!RecupereBibliotheque())
                     _bibliotheque = precedente;     // fichier illisible : on garde la bibliothèque précédente (et son nom dans les préférences)
             }
         }
@@ -549,24 +549,24 @@ namespace BrunoGUI_GenII
             _moteurElo = "+- 3000";
             _cheminMoteur = Path.Combine(Chemins.MoteursUCI + @"\Rodent_IV", "rodent-iv-x64.exe");
             Debug.WriteLine("Chemin Rodent IV = " + _cheminMoteur);
-            DémarrageMoteur();
+            DemarrageMoteur();
         }
         private void Sargon1_1978_Click(object sender, EventArgs e)
         {   // https://echecs-et-informatique.franceserv.com/sargon-1978.html
             _moteurElo = "1678";
             _cheminMoteur = Path.Combine(Chemins.MoteursUCI + @"\sargon1978", "sargon1978_1_01b.exe");
             Debug.WriteLine("Chemin sargon I 1978 = " + _cheminMoteur);
-            DémarrageMoteur();
+            DemarrageMoteur();
             MoteurUci.SpecialeSargon();         // Sinon Sargon  mouline sans fin !!!!!
         }
-        public void DémarreStockfish()
+        public void DemarreStockfish()
         {   //  https://stockfishchess.org/
             _moteurElo = "+- 3000";
             _cheminMoteur = CheminStockfish;
             Debug.WriteLine("Chemin Stockfish = " + _cheminMoteur);
-            DémarrageMoteur();
+            DemarrageMoteur();
         }
-        private void DémarrageMoteur()
+        private void DemarrageMoteur()
         {   // Arrête le moteur UCI s'il est déjà en cours d'exécution, pour éviter les conflits
             AbandonneReflexion();   // changement de moteur
             // (le dossier de travail du moteur est celui de son .exe : voir MoteurUci.Start)
@@ -683,7 +683,7 @@ namespace BrunoGUI_GenII
             _partie.MoteurPrendLeTrait();   // le moteur joue désormais le camp au trait, l'humain l'autre
             if (_pendule != null && _pendule.CampQuiDecompte == null && _partie.EnCours && ListeCoups.Any(c => !c.EstPositionDeDepart))
                 _pendule.Demarrer(QuiJoue);     // pendule arrêtée par un retour arrière : elle repart pour le moteur
-            JeuMoteurAvecBibliothèque(ListeCoupsFen.Count > 0 ? ListeCoupsFen[^1] : FenDepart);   // dernière position, ou position initiale
+            JeuMoteurAvecBibliotheque(ListeCoupsFen.Count > 0 ? ListeCoupsFen[^1] : FenDepart);   // dernière position, ou position initiale
             // Plateau bloqué tant que le moteur réfléchit ; libre si son coup de bibliothèque est déjà joué
             PlateauEnable(!_partie.MoteurAuTrait);
             _clickCaseSource = _visuSymbole = true;    // L'ordinateur ayant joué, c'est indispensable !
@@ -898,7 +898,7 @@ namespace BrunoGUI_GenII
                     MoteurUci.Quitte();
                     MoteurUci.Start(CheminStockfish);
                     if (_partie.MoteurAuTrait)      // il devait jouer : on lui redemande son coup
-                        JeuMoteurAvecBibliothèque(LogiqueMouvements.RetourneChaineFenActuel());
+                        JeuMoteurAvecBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
                 }
                 VarianteMoteurUci2.Text = "Stockfish est à jour !";
                 KryptonMessageBox.Show($"{version.Tag.Replace("sf_", "Stockfish ")} est installé." +
@@ -949,8 +949,8 @@ namespace BrunoGUI_GenII
             parametres.NombreCoeursThread = MoteurUci.NombreThreads ?? parametres.NombreCoeursThread;
             parametres.TailleHachageMo = MoteurUci.TailleHachageMo;
             // Bibliothèque : juste le nom si elle est dans le dossier des bibliothèques fournies, sinon le chemin complet
-            parametres.Bibliotheque = string.Equals(Path.GetDirectoryName(Path.GetFullPath(Path.Combine(Chemins.BibliothèquesPolyglot, _bibliotheque))),
-                                                    Path.GetFullPath(Chemins.BibliothèquesPolyglot), StringComparison.OrdinalIgnoreCase)
+            parametres.Bibliotheque = string.Equals(Path.GetDirectoryName(Path.GetFullPath(Path.Combine(Chemins.BibliothequesPolyglot, _bibliotheque))),
+                                                    Path.GetFullPath(Chemins.BibliothequesPolyglot), StringComparison.OrdinalIgnoreCase)
                 ? Path.GetFileName(_bibliotheque) : _bibliotheque;
             try
             {
@@ -986,13 +986,13 @@ namespace BrunoGUI_GenII
             _dureeReflexionMilliSeconde = (int)TempsReflexionSecondes.Value * 1000;
             InformationsPartie.Text = "Temps de réflexion = " + (_dureeReflexionMilliSeconde / 1000).ToString() + " secondes";
         }
-        private void ActiveBibliothèque_CheckedChanged(object sender, EventArgs e)
+        private void ActiveBibliotheque_CheckedChanged(object sender, EventArgs e)
         {   // Activer ou non la bibliothèque (on lit la case : une bascule se décalerait si l'état initial différait)
-            _bibliothèqueActive = ActiveBibliothèque.Checked;
+            _bibliothequeActive = ActiveBibliotheque.Checked;
         }
-        private void ActiveAléatoire_CheckedChanged(object sender, EventArgs e)
+        private void ActiveAleatoire_CheckedChanged(object sender, EventArgs e)
         {   // Choisir un coup aléatoire ou le meilleur coup dans la bibliothèque
-            _bibliothèqueAléatoire = ActiveAléatoire.Checked;
+            _bibliothequeAleatoire = ActiveAleatoire.Checked;
         }
         private void ActiveSon_CheckedChanged(object sender, EventArgs e)
         {   // Mettre ou enlever le son
@@ -1127,28 +1127,28 @@ namespace BrunoGUI_GenII
             InformationPourJoueur.Visible = true;
             InformationPourJoueur.Text = StatusProgramme.Text = Affichage;
         }
-        private bool RécupèreBibliothèque()
+        private bool RecupereBibliotheque()
         {   // Charge la bibliothèque _bibliotheque ; false (avec un message) si elle est introuvable ou illisible :
             // la précédente reste alors active, ou, au démarrage, le moteur joue sans bibliothèque
-            var polyglot = new PolyglotBibliothèque();
-            polyglot.MessageLog += msg => CoupsBibliothèque.Text = msg;
+            var polyglot = new PolyglotBibliotheque();
+            polyglot.MessageLog += msg => CoupsBibliotheque.Text = msg;
             try
             {
-                polyglot.PolyglotBibliothèqueLecture(_bibliotheque);
+                polyglot.PolyglotBibliothequeLecture(_bibliotheque);
             }
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException)
             {
                 Debug.WriteLine("[Bibliothèque] " + ex.Message);
-                if (!PolyglotBibliothèque.Disponible)
-                    CoupsBibliothèque.Text = "Aucune bibliothèque d'ouvertures";
-                KryptonMessageBox.Show(ex.Message + (PolyglotBibliothèque.Disponible ? "\n\nLa bibliothèque précédente reste utilisée."
+                if (!PolyglotBibliotheque.Disponible)
+                    CoupsBibliotheque.Text = "Aucune bibliothèque d'ouvertures";
+                KryptonMessageBox.Show(ex.Message + (PolyglotBibliotheque.Disponible ? "\n\nLa bibliothèque précédente reste utilisée."
                                                                                      : "\n\nLe moteur jouera sans bibliothèque d'ouvertures."),
                     "Bibliothèque d'ouvertures", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
                 return false;
             }
-            CoupsBibliothèque.SelectAll();
-            CoupsBibliothèque.SelectionAlignment = HorizontalAlignment.Center;
-            CoupsBibliothèque.DeselectAll();
+            CoupsBibliotheque.SelectAll();
+            CoupsBibliotheque.SelectionAlignment = HorizontalAlignment.Center;
+            CoupsBibliotheque.DeselectAll();
             AfficheCoupsBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());     // coups connus pour la position actuelle
             return true;
         }

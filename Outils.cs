@@ -1,4 +1,4 @@
-// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
 // █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
 // █ Copyright (C) 2026 Bruno COURTOIS                                      █
 // █ SPDX-License-Identifier: GPL-3.0-or-later                              █
@@ -14,7 +14,7 @@
 // └─ Classe "Outils"  
 //              ├─ "VarianteUciVersPgn"  
 //              ├─ "EstCaseClaire"
-//              ├─ "ChangerDeCoté"  
+//              ├─ "ChangerDeCote"  
 //              └─ "MiseaZeroListes"
 // └─ Classe "Parametres"  
 //              ├─ "ConvertitCouleur" / "FormatCouleur"
@@ -63,7 +63,7 @@ namespace BrunoGUI_GenII
                 // return Path.GetDirectoryName(RepertoireExecutable);
             }
         }
-        public static string BibliothèquesPolyglot
+        public static string BibliothequesPolyglot
         {   // Chemin du répertoire BibliothèquesPolyglot
             get
             {
@@ -203,7 +203,7 @@ namespace BrunoGUI_GenII
             // On inverse pour avoir clair/sombre selon ton choix :
             return ((rang + colonne) % 2 != 0);
         }
-        public static void ChangerDeCoté()
+        public static void ChangerDeCote()
         {
             QuiJoue = LogiqueMouvements.Adversaire(QuiJoue);
         }
