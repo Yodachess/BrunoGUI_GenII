@@ -16,7 +16,7 @@ dotnet build BrunoGUI_GenII.sln
 dotnet run --project BrunoGUI_GenII.csproj
 ```
 
-Tests de la logique d'échecs (projet console sans framework externe, `Tests/Program.cs`) :
+Tests de la logique d'échecs (projet `Tests` : les vérifications sont dans `Tests/Scenario.cs`, `Scenario.Executer(complet)` ; `Tests/Program.cs` les affiche en console ; `Tests/VerificationsTests.cs` en fait un test **xUnit** par vérification, visibles dans l'Explorateur de tests de Visual Studio ; le scénario ne s'exécute qu'une fois, dans l'ordre, la logique ayant un état statique) :
 
 ```bash
 dotnet run --project Tests
@@ -27,7 +27,11 @@ dotnet run --project Tests -- --complet
 ```
 
 - Les tests couvrent les règles (roque, prise en passant, promotion, 50 coups, lecture FEN, conversion de variantes UCI), la notation PGN des coups ambigus (avec aller-retour écriture/relecture), la liste des coups (alignement, départ FEN, retour arrière, « # » du mat), le décodage des lignes UCI (`LigneUci`), la classe `Position` (copie, `CalculerSurCopie`), la classe `Partie` (qui est au trait, retour arrière, reprise après un mat, départ FEN, lecture seule, « Reprendre ici »), la classe `PiloteMoteur` avec un faux moteur `FauxMoteur` (bibliothèque puis moteur, analyse, abandon, coup UCI avec promotion), les évaluations et variantes du moteur (`Evaluation`, `SuiviAnalyse` : point de vue des Blancs, mat, score par variante, limite en coups entiers, promotion), la pendule (`Cadence`, `Pendule` avec un temps simulé, `PeutMater`) et des **perft** (chaque coup y est joué via `CalculerSurCopie`) comparés aux valeurs de référence (position initiale, Kiwipete, positions 3 à 5). `--complet` ajoute les perft profonds (~15 s). Toute modification du générateur de coups doit garder les perft verts.
-- Pour ajouter un test : appeler `Charger(fen)`, jouer avec `L.ExecutionCoup(source, destination)`, puis `Verifie(nom, condition, détail)`.
+```bash
+dotnet test Tests
+```
+
+- Pour ajouter un test (dans `Tests/Scenario.cs`) : appeler `Charger(fen)`, jouer avec `L.ExecutionCoup(source, destination)`, puis `Verifie(nom, condition, détail)` ; il apparaît tout seul comme test xUnit. La CI lance la console (`--complet`) puis `dotnet test`.
 - L'interface graphique n'a pas de tests : vérifier à la main dans l'application tout ce qui touche à `EchiquierPrincipal` ou au moteur.
 - La solution compile sans avertissement : garder cet état.
 - **Types de référence nullables** : activés fichier par fichier (`#nullable enable` après les `using`) dans la logique : `Position`, `Partie`, `Coup`, `Pendule`, `PiloteMoteur`, `SuiviDemandesMoteur`, `LigneUci`, `AnalyseMoteur`, `AnalysePartie`, `ChargementPartie`, `EditeurPosition`, `Journal`. Une valeur qui peut manquer y est déclarée `string?` (ex : `Coup.MeilleurCoup`, `ChargementPartie.ErreurFen`) ; garder zéro avertissement. Les autres fichiers (formulaires, `LogiqueMouvements`, `GestionPartiePgn`, `FichierPartiePgn`, `Outils`, `MoteurUci`…) ne l'ont pas encore : environ 180 avertissements à traiter avant d'activer `<Nullable>enable</Nullable>` dans tout le projet.
