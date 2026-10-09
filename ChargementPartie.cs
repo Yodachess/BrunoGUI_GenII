@@ -19,8 +19,6 @@ using System.Collections.Generic;
 using System.Linq;
 using static BrunoGUI_GenII.LogiqueMouvements;
 
-#nullable enable
-
 namespace BrunoGUI_GenII
 {
     public record ResultatChargementPgn(

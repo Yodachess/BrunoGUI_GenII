@@ -21,8 +21,6 @@ using System.Globalization;
 using System.Linq;
 using static BrunoGUI_GenII.LogiqueMouvements;
 
-#nullable enable
-
 namespace BrunoGUI_GenII
 {
     public readonly record struct Evaluation(int? Centipions, int? MatEn)     // du point de vue des Blancs

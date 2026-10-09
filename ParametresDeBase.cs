@@ -29,7 +29,7 @@ namespace BrunoGUI_GenII
             this.FormClosing += ParametresDeBase_FormClosing;   // Gestion du click sur la croix rouge en haut à droite ...
             this.VisibleChanged += ParametresDeBase_VisibleChanged;
         }
-        private void ParametresDeBase_VisibleChanged(object sender, EventArgs e)
+        private void ParametresDeBase_VisibleChanged(object? sender, EventArgs e)
         {   // A chaque affichage, on montre les réglages actuels (variantes, threads, temps de réflexion)
             if (!Visible)
                 return;
@@ -38,7 +38,7 @@ namespace BrunoGUI_GenII
                 baseThreadsNumerique.Value = Math.Clamp(threads, (int)baseThreadsNumerique.Minimum, (int)baseThreadsNumerique.Maximum);
             baseReflexionNumerique.Value = Math.Clamp(interfaceGraphique.TempsReflexionSecondes.Value, baseReflexionNumerique.Minimum, baseReflexionNumerique.Maximum);
         }
-        private void BaseBoutonOk_Click(object sender, EventArgs e)
+        private void BaseBoutonOk_Click(object? sender, EventArgs e)
         {
             MoteurUci.DefinitLimiteElo(baseEloNumerique.Value.ToString());
             MoteurUci.DefinitThreads((int)baseThreadsNumerique.Value);
@@ -49,12 +49,12 @@ namespace BrunoGUI_GenII
             this.DialogResult = DialogResult.OK;
             this.Hide();
         }
-        private void BaseBoutonAnnuler_Click(object sender, EventArgs e)
+        private void BaseBoutonAnnuler_Click(object? sender, EventArgs e)
         {   // Le formulaire ne se ferme jamais, même si l’utilisateur clique sur la croix. Il est simplement caché.
             this.DialogResult = DialogResult.Cancel;
             this.Hide();
         }
-        private void ParametresDeBase_FormClosing(object sender, FormClosingEventArgs e)
+        private void ParametresDeBase_FormClosing(object? sender, FormClosingEventArgs e)
         {   // Gestion du click sur la croix rouge en haut à droite ...
             e.Cancel = true; // Annule la fermeture de la fenêtre
             this.Hide();     // Masque la fenêtre

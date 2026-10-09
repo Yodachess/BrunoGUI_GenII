@@ -738,7 +738,7 @@ public static class Scenario
             Verifie($"Partie annotée « {annotee.Tournoi} » : tous les coups relus",
                 chargementAnnote.CoupIllisible == null && chargementAnnote.DemiCoupsJoues.ToString() == annotee.CompteDePLy,
                 $"{chargementAnnote.DemiCoupsJoues} demi-coups sur {annotee.CompteDePLy}, illisible : {chargementAnnote.CoupIllisible ?? "aucun"} | {annotee.CoupsPartiePGN[..Math.Min(120, annotee.CoupsPartiePGN.Length)]}");
-            if (annotee.TimeControl == null)
+            if (string.IsNullOrEmpty(annotee.TimeControl))
                 Verifie("Partie annotée par Fritz : codes NAG de la partie principale relus (27. e5 $1 = !), ceux des variantes ignorés",
                     L.ListeCoups[52].Annotation == "!" && L.ListeCoups[52].PgnIntl.Contains("e5") && L.ListeCoups[34].Annotation == ""
                     && L.ListeCoups.Count(c => c.Annotation != "") == 1,
@@ -747,7 +747,7 @@ public static class Scenario
                 Verifie("Partie annotée ChessBase : 19. Ng5 $2 = ?, 20. Rxf6 $1 = !",
                     L.ListeCoups[36].Annotation == "?" && L.ListeCoups[38].Annotation == "!",
                     string.Join(" ", L.ListeCoups.Where(c => c.Annotation != "").Select(c => c.PgnIntl.Trim() + c.Annotation)));
-            if (annotee.TimeControl != null)
+            if (!string.IsNullOrEmpty(annotee.TimeControl))
             {   // 2e partie (ChessBase) : temps de réflexion [%emt], y compris ceux coupés en fin de ligne ("[%emt 0:⏎00:47]")
                 Verifie("Partie annotée : temps de réflexion [%emt] relus pour chaque coup",
                     L.ListeCoups.All(c => c.TempsReflexion != null) && L.ListeCoups[12].TempsReflexion == new TimeSpan(0, 30, 11)

@@ -45,18 +45,18 @@ namespace BrunoGUI_GenII
         // Les cases marquées -1 sur l'échiquier 120 cases sont en dehors de l'échiquier 64 cases et ne sont pas visibles .
         // Ces mêmes cases marquées -1 sont les cases TypePiece.Bordure : elles permettent de savoir si un déplacement déborde de l'échiquier.
 
-        public static event AffichageCoupJoue AfficheCoupNoir;
-        public static event AffichageCoupJoue AfficheCoupBlanc;
-        public static event AfficheInfo AfficheInfoEchec;       // message d'échec ou de pat (vide : plus d'échec)
-        public static event AfficheCouleur AfficheEchecEtMat;   // camp maté
-        public static event AfficheCouleur AffichePat;          // camp pat (il n'a plus de coup)
-        public static event AfficheCouleur AfficheTour;         // camp au trait après un coup
+        public static event AffichageCoupJoue? AfficheCoupNoir;
+        public static event AffichageCoupJoue? AfficheCoupBlanc;
+        public static event AfficheInfo? AfficheInfoEchec;       // message d'échec ou de pat (vide : plus d'échec)
+        public static event AfficheCouleur? AfficheEchecEtMat;   // camp maté
+        public static event AfficheCouleur? AffichePat;          // camp pat (il n'a plus de coup)
+        public static event AfficheCouleur? AfficheTour;         // camp au trait après un coup
         // Pièce choisie par le joueur pour une promotion (l'interface affiche le choix et attend le clic) ;
         // si personne ne répond (tests, fenêtre fermée), c'est une dame
-        public static Func<ColorPiece, TypePiece> ChoixPromotion { get; set; }
+        public static Func<ColorPiece, TypePiece>? ChoixPromotion { get; set; }
         // public static event AfficheInfo AfficheFen;
-        public static event AffichagePiece DessinePiece;
-        public static event AffichageSymbole DessineSymbole;
+        public static event AffichagePiece? DessinePiece;
+        public static event AffichageSymbole? DessineSymbole;
 
         // énumération du contenu possible des cases de l'échiquier 120 cases
         // Remarque : les pièces noires sont paires et les pièces blanches sont impaires
@@ -130,10 +130,10 @@ namespace BrunoGUI_GenII
         // Après le coup 1. e4 :        rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1
         // Après le coup 1. ... c5 :    rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2
         // Après le coup 2. Cf3 :       rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2
-        private static string MouvementCoup { get; set; }
-        private static string MouvementCoupPgn { get; set; }
-        private static string MouvementCoupNal { get; set; }
-        private static string MouvementCoupUci { get; set; }
+        private static string MouvementCoup { get; set; } = "";
+        private static string MouvementCoupPgn { get; set; } = "";
+        private static string MouvementCoupNal { get; set; } = "";
+        private static string MouvementCoupUci { get; set; } = "";
         private static FlagMouvementRoque Roque { get; set; }
 
         private static readonly Dictionary<FlagMouvementRoque, string> ListeCasesTraverseesRoi = new()
@@ -703,7 +703,7 @@ namespace BrunoGUI_GenII
             return piecesLegeres >= 2;
         }
 
-        public static string RaisonNulle()
+        public static string? RaisonNulle()
         {   // Après un coup : raison de la nulle automatique, ou null si la partie continue.
             // Le mat et le pat du dernier coup sont signalés par leurs propres événements (AfficheEchecEtMat, AffichePat).
             if (DernierCoupTerminePartie)
@@ -771,7 +771,7 @@ namespace BrunoGUI_GenII
                 case TypePiece.PionNoir:
                     return MouvementsPion(indexCase);
                 default:
-                    return null;
+                    return [];      // case vide (ou bordure) : aucun mouvement (et non null : un appelant lit .Count sans vérifier)
             }
         }
         private static List<string> MouvementsCavalier(int IndexCase, List<int> listDeplacementsCavalier)
@@ -910,7 +910,7 @@ namespace BrunoGUI_GenII
             if (CouleurCase(IndexSource) != QuiJoue)
                 return false;
             List<string> MouvementsPossibles = RetourneMouvements(caseSource);
-            string CaseAtteinte = MouvementsPossibles.Find(x => x.Contains(caseDestination));
+            string? CaseAtteinte = MouvementsPossibles.Find(x => x.Contains(caseDestination));
             if (CaseAtteinte != null)
             {
                 Roque = TestSiRoque(IndexSource, IndexDestination);

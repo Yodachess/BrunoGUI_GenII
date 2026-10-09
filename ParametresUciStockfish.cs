@@ -29,7 +29,7 @@ namespace BrunoGUI_GenII
             this.FormClosing += ParametresUciStockfish_FormClosing;     // Gestion du click sur la croix rouge en haut à droite ...
             this.VisibleChanged += ParametresUciStockfish_VisibleChanged;
         }
-        private void ParametresUciStockfish_VisibleChanged(object sender, EventArgs e)
+        private void ParametresUciStockfish_VisibleChanged(object? sender, EventArgs e)
         {   // A chaque affichage, on montre les réglages actuels (variantes, threads, table de hachage)
             if (!Visible)
                 return;
@@ -39,15 +39,15 @@ namespace BrunoGUI_GenII
             if (MoteurUci.TailleHachageMo is int hachage)
                 HashSizeUpDown.Value = Math.Clamp(hachage, (int)HashSizeUpDown.Minimum, (int)HashSizeUpDown.Maximum);
         }
-        private void ParametresUciStockfish_Load(object sender, EventArgs e)
+        private void ParametresUciStockfish_Load(object? sender, EventArgs e)
         {   // Affichage des paramêtres dans la console
             MoteurUci.StandardInputDataToUci("uci");
         } 
-        private void ClearHashButton_Click(object sender, EventArgs e)
+        private void ClearHashButton_Click(object? sender, EventArgs e)
         {   // Traitement du bouton de vidage des hash tables
             MoteurUci.StandardInputDataToUci("setoption name Clear Hash");
         }
-        private void ParametresFermer_Click(object sender, EventArgs e)
+        private void ParametresFermer_Click(object? sender, EventArgs e)
         {   // Passage au moteur des paramètres sélectionnés 
             MoteurUci.StandardInputDataToUci("setoption name Ponder value " + (checkBoxPonder.Checked ? "true" : "false"));
             MoteurUci.DefinitThreads((int)ThreadsUpDown.Value);
@@ -58,7 +58,7 @@ namespace BrunoGUI_GenII
             MoteurUci.StandardInputDataToUci("setoption name nodestime value " + (int)NodesTimeUpDown.Value);
             this.Hide();
         }
-        private void ParametresUciStockfish_FormClosing(object sender, FormClosingEventArgs e)
+        private void ParametresUciStockfish_FormClosing(object? sender, FormClosingEventArgs e)
         {   // Gestion du click sur la croix rouge en haut à droite ...
             e.Cancel = true; // Annule la fermeture
             this.Hide();      // Masque la fenêtre

@@ -25,6 +25,9 @@
     <Authors>Bruno COURTOIS</Authors>
     <Copyright>Copyright © 2026 Bruno COURTOIS</Copyright>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <!-- Types de référence nullables dans tout le projet : une valeur qui peut manquer est déclarée (string?), le compilateur
+         signale tout usage qui pourrait lever une NullReferenceException -->
+    <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     <NoWarn>$(NoWarn);CA1416</NoWarn>

@@ -41,7 +41,7 @@ namespace BrunoGUI_GenII
             get
             {
                 string cheminExecutable = Assembly.GetExecutingAssembly().Location;
-                return Path.GetDirectoryName(cheminExecutable);
+                return Path.GetDirectoryName(cheminExecutable) ?? AppContext.BaseDirectory;
             }
         }
         public static string RepertoireRacine
@@ -80,7 +80,7 @@ namespace BrunoGUI_GenII
     }
     public class Outils
     {
-        public static string VarianteUciVersPgn(string varianteBrute, int numeroDemiCoup, bool coupConseil, Position position = null)
+        public static string VarianteUciVersPgn(string varianteBrute, int numeroDemiCoup, bool coupConseil, Position? position = null)
         {   // Retourne les coups dans le format PGN (Cdxe4)
             // Si coupConseil = true, seul le dernier coup de la variante est retourné (avec son numéro)
             // Les coups sont joués sur une copie de la position analysée (par défaut la partie) : rien n'est modifié, ni redessiné
@@ -368,7 +368,7 @@ namespace BrunoGUI_GenII
                 if (string.IsNullOrWhiteSpace(lignes[i]) || lignes[i].TrimStart().StartsWith(';'))
                     continue;
                 string cle = lignes[i].Split('=', 2)[0].Trim();
-                if (valeurs.Remove(cle, out string valeur))
+                if (valeurs.Remove(cle, out string? valeur))
                     lignes[i] = $"{cle} = {valeur}";
             }
             foreach (var (cle, valeur) in valeurs)      // clés absentes du fichier

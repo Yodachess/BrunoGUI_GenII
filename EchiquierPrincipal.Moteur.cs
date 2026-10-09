@@ -57,7 +57,7 @@ namespace BrunoGUI_GenII
                     }
                     if (_analyseDePartie != null)
                         break;      // analyse de partie : aucun coup n'est joué (la suite est dans AfficheCoupMoteur)
-                    VarianteMoteurCourante.Text = "Coup joué : " + Outils.VarianteUciVersPgn(ligne.MeilleurCoup, LogiqueMouvements.DemiCoupAvant(PositionDesVariantes), false, PositionDesVariantes) +
+                    VarianteMoteurCourante.Text = "Coup joué : " + Outils.VarianteUciVersPgn(ligne.MeilleurCoup ?? "", LogiqueMouvements.DemiCoupAvant(PositionDesVariantes), false, PositionDesVariantes) +
                         (ligne.CoupConseil != null ? "   (Conseil : " + Outils.VarianteUciVersPgn(ligne.MeilleurCoup + " " + ligne.CoupConseil, LogiqueMouvements.DemiCoupAvant(PositionDesVariantes), true, PositionDesVariantes) + ")" : "");  // Le conseil (ponder) se joue après le coup du moteur
                     break;
                 case "id":
@@ -82,7 +82,7 @@ namespace BrunoGUI_GenII
             if (ligne.DansBibliotheque)
                 VarianteMoteurUci1.Text = "    Le moteur est dans sa bibliothèque d'ouvertures";
 
-            LigneAnalyse ligneAnalyse = _pilote.Lignes.Ajouter(ligne, PositionDesVariantes);
+            LigneAnalyse? ligneAnalyse = _pilote.Lignes.Ajouter(ligne, PositionDesVariantes);
             if (ligneAnalyse == null)
                 return;     // ni score ni variante (ex : "info depth 12")
             // On affiche seulement le score de la meilleure variante (un moteur sans MultiPV, comme Sargon, n'a que celle-là)
@@ -91,7 +91,7 @@ namespace BrunoGUI_GenII
                 EvaluationUci.Text = evaluation.Appreciation;
                 if (evaluation.EstUnMat)
                 {
-                    ScoreMoteur.Text = "MAT en " + Math.Abs(evaluation.MatEn.Value);
+                    ScoreMoteur.Text = "MAT en " + Math.Abs(evaluation.MatEn ?? 0);
                     InformationPourJoueur.Text = evaluation.TexteMat;      // "MAT en 3 pour les Blancs"
                 }
                 else
@@ -187,7 +187,7 @@ namespace BrunoGUI_GenII
                     // dans une boîte de message, sur la 1re ligne de variante (centrée, en gras ; les autres variantes restent sur les
                     // lignes 2 et 3), dans la barre d'état, et une flèche verte montre le coup conseillé sur l'échiquier (effacée par
                     // toute action qui change la position)
-                    LigneAnalyse meilleure = _pilote.Lignes.Meilleure;
+                    LigneAnalyse? meilleure = _pilote.Lignes.Meilleure;
                     InformationPourJoueur.Text = StatusProgramme.Text = "Analyse terminée ... ";
                     string titre = "Analyse Moteur (" + _dureeReflexionMilliSeconde / 1000 + " sec.) par " + _nomMoteur;
                     if (meilleure?.VariantePgn == null)
@@ -202,7 +202,7 @@ namespace BrunoGUI_GenII
                         EvaluationUci.Text = appreciation;
                         VarianteMoteurCourante.Text = InformationsPartie.Text = "Coup suggéré : " + meilleure.Debut;
                         AfficheLigneCentree(VarianteMoteurUci1, $"Meilleure suite ({meilleure.TexteScore}, {appreciation}) : {meilleure.VariantePgn}");
-                        string conseil = (meilleure.VarianteUci ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+                        string? conseil = (meilleure.VarianteUci ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
                         if (conseil is { Length: >= 4 } && RenvoieCaseIndex120(conseil[..2]) > 0 && RenvoieCaseIndex120(conseil[2..4]) > 0)
                             _vue.MontreFleches((RenvoieCaseIndex120(conseil[..2]), RenvoieCaseIndex120(conseil[2..4]), CouleurFlecheMeilleurCoup));
                         MetAJourCommandes();
@@ -240,7 +240,7 @@ namespace BrunoGUI_GenII
             if (_pendule != null)
                 _pendule.NoteTemps(LogiqueMouvements.ListeCoups[^1]);   // pour le retour arrière et "Reprendre ici"
             AffichePendules();
-            string raisonNulle = _partie.RejeuPgn ? null : LogiqueMouvements.RaisonNulle();    // répétition, 50 coups ou matériel insuffisant
+            string? raisonNulle = _partie.RejeuPgn ? null : LogiqueMouvements.RaisonNulle();    // répétition, 50 coups ou matériel insuffisant
             if (raisonNulle != null)
                 GestionResultat("1/2-1/2", raisonNulle);
             MetAJourCommandes();    // un coup a été joué : on peut parcourir la partie, la liste des coups, le retour arrière...
@@ -257,7 +257,7 @@ namespace BrunoGUI_GenII
                                                   : LimiteTemps.Duree(_dureeReflexionMilliSeconde);
             if (_pilote.DemanderCoup(chaineFen, limite) == ResultatDemandeCoup.CoupBibliotheque)
             {   // Coup trouvé dans la bibliothèque : il est déjà joué
-                string coupChoisiTxt = _pilote.DernierCoupBibliotheque;
+                string? coupChoisiTxt = _pilote.DernierCoupBibliotheque;
                 VarianteMoteurUci1.Text = "Coup bibliothèque " + Path.GetFileName(_bibliotheque) + " exécuté par le moteur -> " + coupChoisiTxt;
                 VarianteMoteurUci2.Text = VarianteMoteurUci3.Text = ".....";
                 Debug.WriteLine($"Coup bibliothèque exécuté : {coupChoisiTxt}");
@@ -279,12 +279,12 @@ namespace BrunoGUI_GenII
 
         // ═══ Bibliothèque d'ouvertures : affichage des coups connus, et choix du coup quand le moteur doit jouer ═══
         private static readonly Random _hasard = new();
-        private Font _policeBiblioNormale, _policeBiblioGras;     // créées une seule fois (une police par ligne serait une fuite)
-        private string ChoisirCoupBibliotheque(string fen)
+        private Font? _policeBiblioNormale, _policeBiblioGras;     // créées une seule fois (une police par ligne serait une fuite)
+        private string? ChoisirCoupBibliotheque(string fen)
         {   // Le moteur doit jouer : coup choisi dans la bibliothèque (PolyglotBibliotheque.ChoisirEntree), marqué ⭐ dans la liste ;
             // null s'il n'y en a pas
             List<EntreePolyglot> entrees = PolyglotBibliotheque.TrouverLesEntrees(PolyglotBibliotheque.CalculeClefPolyglot(fen)).ToList();
-            EntreePolyglot choisie = PolyglotBibliotheque.ChoisirEntree(entrees, _bibliothequeAleatoire, _hasard);
+            EntreePolyglot? choisie = PolyglotBibliotheque.ChoisirEntree(entrees, _bibliothequeAleatoire, _hasard);
             AfficheCoupsBibliotheque(entrees, choisie);
             return choisie == null ? null : PolyglotBibliotheque.DecodeCoup(choisie.CoupBiblio);
         }
@@ -292,7 +292,7 @@ namespace BrunoGUI_GenII
         {   // Coups connus de la bibliothèque pour cette position (sans en choisir aucun)
             AfficheCoupsBibliotheque(PolyglotBibliotheque.TrouverLesEntrees(PolyglotBibliotheque.CalculeClefPolyglot(fen)).ToList(), null);
         }
-        private void AfficheCoupsBibliotheque(List<EntreePolyglot> entrees, EntreePolyglot choisie)
+        private void AfficheCoupsBibliotheque(List<EntreePolyglot> entrees, EntreePolyglot? choisie)
         {   // Liste des coups, par poids décroissant ; le coup choisi (s'il y en a un) est marqué ⭐ en vert
             _policeBiblioNormale ??= new Font(CoupsBibliothequeBox.Font, FontStyle.Regular);
             _policeBiblioGras ??= new Font(CoupsBibliothequeBox.Font, FontStyle.Bold);
@@ -346,7 +346,7 @@ namespace BrunoGUI_GenII
             timer.Tick += Timer_Tick;
             timer.Start();
         }
-        private void Timer_Tick(object sender, EventArgs e)
+        private void Timer_Tick(object? sender, EventArgs e)
         {   // Tous les dixièmes de seconde : part du temps de réflexion écoulée (la barre reste pleine jusqu'à la réponse du moteur)
             double ecoule = (_chrono.Elapsed - _debutReflexion).TotalMilliseconds / Math.Max(1, _dureeReflexionMilliSeconde);
             BarreReflexion.Value = (int)Math.Round(Math.Min(1, ecoule) * BarreReflexion.Maximum);

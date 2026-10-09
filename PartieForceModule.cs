@@ -40,14 +40,14 @@ namespace BrunoGUI_GenII
             ListePendule.DrawItem += DessineCadence;
             this.VisibleChanged += (s, e) => { if (Visible) AfficheChoix(); };
         }
-        public static void DessineCadence(object sender, DrawItemEventArgs e)
+        public static void DessineCadence(object? sender, DrawItemEventArgs e)
         {   // Liste des cadences (ici et sous l'échiquier) dessinée à la main : une étoile dorée devant les cadences officielles
             // de la FIDE (3 + 2, 15 + 10, 90 + 30) ; les autres sont décalées d'autant, pour que les noms restent alignés
             e.DrawBackground();
-            ComboBox liste = sender as ComboBox ?? (sender as Krypton.Toolkit.KryptonComboBox)?.ComboBox;
+            ComboBox? liste = sender as ComboBox ?? (sender as Krypton.Toolkit.KryptonComboBox)?.ComboBox;
             if (e.Index < 0 || liste == null || e.Index >= liste.Items.Count)
                 return;
-            object element = liste.Items[e.Index];
+            object? element = liste.Items[e.Index];
             Font police = e.Font ?? liste.Font;
             bool selectionne = (e.State & DrawItemState.Selected) != 0;
             Color couleurTexte = selectionne ? SystemColors.HighlightText : SystemColors.WindowText;
@@ -55,12 +55,12 @@ namespace BrunoGUI_GenII
             if (element is Cadence { EstOfficielle: true })
                 TextRenderer.DrawText(e.Graphics, "★", police, new Rectangle(e.Bounds.X, e.Bounds.Y, largeurEtoile, e.Bounds.Height),
                     Color.FromArgb(212, 160, 23), TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter | TextFormatFlags.NoPadding);
-            TextRenderer.DrawText(e.Graphics, element.ToString(), police,
+            TextRenderer.DrawText(e.Graphics, element?.ToString() ?? "", police,
                 new Rectangle(e.Bounds.X + largeurEtoile, e.Bounds.Y, e.Bounds.Width - largeurEtoile, e.Bounds.Height), couleurTexte,
                 TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
             e.DrawFocusRectangle();
         }
-        private void ListePendule_SelectedIndexChanged(object sender, EventArgs e)
+        private void ListePendule_SelectedIndexChanged(object? sender, EventArgs e)
         {   // La durée de réflexion par coup ne sert que sans pendule (avec une pendule, le moteur gère son temps)
             TempsReflexion.Enabled = ListePendule.SelectedItem is not Cadence cadence || cadence.EstSansPendule;
         }
@@ -79,7 +79,7 @@ namespace BrunoGUI_GenII
             ListePendule.SelectedItem = ChoixCadence;
             ListePendule_SelectedIndexChanged(ListePendule, EventArgs.Empty);
         }
-        private void NouvellePartieForceModule_Load(object sender, EventArgs e)
+        private void NouvellePartieForceModule_Load(object? sender, EventArgs e)
         {
             AfficheChoix();
 
@@ -89,15 +89,15 @@ namespace BrunoGUI_GenII
             ForceMoteurOk.Click += ForceMoteurOk_Click;
             ForceMoteurAnnuler.Click += ForceMoteurAnnuler_Click;
         }
-        private void ForceMoteurMaximum_CheckedChanged(object sender, EventArgs e)
+        private void ForceMoteurMaximum_CheckedChanged(object? sender, EventArgs e)
         {
             ValeurLimiteElo.Enabled = !ForceMoteurMaximum.Checked;
         }
-        private void ForceMoteurDefinie_CheckedChanged(object sender, EventArgs e)
+        private void ForceMoteurDefinie_CheckedChanged(object? sender, EventArgs e)
         {
             ValeurLimiteElo.Enabled = ForceMoteurDefinie.Checked;
         }
-        private void ForceMoteurOk_Click(object sender, EventArgs e)
+        private void ForceMoteurOk_Click(object? sender, EventArgs e)
         {
             ChoixCouleur = ModuleJoueBlancs.Checked ? LogiqueMouvements.ColorPiece.Blanc : LogiqueMouvements.ColorPiece.Noir;
             NomAdversaire = TextBoxNomAdvesaire.Text;
@@ -110,7 +110,7 @@ namespace BrunoGUI_GenII
             this.DialogResult = DialogResult.OK;
             this.Close();
         }
-        private void ForceMoteurAnnuler_Click(object sender, EventArgs e)
+        private void ForceMoteurAnnuler_Click(object? sender, EventArgs e)
         {
             this.DialogResult = DialogResult.Cancel;
             this.Close();

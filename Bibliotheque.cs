@@ -73,9 +73,9 @@ namespace BrunoGUI_GenII
     }
     public class PolyglotBibliotheque
     {   // Classe pour gérer la bibliothèque d'ouvertures Polyglot
-        private static string _cheminBibliotheque;
+        private static string _cheminBibliotheque = "";
         public static bool Disponible => !string.IsNullOrEmpty(_cheminBibliotheque) && File.Exists(_cheminBibliotheque);
-        public event Action<string> MessageLog;
+        public event Action<string>? MessageLog;
         public void PolyglotBibliothequeLecture(string fichier)
         {
             if (string.IsNullOrWhiteSpace(fichier))
@@ -116,7 +116,7 @@ namespace BrunoGUI_GenII
             }
         }
 
-        public static EntreePolyglot ChoisirEntree(IReadOnlyList<EntreePolyglot> entrees, bool aleatoire, Random hasard)
+        public static EntreePolyglot? ChoisirEntree(IReadOnlyList<EntreePolyglot> entrees, bool aleatoire, Random hasard)
         {   // Coup de bibliothèque à jouer : au hasard parmi tous (aleatoire), sinon au hasard parmi ceux de plus grand poids ;
             // null s'il n'y a aucune entrée
             if (entrees.Count == 0)

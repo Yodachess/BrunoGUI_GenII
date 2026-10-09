@@ -31,27 +31,27 @@ namespace BrunoGUI_GenII
 {
     public class PartieEchecsPGN
     {   // Format de chaque partie qui se trouve dans ListeParties
-        public string Tournoi { get; set; }
-        public string Lieu { get; set; }
-        public string Date { get; set; }
-        public string Ronde { get; set; }
-        public string White { get; set; }
-        public string Black { get; set; }
-        public string Result { get; set; }
-        public string ECO { get; set; }
-        public string WhiteElo { get; set; }
-        public string BlackElo { get; set; }
-        public string CompteDePLy { get; set; }
-        public string CoupsPartiePGN { get; set; }
-        public string Fen { get; set; }             // position de départ ([SetUp "1"] [FEN "..."]) ; vide : position initiale
-        public string TimeControl { get; set; }     // cadence ([TimeControl "180+2"], en secondes + bonus) ; vide : sans pendule
+        public string Tournoi { get; set; } = "";
+        public string Lieu { get; set; } = "";
+        public string Date { get; set; } = "";
+        public string Ronde { get; set; } = "";
+        public string White { get; set; } = "";
+        public string Black { get; set; } = "";
+        public string Result { get; set; } = "";
+        public string ECO { get; set; } = "";
+        public string WhiteElo { get; set; } = "";
+        public string BlackElo { get; set; } = "";
+        public string CompteDePLy { get; set; } = "";
+        public string CoupsPartiePGN { get; set; } = "";
+        public string Fen { get; set; } = "";        // position de départ ([SetUp "1"] [FEN "..."]) ; vide : position initiale
+        public string TimeControl { get; set; } = "";// cadence ([TimeControl "180+2"], en secondes + bonus) ; vide : sans pendule
         public List<TimeSpan?> TempsCoups { get; set; } = [];  // temps de pendule après chaque coup ({[%clk h:mm:ss]}), dans l'ordre ; null : inconnu
         public List<TimeSpan?> TempsReflexion { get; set; } = [];  // temps passé sur chaque coup ({[%emt h:mm:ss]}, ChessBase) ; null : inconnu
         public List<string> Annotations { get; set; } = [];        // annotation de chaque coup ("!?", "??"... ; "" : aucune), dans l'ordre
         // Pour chaque coup (null : rien) : évaluation [%eval], texte de ses commentaires, et sa 1re variante "( ... )" telle qu'écrite
         public List<Evaluation?> Evaluations { get; set; } = [];
-        public List<string> Commentaires { get; set; } = [];
-        public List<string> Variantes { get; set; } = [];
+        public List<string?> Commentaires { get; set; } = [];
+        public List<string?> Variantes { get; set; } = [];
         public List<bool> AnnotationsAuto { get; set; } = [];       // [%auto] : l'annotation du coup a été posée par l'analyse de partie
     }
 
@@ -65,7 +65,7 @@ namespace BrunoGUI_GenII
             List<string> mots = [];
             bool apresCommentaire = false;      // un coup noir qui suit un commentaire ou une variante reprend son numéro ("1... e5")
             // Partie commençant par un coup noir (départ FEN, Noirs au trait) : le PGN exige "n... coup"
-            Coup premier = ListeCoups.FirstOrDefault(c => !c.EstPositionDeDepart);
+            Coup? premier = ListeCoups.FirstOrDefault(c => !c.EstPositionDeDepart);
             if (premier != null && !premier.EstCoupBlanc)
                 apresCommentaire = true;
             for (int i = 0; i < ListeCoups.Count; i++)
@@ -366,6 +366,9 @@ namespace BrunoGUI_GenII
                 InitializeComponents();
                 this.StartPosition = FormStartPosition.CenterScreen;     // palette globale Krypton appliquée par défaut
             }
+            [System.Diagnostics.CodeAnalysis.MemberNotNull(nameof(tournamentCase), nameof(lieuCase), nameof(dateCase), nameof(rondeCase),
+                nameof(blancsCase), nameof(noirsCase), nameof(resultCase), nameof(ecoCase), nameof(whiteeloCase), nameof(blackeloCase),
+                nameof(plycountCase), nameof(cadenceCase), nameof(sauveEnTete), nameof(annulerEnTete))]     // (tous créés ici)
             private void InitializeComponents()
             {
                 // Création des champs de saisie
@@ -439,7 +442,7 @@ namespace BrunoGUI_GenII
 
                 return textBox;
             }
-            private void SauveBalises_Click(object sender, EventArgs e)
+            private void SauveBalises_Click(object? sender, EventArgs e)
             {   // Mettre à jour les valeurs de la partie
                 partieBalises.Tournoi = tournamentCase.Text;
                 partieBalises.Lieu = lieuCase.Text;
@@ -456,7 +459,7 @@ namespace BrunoGUI_GenII
                 // Fermer la fenêtre
                 this.Close();
             }
-            private void AnnulerBalises_Click(object sender, EventArgs e)
+            private void AnnulerBalises_Click(object? sender, EventArgs e)
             {   // Fermer sans enregistrer
                 this.Close();
             }
