@@ -20,7 +20,7 @@
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <!-- Numéro de version de l'application (A propos, propriétés de l'exe) : à changer à chaque version publiée ;
          la publication (tag vX.YY) vérifie qu'il correspond au tag -->
-    <Version>1.16</Version>
+    <Version>1.20</Version>
     <Product>BrunoGUI GenII</Product>
     <Authors>Bruno COURTOIS</Authors>
     <Copyright>Copyright © 2026 Bruno COURTOIS</Copyright>
