@@ -606,7 +606,7 @@ namespace BrunoGUI_GenII
             BilanAnalyse.Size = new System.Drawing.Size(240, 92);
             BilanAnalyse.TabIndex = 32;
             //
-            // groupBilanPartie (la barre de progression de l'analyse, visible seulement pendant l'analyse, est par-dessus le bilan, vide alors)
+            // groupBilanPartie
             //
             groupBilanPartie.BackColor = System.Drawing.Color.WhiteSmoke;
             groupBilanPartie.Controls.Add(BarreAnalysePartie);
@@ -779,7 +779,7 @@ namespace BrunoGUI_GenII
             //
             LabelTournoi.BackColor = System.Drawing.Color.White;
             LabelTournoi.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            LabelTournoi.AutoEllipsis = true;      // sur deux lignes au plus (le cadre a la hauteur des joueurs), « … » au-delà
+            LabelTournoi.AutoEllipsis = true;
             LabelTournoi.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             LabelTournoi.ForeColor = System.Drawing.Color.Black;
             LabelTournoi.Location = new System.Drawing.Point(538, 28);

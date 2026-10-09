@@ -29,6 +29,11 @@ using static BrunoGUI_GenII.Parametres;
 
 namespace BrunoGUI_GenII
 {
+    // Disposition (EchiquierPrincipal.Designer.cs, à modifier de préférence dans le concepteur de Visual Studio, qui réécrit
+    // InitializeComponent et en retire tout commentaire) :
+    //  - groupBilanPartie contient le bilan et la barre de progression de l'analyse, posée par-dessus : elle n'est visible que
+    //    pendant l'analyse, quand le bilan est vide ;
+    //  - LabelTournoi (AutoEllipsis) tient sur deux lignes, à la hauteur des étiquettes des joueurs, et finit par « … » au-delà.
     public partial class EchiquierPrincipal : Form
     {
         // Les listes
