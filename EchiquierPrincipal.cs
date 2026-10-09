@@ -879,6 +879,12 @@ namespace BrunoGUI_GenII
             // Version 1.16 = saisie d'une position à la main, annotations « ! » (seul bon coup) et « !! » (avec sacrifice), PGN relu
             //                avec commentaires, évaluations et variantes (meilleur coup des coups annotés), marque [%auto] des
             //                annotations de l'analyse, lignes de variantes plus grandes et centrées, aide complétée
+            // Version 1.20 = fiabilité : journal des erreurs BrunoGUI.log (une erreur imprévue est expliquée, l'application continue,
+            //                même pendant le coup du moteur), plantage à la fermeture corrigé, moteur introuvable signalé ; « ! »
+            //                mieux jugé (fuite évidente) et « ! » / « !! » revus par l'analyse complète ; date et ECO d'une partie
+            //                chargée qui restaient dans la suivante, PlyCount des parties depuis une FEN, pièce prise en main
+            //                remise en place, promotion PGN sans « = » (e8Q), roque Polyglot ; code : fichiers partiels,
+            //                identifiants sans accents, types nullables, tests xUnit
             // (le numéro de version vient du .csproj, <Version> : il n'est plus écrit ici)
             _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version " + VersionAffichee + "\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", "A propos de",
