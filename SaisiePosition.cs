@@ -41,22 +41,22 @@ namespace BrunoGUI_GenII
 
         private readonly Zone _plateau = new() { Location = new Point(12, 12), Size = new Size(8 * TailleCase, 8 * TailleCase), Cursor = Cursors.Hand };
         private readonly List<(TypePiece Piece, Zone Case)> _palette = [];
-        private readonly KryptonRadioButton _traitBlancs = new() { Text = "Blancs", Location = new Point(440, 200), Width = 80 };
-        private readonly KryptonRadioButton _traitNoirs = new() { Text = "Noirs", Location = new Point(530, 200), Width = 80 };
+        private readonly KryptonRadioButton _traitBlancs = new() { Text = "Blancs", Location = new Point(500, 170), Width = 80 };
+        private readonly KryptonRadioButton _traitNoirs = new() { Text = "Noirs", Location = new Point(590, 170), Width = 80 };
         private readonly Dictionary<DroitRoque, KryptonCheckBox> _roques = new()
         {
-            [DroitRoque.PetitBlanc] = new() { Text = "O-O blanc", Location = new Point(440, 248) },
-            [DroitRoque.GrandBlanc] = new() { Text = "O-O-O blanc", Location = new Point(580, 248) },
-            [DroitRoque.PetitNoir] = new() { Text = "O-O noir", Location = new Point(440, 272) },
-            [DroitRoque.GrandNoir] = new() { Text = "O-O-O noir", Location = new Point(580, 272) }
+            [DroitRoque.PetitBlanc] = new() { Text = "O-O blanc", Location = new Point(440, 216) },
+            [DroitRoque.GrandBlanc] = new() { Text = "O-O-O blanc", Location = new Point(580, 216) },
+            [DroitRoque.PetitNoir] = new() { Text = "O-O noir", Location = new Point(440, 240) },
+            [DroitRoque.GrandNoir] = new() { Text = "O-O-O noir", Location = new Point(580, 240) }
         };
-        private readonly KryptonComboBox _enPassant = new() { Location = new Point(560, 300), Width = 80, DropDownStyle = ComboBoxStyle.DropDownList };
-        private readonly KryptonNumericUpDown _numero = new() { Location = new Point(560, 330), Width = 80, Minimum = 1, Maximum = 999 };
-        private readonly KryptonTextBox _fen = new() { Location = new Point(56, 440), Width = 560, ReadOnly = true };
-        // Messages (position correcte ou non, FEN collée...) : à droite, sous la palette, sur plusieurs lignes si besoin
+        private readonly KryptonComboBox _enPassant = new() { Location = new Point(512, 270), Width = 60, DropDownStyle = ComboBoxStyle.DropDownList };
+        private readonly KryptonNumericUpDown _numero = new() { Location = new Point(640, 270), Width = 70, Minimum = 1, Maximum = 999 };
+        private readonly KryptonTextBox _fen = new() { Location = new Point(48, 440), Width = 456, ReadOnly = true };
+        // Messages (position correcte ou non, FEN collée...) : à droite, sous la palette, sur deux lignes au plus (choix de Bruno)
         private readonly Label _etat = new()
         {
-            Location = new Point(440, 132), AutoSize = true, MaximumSize = new Size(270, 48), Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+            Location = new Point(440, 132), AutoSize = true, MaximumSize = new Size(270, 34), Font = new Font("Segoe UI", 9F, FontStyle.Bold),
             BackColor = Color.Transparent
         };
 
@@ -74,16 +74,16 @@ namespace BrunoGUI_GenII
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = MinimizeBox = false;
             ShowInTaskbar = false;
-            ClientSize = new Size(730, 512);
+            ClientSize = new Size(730, 476);
 
             _plateau.Paint += DessinePlateau;
             _plateau.MouseDown += ClicSurPlateau;
             Controls.Add(_plateau);
             CreePalette();
-            Controls.Add(Libelle("Trait", 440, 182));
+            Controls.Add(Libelle("Trait", 440, 172));
             Controls.AddRange([_traitBlancs, _traitNoirs]);
             _traitBlancs.CheckedChanged += (s, e) => ChangeTrait();
-            Controls.Add(Libelle("Roques", 440, 228));
+            Controls.Add(Libelle("Roques", 440, 198));
             foreach ((DroitRoque roque, KryptonCheckBox caseRoque) in _roques)
             {
                 caseRoque.Width = 130;
@@ -95,7 +95,7 @@ namespace BrunoGUI_GenII
                 };
                 Controls.Add(caseRoque);
             }
-            Controls.Add(Libelle("En passant", 440, 302));
+            Controls.Add(Libelle("En passant", 440, 272));
             _enPassant.SelectedIndexChanged += (s, e) =>
             {
                 if (_miseAJour) return;
@@ -103,7 +103,7 @@ namespace BrunoGUI_GenII
                 MetAJour();
             };
             Controls.Add(_enPassant);
-            Controls.Add(Libelle("Coup n°", 440, 332));
+            Controls.Add(Libelle("Coup n°", 584, 272));
             _numero.ValueChanged += (s, e) =>
             {
                 if (_miseAJour) return;
@@ -111,16 +111,16 @@ namespace BrunoGUI_GenII
                 MetAJour();
             };
             Controls.Add(_numero);
-            Controls.Add(Bouton("Vider", 440, 364, 130, (s, e) => { _editeur.Vider(); MetAJour(); }));
-            Controls.Add(Bouton("Position initiale", 580, 364, 130, (s, e) => { _editeur.PositionInitiale(); MetAJour(); }));
-            Controls.Add(Bouton("Tourner", 440, 396, 130, (s, e) => { _coteNoir = !_coteNoir; _plateau.Invalidate(); }));
-            Controls.Add(Bouton("Coller une FEN", 580, 396, 130, (s, e) => CollerFen()));
-            Controls.Add(Libelle("FEN", 12, 442));
+            Controls.Add(Bouton("Vider", 440, 304, 130, (s, e) => { _editeur.Vider(); MetAJour(); }));
+            Controls.Add(Bouton("Position initiale", 580, 304, 130, (s, e) => { _editeur.PositionInitiale(); MetAJour(); }));
+            Controls.Add(Bouton("Tourner", 440, 336, 130, (s, e) => { _coteNoir = !_coteNoir; _plateau.Invalidate(); }));
+            Controls.Add(Bouton("Copier FEN", 580, 336, 130, (s, e) => Clipboard.SetText(_editeur.Fen)));
+            Controls.Add(Bouton("Coller une FEN", 440, 368, 130, (s, e) => CollerFen()));
+            Controls.Add(Libelle("FEN", 12, 442));      // FEN, OK et Annuler sur une seule ligne sous l'échiquier
             Controls.Add(_fen);
-            Controls.Add(Bouton("Copier", 624, 438, 86, (s, e) => Clipboard.SetText(_editeur.Fen)));
             Controls.Add(_etat);
-            KryptonButton ok = Bouton("OK", 520, 474, 90, (s, e) => Valider());
-            KryptonButton annuler = Bouton("Annuler", 620, 474, 90, null);
+            KryptonButton ok = Bouton("OK", 520, 438, 90, (s, e) => Valider());
+            KryptonButton annuler = Bouton("Annuler", 620, 438, 90, null);
             annuler.DialogResult = DialogResult.Cancel;
             Controls.AddRange([ok, annuler]);
             AcceptButton = ok;
