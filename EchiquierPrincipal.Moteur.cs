@@ -35,11 +35,8 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void AfficheUci()   // Affiche les informations du moteur UCI (la ligne est déjà décodée dans MoteurUci.DerniereLigne)
         {   // ATTENTION : MALGRE LA PRESENCE DU PROTOCOLE UCI, LES MOTEURS ONT DES REPONSES DIFFERENTES !!?? (voir case "info", par ex)
-            if (InvokeRequired)
-            {
-                Invoke(new MethodInvoker(AfficheUci));
-                return; // Empêche l'exécution du reste de la méthode sur le thread d'origine
-            }
+            if (SurLeThreadInterface(AfficheUci))
+                return;     // (relancée sur le thread de l'interface, ou ignorée si la fenêtre est fermée)
             LigneUci ligne = MoteurUci.DerniereLigne;
             if ((ligne.Commande == "info" || ligne.Commande == "bestmove") && MoteurUci.LigneAbandonnee)
                 return;     // réponse à une demande abandonnée (retour arrière, nouvelle partie...) : on n'affiche rien
@@ -147,11 +144,8 @@ namespace BrunoGUI_GenII
 
         private void AfficheCoupMoteur()
         {   // Le moteur UCI joue son meilleur coup
-            if (InvokeRequired)
-            {
-                Invoke(new MethodInvoker(AfficheCoupMoteur));
-                return; // Empêche l'exécution du reste de la méthode sur le thread d'origine
-            }
+            if (SurLeThreadInterface(AfficheCoupMoteur))
+                return;     // (relancée sur le thread de l'interface, ou ignorée si la fenêtre est fermée)
             else
             {
                 if (MoteurUci.LigneAbandonnee)

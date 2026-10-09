@@ -1003,13 +1003,29 @@ namespace BrunoGUI_GenII
         {   // Mettre ou enlever le son
             _emetUnSon = ActiveSon.Checked;
         }
+        private bool SurLeThreadInterface(Action action)
+        {   // Pour une méthode appelée depuis un autre thread (celui du moteur) : true si elle ne doit pas continuer ici, parce que
+            // l'action vient d'être exécutée sur le thread de l'interface, ou parce que la fenêtre est fermée (ses dernières lignes
+            // arrivaient sur une fenêtre détruite : ObjectDisposedException sur le thread du moteur, qui arrêtait l'application) ;
+            // false sur le thread de l'interface : la méthode continue normalement
+            if (IsDisposed || Disposing)
+                return true;
+            if (!InvokeRequired)
+                return false;
+            try
+            {
+                Invoke(action);
+            }
+            catch (Exception ex) when (ex is ObjectDisposedException || ex is InvalidOperationException)
+            {   // fenêtre détruite entre le test et l'appel : plus rien à afficher
+                Debug.WriteLine("[App] Fenêtre fermée, ligne du moteur ignorée : " + ex.Message);
+            }
+            return true;
+        }
         public void ActiverMenus(bool actif)
         {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => ActiverMenus(actif)));
+            if (SurLeThreadInterface(() => ActiverMenus(actif)))
                 return;
-            }
             MenuInterfaceGraphique.Enabled = actif;
         }
         private void Promo0_Click(object sender, EventArgs e)

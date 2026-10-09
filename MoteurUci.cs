@@ -263,17 +263,20 @@ namespace BrunoGUI_GenII
             if (Proc == null)
                 return;
             StandardInputDataToUci("quit");
+            // Dès maintenant, les dernières lignes du moteur (ex : son bestmove après un "stop") sont ignorées (sender != Proc) :
+            // à la fermeture de l'application, elles arrivaient sur une fenêtre détruite (ObjectDisposedException dans le journal)
+            Process enArret = Proc;
+            Proc = null;
             try
             {
-                if (!Proc.WaitForExit(1000))
-                    Proc.Kill();
+                if (!enArret.WaitForExit(1000))
+                    enArret.Kill();
             }
             catch (Exception ex) when (ex is InvalidOperationException || ex is System.ComponentModel.Win32Exception)
             {   // processus déjà terminé ou inaccessible : rien à faire
                 Debug.WriteLine($"[App] Arrêt du moteur : {ex.Message}");
             }
-            Proc.Dispose();
-            Proc = null;
+            enArret.Dispose();
         }
     }
 }
