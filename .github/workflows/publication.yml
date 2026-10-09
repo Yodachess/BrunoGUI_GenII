@@ -24,6 +24,15 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      # Le numéro de version de l'application est la balise <Version> du .csproj : le tag doit lui correspondre (v1.16 <-> 1.16),
+      # sinon l'archive publiée afficherait un autre numéro que celui de la Release
+      - name: Vérification du numéro de version
+        run: |
+          [xml]$projet = Get-Content BrunoGUI_GenII.csproj
+          $version = @($projet.Project.PropertyGroup | ForEach-Object { $_.Version } | Where-Object { $_ })[0]
+          if ("v$version" -ne "${{ github.ref_name }}") { throw "Le tag ${{ github.ref_name }} ne correspond pas à la version du .csproj ($version)" }
+          Write-Host "Version $version"
+
       # SignManifests=false : le certificat de signature ClickOnce n'existe que sur le PC de développement
       - name: Compilation
         run: dotnet build BrunoGUI_GenII.sln -c Release -p:SignManifests=false

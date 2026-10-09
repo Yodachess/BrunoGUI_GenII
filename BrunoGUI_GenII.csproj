@@ -18,7 +18,13 @@
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- Numéro de version de l'application (A propos, propriétés de l'exe) : à changer à chaque version publiée ;
+         la publication (tag vX.YY) vérifie qu'il correspond au tag -->
+    <Version>1.16</Version>
+    <Product>BrunoGUI GenII</Product>
+    <Authors>Bruno COURTOIS</Authors>
+    <Copyright>Copyright © 2026 Bruno COURTOIS</Copyright>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <UseWindowsForms>true</UseWindowsForms>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     <NoWarn>$(NoWarn);CA1416</NoWarn>
@@ -39,22 +45,18 @@
     <None Include="Resources\FichierrOuvrir.bmp" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Fichiers partiels du formulaire principal (découpé par sujet) : rangés sous EchiquierPrincipal.cs dans Visual Studio,
+         et ouverts comme du code (pas dans le concepteur de formulaires) -->
+    <Compile Update="EchiquierPrincipal.Moteur.cs;EchiquierPrincipal.Pendule.cs;EchiquierPrincipal.Parcours.cs;EchiquierPrincipal.Fichiers.cs;EchiquierPrincipal.AnalysePartie.cs">
+      <DependentUpon>EchiquierPrincipal.cs</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
     <!-- Le projet de tests a son propre .csproj : on l'exclut de l'application -->
     <Compile Remove="Tests\**" />
     <EmbeddedResource Remove="Tests\**" />
     <None Remove="Tests\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">
-      <Visible>False</Visible>
-      <ProductName>Microsoft .NET Framework 4.7.2 %28x86 et x64%29</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
     <!-- PreserveNewest : un Stockfish mis à jour par l'application dans bin n'est pas écrasé à chaque compilation -->
@@ -67,8 +69,6 @@
     <PackageReference Include="Krypton.Ribbon" Version="95.25.10.293" />
     <PackageReference Include="Krypton.Toolkit" Version="95.25.10.293" />
     <PackageReference Include="Krypton.Workspace" Version="95.25.10.293" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
     <None Update="AideBrunoGUI.rtf">
