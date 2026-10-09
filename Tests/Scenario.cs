@@ -801,6 +801,14 @@ public static class Scenario
         Verifie("Bibliothèque : meilleur poids (les deux ex aequo sortent), tous les coups en mode aléatoire, aucun coup si liste vide",
             toujoursMeilleur && choixMeilleurs == 2 && choixAleatoires == 4 && PolyglotBibliotheque.ChoisirEntree([], false, hasardTest) == null,
             $"meilleurs : {choixMeilleurs} coups distincts, aléatoire : {choixAleatoires}");
+        // Roque Polyglot : codé "le roi va sur la case de la tour" (e1h1) ; une tour qui va vraiment de e1 à h1 a le même code
+        static ushort CoupPolyglot(int depart, int arrivee) => (ushort)(arrivee | (depart << 6));     // cases 0 = a1 ... 63 = h8
+        string roqueBlanc = PolyglotBibliotheque.DecodeCoup(CoupPolyglot(4, 7), "rnbqk2r/pppp1ppp/5n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4");
+        string grandRoqueNoir = PolyglotBibliotheque.DecodeCoup(CoupPolyglot(60, 56), "r3kbnr/pppqpppp/2n5/3p1b2/3P1B2/2N5/PPPQPPPP/R3KBNR b KQkq - 5 5");
+        string tourVersH1 = PolyglotBibliotheque.DecodeCoup(CoupPolyglot(4, 7), "6k1/5ppp/8/8/8/8/6PP/K3R3 w - - 0 30");
+        Verifie("Bibliothèque : e1h1 est un roque seulement si le roi est en e1 (sinon la tour va vraiment en h1)",
+            roqueBlanc == "e1g1" && grandRoqueNoir == "e8c8" && tourVersH1 == "e1h1",
+            $"{roqueBlanc} {grandRoqueNoir} {tourVersH1}");
 
         // Mise à jour de Stockfish : archive Windows adaptée au processeur (publication de Stockfish 19)
         string[] archivesSf19 = ["stockfish-android-armv8.tar", "stockfish-ubuntu-x86-64-universal.tar", "stockfish-windows-arm64-universal.zip", "stockfish-windows-x86-64-universal.zip"];
