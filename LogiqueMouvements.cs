@@ -157,6 +157,8 @@ namespace BrunoGUI_GenII
         // On ne la modifie que par AjouteCoup, AjoutePositionDeDepart, RetireDernierCoup et ViderCoups.
         private static readonly List<Coup> _coups = [];
         public static IReadOnlyList<Coup> ListeCoups => _coups;
+        // Demi-coups joués (balise PGN PlyCount) : sans l'élément "position de départ" d'une partie commencée depuis un FEN
+        public static int DemiCoupsJoues => _coups.Count(c => !c.EstPositionDeDepart);
         // Vues en lecture seule par notation (même index que ListeCoups, donc toujours alignées)
         public static readonly VueCoups ListeCoupsFen = new(_coups, c => c.Fen);          // https://www.pousseurdebois.fr/cours/notation-fen/
         public static readonly VueCoups ListeCoupsPgnIntl = new(_coups, c => c.PgnIntl);  // https://fr.wikipedia.org/wiki/Portable_Game_Notation

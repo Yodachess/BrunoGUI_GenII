@@ -210,12 +210,15 @@ namespace BrunoGUI_GenII
                    // fichier verrouillé... : les causes possibles sont trop variées pour être listées, d'où le catch général)
                    Journal.Info("Pas de mise à jour automatique de Stockfish : " + ex.Message);
                }
-                    // B. MAINTENANT, on démarre le moteur. 
-                    // Le fichier est libre, remplacé et prêt.
-               Debug.WriteLine("chemin Load = " + _cheminMoteur);
-
-               MoteurUci.Start(_cheminMoteur);
-               ActiverMenus(true);    // On réactive les menus après la mise à jour
+               try
+               {   // B. MAINTENANT, on démarre le moteur (le fichier est libre, remplacé et prêt)
+                   Debug.WriteLine("chemin Load = " + _cheminMoteur);
+                   LanceMoteur(_cheminMoteur);
+               }
+               finally
+               {   // Menus réactivés même si le moteur n'a pas démarré (sinon ils restaient grisés, sans explication)
+                   ActiverMenus(true);
+               }
            });
             Debug.WriteLine("Moteur = " + _nomMoteur);
             // VarianteMoteurUci2.Text = "[INFO] Fin de la vérification de mise à jour de Stockfish...";
@@ -272,9 +275,7 @@ namespace BrunoGUI_GenII
             _partie.Commencer(blancs, noirs);
             _vue.EffaceDernierCoup();   // les cases du dernier coup de la partie précédente
             _clickCaseSource = _visuSymbole = true;
-            PartieEnCours.CoupsPartiePGN = PartieEnCours.Result = PartieEnCours.CompteDePLy = PartieEnCours.Ronde = "";
-            PartieEnCours.Tournoi = "Entrainement";
-            PartieEnCours.Lieu = "Maison";
+            EnteteNouvellePartie();
             MiseaZeroAffichages();
             MiseaZeroTimer();
             VarianteMoteurUci1.Text = string.Empty;
@@ -289,6 +290,16 @@ namespace BrunoGUI_GenII
             AfficheCoupsBibliotheque(FenDepart);
             NouvellePendule();          // cadence choisie (Sans pendule : temps fixe par coup, comme avant)
             MetAJourCommandes();
+        }
+
+        private void EnteteNouvellePartie()
+        {   // En-tête PGN d'une nouvelle partie (contre le moteur, entre humains, ou depuis une position) : rien ne doit rester de la
+            // partie précédente, en particulier d'une partie PGN chargée (sa date et son ECO se retrouvaient dans la partie suivante).
+            // Les joueurs (AfficheJoueurs) et la cadence (NouvellePendule) sont fixés à part
+            PartieEnCours.CoupsPartiePGN = PartieEnCours.Result = PartieEnCours.CompteDePLy = PartieEnCours.Ronde = PartieEnCours.ECO = "";
+            PartieEnCours.Tournoi = "Entrainement";
+            PartieEnCours.Lieu = "Maison";
+            PartieEnCours.Date = DateTime.Today.ToString("yyyy.MM.dd");
         }
 
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
@@ -332,6 +343,7 @@ namespace BrunoGUI_GenII
                             LogiqueMouvements.Echec = false;
                             _vue.LibereCurseurPiece();      // On revient au curseur "normal"
                             LogiqueMouvements.EffaceSymboles(true);
+                            _clickCaseSource = true;        // la pièce est posée (avant AbandonneReflexion : voir AnnuleSelectionPiece)
                             _caseDestination = LogiqueMouvements.NomCaseAlgebrique(IndexCase120);
                             AbandonneReflexion();   // une analyse en cours porterait sur la position d'avant ce coup
                             LogiqueMouvements.ExecutionCoup(_caseSource, _caseDestination);
@@ -348,7 +360,6 @@ namespace BrunoGUI_GenII
                             {   // Si le coup n'est pas valide, on remet la pièce sur sa case d'origine !
                                 _vue.DessinePiece(_indexSource120, _pieceSource);
                             }
-                            _clickCaseSource = true;
                             _vue.EffaceDernierCoup();
                         }
                     }
@@ -365,6 +376,17 @@ namespace BrunoGUI_GenII
         }
 
 
+        private void AnnuleSelectionPiece()
+        {   // Une pièce prise en main (1er clic) mais pas encore posée revient sur sa case : appelée avant toute action qui change
+            // la partie ou l'affichage (AbandonneReflexion, parcours). Sinon la pièce restait au curseur, sa case vide, et le clic
+            // suivant était pris pour sa case d'arrivée, dans une position qui avait changé (ex : après un retour arrière)
+            if (_clickCaseSource || _vue == null)
+                return;
+            _clickCaseSource = true;
+            _vue.LibereCurseurPiece();
+            LogiqueMouvements.EffaceSymboles(true);
+            _vue.DessinePiece(_indexSource120, _pieceSource);
+        }
         private void AfficheTour(ColorPiece couleur)
         {   // Affiche le camp au trait entre humains ; sinon active les cases si c'est au tour du joueur humain
             if (_partie.EntreHumains)
@@ -382,7 +404,6 @@ namespace BrunoGUI_GenII
                 GestionResultat("1-0", " Gain Blanc");
             InformationPourJoueur.Text = VarianteMoteurCourante.Text = "Le Roi " + NomCouleur(couleurMatee) + " est échec et mat";
             StatusProgramme.Text = "Partie terminée";
-            Application.DoEvents();
             PlateauEnable(false);
         }
 
@@ -571,12 +592,31 @@ namespace BrunoGUI_GenII
             Debug.WriteLine("Chemin Stockfish = " + _cheminMoteur);
             DemarrageMoteur();
         }
+        private bool LanceMoteur(string chemin)
+        {   // Démarre le moteur ; false si son fichier est absent ou ne se lance pas : noté dans le journal et expliqué
+            // (appelée aussi depuis la tâche de démarrage : le message est alors affiché sur le thread de l'interface)
+            try
+            {
+                MoteurUci.Start(chemin);
+                return true;
+            }
+            catch (Exception ex) when (ex is System.ComponentModel.Win32Exception || ex is InvalidOperationException
+                                       || ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException)
+            {
+                Journal.Erreur("Démarrage du moteur " + chemin, ex);
+                void Message() => KryptonMessageBox.Show($"Le moteur n'a pas pu être lancé :\n{chemin}\n\n{ex.Message}\n\n" +
+                    "Choisissez un autre moteur dans le menu.", "Moteur UCI", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+                if (!SurLeThreadInterface(Message))
+                    Message();
+                return false;
+            }
+        }
         private void DemarrageMoteur()
         {   // Arrête le moteur UCI s'il est déjà en cours d'exécution, pour éviter les conflits
             AbandonneReflexion();   // changement de moteur
             // (le dossier de travail du moteur est celui de son .exe : voir MoteurUci.Start)
             MoteurUci.Quitte();
-            MoteurUci.Start(_cheminMoteur); // on démarre le nouveau moteur Uci
+            LanceMoteur(_cheminMoteur);     // on démarre le nouveau moteur Uci
             _nomMoteurChoisi = Path.GetFileNameWithoutExtension(_cheminMoteur);
             Debug.WriteLine("Moteur = " + _nomMoteurChoisi);
             _nomMoteur = _nomMoteurChoisi;      // en attendant le nom annoncé par le moteur ("id name", voir AfficheUci)
@@ -1013,12 +1053,17 @@ namespace BrunoGUI_GenII
             if (!InvokeRequired)
                 return false;
             try
-            {
-                Invoke(action);
+            {   // Une erreur de l'action est traitée ICI, sur le thread de l'interface (journal + message, l'application continue) :
+                // renvoyée par Invoke sur le thread du moteur, où rien ne la rattrape, elle arrêterait l'application
+                Invoke(() =>
+                {
+                    try { action(); }
+                    catch (Exception ex) { Program.ErreurImprevue(ex); }
+                });
             }
             catch (Exception ex) when (ex is ObjectDisposedException || ex is InvalidOperationException)
             {   // fenêtre détruite entre le test et l'appel : plus rien à afficher
-                Debug.WriteLine("[App] Fenêtre fermée, ligne du moteur ignorée : " + ex.Message);
+                Journal.Info("Fenêtre fermée, ligne du moteur ignorée : " + ex.Message);
             }
             return true;
         }

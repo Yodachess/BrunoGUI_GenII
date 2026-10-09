@@ -111,7 +111,7 @@ namespace BrunoGUI_GenII
             else
                 _pendule?.RestaurerDepuis(LogiqueMouvements.ListeCoups, QuiJoue);   // temps notés après le coup où l'on reprend
             AffichePendules();
-            PartieEnCours.CompteDePLy = LogiqueMouvements.ListeCoupsFen.Count.ToString();
+            PartieEnCours.CompteDePLy = LogiqueMouvements.DemiCoupsJoues.ToString();
             string fen = LogiqueMouvements.RetourneChaineFenActuel();
             AfficheCoupsBibliotheque(fen);
             InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + NomCamp(QuiJoue);
@@ -188,6 +188,7 @@ namespace BrunoGUI_GenII
                 return;
             }
             index = Math.Max(index, IndexPremierePosition);
+            AnnuleSelectionPiece();         // (pièce prise en main sur la position courante)
             if (_pilote.AnalyseEnCours && _analyseDePartie == null)
                 AbandonneReflexion();       // l'analyse portait sur la position affichée jusqu'ici (la réflexion du moteur pour son coup continue ;
                                             // l'analyse de la partie aussi : on peut parcourir la partie pendant qu'elle avance)

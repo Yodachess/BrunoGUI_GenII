@@ -243,6 +243,8 @@ public static class Scenario
         Verifie("Départ FEN : notations alignées (le coup est à l'index 1)",
             L.ListeCoups.Count == 2 && L.ListeCoups[0].EstPositionDeDepart && L.ListeCoupsNal[0] == "" && L.ListeCoupsPgnIntl[1] == "3. Bb5 " && L.ListeCoupsFen[0] == fenDepartPartie,
             $"Nal[0]='{L.ListeCoupsNal[0]}', PGN[1]='{L.ListeCoupsPgnIntl[1]}'");
+        Verifie("Départ FEN : PlyCount (DemiCoupsJoues) ne compte pas la position de départ",
+            L.DemiCoupsJoues == 1, $"{L.DemiCoupsJoues} demi-coup(s) pour {L.ListeCoups.Count} élément(s)");
         bool retire1 = L.RetireDernierCoup();
         bool retire2 = L.RetireDernierCoup();
         Verifie("Départ FEN : le retour arrière ne retire jamais la position de départ",

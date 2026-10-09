@@ -117,9 +117,7 @@ namespace BrunoGUI_GenII
             _vue.EffaceDernierCoup();                // les cases du dernier coup de la partie précédente
             _pilote.Abandonner();       // plus aucune demande (analyse ou coup) en cours au moteur
             _clickCaseSource = _visuSymbole = true;
-            PartieEnCours.CoupsPartiePGN = PartieEnCours.Result = PartieEnCours.CompteDePLy = PartieEnCours.Ronde = "";
-            PartieEnCours.Tournoi = "Entrainement";
-            PartieEnCours.Lieu = "Maison";
+            EnteteNouvellePartie();
             AfficheJoueurs("", "", "", "");     // position chargée : ce n'est la partie ni de l'humain ni du moteur, noms vides
             NouvellePendule();                  // la partie qui commence à cette position suit la cadence choisie
             InformationPourJoueur.Text = "Trait aux " + NomCamp(QuiJoue);
