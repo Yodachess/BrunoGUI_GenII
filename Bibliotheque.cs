@@ -110,13 +110,9 @@ namespace BrunoGUI_GenII
                 Debug.WriteLine($"Bibliothèque {nomBiblio} chargée. Nombre d'entrées : {nombreEntrées}");
                 Debug.WriteLine($"[LireLeFichier] Le chemin est : {_cheminBibliothèque}");
             }
-            catch (UnauthorizedAccessException)
-            {   // Gère l'exception si le fichier n'est pas accessible  
-                Debug.WriteLine("Erreur de permission : Accès refusé au fichier.");
-            }
-            catch (Exception ex)
-            {   // Gère les autres exceptions  
-                Debug.WriteLine($"Une erreur s'est produite : {ex.Message}");
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {   // fichier inaccessible ou illisible : noté dans le journal (la bibliothèque ne donnera aucun coup)
+                Journal.Erreur($"Lecture de la bibliothèque {_cheminBibliothèque}", ex);
             }
         }
 

@@ -258,8 +258,10 @@ namespace BrunoGUI_GenII
                 if (couleur.IsKnownColor || valeur.StartsWith('#'))
                     return couleur;
             }
-            catch (Exception) { }
-            Debug.WriteLine($"[DEBUG] Couleur illisible dans le .ini : '{valeur}', utilisation de {parDefaut}");
+            catch (Exception)
+            {   // ColorTranslator.FromHtml lève une Exception de base (et non un type précis) pour un code illisible ("#XYZ")
+            }
+            Journal.Info($"Couleur illisible dans le .ini : '{valeur}', utilisation de {parDefaut}");
             return ColorTranslator.FromHtml(parDefaut);
         }
 
