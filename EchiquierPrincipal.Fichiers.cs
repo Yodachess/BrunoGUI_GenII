@@ -67,8 +67,8 @@ namespace BrunoGUI_GenII
                 MontrePartiesPGN.Enabled = true; // Active le bouton pour masquer/afficher la liste
             }
             catch (Exception ex)
-            {
-                Debug.WriteLine("Chargement Pgn : Erreur lors de la lecture du fichier : " + ex.Message);
+            {   // fichier illisible ou contenu inattendu (erreurs variées : lecture, décodage) : expliqué et noté dans le journal
+                Journal.Erreur("Ouverture du fichier PGN " + ChargerPartiesPgn.FileName, ex);
                 KryptonMessageBox.Show("Impossible de lire ce fichier PGN :\n" + ex.Message, "Ouvrir fichier PGN",
                     KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
             }
@@ -82,8 +82,9 @@ namespace BrunoGUI_GenII
             {
                 positions = File.ReadAllLines(Path.GetFullPath(ChargerPositionFen.FileName)).Where(l => !string.IsNullOrWhiteSpace(l)).ToArray();
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is NotSupportedException)
             {
+                Journal.Erreur("Lecture du fichier FEN " + ChargerPositionFen.FileName, ex);
                 KryptonMessageBox.Show("Lecture impossible : " + ex.Message, "Chargement FEN", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
                 return;
             }
@@ -173,7 +174,8 @@ namespace BrunoGUI_GenII
                 }
             }
             catch (Exception ex)
-            {
+            {   // écriture impossible (dossier protégé, disque plein, fichier verrouillé...) : expliqué et noté dans le journal
+                Journal.Erreur("Enregistrement du fichier PGN", ex);
                 KryptonMessageBox.Show($"Une erreur s'est produite : {ex.Message}", "Erreur méthode Enregistrer PGN", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                 Debug.WriteLine($"StackTrace : {ex.StackTrace}");
             }

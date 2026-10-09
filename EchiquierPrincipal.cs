@@ -201,9 +201,9 @@ namespace BrunoGUI_GenII
                    await VerificationAutomatiqueMiseAJour();
                }
                catch (Exception ex)
-               {   // On log juste, on ne bloque pas le démarrage si la MAJ échoue (ex: hors ligne)
-                   Debug.WriteLine("[INFO] Pas de mise à jour effectuée : " + ex.Message);
-                   // VarianteMoteurUci1.Text = "[INFO] Pas de mise à jour effectuée : ";
+               {   // On note dans le journal, on ne bloque pas le démarrage si la MAJ échoue (hors ligne, GitHub indisponible,
+                   // fichier verrouillé... : les causes possibles sont trop variées pour être listées, d'où le catch général)
+                   Journal.Info("Pas de mise à jour automatique de Stockfish : " + ex.Message);
                }
                     // B. MAINTENANT, on démarre le moteur. 
                     // Le fichier est libre, remplacé et prêt.
@@ -354,9 +354,8 @@ namespace BrunoGUI_GenII
                 }
             }
             catch (Exception ex)
-            {
-                Debug.WriteLine("Erreur dans CaseMoveDown : " + ex.Message);
-                Debug.WriteLine($"StackTrace : {ex.StackTrace}");
+            {   // un clic sur l'échiquier ne doit jamais arrêter la partie : l'erreur est notée dans le journal pour être corrigée
+                Journal.Erreur("Clic sur une case de l'échiquier", ex);
             }
         }
 
@@ -907,7 +906,8 @@ namespace BrunoGUI_GenII
                                        "Stockfish", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
             }
             catch (Exception ex)
-            {   // On gère les messages (ex: "Déjà à jour" ou "Pas de connexion")
+            {   // On gère les messages (ex: "Déjà à jour" ou "Pas de connexion") ; causes trop variées pour être listées
+                Journal.Info("Mise à jour de Stockfish non faite : " + ex.Message);
                 VarianteMoteurUci2.Text = "Prêt";
                 KryptonMessageBox.Show(ex.Message, "Mise à jour", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
             }
@@ -958,7 +958,7 @@ namespace BrunoGUI_GenII
             }
             catch (Exception ex)
             {   // Par exemple si l'application est installée dans un dossier protégé en écriture : on ne bloque pas la fermeture
-                Debug.WriteLine("[INFO] Préférences non enregistrées : " + ex.Message);
+                Journal.Info("Préférences non enregistrées : " + ex.Message);
             }
         }
         private void KryptonQuitter_Click(object sender, EventArgs e)

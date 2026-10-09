@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using BrunoGUI_GenII;
 using L = BrunoGUI_GenII.LogiqueMouvements;
@@ -1100,6 +1101,30 @@ Verifie("Analyse : meilleur coup noir tiré d'une vraie variante du moteur (« 1
     AnalyseDePartie.PremierCoup(ligneNoirs.VariantePgn) == "c5", ligneNoirs.VariantePgn);
 Verifie("Variante : début = le premier coup seul (« 1 ... c5 » pour les Noirs, « 1. e4 » sans la réponse noire pour les Blancs)",
     ligneNoirs.Debut == "1 ... c5", ligneNoirs.Debut);
+
+// ═══════════════ Journal des erreurs ═══════════════
+Console.WriteLine("── Journal des erreurs ──");
+
+string dossierJournal = Path.Combine(Path.GetTempPath(), "BrunoGUI_TestsJournal");
+Directory.CreateDirectory(dossierJournal);
+Journal.Chemin = Path.Combine(dossierJournal, "BrunoGUI.log");
+File.Delete(Journal.Chemin);
+File.Delete(Journal.Chemin + ".old");
+Journal.Info("Démarrage");
+try { throw new InvalidOperationException("panne simulée"); }
+catch (InvalidOperationException ex) { Journal.Erreur("Test du journal", ex); }
+string contenuJournal = File.ReadAllText(Journal.Chemin);
+Verifie("Journal : une information et une erreur (contexte, type, message et pile d'appels), accents compris",
+    contenuJournal.Contains("[INFO] Démarrage") && contenuJournal.Contains("[ERREUR] Test du journal : InvalidOperationException : panne simulée")
+    && contenuJournal.Contains("at "), contenuJournal);
+File.WriteAllText(Journal.Chemin, new string('x', (int)Journal.TailleMaximale + 10));
+Journal.Info("Après la rotation");
+Verifie("Journal : au-delà de 1 Mo, l'ancien journal devient BrunoGUI.log.old et un nouveau commence",
+    File.Exists(Journal.Chemin + ".old") && new FileInfo(Journal.Chemin).Length < 200 && File.ReadAllText(Journal.Chemin).Contains("Après la rotation"), "");
+Journal.Chemin = Path.Combine(dossierJournal, "dossier_inexistant", "BrunoGUI.log");
+Journal.Info("Rien ne doit planter");
+Verifie("Journal : un fichier impossible à écrire ne lève aucune exception", !File.Exists(Journal.Chemin), "");
+Directory.Delete(dossierJournal, recursive: true);
 
 // ═══════════════ Saisie d'une position ═══════════════
 Console.WriteLine("── Saisie d'une position ──");

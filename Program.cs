@@ -19,6 +19,15 @@ namespace BrunoGUI_GenII
         [STAThread]
         static void Main()
         {
+            // Erreurs imprévues : notées dans le journal (BrunoGUI.log) ; sur le thread de l'interface, un message clair remplace la
+            // boîte de plantage de .NET et l'application continue ; ailleurs (thread du moteur, tâches), .NET arrête l'application,
+            // mais la cause reste dans le journal
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+            Application.ThreadException += (s, e) => ErreurImprevue(e.Exception);
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+                Journal.Erreur("Erreur imprévue hors de l'interface (l'application s'arrête)", e.ExceptionObject as Exception ?? new Exception(e.ExceptionObject?.ToString()));
+            TaskScheduler.UnobservedTaskException += (s, e) => { Journal.Erreur("Erreur dans une tâche", e.Exception); e.SetObserved(); };
+            Journal.Info($"Démarrage de BrunoGUI GenII {EchiquierPrincipal.VersionAffichee}");
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             // *** Splash Screen ***
@@ -33,6 +42,21 @@ namespace BrunoGUI_GenII
             // *** Fin du Splash ***
             ConfigureKrypton(Parametres.Charger(Chemins.RepertoireRacine).Palette);
             Application.Run(new EchiquierPrincipal());
+        }
+
+        private static void ErreurImprevue(Exception exception)
+        {   // Erreur non prévue sur le thread de l'interface : notée, puis expliquée à l'utilisateur ; l'application continue
+            Journal.Erreur("Erreur imprévue", exception);
+            try
+            {
+                KryptonMessageBox.Show("Une erreur imprévue s'est produite :\n" + exception.Message +
+                    "\n\nLe détail est enregistré dans le fichier BrunoGUI.log, à côté du programme.\nVous pouvez continuer ; " +
+                    "si l'erreur se reproduit, enregistrez votre partie.", "Erreur", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Error);
+            }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is ObjectDisposedException)
+            {   // application en cours de fermeture : plus de fenêtre à montrer
+                Journal.Erreur("Message d'erreur impossible à afficher", ex);
+            }
         }
 
         private static void ConfigureKrypton(string palette)
