@@ -635,7 +635,7 @@ namespace BrunoGUI_GenII
             BoutonSaisiePosition.TabIndex = 29;
             BoutonSaisiePosition.Values.DropDownArrowColor = System.Drawing.Color.Empty;
             BoutonSaisiePosition.Values.Text = "Saisie position";
-            BoutonSaisiePosition.Enabled = false;     // à venir : saisie d'une position à la main
+            BoutonSaisiePosition.Click += BoutonSaisiePosition_Click;
             // 
             // VisualisationPgn
             // 

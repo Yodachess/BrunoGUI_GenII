@@ -1510,12 +1510,24 @@ namespace BrunoGUI_GenII
                     KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
                 return;
             }
+            ChargeFenDansLaPartie(contenuFen, "Fen chargé : ", positions.Length > 1 ? $"   Fichier de {positions.Length} positions : la première est chargée" : "...");
+        }
+        private void BoutonSaisiePosition_Click(object sender, EventArgs e)
+        {   // Saisie d'une position à la main (fenêtre SaisiePosition), en partant de la position affichée ; OK : elle est jouée
+            // comme une FEN chargée (nouvelle partie, l'humain au trait) ; Annuler ne change rien
+            string fenAffichee = LogiqueMouvements.CalculerSur(_positionAffichee ?? LogiqueMouvements.PositionActuelle, LogiqueMouvements.RetourneChaineFenActuel);
+            using SaisiePosition saisie = new(fenAffichee, _vue.ImagePiece, _vue.CaseClaire, _vue.CaseSombre, _vue.CoteNoir);
+            if (saisie.ShowDialog(this) == DialogResult.OK)
+                ChargeFenDansLaPartie(saisie.FenSaisie, "Position saisie : ", "...");
+        }
+        private void ChargeFenDansLaPartie(string contenuFen, string libelle, string detail)
+        {   // Une position (FEN déjà contrôlée par ChargementPartie.ErreurFen) devient une nouvelle partie : fichier FEN ou saisie
             AbandonneReflexion();   // chargement d'une position
             QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
             ListeParties.Clear();    // On vide la liste des parties
             ListePartiesPGN.Clear(); // On vide la liste des parties PGN
             ChargementPartie.ChargerPosition(contenuFen, _partie);     // l'humain joue le camp au trait, le moteur lui répond
-            VarianteMoteurUci1.Text = "Fen chargé : " + contenuFen;
+            VarianteMoteurUci1.Text = libelle + contenuFen;
             _vue.EffaceDernierCoup();                // les cases du dernier coup de la partie précédente
             _pilote.Abandonner();       // plus aucune demande (analyse ou coup) en cours au moteur
             _clickCaseSource = _visuSymbole = true;
@@ -1529,7 +1541,7 @@ namespace BrunoGUI_GenII
             AfficheCoupsBibliotheque(contenuFen);
             // Le cadre vert est court : les détails du chargement vont dans les lignes de variantes 2 et 3 (inutilisées à ce moment)
             InformationsPartie.Text = "Position chargée";
-            VarianteMoteurUci2.Text = positions.Length > 1 ? $"   Fichier de {positions.Length} positions : la première est chargée" : "...";
+            VarianteMoteurUci2.Text = detail;
             VarianteMoteurUci3.Text = _pendule != null ? $"   Pendule {_pendule.Cadence.Nom} : elle démarre au premier coup" : "...";
             MetAJourCommandes();
         }
@@ -1810,6 +1822,7 @@ namespace BrunoGUI_GenII
             BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = enCours;
             OrdinateurJoue.Enabled = enCours;
             BoutonBalises.Enabled = SaisiePartieBouton.Enabled = !PartieEnLectureSeule;
+            BoutonSaisiePosition.Enabled = _analyseDePartie == null;      // (pas pendant une analyse de partie)
             MetAJourPlateau();
             MetAJourFeuille();      // (appelée partout où la partie ou le parcours change : la feuille les suit d'ici)
         }
