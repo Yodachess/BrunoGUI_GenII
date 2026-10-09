@@ -44,8 +44,9 @@ namespace BrunoGUI_GenII
             Application.Run(new EchiquierPrincipal());
         }
 
-        private static void ErreurImprevue(Exception exception)
+        internal static void ErreurImprevue(Exception exception)
         {   // Erreur non prévue sur le thread de l'interface : notée, puis expliquée à l'utilisateur ; l'application continue
+            // (aussi pour une action venue du thread du moteur : voir EchiquierPrincipal.SurLeThreadInterface)
             Journal.Erreur("Erreur imprévue", exception);
             try
             {

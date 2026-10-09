@@ -92,8 +92,18 @@ namespace BrunoGUI_GenII
             Proc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             // gestionnaire d'événement de sortie de données
             Proc.OutputDataReceived += ProcOutputDataReceived;
-            // démarrer le processus
-            Proc.Start();
+            // démarrer le processus (fichier absent ou illisible : exception pour l'appelant, et pas de moteur plutôt qu'un
+            // processus jamais démarré)
+            try
+            {
+                Proc.Start();
+            }
+            catch
+            {
+                Proc.Dispose();
+                Proc = null;
+                throw;
+            }
             // commencer à lire les sorties de données
             Proc.BeginOutputReadLine();
             // première interrogation du processus: le moteur UCI est il pret ? 
@@ -110,10 +120,22 @@ namespace BrunoGUI_GenII
         {   // Evènement de sortie de données du processus UCI vers l'interface pour jouer le coup du moteur UCI
             if (sender != Proc)
                 return;     // ligne d'un ancien processus moteur (arrêté par un changement de moteur ou une nouvelle partie) : ignorée
+            try
+            {
+                TraiteLigneDuMoteur(e.Data);
+            }
+            catch (Exception ex)
+            {   // Thread du moteur : une erreur non rattrapée ici arrêterait l'application. Elle est notée, la ligne est perdue,
+                // et la lecture des lignes suivantes continue (les erreurs de l'interface sont traitées par SurLeThreadInterface)
+                Journal.Erreur("Ligne du moteur : " + e.Data, ex);
+            }
+        }
+        private void TraiteLigneDuMoteur(string? ligne)
+        {
             UciVersGui = true;
-            if (string.IsNullOrWhiteSpace(e.Data) == false)   // true si la chaine est " ", "\n", null, ""
+            if (!string.IsNullOrWhiteSpace(ligne))
             {   // La ligne est décodée une seule fois ; l'interface lit le résultat dans DerniereLigne
-                DataUci = e.Data;
+                DataUci = ligne;
                 DerniereLigne = LigneUci.Analyser(DataUci);
                 // Demande à laquelle répond la ligne : un "bestmove" termine la demande en cours
                 NumeroDemandeDeLaLigne = DerniereLigne.Commande == "bestmove" ? Demandes.ReponseRecue() : Demandes.NumeroEnCours;
