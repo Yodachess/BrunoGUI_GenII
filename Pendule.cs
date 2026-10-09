@@ -18,6 +18,8 @@
 using System;
 using static BrunoGUI_GenII.LogiqueMouvements;
 
+#nullable enable
+
 namespace BrunoGUI_GenII
 {
     // Cadence : temps initial et bonus par coup. Cadence à deux périodes (tournoi) : au coup n° CoupsControle, chaque camp
@@ -188,7 +190,7 @@ namespace BrunoGUI_GenII
         public void RestaurerDepuis(System.Collections.Generic.IReadOnlyList<Coup> coups, ColorPiece auTrait)
         {   // Retour arrière ou "Reprendre ici" : la pendule reprend les temps notés après le dernier coup restant.
             // Aucun coup joué (ou coups joués sans pendule) : temps complets, et elle ne repart qu'au prochain coup
-            Coup dernier = null;
+            Coup? dernier = null;
             for (int i = coups.Count - 1; i >= 0 && dernier == null; i--)
                 if (!coups[i].EstPositionDeDepart)
                     dernier = coups[i];

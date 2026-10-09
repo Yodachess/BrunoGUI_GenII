@@ -19,6 +19,8 @@ using System.Collections.Generic;
 using System.Linq;
 using static BrunoGUI_GenII.LogiqueMouvements;
 
+#nullable enable
+
 namespace BrunoGUI_GenII
 {
     public enum DroitRoque { PetitBlanc, GrandBlanc, PetitNoir, GrandNoir }
@@ -27,7 +29,7 @@ namespace BrunoGUI_GenII
     {
         public Position Position { get; private set; } = new();
 
-        public EditeurPosition(string fen = null)
+        public EditeurPosition(string? fen = null)
         {
             if (fen == null || ChargerFen(fen) != null)
                 PositionInitiale();
@@ -45,10 +47,10 @@ namespace BrunoGUI_GenII
             _roquesPossiblesAvant = RoquesPossibles();
         }
 
-        public string ChargerFen(string fen)
+        public string? ChargerFen(string fen)
         {   // La position d'une FEN (null), ou la raison de son refus (rien n'est changé)
             string normalisee = ChargementPartie.NormaliseFen(fen);
-            string erreur = ChargementPartie.ErreurFen(normalisee);
+            string? erreur = ChargementPartie.ErreurFen(normalisee);
             if (erreur != null)
                 return erreur;
             Position = PositionDepuisFen(normalisee);
@@ -154,6 +156,6 @@ namespace BrunoGUI_GenII
 
         // ═══ Résultat ═══
         public string Fen => CalculerSur(Position, RetourneChaineFenActuel);
-        public string Erreur => ChargementPartie.ErreurFen(Fen);   // null : la position peut être jouée
+        public string? Erreur => ChargementPartie.ErreurFen(Fen);   // null : la position peut être jouée
     }
 }

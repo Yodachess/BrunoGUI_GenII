@@ -1,4 +1,4 @@
-// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
 // █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
 // █ Copyright (C) 2026 Bruno COURTOIS                                      █
 // █ SPDX-License-Identifier: GPL-3.0-or-later                              █
@@ -15,6 +15,8 @@
 
 using System;
 
+#nullable enable
+
 namespace BrunoGUI_GenII
 {
     public class LigneUci
@@ -23,25 +25,25 @@ namespace BrunoGUI_GenII
         public string Commande { get; private set; } = "";     // premier mot : info, bestmove, id, option, readyok, uciok ...
 
         // bestmove <coup> [ponder <coup>]
-        public string MeilleurCoup { get; private set; }
-        public string CoupConseil { get; private set; }        // coup attendu de l'adversaire (ponder)
+        public string? MeilleurCoup { get; private set; }
+        public string? CoupConseil { get; private set; }        // coup attendu de l'adversaire (ponder)
         public bool AucunCoupLegal => Commande == "bestmove" && (MeilleurCoup == null || MeilleurCoup == "(none)" || MeilleurCoup == "0000");
 
         // id name <nom> / id author <auteur>
-        public string NomMoteur { get; private set; }
-        public string AuteurMoteur { get; private set; }
+        public string? NomMoteur { get; private set; }
+        public string? AuteurMoteur { get; private set; }
 
         // option name <nom> type ...
-        public string NomOption { get; private set; }
+        public string? NomOption { get; private set; }
 
         // info ... multipv <n> score cp <x> | score mate <y> ... pv <coups>
         public bool DansBibliotheque { get; private set; }     // mot "book" (certains moteurs l'indiquent)
         public int? NumeroVariante { get; private set; }       // multipv
         public int? ScoreCentipions { get; private set; }      // score cp, du point de vue du camp au trait
         public int? MatEn { get; private set; }                // score mate, négatif si le camp au trait est maté
-        public string Variante { get; private set; }           // coups UCI après "pv", séparés par des espaces
+        public string? Variante { get; private set; }           // coups UCI après "pv", séparés par des espaces
 
-        public static LigneUci Analyser(string ligne)
+        public static LigneUci Analyser(string? ligne)
         {
             LigneUci resultat = new();
             if (string.IsNullOrWhiteSpace(ligne))
@@ -106,7 +108,7 @@ namespace BrunoGUI_GenII
             }
         }
 
-        private static string MotApres(string[] mots, int index) => index + 1 < mots.Length ? mots[index + 1] : null;
+        private static string? MotApres(string[] mots, int index) => index + 1 < mots.Length ? mots[index + 1] : null;
 
         private static int? EntierApres(string[] mots, int index) => int.TryParse(MotApres(mots, index), out int valeur) ? valeur : null;
 

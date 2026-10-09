@@ -30,6 +30,7 @@ dotnet run --project Tests -- --complet
 - Pour ajouter un test : appeler `Charger(fen)`, jouer avec `L.ExecutionCoup(source, destination)`, puis `Verifie(nom, condition, détail)`.
 - L'interface graphique n'a pas de tests : vérifier à la main dans l'application tout ce qui touche à `EchiquierPrincipal` ou au moteur.
 - La solution compile sans avertissement : garder cet état.
+- **Types de référence nullables** : activés fichier par fichier (`#nullable enable` après les `using`) dans la logique : `Position`, `Partie`, `Coup`, `Pendule`, `PiloteMoteur`, `SuiviDemandesMoteur`, `LigneUci`, `AnalyseMoteur`, `AnalysePartie`, `ChargementPartie`, `EditeurPosition`, `Journal`. Une valeur qui peut manquer y est déclarée `string?` (ex : `Coup.MeilleurCoup`, `ChargementPartie.ErreurFen`) ; garder zéro avertissement. Les autres fichiers (formulaires, `LogiqueMouvements`, `GestionPartiePgn`, `FichierPartiePgn`, `Outils`, `MoteurUci`…) ne l'ont pas encore : environ 180 avertissements à traiter avant d'activer `<Nullable>enable</Nullable>` dans tout le projet.
 - `CA1416` est désactivé dans le `.csproj`.
 - `git` n'est pas dans le PATH de PowerShell sur cette machine : utiliser celui de Visual Studio 2022 (`C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Git\cmd\git.exe`).
 - GitHub Actions (`.github/workflows/tests.yml`) compile et lance les tests à chaque push. La compilation y passe `-p:SignManifests=false` : le certificat ClickOnce n'existe que sur le PC de développement.

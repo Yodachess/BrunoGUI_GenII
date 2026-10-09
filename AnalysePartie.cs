@@ -24,6 +24,8 @@ using System.Collections.Generic;
 using System.Linq;
 using static BrunoGUI_GenII.LogiqueMouvements;
 
+#nullable enable
+
 namespace BrunoGUI_GenII
 {
     public static class JugementCoups
@@ -74,15 +76,15 @@ namespace BrunoGUI_GenII
 
     public sealed class PositionAnalysee
     {
-        public string Fen { get; init; }
+        public required string Fen { get; init; }
         public ColorPiece AuTrait { get; init; }
         public double? ChancesFinDePartie { get; init; }    // mat ou pat : +1, -1 ou 0, sans demander au moteur
         public Evaluation? Evaluation { get; set; }         // du point de vue des Blancs (null : pas encore analysée)
-        public string MeilleurCoup { get; set; }            // premier coup de la meilleure variante, en notation française ("Cf3")
-        public string MeilleurCoupUci { get; set; }         // le même au format UCI ("g1f3")
-        public string MeilleurCoupLong { get; set; }        // le même avec sa case de départ ("Cg1-f3")
-        public string VarianteMeilleure { get; set; }       // la meilleure variante en notation française ("12. Cf3 Fe7 13. ...")
-        public string VarianteMeilleureUci { get; set; }    // la même au format UCI ("g1f3 f8e7 ...") : sert à voir un sacrifice ("!!")
+        public string? MeilleurCoup { get; set; }           // premier coup de la meilleure variante, en notation française ("Cf3")
+        public string? MeilleurCoupUci { get; set; }        // le même au format UCI ("g1f3")
+        public string? MeilleurCoupLong { get; set; }       // le même avec sa case de départ ("Cg1-f3")
+        public string? VarianteMeilleure { get; set; }      // la meilleure variante en notation française ("12. Cf3 Fe7 13. ...")
+        public string? VarianteMeilleureUci { get; set; }   // la même au format UCI ("g1f3 f8e7 ...") : sert à voir un sacrifice ("!!")
         public Evaluation? EvaluationSeconde { get; set; }  // évaluation de la 2e variante du moteur (la meilleure alternative), null : inconnue
         public int NombreCoupsLegaux { get; init; }          // 1 : coup forcé (jamais "!")
         public bool Ignoree { get; set; }                   // le moteur n'a donné aucun score : position sautée (sinon l'analyse tournerait en rond)
@@ -96,8 +98,8 @@ namespace BrunoGUI_GenII
     // Precision : en %, voir JugementCoups.Precision). EvaluationMeilleur : évaluation de la position avant le coup, c'est-à-dire
     // celle du meilleur coup du moteur ; MeilleurCoupLong : avec sa case de départ ; VarianteMeilleure : la suite prévue
     public record JugementCoup(int IndexCoup, ColorPiece Camp, double Perte, string Annotation, Evaluation? EvaluationApres,
-                               string MeilleurCoup, bool MeilleurJoue, Evaluation? EvaluationMeilleur, string MeilleurCoupLong,
-                               string VarianteMeilleure, double Precision);
+                               string? MeilleurCoup, bool MeilleurJoue, Evaluation? EvaluationMeilleur, string? MeilleurCoupLong,
+                               string? VarianteMeilleure, double Precision);
 
     public record BilanCamp(int Imprecisions, int Erreurs, int Gaffes, int Precision);     // précision moyenne des coups, en %
 
@@ -182,7 +184,7 @@ namespace BrunoGUI_GenII
             }
         }
 
-        public void Enregistre(int indexPosition, LigneAnalyse meilleure, LigneAnalyse seconde = null)
+        public void Enregistre(int indexPosition, LigneAnalyse? meilleure, LigneAnalyse? seconde = null)
         {   // Résultat du moteur pour la position (sa meilleure variante, et la 2e s'il en a donné une : elle dit si le meilleur coup
             // était le seul bon) ; sans score, la position est sautée (ses coups ne seront pas jugés).
             // 2e passage : le nouveau résultat remplace le premier (sans score, le premier est gardé)
@@ -205,7 +207,7 @@ namespace BrunoGUI_GenII
             position.MeilleurCoupLong = NotationLongue(position.Fen, position.MeilleurCoupUci, position.MeilleurCoup);
         }
 
-        public static string NotationLongue(string fen, string coupUci, string coupPgn = null)
+        public static string? NotationLongue(string fen, string? coupUci, string? coupPgn = null)
         {   // Le coup avec sa case de départ, en notation française : "Dd8-d7", "Cf3xe5", "e2-e4", "e7-e8=D", "O-O" ;
             // l'échec ou le mat ("+", "#") est repris de la notation courte du même coup s'il y en a une
             if (coupUci == null || coupUci.Length < 4)
@@ -237,19 +239,19 @@ namespace BrunoGUI_GenII
             _ => ""
         };
 
-        public static string PremierCoup(string variantePgn) =>
+        public static string? PremierCoup(string? variantePgn) =>
             // "12. Cf3 Fe7" -> "Cf3" ; "19 ... Fa2 20. Cf3" (Noirs au trait) -> "Fa2" : le premier mot qui contient une lettre
             // (les numéros "19", "19.", "19..." et les "..." sont sautés)
             (variantePgn ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(m => m.Any(char.IsLetter));
 
-        public JugementCoup Jugement(int indexCoup)
+        public JugementCoup? Jugement(int indexCoup)
         {   // Le coup n° indexCoup de ListeCoups : null s'il n'en est pas un, ou si les positions avant et après ne sont pas analysées
             int k = _indexCoups.IndexOf(indexCoup);
             if (k < 0 || _positions[k].Chances is not double avant || _positions[k + 1].Chances is not double apres)
                 return null;
             PositionAnalysee positionAvant = _positions[k];
             ColorPiece camp = positionAvant.AuTrait;
-            string meilleur = positionAvant.MeilleurCoup;
+            string? meilleur = positionAvant.MeilleurCoup;
             // Meilleur coup joué ? Comparé au format UCI s'il est connu (sans ambiguïté), sinon en notation
             bool meilleurJoue = positionAvant.MeilleurCoupUci != null
                 ? positionAvant.MeilleurCoupUci == _coups[indexCoup].Uci.Trim()
@@ -377,7 +379,7 @@ namespace BrunoGUI_GenII
 
         private static string SansSymboles(string coup) => coup.TrimEnd('+', '#', '!', '?');
 
-        public IEnumerable<JugementCoup> Jugements() => _indexCoups.Select(Jugement).Where(j => j != null);
+        public IEnumerable<JugementCoup> Jugements() => _indexCoups.Select(Jugement).OfType<JugementCoup>();
 
         public void AppliqueAuxCoups(IReadOnlyList<Coup> coups)
         {   // Range les résultats dans les coups jugés (même liste qu'à la construction) : évaluation, meilleur coup, et annotation
@@ -413,7 +415,7 @@ namespace BrunoGUI_GenII
                                  jugements.Count(j => j.Annotation == "??"), precision);
         }
 
-        public JugementCoup CoupCritique() =>
+        public JugementCoup? CoupCritique() =>
             // Le moment où la partie a basculé : le coup qui a fait perdre le plus de chances de gain, s'il est au moins une erreur (?)
             // (null : aucun coup n'a vraiment changé le cours de la partie). À égalité, le premier
             Jugements().Where(j => j.Perte >= JugementCoups.SeuilErreur).OrderByDescending(j => j.Perte).ThenBy(j => j.IndexCoup).FirstOrDefault();

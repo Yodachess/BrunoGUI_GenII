@@ -21,6 +21,8 @@ using System.Globalization;
 using System.Linq;
 using static BrunoGUI_GenII.LogiqueMouvements;
 
+#nullable enable
+
 namespace BrunoGUI_GenII
 {
     public readonly record struct Evaluation(int? Centipions, int? MatEn)     // du point de vue des Blancs
@@ -58,15 +60,15 @@ namespace BrunoGUI_GenII
                 < -50 => "Avantage Noir (∓)",
                 _ => "Égal (=)"
             };
-        public string TexteMat => MatEn is int mat ? $"MAT en {Math.Abs(mat)} pour les {(mat < 0 ? "Noirs" : "Blancs")}" : null;
+        public string? TexteMat => MatEn is int mat ? $"MAT en {Math.Abs(mat)} pour les {(mat < 0 ? "Noirs" : "Blancs")}" : null;
     }
 
     public class LigneAnalyse
     {
         public int Numero { get; init; }                // numéro de variante (1 = la meilleure ; 1 aussi pour un moteur sans MultiPV)
         public Evaluation? Evaluation { get; init; }    // null si le moteur n'a pas encore donné de score pour cette variante
-        public string VariantePgn { get; init; }        // coups en notation (limités à CoupsAffiches), null si la ligne n'a pas de variante
-        public string VarianteUci { get; init; }        // les mêmes coups au format UCI ("g1f3 b8c6"), null si la ligne n'a pas de variante
+        public string? VariantePgn { get; init; }        // coups en notation (limités à CoupsAffiches), null si la ligne n'a pas de variante
+        public string? VarianteUci { get; init; }        // les mêmes coups au format UCI ("g1f3 b8c6"), null si la ligne n'a pas de variante
         // Le premier coup seul, avec son numéro : "15. Dxe4" (Blancs au trait) ou "15 ... Fxf5" (Noirs au trait) ; avant, les 3
         // premiers mots, ce qui donnait aussi la réponse noire après un coup blanc ("15. Dxe4 Fxf5")
         public string Debut
@@ -90,17 +92,17 @@ namespace BrunoGUI_GenII
         private readonly Dictionary<int, LigneAnalyse> _lignes = [];
 
         public void Reinitialiser() => _lignes.Clear();
-        public LigneAnalyse Meilleure => _lignes.GetValueOrDefault(1);
-        public LigneAnalyse Seconde => _lignes.GetValueOrDefault(2);    // 2e variante (MultiPV ≥ 2) : la meilleure alternative
+        public LigneAnalyse? Meilleure => _lignes.GetValueOrDefault(1);
+        public LigneAnalyse? Seconde => _lignes.GetValueOrDefault(2);    // 2e variante (MultiPV ≥ 2) : la meilleure alternative
 
-        public LigneAnalyse Ajouter(LigneUci ligne, Position position)
+        public LigneAnalyse? Ajouter(LigneUci ligne, Position position)
         {   // Décode une ligne "info" sur la position analysée ; null si elle n'a ni score ni variante (ex : "info depth 12")
             int numero = ligne.NumeroVariante ?? 1;
             Evaluation? evaluation = Evaluation.Depuis(ligne, position.QuiJoue);
             if (evaluation == null && ligne.Variante == null)
                 return null;
-            _lignes.TryGetValue(numero, out LigneAnalyse precedente);
-            string variantePgn = precedente?.VariantePgn, varianteUci = precedente?.VarianteUci;
+            _lignes.TryGetValue(numero, out LigneAnalyse? precedente);
+            string? variantePgn = precedente?.VariantePgn, varianteUci = precedente?.VarianteUci;
             if (ligne.Variante != null)
             {   // Coups entiers seulement (un coup coupé perdrait sa promotion), convertis en notation sur une copie de la position
                 varianteUci = string.Join(" ", ligne.Variante.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(CoupsAffiches));

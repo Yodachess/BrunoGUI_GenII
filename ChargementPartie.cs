@@ -19,22 +19,24 @@ using System.Collections.Generic;
 using System.Linq;
 using static BrunoGUI_GenII.LogiqueMouvements;
 
+#nullable enable
+
 namespace BrunoGUI_GenII
 {
     public record ResultatChargementPgn(
         bool FenIncomplete,         // la balise FEN était refusée (voir ErreurFen) : les coups ont été joués depuis la position initiale
-        string CoupIllisible,       // premier coup illisible ou illégal (le rejeu s'est arrêté avant lui), null si tout est joué
+        string? CoupIllisible,       // premier coup illisible ou illégal (le rejeu s'est arrêté avant lui), null si tout est joué
         int DemiCoupsJoues);
 
     public static class ChargementPartie
     {
         public static bool EstFenComplete(string fen) => ErreurFen(fen) == null;
 
-        public static string NormaliseFen(string fen) =>
+        public static string NormaliseFen(string? fen) =>
             // Les 6 champs séparés par un seul espace (LitFen découpe sur les espaces)
-            string.Join(' ', (fen ?? "").Split((char[])null, StringSplitOptions.RemoveEmptyEntries));
+            string.Join(' ', (fen ?? "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
 
-        public static string ErreurFen(string fen)
+        public static string? ErreurFen(string? fen)
         {   // null si la FEN est utilisable, sinon la raison (affichée à l'utilisateur) : on ne la lit jamais sans ce contrôle,
             // une FEN mal formée ferait planter la lecture ou donnerait une position incohérente
             string[] champs = NormaliseFen(fen).Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -116,7 +118,7 @@ namespace BrunoGUI_GenII
             bool depuisPosition = ListeCoups.Count > 0 && ListeCoups[0].EstPositionDeDepart;
             partie.Commencer(Joueur.Humain, Joueur.Humain, depuisPosition);
             partie.RejeuPgn = true;     // pas de nulle automatique pendant le rejeu : c'est le résultat du PGN qui compte
-            string coupIllisible = null;
+            string? coupIllisible = null;
             int demiCoupsJoues = 0;
             // Temps de pendule ([%clk] après chaque coup) : chaque coup note le temps de son camp et le dernier temps connu de l'autre
             // (au départ : le temps initial de la balise TimeControl, s'il y en a une)
@@ -135,10 +137,10 @@ namespace BrunoGUI_GenII
                     }
                     if (GestionPartiePgn.EstNumeroOuResultat(element))
                         continue;
-                    TimeSpan? temps = demiCoupsJoues < (pgn.TempsCoups?.Count ?? 0) ? pgn.TempsCoups[demiCoupsJoues] : null;
+                    TimeSpan? temps = Element(pgn.TempsCoups, demiCoupsJoues);
                     Coup coup = ListeCoups[^1];
-                    coup.TempsReflexion = demiCoupsJoues < (pgn.TempsReflexion?.Count ?? 0) ? pgn.TempsReflexion[demiCoupsJoues] : null;
-                    coup.Annotation = demiCoupsJoues < (pgn.Annotations?.Count ?? 0) ? pgn.Annotations[demiCoupsJoues] : "";
+                    coup.TempsReflexion = Element(pgn.TempsReflexion, demiCoupsJoues);
+                    coup.Annotation = Element(pgn.Annotations, demiCoupsJoues) ?? "";
                     // [%auto] : annotation posée par une analyse de BrunoGUI, de nouveau "proposée" (plus pâle, remplaçable par une
                     // nouvelle analyse) ; sans cette marque, l'annotation est celle d'un joueur ou d'un auteur : jamais remplacée
                     coup.AnnotationProposee = coup.Annotation != "" && Element(pgn.AnnotationsAuto, demiCoupsJoues);
@@ -165,10 +167,10 @@ namespace BrunoGUI_GenII
             return new ResultatChargementPgn(fenIncomplete, coupIllisible, demiCoupsJoues);
         }
 
-        private static T Element<T>(List<T> liste, int index) =>
+        private static T? Element<T>(List<T>? liste, int index) =>
             liste != null && index < liste.Count ? liste[index] : default;
 
-        private static void RangeAnalyseLue(Coup coup, string fenAvant, string commentaire, Evaluation? evaluation, string variante, Evaluation? evaluationAvant)
+        private static void RangeAnalyseLue(Coup coup, string fenAvant, string? commentaire, Evaluation? evaluation, string? variante, Evaluation? evaluationAvant)
         {   // Ce que le PGN dit du coup, rangé comme le ferait l'analyse de partie (affichage pendant le parcours, flèches,
             // réécriture à l'enregistrement) : son commentaire, son évaluation [%eval], et sa 1re variante, qui est l'alternative au
             // coup joué (ex : "16... Be6?? (16... Bb7)", ChessBase et BrunoGUI) : elle donne le meilleur coup et la meilleure suite
@@ -212,7 +214,7 @@ namespace BrunoGUI_GenII
                     string san = Annotations.Separe(mot).Coup.TrimEnd('+', '#');
                     if (san == "")
                         continue;
-                    string uci = CoupSanEnUci(san);
+                    string? uci = CoupSanEnUci(san);
                     if (uci == null)
                         break;
                     coups.Add(uci);
@@ -221,7 +223,7 @@ namespace BrunoGUI_GenII
                 return string.Join(" ", coups);
             });
 
-        private static string CoupSanEnUci(string san)
+        private static string? CoupSanEnUci(string san)
         {   // Un coup SAN ("Nbd7", "exd5", "e8=Q", "O-O") pour le camp au trait de la position actuelle (une copie) : son format UCI,
             // ou null s'il n'est pas légal
             ColorPiece camp = QuiJoue;

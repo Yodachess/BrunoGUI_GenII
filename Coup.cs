@@ -1,4 +1,4 @@
-// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
 // █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
 // █ Copyright (C) 2026 Bruno COURTOIS                                      █
 // █ SPDX-License-Identifier: GPL-3.0-or-later                              █
@@ -13,6 +13,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+
+#nullable enable
 
 namespace BrunoGUI_GenII
 {
@@ -34,15 +36,15 @@ namespace BrunoGUI_GenII
         // en choisisse une), évaluation après le coup (point de vue des Blancs), meilleur coup du moteur dans la position d'avant
         public bool AnnotationProposee { get; set; }
         public Evaluation? EvaluationApres { get; set; }
-        public string MeilleurCoup { get; set; }
+        public string? MeilleurCoup { get; set; }
         public bool MeilleurJoue { get; set; }
         public Evaluation? EvaluationMeilleur { get; set; }     // évaluation du meilleur coup du moteur (position avant le coup)
         public double? PerteAnalyse { get; set; }               // chances de gain perdues par le coup (0 : aussi bon que le meilleur)
-        public string MeilleurCoupLong { get; set; }            // le meilleur coup avec sa case de départ ("Ta8-c8")
-        public string MeilleurCoupUci { get; set; }             // le meilleur coup au format UCI ("a8c8") : flèche sur l'échiquier
-        public string VarianteMeilleure { get; set; }           // la suite prévue par le moteur après le meilleur coup ("19 ... Tac8 20. Cf3")
-        public string CoupJoueLong { get; set; }                // le coup lui-même avec sa case de départ, en français ("Dd8-d7")
-        public string Commentaire { get; set; }                 // texte du commentaire du coup dans le PGN chargé (null : aucun), réécrit à l'enregistrement
+        public string? MeilleurCoupLong { get; set; }            // le meilleur coup avec sa case de départ ("Ta8-c8")
+        public string? MeilleurCoupUci { get; set; }             // le meilleur coup au format UCI ("a8c8") : flèche sur l'échiquier
+        public string? VarianteMeilleure { get; set; }           // la suite prévue par le moteur après le meilleur coup ("19 ... Tac8 20. Cf3")
+        public string? CoupJoueLong { get; set; }                // le coup lui-même avec sa case de départ, en français ("Dd8-d7")
+        public string? Commentaire { get; set; }                 // texte du commentaire du coup dans le PGN chargé (null : aucun), réécrit à l'enregistrement
         public bool VarianteLue { get; set; }                   // la variante (meilleur coup) vient du PGN chargé : réécrite à l'enregistrement
 
         public static Coup PositionDeDepart(string fen) => new() { Fen = fen, EstPositionDeDepart = true };
