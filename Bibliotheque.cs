@@ -235,8 +235,8 @@ namespace BrunoGUI_GenII
             Array.Reverse(octets);
             return BitConverter.ToUInt16(octets, 0);
         }
-        public static string DecodeCoup(ushort coup)
-        {
+        public static string DecodeCoup(ushort coup, string fen)
+        {   // Coup Polyglot au format UCI ("e2e4", "e7e8q") ; fen : la position où il se joue (pour reconnaître un roque)
             int aPartirDe = (coup >> 6) & 0x3F;  // bits  6–11  : case de départ
             int vers = coup & 0x3F;           // its  0–5   : case de destination
             int promo = (coup >> 12) & 7;   // bits 12–14  : type de promotion (si promo)
@@ -250,11 +250,14 @@ namespace BrunoGUI_GenII
             C'est une convention spécifique à Polyglot pour simplifier l'encodage des coups. 
             Dans la réalité du jeu, le roi ne va pas sur h1 ou a1, mais c'est ainsi que Polyglot représente le roque.
             */
-            // donc  on corrige les roques si besoin
-            if (aPartirDe == 4 && vers == 7) vers = 6;           // e1h1 => e1g1  (petit roque blanc)
-            else if (aPartirDe == 4 && vers == 0) vers = 2;      // e1a1 => e1c1  (grand roque blanc)
-            else if (aPartirDe == 60 && vers == 63) vers = 62;   // e8h8 => e8g8  (petit roque noir)
-            else if (aPartirDe == 60 && vers == 56) vers = 58;   // e8a8 => e8c8  (grand roque noir)
+            // donc  on corrige les roques si besoin. Seulement si c'est bien le ROI qui part de e1 ou e8 : une tour ou une dame
+            // qui va vraiment de e1 à h1 a exactement le même code (Polyglot ne code que les cases, pas la pièce)
+            bool roiBlancEnE1 = aPartirDe == 4 && PieceDansFen(fen, 4) == 'K';
+            bool roiNoirEnE8 = aPartirDe == 60 && PieceDansFen(fen, 60) == 'k';
+            if (roiBlancEnE1 && vers == 7) vers = 6;            // e1h1 => e1g1  (petit roque blanc)
+            else if (roiBlancEnE1 && vers == 0) vers = 2;       // e1a1 => e1c1  (grand roque blanc)
+            else if (roiNoirEnE8 && vers == 63) vers = 62;      // e8h8 => e8g8  (petit roque noir)
+            else if (roiNoirEnE8 && vers == 56) vers = 58;      // e8a8 => e8c8  (grand roque noir)
 
             // Debug.WriteLine($"raw move: 0x{coup:X4}  aPartirDe={aPartirDe}  vers={vers}  promo={promo}");
             string[] colonnes = ["a", "b", "c", "d", "e", "f", "g", "h"];
@@ -274,6 +277,23 @@ namespace BrunoGUI_GenII
             return caseDepart + caseArrive + promoPiece;
         }
 
+        private static char PieceDansFen(string fen, int casePolyglot)
+        {   // Lettre FEN de la pièce sur la case (numérotation Polyglot : 0 = a1, 7 = h1, 63 = h8), ' ' si la case est vide
+            string[] rangees = (fen ?? "").Split(' ')[0].Split('/');
+            if (rangees.Length != 8)
+                return ' ';
+            int colonneVoulue = casePolyglot & 7, colonne = 0;
+            foreach (char c in rangees[7 - (casePolyglot >> 3)])     // la FEN décrit la 8e rangée en premier
+            {
+                if (colonne > colonneVoulue)
+                    break;
+                if (char.IsDigit(c))
+                    colonne += c - '0';
+                else if (colonne++ == colonneVoulue)
+                    return c;
+            }
+            return ' ';
+        }
         public static ulong CalculeClefPolyglot(string fen)
         {   // Calcule la clé Zobrist 64 bits pour une position donnée en FEN
             ulong[] RandomPiece = Random64;

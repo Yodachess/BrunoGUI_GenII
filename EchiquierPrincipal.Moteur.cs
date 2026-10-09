@@ -285,14 +285,14 @@ namespace BrunoGUI_GenII
             // null s'il n'y en a pas
             List<EntreePolyglot> entrees = PolyglotBibliotheque.TrouverLesEntrees(PolyglotBibliotheque.CalculeClefPolyglot(fen)).ToList();
             EntreePolyglot? choisie = PolyglotBibliotheque.ChoisirEntree(entrees, _bibliothequeAleatoire, _hasard);
-            AfficheCoupsBibliotheque(entrees, choisie);
-            return choisie == null ? null : PolyglotBibliotheque.DecodeCoup(choisie.CoupBiblio);
+            AfficheCoupsBibliotheque(entrees, choisie, fen);
+            return choisie == null ? null : PolyglotBibliotheque.DecodeCoup(choisie.CoupBiblio, fen);
         }
         private void AfficheCoupsBibliotheque(string fen)
         {   // Coups connus de la bibliothèque pour cette position (sans en choisir aucun)
-            AfficheCoupsBibliotheque(PolyglotBibliotheque.TrouverLesEntrees(PolyglotBibliotheque.CalculeClefPolyglot(fen)).ToList(), null);
+            AfficheCoupsBibliotheque(PolyglotBibliotheque.TrouverLesEntrees(PolyglotBibliotheque.CalculeClefPolyglot(fen)).ToList(), null, fen);
         }
-        private void AfficheCoupsBibliotheque(List<EntreePolyglot> entrees, EntreePolyglot? choisie)
+        private void AfficheCoupsBibliotheque(List<EntreePolyglot> entrees, EntreePolyglot? choisie, string fen)
         {   // Liste des coups, par poids décroissant ; le coup choisi (s'il y en a un) est marqué ⭐ en vert
             _policeBiblioNormale ??= new Font(CoupsBibliothequeBox.Font, FontStyle.Regular);
             _policeBiblioGras ??= new Font(CoupsBibliothequeBox.Font, FontStyle.Bold);
@@ -313,7 +313,7 @@ namespace BrunoGUI_GenII
                 bool estChoisie = entree == choisie;
                 CoupsBibliothequeBox.SelectionFont = estChoisie ? _policeBiblioGras : _policeBiblioNormale;
                 CoupsBibliothequeBox.SelectionColor = estChoisie ? Color.Green : Color.Black;
-                CoupsBibliothequeBox.AppendText($"{(estChoisie ? "⭐ " : " *  ")}{PolyglotBibliotheque.DecodeCoup(entree.CoupBiblio)} ({entree.Poids})\n");
+                CoupsBibliothequeBox.AppendText($"{(estChoisie ? "⭐ " : " *  ")}{PolyglotBibliotheque.DecodeCoup(entree.CoupBiblio, fen)} ({entree.Poids})\n");
             }
         }
 
