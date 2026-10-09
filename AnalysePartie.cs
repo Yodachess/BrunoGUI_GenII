@@ -173,7 +173,8 @@ namespace BrunoGUI_GenII
             _premierPassageFini = true;
             if (!_approfondir)
                 return;
-            foreach (JugementCoup jugement in Jugements().Where(j => j.Perte >= JugementCoups.SeuilImprecision).ToList())
+            // (et les "!" et "!!" : leur 2e variante, celle qui fait d'un coup le seul bon, mérite aussi une recherche plus longue)
+            foreach (JugementCoup jugement in Jugements().Where(j => j.Perte >= JugementCoups.SeuilImprecision || j.Annotation is "!" or "!!").ToList())
             {
                 int k = _indexCoups.IndexOf(jugement.IndexCoup);
                 foreach (PositionAnalysee position in new[] { _positions[k], _positions[k + 1] })
@@ -281,20 +282,49 @@ namespace BrunoGUI_GenII
         }
 
         private bool EstFuite(int k, int indexCoup)
-        {   // La pièce jouée était attaquée par une pièce adverse de moindre valeur, et elle s'en va : retraite évidente, pas un "!"
-            // (ex : Caro-Kann, 8. h5 Fh7 : le fou attaqué par le pion n'a qu'une case, remarque de Bruno). Les attaques adverses sont
-            // les coups légaux de l'adversaire sur la case de départ, en lui donnant le trait sur une copie de la position
+        {   // Retraite évidente, pas un "!" : la pièce jouée (plus qu'un pion) était attaquée par une pièce adverse de moindre valeur,
+            // elle n'avait qu'UNE case sûre, et c'est là qu'elle va (ex : Caro-Kann, 8. h5 Fh7 : le fou attaqué par le pion n'a que h7,
+            // remarque de Bruno). Avec plusieurs cases sûres, trouver la seule bonne est un vrai choix, qui garde son "!" (ex : Cg6) ;
+            // aller sur une case attaquée n'est pas une fuite (c'est un sacrifice)
             string joue = _coups[indexCoup].Uci.Trim();
             if (joue.Length < 4)
                 return false;
-            string depart = joue[..2];
-            return CalculerSur(PositionDepuisFen(_positions[k].Fen), () =>
-            {
-                int valeur = JugementCoups.Valeur(PiecesEchiquier[RenvoieCaseIndex120(depart)]);
-                if (valeur <= 1)
-                    return false;       // pion (ou roi, valeur 0) : jamais une fuite au sens de cette règle
+            string depart = joue[..2], arrivee = joue.Substring(2, 2);
+            Position avant = PositionDepuisFen(_positions[k].Fen);
+            int valeur = JugementCoups.Valeur(avant.Pieces[RenvoieCaseIndex120(depart)]);
+            if (valeur <= 1)
+                return false;       // pion (ou roi, valeur 0) : jamais une fuite au sens de cette règle
+            bool menacee = CalculerSur(avant, () =>
+            {   // attaques adverses sur la case de départ : coups légaux de l'adversaire, en lui donnant le trait sur la copie
                 QuiJoue = Adversaire(QuiJoue);
                 return CoupsLegaux().Any(c => c.Destination == depart && JugementCoups.Valeur(PiecesEchiquier[RenvoieCaseIndex120(c.Source)]) < valeur);
+            });
+            if (!menacee)
+                return false;
+            List<string> casesSures = [.. CalculerSur(avant, () => CoupsLegaux().Where(c => c.Source == depart).Select(c => c.Destination).ToList())
+                                          .Where(destination => CaseSure(avant, depart, destination, valeur))];
+            return casesSures.Count == 1 && casesSures[0] == arrivee;
+        }
+
+        private static bool CaseSure(Position avant, string depart, string destination, int valeur)
+        {   // Après le coup (sur une copie), la pièce n'y est attaquée par aucune pièce adverse de moindre valeur, et, si elle y est
+            // attaquée, elle y est défendue (une pièce de même valeur qui la prend sera reprise : simple échange)
+            return CalculerSur(avant, () =>
+            {
+                int indexDestination = RenvoieCaseIndex120(destination);
+                ColorPiece camp = QuiJoue;
+                SimuleCoup(RenvoieCaseIndex120(depart), indexDestination);
+                QuiJoue = Adversaire(camp);
+                List<int> attaquants = [.. CoupsLegaux().Where(c => c.Destination == destination)
+                                                        .Select(c => JugementCoups.Valeur(PiecesEchiquier[RenvoieCaseIndex120(c.Source)]))];
+                if (attaquants.Any(v => v < valeur))
+                    return false;
+                if (attaquants.Count == 0)
+                    return true;
+                // Défendue ? On met un pion adverse à sa place : une pièce du camp qui peut le prendre défend la case
+                PiecesEchiquier[indexDestination] = camp == ColorPiece.Blanc ? TypePiece.PionNoir : TypePiece.PionBlanc;
+                QuiJoue = camp;
+                return CoupsLegaux().Any(c => c.Destination == destination);
             });
         }
 
