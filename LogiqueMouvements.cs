@@ -563,7 +563,7 @@ namespace BrunoGUI_GenII
                     // Affiche si le roi est en échec
                     if (Echec)
                     {
-                        AfficheInfoEchec?.Invoke("Le roi " + NomCouleur(QuiJoue) + " est en échec");
+                        AfficheInfoEchec?.Invoke(Langue.T("Le roi {0} est en échec", NomCouleur(QuiJoue)));
                     }
                     if (QuiJoue == ColorPiece.Noir)
                     {
@@ -592,7 +592,7 @@ namespace BrunoGUI_GenII
                     // ( plus de coups valides jouables + le joueur n'est pas échec )
                     if (AucunCoupJouable)
                     {
-                        AfficheInfoEchec?.Invoke("Le joueur " + NomCouleur(QuiJoue) + " est Pat - plus de coup possible ");
+                        AfficheInfoEchec?.Invoke(Langue.T("Le joueur {0} est Pat - plus de coup possible", NomCouleur(QuiJoue)));
                         AffichePat?.Invoke(QuiJoue);
                     }
                 }
@@ -711,11 +711,11 @@ namespace BrunoGUI_GenII
             if (DernierCoupTerminePartie)
                 return null;
             if (TripleRepetition())
-                return "Nulle par répétition";
+                return Langue.T("Nulle par répétition");
             if (SansPrise >= 100)
-                return "Nulle (règle des 50 coups)";
+                return Langue.T("Nulle (règle des 50 coups)");
             if (MaterielInsuffisant())
-                return "Nulle (matériel insuffisant)";
+                return Langue.T("Nulle (matériel insuffisant)");
             return null;
         }
         public static void DeplacementPiece(int IndexSource, int IndexDestination, bool visu)
@@ -1013,8 +1013,8 @@ namespace BrunoGUI_GenII
             return piecePromue;
         }
         public static ColorPiece Adversaire(ColorPiece couleur) => couleur == ColorPiece.Blanc ? ColorPiece.Noir : ColorPiece.Blanc;
-        public static string NomCouleur(ColorPiece couleur) => couleur == ColorPiece.Blanc ? "Blanc" : "Noir";     // "le roi Blanc"
-        public static string NomCamp(ColorPiece couleur) => couleur == ColorPiece.Blanc ? "Blancs" : "Noirs";      // "aux Blancs de jouer"
+        public static string NomCouleur(ColorPiece couleur) => couleur == ColorPiece.Blanc ? Langue.T("Blanc") : Langue.T("Noir");     // "le roi Blanc"
+        public static string NomCamp(ColorPiece couleur) => couleur == ColorPiece.Blanc ? Langue.T("Blancs") : Langue.T("Noirs");      // "aux Blancs de jouer"
         public static TypePiece PieceDeLaCouleur(TypePiece piece, ColorPiece couleur)
         {   // La même sorte de pièce de promotion, dans la couleur demandée (une dame si la pièce n'est pas une pièce de promotion)
             return piece switch

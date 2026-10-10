@@ -238,6 +238,7 @@ namespace BrunoGUI_GenII
         public int NombreCoeursThread { get; set; } = 4;
         public int? TailleHachageMo { get; set; }       // null : taille par défaut du moteur
         public string Bibliotheque { get; set; } = "rodent.bin";
+        public string Langue { get; set; } = "";              // langue de l'interface ("fr", "en") ; vide : celle de Windows
         public string Palette { get; set; } = "";               // palette Krypton (ex : Microsoft365Silver) ; vide : palette par défaut
         public int VerificationMiseAJourJours { get; set; } = 30;       // intervalle entre deux vérifications automatiques de Stockfish (0 : jamais)
         public DateTime? DerniereVerificationMiseAJour { get; set; }    // date de la dernière vérification réussie (préférences)
@@ -303,13 +304,14 @@ namespace BrunoGUI_GenII
                     case "DureereflexionSeconde": DureeReflexionSeconde = PremierEntier(valeur) ?? DureeReflexionSeconde; break;
                     case "Forcemoteur": ForceMoteur = PremierEntier(valeur) ?? ForceMoteur; break;
                     case "ForceMaximale": ForceMaximale = !valeur.Equals("false", StringComparison.OrdinalIgnoreCase); break;
-                    case "CouleurMoteur": CouleurMoteur = valeur == NomCamp(ColorPiece.Blanc) ? ColorPiece.Blanc : ColorPiece.Noir; break;
+                    case "CouleurMoteur": CouleurMoteur = valeur == "Blancs" ? ColorPiece.Blanc : ColorPiece.Noir; break;    // (toujours en français dans le .ini)
                     case "Cadence": Cadence = Cadence.Lire(valeur); break;
                     case "NombrelignesPV": NombreLignesPV = PremierEntier(valeur) ?? NombreLignesPV; break;
                     case "NombreCoeursThread": NombreCoeursThread = PremierEntier(valeur) ?? NombreCoeursThread; break;
                     case "TableHachage": TailleHachageMo = PremierEntier(valeur); break;     // en Mo, ex : "256" ou "256 min"
                     case "Bibliotheque": Bibliotheque = valeur; break;
                     case "Palette": Palette = valeur; break;
+                    case "Langue": Langue = valeur; break;
                     case "VerificationMiseAJourJours": VerificationMiseAJourJours = PremierEntier(valeur) ?? VerificationMiseAJourJours; break;
                     case "DerniereVerificationMiseAJour":
                         if (DateTime.TryParseExact(valeur, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime date))
@@ -349,12 +351,14 @@ namespace BrunoGUI_GenII
                 ["DureereflexionSeconde"] = DureeReflexionSeconde.ToString(),
                 ["Forcemoteur"] = ForceMoteur.ToString(),
                 ["ForceMaximale"] = ForceMaximale ? "true" : "false",
-                ["CouleurMoteur"] = NomCamp(CouleurMoteur),
+                ["CouleurMoteur"] = CouleurMoteur == ColorPiece.Blanc ? "Blancs" : "Noirs",   // (pas NomCamp : il est traduit)
                 ["Cadence"] = Cadence.TimeControl,
                 ["NombrelignesPV"] = NombreLignesPV.ToString(),
                 ["NombreCoeursThread"] = NombreCoeursThread.ToString(),
                 ["Bibliotheque"] = Bibliotheque,
             };
+            if (!string.IsNullOrWhiteSpace(Langue))
+                valeurs["Langue"] = Langue;
             if (TailleHachageMo is int hachage)
                 valeurs["TableHachage"] = hachage.ToString();
             if (DerniereVerificationMiseAJour is DateTime verification)

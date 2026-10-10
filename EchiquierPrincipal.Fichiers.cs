@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Krypton.Toolkit;
 using static BrunoGUI_GenII.GestionPartiePgn;
+using static BrunoGUI_GenII.Langue;
 using static BrunoGUI_GenII.LogiqueMouvements;
 using static BrunoGUI_GenII.Parametres;
 
@@ -59,8 +60,7 @@ namespace BrunoGUI_GenII
                 ListePartiesPGN.Clear();
                 foreach (string partie in ListeParties)                     // On met chaque partie au format PartieEchecsPGN dans ListePartiePGN
                     ListePartiesPGN.Add(FichierPartiePgn.DecodePartiePGN(partie));
-                fichierPartiePgn.NombrePartiesFichier.Text = ListePartiesPGN.Count.ToString()
-                    + " partie(s) dans le fichier  " + Path.GetFileName(cheminFichier);
+                fichierPartiePgn.NombrePartiesFichier.Text = T("{0} partie(s) dans le fichier  {1}", ListePartiesPGN.Count, Path.GetFileName(cheminFichier));
                 fichierPartiePgn.AfficherListeParties(ListePartiesPGN);
                 fichierPartiePgn.Show();
                 fichierPartiePgn.BringToFront();
@@ -69,7 +69,7 @@ namespace BrunoGUI_GenII
             catch (Exception ex)
             {   // fichier illisible ou contenu inattendu (erreurs variées : lecture, décodage) : expliqué et noté dans le journal
                 Journal.Erreur("Ouverture du fichier PGN " + ChargerPartiesPgn.FileName, ex);
-                KryptonMessageBox.Show("Impossible de lire ce fichier PGN :\n" + ex.Message, "Ouvrir fichier PGN",
+                KryptonMessageBox.Show(T("Impossible de lire ce fichier PGN :\n{0}", ex.Message), T("Ouvrir fichier PGN"),
                     KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
             }
         }
@@ -85,18 +85,18 @@ namespace BrunoGUI_GenII
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException || ex is NotSupportedException)
             {
                 Journal.Erreur("Lecture du fichier FEN " + ChargerPositionFen.FileName, ex);
-                KryptonMessageBox.Show("Lecture impossible : " + ex.Message, "Chargement FEN", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+                KryptonMessageBox.Show(T("Lecture impossible : {0}", ex.Message), T("Chargement FEN"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
                 return;
             }
             string contenuFen = positions.Length > 0 ? ChargementPartie.NormaliseFen(positions[0]) : "";
             string? erreur = ChargementPartie.ErreurFen(contenuFen);
             if (erreur != null)
             {   // FEN mal formée : on ne la lit pas (elle ferait planter la lecture ou donnerait une position incohérente)
-                KryptonMessageBox.Show($"Position FEN refusée : {erreur}.\n\n{contenuFen}", "Chargement FEN",
+                KryptonMessageBox.Show(T("Position FEN refusée : {0}.\n\n{1}", erreur, contenuFen), T("Chargement FEN"),
                     KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
                 return;
             }
-            ChargeFenDansLaPartie(contenuFen, "Fen chargé : ", positions.Length > 1 ? $"   Fichier de {positions.Length} positions : la première est chargée" : "...");
+            ChargeFenDansLaPartie(contenuFen, T("Fen chargé : "), positions.Length > 1 ? "   " + T("Fichier de {0} positions : la première est chargée", positions.Length) : "...");
         }
         private void BoutonSaisiePosition_Click(object? sender, EventArgs e)
         {   // Saisie d'une position à la main (fenêtre SaisiePosition), en partant de la position affichée ; OK : elle est jouée
@@ -104,7 +104,7 @@ namespace BrunoGUI_GenII
             string fenAffichee = LogiqueMouvements.CalculerSur(_positionAffichee ?? LogiqueMouvements.PositionActuelle, LogiqueMouvements.RetourneChaineFenActuel);
             using SaisiePosition saisie = new(fenAffichee, _vue.ImagePiece, _vue.CaseClaire, _vue.CaseSombre, _vue.CoteNoir);
             if (saisie.ShowDialog(this) == DialogResult.OK)
-                ChargeFenDansLaPartie(saisie.FenSaisie, "Position saisie : ", "...");
+                ChargeFenDansLaPartie(saisie.FenSaisie, T("Position saisie : "), "...");
         }
         private void ChargeFenDansLaPartie(string contenuFen, string libelle, string detail)
         {   // Une position (FEN déjà contrôlée par ChargementPartie.ErreurFen) devient une nouvelle partie : fichier FEN ou saisie
@@ -120,13 +120,13 @@ namespace BrunoGUI_GenII
             EnteteNouvellePartie();
             AfficheJoueurs("", "", "", "");     // position chargée : ce n'est la partie ni de l'humain ni du moteur, noms vides
             NouvellePendule();                  // la partie qui commence à cette position suit la cadence choisie
-            InformationPourJoueur.Text = "Trait aux " + NomCamp(QuiJoue);
+            InformationPourJoueur.Text = T("Trait aux {0}", NomCamp(QuiJoue));
             PlateauEnable(true);   // On active le plateau pour pouvoir jouer à partir de la position chargée
             AfficheCoupsBibliotheque(contenuFen);
             // Le cadre vert est court : les détails du chargement vont dans les lignes de variantes 2 et 3 (inutilisées à ce moment)
-            InformationsPartie.Text = "Position chargée";
+            InformationsPartie.Text = T("Position chargée");
             VarianteMoteurUci2.Text = detail;
-            VarianteMoteurUci3.Text = _pendule != null ? $"   Pendule {_pendule.Cadence.Nom} : elle démarre au premier coup" : "...";
+            VarianteMoteurUci3.Text = _pendule != null ? "   " + T("Pendule {0} : elle démarre au premier coup", _pendule.Cadence.Nom) : "...";
             MetAJourCommandes();
         }
         private void EnregistrerPgn_Click(object? sender, EventArgs e)
@@ -145,23 +145,22 @@ namespace BrunoGUI_GenII
                         string cheminPgn = SauvegardeFichier.FileName;
                         if (File.Exists(cheminPgn))                         // Si le fichier existe déjà
                         {   // On demande à l'utilisateur s'il veut écraser le fichier ou ajouter la partie
-                            DialogResult resultat = KryptonMessageBox.Show("ATTENTION, le fichier " + Path.GetFileName(cheminPgn) + " existe déjà. \nCliquer Oui pour ajouter la partie à la fin." +
-                               "\nCliquer Non pour écraser le fichier existant.\nCancel pour afficher le fichier PGN.",
-                               "Fichier existant", KryptonMessageBoxButtons.YesNoCancel, KryptonMessageBoxIcon.Warning);
+                            DialogResult resultat = KryptonMessageBox.Show(T("ATTENTION, le fichier {0} existe déjà. \nCliquer Oui pour ajouter la partie à la fin.\nCliquer Non pour écraser le fichier existant.\nAnnuler pour afficher le fichier PGN.", Path.GetFileName(cheminPgn)),
+                               T("Fichier existant"), KryptonMessageBoxButtons.YesNoCancel, KryptonMessageBoxIcon.Warning);
                             if (resultat == DialogResult.No)
                             {   // Écrase le fichier existant avec la nouvelle partie
                                 File.WriteAllText(cheminPgn, contenuPgn);
-                                InformationPourJoueur.Text = "La partie est écrite dans le fichier " + Path.GetFileName(cheminPgn);
+                                InformationPourJoueur.Text = T("La partie est écrite dans le fichier {0}", Path.GetFileName(cheminPgn));
                             }
                             else if (resultat == DialogResult.Yes)
                             {   // Ajoute la nouvelle partie à la fin du fichier existant, sans réécrire ce qu'il contient (relu puis réécrit
                                 // en UTF-8, un fichier aux lignes Latin-1 aurait perdu ses accents)
                                 File.AppendAllText(cheminPgn, "\r\n\r\n" + contenuPgn);
-                                InformationPourJoueur.Text = "La partie est ajoutée dans le fichier " + Path.GetFileName(cheminPgn);
+                                InformationPourJoueur.Text = T("La partie est ajoutée dans le fichier {0}", Path.GetFileName(cheminPgn));
                             }
                             else if (resultat == DialogResult.Cancel)
                             {   // Affiche la nouvelle partie (sans les temps de la pendule : ils ne vont que dans le fichier)
-                                KryptonMessageBox.Show($"Fichier PGN :\n {GestionPartiePgn.RetourneContenuPgn(PartieEnCours, "Intl")}", "Affichage fichier PGN", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                                KryptonMessageBox.Show(T("Fichier PGN :") + "\n " + GestionPartiePgn.RetourneContenuPgn(PartieEnCours, "Intl"), T("Affichage fichier PGN"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                             }
                         }
                         else
@@ -174,7 +173,7 @@ namespace BrunoGUI_GenII
             catch (Exception ex)
             {   // écriture impossible (dossier protégé, disque plein, fichier verrouillé...) : expliqué et noté dans le journal
                 Journal.Erreur("Enregistrement du fichier PGN", ex);
-                KryptonMessageBox.Show($"Une erreur s'est produite : {ex.Message}", "Erreur méthode Enregistrer PGN", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                KryptonMessageBox.Show(T("Une erreur s'est produite : {0}", ex.Message), T("Enregistrement du fichier PGN"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                 Debug.WriteLine($"StackTrace : {ex.StackTrace}");
             }
         }
@@ -210,21 +209,20 @@ namespace BrunoGUI_GenII
             PartieEnCours.CompteDePLy = partie.CompteDePLy;
             PartieEnCours.CoupsPartiePGN = partie.CoupsPartiePGN;
             PartieEnCours.TimeControl = partie.TimeControl;
-            InformationPourJoueur.Text = partie.Tournoi + " / ronde " + partie.Ronde;
+            InformationPourJoueur.Text = T("{0} / ronde {1}", partie.Tournoi, partie.Ronde);
             StatusProgramme.Text = $"{partie.White} vs {partie.Black}";
-            ScoreMoteur.Text = InformationsPartie.Text = "Résultat : " + partie.Result;
+            ScoreMoteur.Text = InformationsPartie.Text = T("Résultat : {0}", partie.Result);
             VarianteMoteurCourante.Text = "";
             Debug.WriteLine($"Partie en PGN : {partie.CoupsPartiePGN}");
             // Rejeu des coups (depuis la balise FEN s'il y en a une) ; la partie finit en lecture seule
             ResultatChargementPgn chargement = ChargementPartie.ChargerPartiePgn(partie, _partie);
             PartieEnCours.CompteDePLy = chargement.DemiCoupsJoues.ToString();   // PlyCount : demi-coups réellement rejoués (la balise du fichier peut manquer ou être fausse)
             if (chargement.FenIncomplete)
-                KryptonMessageBox.Show($"La position de départ de cette partie (balise FEN) est refusée : {ChargementPartie.ErreurFen(partie.Fen)}.\n" +
-                    "Les coups sont joués depuis la position initiale.",
-                    "Partie PGN", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+                KryptonMessageBox.Show(T("La position de départ de cette partie (balise FEN) est refusée : {0}.\nLes coups sont joués depuis la position initiale.", ChargementPartie.ErreurFen(partie.Fen)),
+                    T("Partie PGN"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
             if (chargement.CoupIllisible != null)
-                KryptonMessageBox.Show($"Coup illisible ou illégal : « {chargement.CoupIllisible} » (demi-coup n° {chargement.DemiCoupsJoues + 1}).\n" +
-                    "La partie est chargée jusqu'au coup précédent.", "Partie PGN", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+                KryptonMessageBox.Show(T("Coup illisible ou illégal : « {0} » (demi-coup n° {1}).\nLa partie est chargée jusqu'au coup précédent.", chargement.CoupIllisible, chargement.DemiCoupsJoues + 1),
+                    T("Partie PGN"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
             AfficheResultatPartiePgn();
         }
         private void AfficheResultatPartiePgn()
@@ -232,16 +230,16 @@ namespace BrunoGUI_GenII
             switch (PartieEnCours.Result)       // Et on ajoute le résultat
             {
                 case "1-0":
-                    InformationsPartie.Text = "Résultat : 1-0 Gain Blanc";
+                    InformationsPartie.Text = T("Résultat : 1-0 Gain Blanc");
                     break;
                 case "0-1":
-                    InformationsPartie.Text = "Résultat : 0-1 Gain Noir";
+                    InformationsPartie.Text = T("Résultat : 0-1 Gain Noir");
                     break;
                 case "1/2-1/2":
-                    InformationsPartie.Text = "Résultat : 1/2-1/2 Nulle";
+                    InformationsPartie.Text = T("Résultat : 1/2-1/2 Nulle");
                     break;
                 case "*":
-                    InformationsPartie.Text = "Résultat : * Indéterminé";
+                    InformationsPartie.Text = T("Résultat : * Indéterminé");
                     break;
                 default:
                     Debug.WriteLine($"Pas de résultat défini : {PartieEnCours.Result}");

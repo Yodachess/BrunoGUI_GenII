@@ -75,8 +75,8 @@ namespace BrunoGUI_GenII
 
         public static string Nom(string annotation) => annotation switch
         {
-            "!!" => "Coup brillant", "!" => "Bon coup", "!?" => "Coup intéressant",
-            "?!" => "Coup douteux", "?" => "Mauvais coup", "??" => "Gaffe", _ => "Aucune annotation"
+            "!!" => Langue.T("Coup brillant"), "!" => Langue.T("Bon coup"), "!?" => Langue.T("Coup intéressant"),
+            "?!" => Langue.T("Coup douteux"), "?" => Langue.T("Mauvais coup"), "??" => Langue.T("Gaffe"), _ => Langue.T("Aucune annotation")
         };
 
         public static (string Coup, string Annotation) Separe(string coupPgn)

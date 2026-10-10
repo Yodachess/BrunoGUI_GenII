@@ -46,6 +46,10 @@
     <PackageReference Include="Krypton.Workspace" Version="95.25.10.293" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Traductions de l'interface (voir Langue.cs) : à côté de l'exécutable, modifiables sans recompiler -->
+    <None Update="Langues\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="AideBrunoGUI.rtf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

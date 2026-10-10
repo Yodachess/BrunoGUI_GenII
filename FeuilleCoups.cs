@@ -161,8 +161,8 @@ namespace BrunoGUI_GenII
                 return;
             _demiCoupInfobulle = index;
             string? texte = index == -2 ? null
-                : index < 0 || _coups[index].EvaluationApres is not Evaluation evaluation ? "Courbe d'évaluation : analyser la partie pour la voir"
-                : $"{_coups[index].PgnFrNumerote}{_coups[index].Annotation}   {evaluation.Texte}";
+                : index < 0 || _coups[index].EvaluationApres is not Evaluation evaluation ? Langue.T("Courbe d'évaluation : analyser la partie pour la voir")
+                : $"{Langue.Notation(_coups[index].PgnFrNumerote)}{_coups[index].Annotation}   {evaluation.Texte}";
             _infobulleBande.SetToolTip(this, texte);
         }
 
@@ -254,7 +254,7 @@ namespace BrunoGUI_GenII
             Rectangle texte = new(zone.X + 4, zone.Y, zone.Width - 6, zone.Height);
             TextFormatFlags format = TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix
                                    | TextFormatFlags.NoPadding;
-            string coup = _coups[i].PgnFrSansNumero;
+            string coup = Langue.Notation(_coups[i].PgnFrSansNumero);     // (lettres anglaises des pièces en anglais)
             TextRenderer.DrawText(g, coup, Font, texte, ForeColor, format | TextFormatFlags.EndEllipsis);
             string annotation = _coups[i].Annotation;
             if (annotation != "")

@@ -84,7 +84,7 @@ namespace BrunoGUI_GenII
             // → Chemin complet portable (un chemin complet, choisi par l'utilisateur, est gardé tel quel par Path.Combine)
             string chemin = Path.Combine(Chemins.BibliothequesPolyglot, fichier);
             if (!File.Exists(chemin))       // la bibliothèque précédente (s'il y en a une) reste active
-                throw new FileNotFoundException("Bibliothèque d'ouvertures introuvable : " + chemin, chemin);
+                throw new FileNotFoundException(Langue.T("Bibliothèque d'ouvertures introuvable : {0}", chemin), chemin);
             _cheminBibliotheque = chemin;
 
             LireLeFichier();
@@ -106,7 +106,7 @@ namespace BrunoGUI_GenII
                 long fileSize = new FileInfo(_cheminBibliotheque).Length;
                 int nombreEntrees = (int)fileSize / 16;
                 string nomBiblio = Path.GetFileName(_cheminBibliotheque);   // Evite d'afficher le chemin complet
-                MessageLog?.Invoke($"Bibliothèque {nomBiblio} chargée  ({nombreEntrees} entrées)");
+                MessageLog?.Invoke(Langue.T("Bibliothèque {0} chargée  ({1} entrées)", nomBiblio, nombreEntrees));
                 Debug.WriteLine($"Bibliothèque {nomBiblio} chargée. Nombre d'entrées : {nombreEntrees}");
                 Debug.WriteLine($"[LireLeFichier] Le chemin est : {_cheminBibliotheque}");
             }

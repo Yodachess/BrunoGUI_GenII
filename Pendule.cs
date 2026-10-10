@@ -40,9 +40,9 @@ namespace BrunoGUI_GenII
 
         private string TexteIncrement(string format) => Increment > TimeSpan.Zero ? string.Format(format, Increment.TotalSeconds) : "";
         // Sans bonus, une seule période : "KO" (le temps est perdu au drapeau, sans rien gagner par coup)
-        public string Nom => EstSansPendule ? "Sans pendule"
+        public string Nom => EstSansPendule ? Langue.T("Sans pendule")
             : this == Fide ? "90 + 30 min (+30 s) FIDE"
-            : ADeuxPeriodes ? $"{TempsInitial.TotalMinutes:0} min/{CoupsControle} coups + {TempsAjoute.TotalMinutes:0} min" + TexteIncrement(" (+{0:0} s)")
+            : ADeuxPeriodes ? Langue.T("{0:0} min/{1} coups + {2:0} min", TempsInitial.TotalMinutes, CoupsControle, TempsAjoute.TotalMinutes) + TexteIncrement(" (+{0:0} s)")
             : $"{TempsInitial.TotalMinutes:0} min" + (Increment > TimeSpan.Zero ? TexteIncrement(" + {0:0} s") : " KO") + (EstOfficielle ? " FIDE" : "");
 
         // Balise PGN [TimeControl] et clé du .ini : "300+3" (secondes + bonus), "-" sans pendule ;

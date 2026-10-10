@@ -24,6 +24,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Krypton.Toolkit;
 using static BrunoGUI_GenII.GestionPartiePgn;
+using static BrunoGUI_GenII.Langue;
 using static BrunoGUI_GenII.LogiqueMouvements;
 using static BrunoGUI_GenII.Parametres;
 
@@ -80,6 +81,8 @@ namespace BrunoGUI_GenII
         public EchiquierPrincipal()
         {
             InitializeComponent();
+            TraductionFenetres.Traduit(this);          // textes du designer dans la langue choisie (voir Langue.cs)
+            CreeMenuLangue();
             InformationsPartie.AutoEllipsis = true;     // message trop long pour le cadre : "…" et texte complet au survol de la souris
 
             parametres =Parametres.Charger(Chemins.RepertoireRacine);   // BrunoGUI.ini puis préférences personnelles (à côté de l'exécutable)
@@ -115,12 +118,7 @@ namespace BrunoGUI_GenII
             PenduleBlanc.Click += Pendule_Click;        // un clic sur une pendule : pause / reprise
             PenduleNoir.Click += Pendule_Click;
             PenduleBlanc.ReduitPourTenir = PenduleNoir.ReduitPourTenir = true;     // "1:30:00" toujours lisible en entier
-            _infobulleBilan.SetToolTip(BilanAnalyse,
-                "Précision : 100 % = tous les coups aussi bons que ceux du moteur (formule de Lichess).\n" +
-                "Imprécision (?!), erreur (?), gaffe (??) : le coup fait perdre au moins 10, 20 ou 30 %\n" +
-                "des chances de gain (une perte dans une position déjà gagnée compte peu).\n" +
-                "Analyse complète : les coups douteux sont revus 10 s pour confirmer le jugement.\n" +
-                "Coup critique : celui où la partie a basculé (la plus grosse perte) ; un clic l'affiche.");
+            _infobulleBilan.SetToolTip(BilanAnalyse, T("Précision : 100 % = tous les coups aussi bons que ceux du moteur (formule de Lichess).\nImprécision (?!), erreur (?), gaffe (??) : le coup fait perdre au moins 10, 20 ou 30 %\ndes chances de gain (une perte dans une position déjà gagnée compte peu).\nAnalyse complète : les coups douteux sont revus 10 s pour confirmer le jugement.\nCoup critique : celui où la partie a basculé (la plus grosse perte) ; un clic l'affiche."));
             BilanAnalyse.Click += BilanAnalyse_Click;
             BoutonAnalysePartie.MouseEnter += MetAJourInfobullesAnalyse;
             BoutonAnalyseComplete.MouseEnter += MetAJourInfobullesAnalyse;
@@ -151,7 +149,7 @@ namespace BrunoGUI_GenII
                 ChoixBibliotheque = fen => _bibliothequeActive ? ChoisirCoupBibliotheque(fen) : null
             };
             PartieEnCours.Date = Aujourdhui.ToString("yyyy.MM.dd");
-            PartieEnCours.Lieu = "Maison"; PartieEnCours.Tournoi = "Entrainement";
+            PartieEnCours.Lieu = T("Maison"); PartieEnCours.Tournoi = T("Entrainement");
             PartieEnCours.Result = "*";
             AfficheJoueursDeLaPartie();     // avant toute partie : l'humain avec les Blancs, le moteur avec les Noirs (étiquettes et en-tête PGN)
             mesparametresDeBase = new ParametresDeBase(this);
@@ -186,7 +184,7 @@ namespace BrunoGUI_GenII
             Debug.WriteLine("Chemin moteurs = " + Chemins.MoteursUCI);
             Debug.WriteLine("Chemin Polyglot = " + Chemins.BibliothequesPolyglot);
 
-            InformationPourJoueur.Text = "   Bienvenue   ";
+            InformationPourJoueur.Text = "   " + T("Bienvenue") + "   ";
 
             _vue.CreerCases(CaseMouseDown);     // les 120 cases (64 visibles), indexées comme le tableau "mailbox"
             LogiqueMouvements.InitialisationEchiquier();
@@ -197,7 +195,7 @@ namespace BrunoGUI_GenII
             MetAJourCommandes();                // aucune partie : seuls les menus sont utiles
 
             ActiverMenus(false);    // On désactive les menus après la mise à jour
-            VarianteMoteurUci2.Text = "     ---       [INFO] Vérification initiale de mise à jour de Stockfish...      ---";
+            VarianteMoteurUci2.Text = "     ---       [INFO] " + T("Vérification initiale de mise à jour de Stockfish...") + "      ---";
             _ = Task.Run(async () =>            // MISE A JOUR STOCKFISH SI ELLE EXISTE
            {   // Vérification de la mise à jour de Stockfish, puis lancement du moteur
                 
@@ -255,7 +253,7 @@ namespace BrunoGUI_GenII
                     AfficheJoueursDeLaPartie();
                     if (!_vue.CoteNoir)
                         TourneEchiquier();      // On met la vue côté Noir
-                    ParametresJoueurHumain("Le moteur UCI joue");      // On fait jouer le moteur côté blanc
+                    ParametresJoueurHumain(T("Le moteur UCI joue"));      // On fait jouer le moteur côté blanc
                     JeuMoteurAvecBibliotheque(FenDepart);
                 }
                 else
@@ -264,7 +262,7 @@ namespace BrunoGUI_GenII
                         TourneEchiquier();
                     CommencerPartie(Joueur.Humain, Joueur.Moteur);
                     AfficheJoueursDeLaPartie();
-                    ParametresJoueurHumain("A vous de jouer");            // On demande à l'humain de jouer
+                    ParametresJoueurHumain(T("A vous de jouer"));            // On demande à l'humain de jouer
                     PlateauEnable(true);                                            // On lui permet de bouger les pièces
                 }
             }
@@ -285,7 +283,7 @@ namespace BrunoGUI_GenII
             {   // (les noms des joueurs sont fixés par HumainContreHumain_Click)
                 PlateauEnable(true);
                 InformationPourJoueur.Visible = true;
-                InformationPourJoueur.Text = StatusProgramme.Text = "Aux Blancs de jouer";
+                InformationPourJoueur.Text = StatusProgramme.Text = T("Aux Blancs de jouer");
             }
             AfficheCoupsBibliotheque(FenDepart);
             NouvellePendule();          // cadence choisie (Sans pendule : temps fixe par coup, comme avant)
@@ -297,8 +295,8 @@ namespace BrunoGUI_GenII
             // partie précédente, en particulier d'une partie PGN chargée (sa date et son ECO se retrouvaient dans la partie suivante).
             // Les joueurs (AfficheJoueurs) et la cadence (NouvellePendule) sont fixés à part
             PartieEnCours.CoupsPartiePGN = PartieEnCours.Result = PartieEnCours.CompteDePLy = PartieEnCours.Ronde = PartieEnCours.ECO = "";
-            PartieEnCours.Tournoi = "Entrainement";
-            PartieEnCours.Lieu = "Maison";
+            PartieEnCours.Tournoi = T("Entrainement");
+            PartieEnCours.Lieu = T("Maison");
             PartieEnCours.Date = DateTime.Today.ToString("yyyy.MM.dd");
         }
 
@@ -320,9 +318,8 @@ namespace BrunoGUI_GenII
                 {
                     int IndexCase120 = _vue.IndexDeLaCase(CaseClick);    // (tient compte de la vue côté Noirs)
                     if (_partie.Mode == ModePartie.AucunePartie)     // au lancement, aucune partie choisie : pas de coup
-                        KryptonMessageBox.Show("Veuillez choisir une partie :\n\n" +
-                            "   •  Stockfish : jouer contre Stockfish (force réglable)\n" +
-                            "   •  Nouvelle Partie : jouer contre le moteur choisi, ou entre amis", "Aucune partie en cours", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                        KryptonMessageBox.Show(T("Veuillez choisir une partie :\n\n   •  Stockfish : jouer contre Stockfish (force réglable)\n   •  Nouvelle Partie : jouer contre le moteur choisi, ou entre amis"),
+                            T("Aucune partie en cours"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                     else
                     {
                         if (_clickCaseSource)     // Permet de savoir si c'est la sélection de la pièce ou le déplacement
@@ -387,10 +384,37 @@ namespace BrunoGUI_GenII
             LogiqueMouvements.EffaceSymboles(true);
             _vue.DessinePiece(_indexSource120, _pieceSource);
         }
+        // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+        //  Langue de l'interface (voir Langue.cs)
+        // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+        private bool _redemarrageDemande;     // changement de langue : fermeture sans confirmation, puis relance (Application.Restart)
+        private void CreeMenuLangue()
+        {   // Menu Options > Langue ; les noms des langues ne sont jamais traduits (chacun reconnaît la sienne)
+            ToolStripMenuItem menuLangue = new(T("Langue"));
+            foreach (var (code, nom) in new[] { (Langue.Francais, "Français"), (Langue.Anglais, "English") })
+            {
+                ToolStripMenuItem element = new(nom) { Checked = code == Langue.Code };
+                element.Click += (s, e) => ChangeLangue(code);
+                menuLangue.DropDownItems.Add(element);
+            }
+            OptionsMenu.DropDownItems.Add(menuLangue);
+        }
+        private void ChangeLangue(string code)
+        {   // La langue est enregistrée dans les préférences (à la fermeture) et ne change qu'au démarrage : on propose de relancer
+            if (code == Langue.Code)
+                return;
+            parametres.Langue = code;
+            if (KryptonMessageBox.Show(T("La nouvelle langue sera utilisée au prochain démarrage de BrunoGUI.\n\nRedémarrer maintenant ? Une partie en cours non enregistrée sera perdue."),
+                    T("Langue"), KryptonMessageBoxButtons.YesNo, KryptonMessageBoxIcon.Question) != DialogResult.Yes)
+                return;
+            _redemarrageDemande = true;     // pas de "Quitter l'application ?" (voir EchiquierPrincipal_FormClosing)
+            Application.Restart();          // ferme (préférences enregistrées, moteur arrêté) puis relance l'application
+        }
+
         private void AfficheTour(ColorPiece couleur)
         {   // Affiche le camp au trait entre humains ; sinon active les cases si c'est au tour du joueur humain
             if (_partie.EntreHumains)
-                InformationPourJoueur.Text = StatusProgramme.Text = "Aux " + NomCamp(couleur) + " de jouer";
+                InformationPourJoueur.Text = StatusProgramme.Text = T("Aux {0} de jouer", NomCamp(couleur));
             else
                 PlateauEnable(_partie.JoueurDe(couleur) == Joueur.Humain);
         }
@@ -399,11 +423,11 @@ namespace BrunoGUI_GenII
         {   // Affiche l'échec et mat du camp en paramètre, et gère la fin de partie
             // (le "#" du mat est déjà dans les notations du dernier coup : voir LogiqueMouvements.ExecutionCoup)
             if (couleurMatee == ColorPiece.Blanc)
-                GestionResultat("0-1", " Gain Noir");
+                GestionResultat("0-1", T("Gain Noir"));
             else
-                GestionResultat("1-0", " Gain Blanc");
-            InformationPourJoueur.Text = VarianteMoteurCourante.Text = "Le Roi " + NomCouleur(couleurMatee) + " est échec et mat";
-            StatusProgramme.Text = "Partie terminée";
+                GestionResultat("1-0", T("Gain Blanc"));
+            InformationPourJoueur.Text = VarianteMoteurCourante.Text = T("Le roi {0} est échec et mat", NomCouleur(couleurMatee));
+            StatusProgramme.Text = T("Partie terminée");
             PlateauEnable(false);
         }
 
@@ -415,8 +439,8 @@ namespace BrunoGUI_GenII
 
         private void AffichePat(ColorPiece couleurPat)
         {   // Un des joueurs est pat : fin de la partie
-            GestionResultat("1/2-1/2", "Pat (Nulle)");
-            InformationPourJoueur.Text = "Pat (Nulle)";
+            GestionResultat("1/2-1/2", T("Pat (Nulle)"));
+            InformationPourJoueur.Text = T("Pat (Nulle)");
             PlateauEnable(false);
         }
         private LogiqueMouvements.TypePiece AffichePromotionPion(LogiqueMouvements.ColorPiece couleur)
@@ -463,15 +487,15 @@ namespace BrunoGUI_GenII
 
         private void BoutonGainBlanc_Click(object? sender, EventArgs e)
         {   // Si un des joueurs abandonne, c'est la règle de l'abandon
-            GestionResultat("1-0", " Gain Blanc");
+            GestionResultat("1-0", T("Gain Blanc"));
         }
         private void BoutonGainNoir_Click(object? sender, EventArgs e)
         {   // Si un des joueurs abandonne, c'est la règle de l'abandon
-            GestionResultat("0-1", " Gain Noir");
+            GestionResultat("0-1", T("Gain Noir"));
         }
         private void BoutonNulle_Click(object? sender, EventArgs e)
         {   // Si un des joueurs propose la nulle et que l'autre accepte, c'est la règle de la nulle par accord mutuel
-            GestionResultat("1/2-1/2", " Nulle");
+            GestionResultat("1/2-1/2", T("Nulle"));
         }
         private void GestionResultat(string resultat, string vainqueur)
         {   // Fin de partie : on affiche le résultat et le vainqueur, on désactive les boutons de gain/nulle,
@@ -481,7 +505,7 @@ namespace BrunoGUI_GenII
             PartieEnCours.Result = EvaluationUci.Text = resultat;
             ScoreMoteur.Text = vainqueur;
             InformationsPartie.Text = resultat + "  (" + vainqueur + ")";
-            StatusProgramme.Text = "Partie terminée";
+            StatusProgramme.Text = T("Partie terminée");
             _partie.Terminer();     // le retour arrière reste possible pour reprendre la partie (Partie.AnnulerDernierCoup)
             _pauseJoueur = false;   // (ex : abandon déclaré pendant une pause)
             _pendule?.Arreter();    // les temps restent affichés
@@ -495,8 +519,8 @@ namespace BrunoGUI_GenII
         private void HumainOrdinateur_Click(object? sender, EventArgs e)
         {   // L'humain joue les blancs, l'ordinateur les noirs.
             // On demande d'abord confirmation (la partie est remise à zéro) : "Annuler" laisse la partie en cours intacte
-            string confirmation = "Vous aurez les Blancs contre " + _nomMoteur + ". " + "\nToute position précédente sera effacée,\n confirmez avec OK, sinon Annuler";
-            DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Le joueur a les Blancs, l'ordinateur les Noirs ", KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
+            string confirmation = T("Vous aurez les Blancs contre {0}.\nToute position précédente sera effacée,\n confirmez avec OK, sinon Annuler", _nomMoteur);
+            DialogResult Resultat = KryptonMessageBox.Show(confirmation, T("Le joueur a les Blancs, l'ordinateur les Noirs"), KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
             if (Resultat == DialogResult.OK)
             {
                 AbandonneReflexion();   // nouvelle partie
@@ -507,15 +531,15 @@ namespace BrunoGUI_GenII
                 if (_vue.CoteNoir)
                     TourneEchiquier();
                 AfficheCoupsBibliotheque(FenDepart);
-                ParametresJoueurHumain("A vous de jouer");            // On demande à l'humain de jouer
+                ParametresJoueurHumain(T("A vous de jouer"));            // On demande à l'humain de jouer
                 PlateauEnable(true);                                            // On lui permet de bouger les pièces
             }
         }
         private void OrdinateurHumain_Click(object? sender, EventArgs e)
         {   // L'ordinateur joue les blancs, l'humain les noirs.
             // On demande d'abord confirmation (la partie est remise à zéro) : "Annuler" laisse la partie en cours intacte
-            string confirmation = "Vous aurez les Noirs contre " + _nomMoteur + ". " + "\nToute position précédente sera effacée,\n confirmez avec OK, sinon Annuler";
-            DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Le joueur a les Noirs, l'ordinateur les Blancs ", KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
+            string confirmation = T("Vous aurez les Noirs contre {0}.\nToute position précédente sera effacée,\n confirmez avec OK, sinon Annuler", _nomMoteur);
+            DialogResult Resultat = KryptonMessageBox.Show(confirmation, T("Le joueur a les Noirs, l'ordinateur les Blancs"), KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
             if (Resultat == DialogResult.OK)
             {
                 AbandonneReflexion();   // nouvelle partie
@@ -525,23 +549,22 @@ namespace BrunoGUI_GenII
                 AfficheJoueursDeLaPartie();
                 if (!_vue.CoteNoir)
                     TourneEchiquier();                                          // On met la vue côté Noir
-                ParametresJoueurHumain("Le moteur UCI joue");
+                ParametresJoueurHumain(T("Le moteur UCI joue"));
                 JeuMoteurAvecBibliotheque(FenDepart);
             }
         }
         private void HumainContreHumain_Click(object? sender, EventArgs e)
         {   // 2 joueurs humains s'affrontent, pas de moteur UCI.
             // On demande d'abord confirmation (la partie est remise à zéro) : "Annuler" laisse la partie en cours intacte
-            string confirmation = "Vous jouez contre votre ami/partenaire,\n" + "ou vous saisissez une partie ...\n" +
-                "Toute position précédente sera effacée,\n confirmez avec OK, sinon Annuler";
-            DialogResult Resultat = KryptonMessageBox.Show(confirmation, "Jeu entre amis, ou saisie de partie", KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
+            string confirmation = T("Vous jouez contre votre ami/partenaire,\nou vous saisissez une partie ...\nToute position précédente sera effacée,\n confirmez avec OK, sinon Annuler");
+            DialogResult Resultat = KryptonMessageBox.Show(confirmation, T("Jeu entre amis, ou saisie de partie"), KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
             if (Resultat == DialogResult.OK)
             {
                 AbandonneReflexion();   // nouvelle partie
                 QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
-                AfficheJoueurs(_nomHumain, _joueurElo, "Adversaire", "");
-                StatusProgramme.Text = "Humain contre humain";
-                InformationsPartie.Text = " Bruno vous souhaite une bonne partie !";
+                AfficheJoueurs(_nomHumain, _joueurElo, T("Adversaire"), "");
+                StatusProgramme.Text = T("Humain contre humain");
+                InformationsPartie.Text = " " + T("Bruno vous souhaite une bonne partie !");
                 MoteurUci.ActiveLimiteElo();        // Préparation du moteur en cas de demande d'analyse
                 MoteurUci.DefinitLimiteElo("3190");
                 MoteurUci.DefinitMultiPV(MoteurUci.NombreLignesPV);
@@ -604,8 +627,8 @@ namespace BrunoGUI_GenII
                                        || ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException)
             {
                 Journal.Erreur("Démarrage du moteur " + chemin, ex);
-                void Message() => KryptonMessageBox.Show($"Le moteur n'a pas pu être lancé :\n{chemin}\n\n{ex.Message}\n\n" +
-                    "Choisissez un autre moteur dans le menu.", "Moteur UCI", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+                void Message() => KryptonMessageBox.Show(T("Le moteur n'a pas pu être lancé :\n{0}\n\n{1}\n\nChoisissez un autre moteur dans le menu.", chemin, ex.Message),
+                    T("Moteur UCI"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
                 if (!SurLeThreadInterface(Message))
                     Message();
                 return false;
@@ -677,7 +700,7 @@ namespace BrunoGUI_GenII
         {   // Arrête le moteur UCI (utilise si réflexion infinie)
             timer.Stop();
             MoteurUci.StandardInputDataToUci("stop");
-            InformationPourJoueur.Text = "Arrêt réflexion Moteur ";
+            InformationPourJoueur.Text = T("Arrêt réflexion Moteur");
         }
 
         private void CaseSombre_Click(object? sender, EventArgs e)
@@ -706,12 +729,12 @@ namespace BrunoGUI_GenII
             {   // Plus aucun coup jouable : mat ou pat, rien à analyser
                 bool mat = LogiqueMouvements.CalculerSur(position, LogiqueMouvements.CampAuTraitEnEchec);
                 MiseaZeroVariantes();
-                InformationPourJoueur.Text = "Analyse inutile ...";
-                InformationsPartie.Text = "La position est terminée ...";
-                KryptonMessageBox.Show(mat ? "La position est un mat." : "La position est un pat.", "Analyse inutile");
+                InformationPourJoueur.Text = T("Analyse inutile ...");
+                InformationsPartie.Text = T("La position est terminée ...");
+                KryptonMessageBox.Show(mat ? T("La position est un mat.") : T("La position est un pat."), T("Analyse inutile"));
                 return;
             }
-            InformationPourJoueur.Text = StatusProgramme.Text = "Analyse de la position ...";
+            InformationPourJoueur.Text = StatusProgramme.Text = T("Analyse de la position ...");
             _pilote.DemanderAnalyse(position, _dureeReflexionMilliSeconde);   // les variantes du moteur seront converties sur cette position
             _pendule?.Pause();  // l'analyse est une aide : la pendule s'arrête pendant ce temps (voir MinuteriePendule_Tick)
             AffichePendules();
@@ -741,7 +764,7 @@ namespace BrunoGUI_GenII
             _vue.EffaceDernierCoup();
             bool etaitTerminee = _partie.Mode == ModePartie.Terminee;
             if (!_partie.AnnulerDernierCoup())      // retire le dernier 1/2 coup et rétablit la position (jamais avant la position de départ)
-                _ = KryptonMessageBox.Show("Pas assez de coups joués \nPas de retour arrière possible", "Retour impossible", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                _ = KryptonMessageBox.Show(T("Pas assez de coups joués \nPas de retour arrière possible"), T("Retour impossible"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
             else
             {
                 if (etaitTerminee)
@@ -754,18 +777,18 @@ namespace BrunoGUI_GenII
                     _pendule?.Arreter();
                 AffichePendules();
                 AfficheCoupsBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
-                InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + NomCamp(QuiJoue);
+                InformationPourJoueur.Text = StatusProgramme.Text = T("Trait aux {0}", NomCamp(QuiJoue));
                 // Dernière case de la barre d'état : le dernier coup qui reste (celui annulé y était encore)
                 Coup? dernierCoup = LogiqueMouvements.ListeCoups.LastOrDefault(c => !c.EstPositionDeDepart);
-                VarianteMoteurCourante.Text = dernierCoup != null ? "Coup joué : " + dernierCoup.PgnFrNumerote : "Position de départ";
-                InformationsPartie.Text = _partie.Blancs == Joueur.Moteur ? "L'ordinateur joue les Blancs" :
-                          _partie.Noirs == Joueur.Moteur ? "L'ordinateur joue les Noirs" :
-                          "L'ordinateur ne joue pas cette partie";
+                VarianteMoteurCourante.Text = dernierCoup != null ? T("Coup joué : {0}", Notation(dernierCoup.PgnFrNumerote)) : T("Position de départ");
+                InformationsPartie.Text = _partie.Blancs == Joueur.Moteur ? T("L'ordinateur joue les Blancs") :
+                          _partie.Noirs == Joueur.Moteur ? T("L'ordinateur joue les Noirs") :
+                          T("L'ordinateur ne joue pas cette partie");
                 // Un demi-coup par clic (choix de Bruno) : au joueur de jouer, sauf si c'est au tour du moteur (il faut alors
                 // un 2e retour arrière, ou "Ordinateur joue") ; le message le dit, l'échiquier bloqué ne doit pas surprendre
                 PlateauEnable(!_partie.MoteurAuTrait);
                 VarianteMoteurUci2.Text = _partie.MoteurAuTrait
-                    ? $"   Au tour de {_nomMoteur} : encore « Retour arrière » pour revenir à votre coup, ou « Ordinateur joue »" : "...";
+                    ? "   " + T("Au tour de {0} : encore « Retour arrière » pour revenir à votre coup, ou « Ordinateur joue »", _nomMoteur) : "...";
             }
             MetAJourCommandes();
         }
@@ -783,7 +806,7 @@ namespace BrunoGUI_GenII
                 fichierPartiePgn.Show();
         }
         private void MetAJourBoutonListeParties() =>
-            MontrePartiesPGN.Text = fichierPartiePgn.Visible ? "Masque liste parties" : "Affiche liste parties";
+            MontrePartiesPGN.Text = fichierPartiePgn.Visible ? T("Masque liste parties") : T("Affiche liste parties");
         private void VisualisationPgn_Click(object? sender, EventArgs e)
         {   // Bouton pour voir la partie en PGN
             if (affichePgn == null || affichePgn.IsDisposed)
@@ -813,13 +836,13 @@ namespace BrunoGUI_GenII
         private void MontreVariantesUci_Click(object? sender, EventArgs e)
         {   // Affiche ou masque les 3 variantes UCI (info multiPV) à chaque clic
             _montre3VariantesUci = !_montre3VariantesUci;
-            MontreVariantesUci.Text = _montre3VariantesUci ? "Affiche variantes UCI" : "Masque variantes UCI";
+            MontreVariantesUci.Text = _montre3VariantesUci ? T("Affiche variantes UCI") : T("Masque variantes UCI");
             VarianteMoteurUci1.Visible = VarianteMoteurUci2.Visible = VarianteMoteurUci3.Visible = !_montre3VariantesUci;
         }
         private void MontreDonneesUci_Click(object? sender, EventArgs e)
         {   // Affiche ou masque les données brutes UCI (info, bestmove, etc.) à chaque clic
             _montreDonneesBrutesUci = !_montreDonneesBrutesUci;
-            MontreDonneesUci.Text = _montreDonneesBrutesUci ? "Masque protocole UCI" : "Affiche protocole UCI";
+            MontreDonneesUci.Text = _montreDonneesBrutesUci ? T("Masque protocole UCI") : T("Affiche protocole UCI");
             if (_montreDonneesBrutesUci) donneesBrutesUci.Show();   // On affiche les données brutes UCI
             else donneesBrutesUci.Hide();                           // On masque les données brutes UCI
             donneesBrutesUci.DonneesBrutesVue.ScrollToCaret();      // Pour garder l'affichage dans toute la fenêtre
@@ -887,7 +910,7 @@ namespace BrunoGUI_GenII
             //                identifiants sans accents, types nullables, tests xUnit
             // (le numéro de version vient du .csproj, <Version> : il n'est plus écrit ici)
             _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version " + VersionAffichee + "\n--  Bruno COURTOIS  -- " +
-                                                                    "\n Copyright © 2026", "A propos de",
+                                                                    "\n Copyright © 2026", T("A propos de"),
                 KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
         }
         private void KryptonApropos_Click(object? sender, EventArgs e)
@@ -912,9 +935,9 @@ namespace BrunoGUI_GenII
         }
         private bool DemandeInstallation(MiseAJourStockfish.VersionStockfish version)
         {   // Demande l'accord avant de télécharger (question posée sur le thread de l'interface)
-            string question = $"Une nouvelle version de Stockfish est disponible : {version.Tag.Replace("sf_", "Stockfish ")} " +
-                              $"({version.TailleOctets / 1_000_000} Mo).\n\nLa télécharger et l'installer maintenant ?";
-            DialogResult Demander() => KryptonMessageBox.Show(question, "Mise à jour de Stockfish", KryptonMessageBoxButtons.YesNo, KryptonMessageBoxIcon.Question);
+            string question = T("Une nouvelle version de Stockfish est disponible : {0} ({1} Mo).\n\nLa télécharger et l'installer maintenant ?",
+                                version.Tag.Replace("sf_", "Stockfish "), version.TailleOctets / 1_000_000);
+            DialogResult Demander() => KryptonMessageBox.Show(question, T("Mise à jour de Stockfish"), KryptonMessageBoxButtons.YesNo, KryptonMessageBoxIcon.Question);
             DialogResult reponse = InvokeRequired ? (DialogResult)Invoke(new Func<DialogResult>(Demander)) : Demander();
             return reponse == DialogResult.Yes;
         }
@@ -922,7 +945,7 @@ namespace BrunoGUI_GenII
         {   // 1. On prépare l'UI
             BtnMiseAJour.Enabled = false;
             Cursor = Cursors.WaitCursor;
-            VarianteMoteurUci2.Text = "Vérification de la version courante de Stockfish...";
+            VarianteMoteurUci2.Text = T("Vérification de la version courante de Stockfish...");
             try
             {   // 2. Recherche, puis installation après accord
                 MiseAJourStockfish maj = new(CheminStockfish);
@@ -930,16 +953,16 @@ namespace BrunoGUI_GenII
                 parametres.DerniereVerificationMiseAJour = DateTime.Today;
                 if (version == null)
                 {
-                    VarianteMoteurUci2.Text = "Stockfish est à jour !";
-                    KryptonMessageBox.Show("Vous avez déjà la dernière version.", "Stockfish", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                    VarianteMoteurUci2.Text = T("Stockfish est à jour !");
+                    KryptonMessageBox.Show(T("Vous avez déjà la dernière version."), "Stockfish", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                     return;
                 }
                 if (!DemandeInstallation(version))
                 {
-                    VarianteMoteurUci2.Text = "Prêt";
+                    VarianteMoteurUci2.Text = T("Prêt");
                     return;
                 }
-                VarianteMoteurUci2.Text = "Téléchargement et installation de Stockfish...";
+                VarianteMoteurUci2.Text = T("Téléchargement et installation de Stockfish...");
                 bool stockfishEnCours = string.Equals(Path.GetFullPath(_cheminMoteur), CheminStockfish, StringComparison.OrdinalIgnoreCase);
                 if (stockfishEnCours)
                     AbandonneReflexion();   // l'installation arrête Stockfish : sa réflexion en cours n'aurait jamais de réponse
@@ -951,16 +974,16 @@ namespace BrunoGUI_GenII
                     if (_partie.MoteurAuTrait)      // il devait jouer : on lui redemande son coup
                         JeuMoteurAvecBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
                 }
-                VarianteMoteurUci2.Text = "Stockfish est à jour !";
-                KryptonMessageBox.Show($"{version.Tag.Replace("sf_", "Stockfish ")} est installé." +
-                                       (stockfishEnCours ? "\nSes réglages de force seront appliqués à la prochaine nouvelle partie." : ""),
+                VarianteMoteurUci2.Text = T("Stockfish est à jour !");
+                KryptonMessageBox.Show(T("{0} est installé.", version.Tag.Replace("sf_", "Stockfish ")) +
+                                       (stockfishEnCours ? "\n" + T("Ses réglages de force seront appliqués à la prochaine nouvelle partie.") : ""),
                                        "Stockfish", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
             }
             catch (Exception ex)
             {   // On gère les messages (ex: "Déjà à jour" ou "Pas de connexion") ; causes trop variées pour être listées
                 Journal.Info("Mise à jour de Stockfish non faite : " + ex.Message);
-                VarianteMoteurUci2.Text = "Prêt";
-                KryptonMessageBox.Show(ex.Message, "Mise à jour", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                VarianteMoteurUci2.Text = T("Prêt");
+                KryptonMessageBox.Show(ex.Message, T("Mise à jour"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
             }
             finally
             {
@@ -974,7 +997,7 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void EchiquierPrincipal_FormClosing(object? sender, FormClosingEventArgs e)
         {   // Demande de confirmation avant de quitter l'application
-            if (KryptonMessageBox.Show("Quitter l'application ?", "Confirmer",
+            if (!_redemarrageDemande && KryptonMessageBox.Show(T("Quitter l'application ?"), T("Confirmer"),
                 KryptonMessageBoxButtons.YesNo, KryptonMessageBoxIcon.Question) == DialogResult.No)
             {
                 e.Cancel = true; // Annule la fermeture
@@ -1035,7 +1058,7 @@ namespace BrunoGUI_GenII
         private void TempsReflexionSecondes_ValueChanged(object? sender, EventArgs e)
         {   // Temps de réflexion (secondes) : analyses, et coups du moteur dans une partie sans pendule
             _dureeReflexionMilliSeconde = (int)TempsReflexionSecondes.Value * 1000;
-            InformationsPartie.Text = "Temps de réflexion = " + (_dureeReflexionMilliSeconde / 1000).ToString() + " secondes";
+            InformationsPartie.Text = T("Temps de réflexion = {0} secondes", _dureeReflexionMilliSeconde / 1000);
         }
         private void ActiveBibliotheque_CheckedChanged(object? sender, EventArgs e)
         {   // Activer ou non la bibliothèque (on lit la case : une bascule se décalerait si l'état initial différait)
@@ -1145,7 +1168,7 @@ namespace BrunoGUI_GenII
             if (morceaux.Length == 3)
                 date = string.Join("/", morceaux.Reverse().Where(m => m.All(char.IsDigit) && m != ""));
             string ronde = Valeur(PartieEnCours.Ronde);
-            string details = string.Join("  ·  ", new[] { ronde != "" ? "Ronde " + ronde : "", date }.Where(t => t != ""));
+            string details = string.Join("  ·  ", new[] { ronde != "" ? T("Ronde {0}", ronde) : "", date }.Where(t => t != ""));
             string tournoi = Valeur(PartieEnCours.Tournoi), lieu = Valeur(PartieEnCours.Lieu);
             if (LabelTournoi.Text == tournoi && LabelDetailsTournoi.Text == details)
                 return;
@@ -1213,10 +1236,10 @@ namespace BrunoGUI_GenII
             {
                 Debug.WriteLine("[Bibliothèque] " + ex.Message);
                 if (!PolyglotBibliotheque.Disponible)
-                    CoupsBibliotheque.Text = "Aucune bibliothèque d'ouvertures";
-                KryptonMessageBox.Show(ex.Message + (PolyglotBibliotheque.Disponible ? "\n\nLa bibliothèque précédente reste utilisée."
-                                                                                     : "\n\nLe moteur jouera sans bibliothèque d'ouvertures."),
-                    "Bibliothèque d'ouvertures", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+                    CoupsBibliotheque.Text = T("Aucune bibliothèque d'ouvertures");
+                KryptonMessageBox.Show(ex.Message + "\n\n" + (PolyglotBibliotheque.Disponible ? T("La bibliothèque précédente reste utilisée.")
+                                                                                     : T("Le moteur jouera sans bibliothèque d'ouvertures.")),
+                    T("Bibliothèque d'ouvertures"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
                 return false;
             }
             CoupsBibliotheque.SelectAll();
@@ -1238,7 +1261,7 @@ namespace BrunoGUI_GenII
         private void MiseaZeroParcours()
         {
             VarianteMoteurUci2.Text = VarianteMoteurUci3.Text = "...";
-            StatusProgramme.Text = InformationsPartie.Text = "Parcours partie";
+            StatusProgramme.Text = InformationsPartie.Text = T("Parcours partie");
         }
 
 

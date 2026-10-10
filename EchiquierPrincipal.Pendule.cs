@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Krypton.Toolkit;
 using static BrunoGUI_GenII.GestionPartiePgn;
+using static BrunoGUI_GenII.Langue;
 using static BrunoGUI_GenII.LogiqueMouvements;
 using static BrunoGUI_GenII.Parametres;
 
@@ -48,7 +49,7 @@ namespace BrunoGUI_GenII
             if (_pauseJoueur)
             {
                 FinPause();
-                InformationsPartie.Text = "Partie reprise";
+                InformationsPartie.Text = T("Partie reprise");
                 if (_partie.MoteurAuTrait && _pilote.Demande == TypeDemande.Aucune)
                     JeuMoteurAvecBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());     // sa réflexion avait été interrompue
             }
@@ -57,7 +58,7 @@ namespace BrunoGUI_GenII
                 AbandonneReflexion();   // le moteur s'arrête de réfléchir (sinon il jouerait pendant la pause) ; il recommencera à la reprise
                 _pendule.Pause();
                 _pauseJoueur = true;
-                InformationsPartie.Text = "En pause (clic pour reprendre)";     // le cadre vert est court : ~30 caractères
+                InformationsPartie.Text = T("En pause (clic pour reprendre)");     // le cadre vert est court : ~30 caractères
                 MetAJourCommandes();
             }
             AffichePendules();
@@ -85,7 +86,7 @@ namespace BrunoGUI_GenII
                 return;
             _cadence = cadence;
             maNouvellePartieForceModule.ChoixCadence = cadence;
-            InformationsPartie.Text = "Pendule " + cadence.Nom + " : à la prochaine partie";
+            InformationsPartie.Text = T("Pendule {0} : à la prochaine partie", cadence.Nom);
         }
         private void NouvellePendule()
         {   // Début d'une partie : pendule de la cadence choisie, temps complets affichés. Elle ne démarre qu'au premier coup
@@ -125,11 +126,11 @@ namespace BrunoGUI_GenII
         private void PerteAuTemps(ColorPiece campSansTemps)
         {   // Le temps du camp est écoulé : il perd, sauf si l'adversaire n'a pas de quoi mater (nulle)
             ColorPiece adversaire = Adversaire(campSansTemps);
-            string message = "Temps écoulé pour les " + NomCamp(campSansTemps);
+            string message = T("Temps écoulé pour les {0}", NomCamp(campSansTemps));
             if (LogiqueMouvements.PeutMater(adversaire))
-                GestionResultat(adversaire == ColorPiece.Blanc ? "1-0" : "0-1", " Gain " + NomCouleur(adversaire) + " (temps)");
+                GestionResultat(adversaire == ColorPiece.Blanc ? "1-0" : "0-1", adversaire == ColorPiece.Blanc ? T("Gain Blanc (temps)") : T("Gain Noir (temps)"));
             else
-                GestionResultat("1/2-1/2", "Nulle (temps écoulé, matériel insuffisant)");
+                GestionResultat("1/2-1/2", T("Nulle (temps écoulé, matériel insuffisant)"));
             InformationPourJoueur.Text = VarianteMoteurCourante.Text = message;
         }
         private void AffichePendules()
