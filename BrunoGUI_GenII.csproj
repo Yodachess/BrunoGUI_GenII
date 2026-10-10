@@ -54,9 +54,6 @@
     <None Update="Langues\*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="AideBrunoGUI.rtf">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="BibliothèquesPolyglot\baron30.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
