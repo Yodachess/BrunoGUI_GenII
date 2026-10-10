@@ -33,9 +33,8 @@ jobs:
           if ("v$version" -ne "${{ github.ref_name }}") { throw "Le tag ${{ github.ref_name }} ne correspond pas à la version du .csproj ($version)" }
           Write-Host "Version $version"
 
-      # SignManifests=false : le certificat de signature ClickOnce n'existe que sur le PC de développement
       - name: Compilation
-        run: dotnet build BrunoGUI_GenII.sln -c Release -p:SignManifests=false
+        run: dotnet build BrunoGUI_GenII.sln -c Release
 
       - name: Tests (une version n'est publiée que si tous les tests passent)
         run: dotnet run --project Tests -c Release --no-build -- --complet
