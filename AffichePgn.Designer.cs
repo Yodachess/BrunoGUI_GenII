@@ -123,7 +123,7 @@ namespace BrunoGUI_GenII
             MasqueAffichePgn.StateCommon.Border.Width = 3;
             MasqueAffichePgn.TabIndex = 4;
             MasqueAffichePgn.Values.DropDownArrowColor = System.Drawing.Color.Empty;
-            MasqueAffichePgn.Values.Text = "Femer";
+            MasqueAffichePgn.Values.Text = "Fermer";
             MasqueAffichePgn.Click += MasqueAffichePgn_Click;
             // 
             // AffichePgnFr

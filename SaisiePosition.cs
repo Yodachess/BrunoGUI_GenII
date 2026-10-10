@@ -19,6 +19,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using Krypton.Toolkit;
+using static BrunoGUI_GenII.Langue;
 using static BrunoGUI_GenII.LogiqueMouvements;
 
 namespace BrunoGUI_GenII
@@ -41,14 +42,14 @@ namespace BrunoGUI_GenII
 
         private readonly Zone _plateau = new() { Location = new Point(12, 12), Size = new Size(8 * TailleCase, 8 * TailleCase), Cursor = Cursors.Hand };
         private readonly List<(TypePiece Piece, Zone Case)> _palette = [];
-        private readonly KryptonRadioButton _traitBlancs = new() { Text = "Blancs", Location = new Point(500, 170), Width = 80 };
-        private readonly KryptonRadioButton _traitNoirs = new() { Text = "Noirs", Location = new Point(590, 170), Width = 80 };
+        private readonly KryptonRadioButton _traitBlancs = new() { Text = T("Blancs"), Location = new Point(500, 170), Width = 80 };
+        private readonly KryptonRadioButton _traitNoirs = new() { Text = T("Noirs"), Location = new Point(590, 170), Width = 80 };
         private readonly Dictionary<DroitRoque, KryptonCheckBox> _roques = new()
         {
-            [DroitRoque.PetitBlanc] = new() { Text = "O-O blanc", Location = new Point(440, 216) },
-            [DroitRoque.GrandBlanc] = new() { Text = "O-O-O blanc", Location = new Point(580, 216) },
-            [DroitRoque.PetitNoir] = new() { Text = "O-O noir", Location = new Point(440, 240) },
-            [DroitRoque.GrandNoir] = new() { Text = "O-O-O noir", Location = new Point(580, 240) }
+            [DroitRoque.PetitBlanc] = new() { Text = T("O-O blanc"), Location = new Point(440, 216) },
+            [DroitRoque.GrandBlanc] = new() { Text = T("O-O-O blanc"), Location = new Point(580, 216) },
+            [DroitRoque.PetitNoir] = new() { Text = T("O-O noir"), Location = new Point(440, 240) },
+            [DroitRoque.GrandNoir] = new() { Text = T("O-O-O noir"), Location = new Point(580, 240) }
         };
         private readonly KryptonComboBox _enPassant = new() { Location = new Point(512, 270), Width = 60, DropDownStyle = ComboBoxStyle.DropDownList };
         private readonly KryptonNumericUpDown _numero = new() { Location = new Point(640, 270), Width = 70, Minimum = 1, Maximum = 999 };
@@ -69,7 +70,7 @@ namespace BrunoGUI_GenII
             _caseClaire = caseClaire;
             _caseSombre = caseSombre;
             _coteNoir = coteNoir;
-            Text = "Saisie position";
+            Text = T("Saisie position");
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = MinimizeBox = false;
@@ -80,10 +81,10 @@ namespace BrunoGUI_GenII
             _plateau.MouseDown += ClicSurPlateau;
             Controls.Add(_plateau);
             CreePalette();
-            Controls.Add(Libelle("Trait", 440, 172));
+            Controls.Add(Libelle(T("Trait"), 440, 172));
             Controls.AddRange([_traitBlancs, _traitNoirs]);
             _traitBlancs.CheckedChanged += (s, e) => ChangeTrait();
-            Controls.Add(Libelle("Roques", 440, 198));
+            Controls.Add(Libelle(T("Roques"), 440, 198));
             foreach ((DroitRoque roque, KryptonCheckBox caseRoque) in _roques)
             {
                 caseRoque.Width = 130;
@@ -95,7 +96,7 @@ namespace BrunoGUI_GenII
                 };
                 Controls.Add(caseRoque);
             }
-            Controls.Add(Libelle("En passant", 440, 272));
+            Controls.Add(Libelle(T("En passant"), 440, 272));
             _enPassant.SelectedIndexChanged += (s, e) =>
             {
                 if (_miseAJour) return;
@@ -103,7 +104,7 @@ namespace BrunoGUI_GenII
                 MetAJour();
             };
             Controls.Add(_enPassant);
-            Controls.Add(Libelle("Coup n°", 584, 272));
+            Controls.Add(Libelle(T("Coup n°"), 584, 272));
             _numero.ValueChanged += (s, e) =>
             {
                 if (_miseAJour) return;
@@ -111,16 +112,16 @@ namespace BrunoGUI_GenII
                 MetAJour();
             };
             Controls.Add(_numero);
-            Controls.Add(Bouton("Vider", 440, 304, 130, (s, e) => { _editeur.Vider(); MetAJour(); }));
-            Controls.Add(Bouton("Position initiale", 580, 304, 130, (s, e) => { _editeur.PositionInitiale(); MetAJour(); }));
-            Controls.Add(Bouton("Tourner", 440, 336, 130, (s, e) => { _coteNoir = !_coteNoir; _plateau.Invalidate(); }));
-            Controls.Add(Bouton("Copier FEN", 580, 336, 130, (s, e) => Clipboard.SetText(_editeur.Fen)));
-            Controls.Add(Bouton("Coller une FEN", 440, 368, 130, (s, e) => CollerFen()));
+            Controls.Add(Bouton(T("Vider"), 440, 304, 130, (s, e) => { _editeur.Vider(); MetAJour(); }));
+            Controls.Add(Bouton(T("Position initiale"), 580, 304, 130, (s, e) => { _editeur.PositionInitiale(); MetAJour(); }));
+            Controls.Add(Bouton(T("Tourner"), 440, 336, 130, (s, e) => { _coteNoir = !_coteNoir; _plateau.Invalidate(); }));
+            Controls.Add(Bouton(T("Copier FEN"), 580, 336, 130, (s, e) => Clipboard.SetText(_editeur.Fen)));
+            Controls.Add(Bouton(T("Coller une FEN"), 440, 368, 130, (s, e) => CollerFen()));
             Controls.Add(Libelle("FEN", 12, 442));      // FEN, OK et Annuler sur une seule ligne sous l'échiquier
             Controls.Add(_fen);
             Controls.Add(_etat);
             KryptonButton ok = Bouton("OK", 520, 438, 90, (s, e) => Valider());
-            KryptonButton annuler = Bouton("Annuler", 620, 438, 90, null);
+            KryptonButton annuler = Bouton(T("Annuler"), 620, 438, 90, null);
             annuler.DialogResult = DialogResult.Cancel;
             Controls.AddRange([ok, annuler]);
             AcceptButton = ok;
@@ -141,7 +142,7 @@ namespace BrunoGUI_GenII
         // ═══ Palette : 6 pièces blanches, 6 noires ═══
         private void CreePalette()
         {
-            Controls.Add(Libelle("Pièce à poser (clic droit sur une case : la vider)", 440, 12));
+            Controls.Add(Libelle(T("Pièce à poser (clic droit sur une case : la vider)"), 440, 12));
             TypePiece[] blanches = [TypePiece.RoiBlanc, TypePiece.ReineBlanche, TypePiece.TourBlanche, TypePiece.FouBlanc, TypePiece.CavalierBlanc, TypePiece.PionBlanc];
             TypePiece[] noires = [TypePiece.RoiNoir, TypePiece.ReineNoire, TypePiece.TourNoire, TypePiece.FouNoir, TypePiece.CavalierNoir, TypePiece.PionNoir];
             for (int i = 0; i < 6; i++)
@@ -213,7 +214,7 @@ namespace BrunoGUI_GenII
             if (e.Button == MouseButtons.Right || _editeur.Piece(index) == _pieceChoisie)
                 _editeur.Poser(index, TypePiece.Vide);      // clic droit, ou la même pièce déjà posée : la case est vidée
             else if (_pieceChoisie is TypePiece.PionBlanc or TypePiece.PionNoir && (index / 10 == 2 || index / 10 == 9))
-                _message = "Un pion ne peut pas être sur la 1re ou la 8e rangée.";
+                _message = T("Un pion ne peut pas être sur la 1re ou la 8e rangée.");
             else
                 _editeur.Poser(index, _pieceChoisie);
             MetAJour();
@@ -230,8 +231,8 @@ namespace BrunoGUI_GenII
         private void CollerFen()
         {
             string texte = Clipboard.ContainsText() ? Clipboard.GetText().Trim() : "";
-            string? erreur = texte == "" ? "le presse-papiers ne contient pas de texte" : _editeur.ChargerFen(texte.Split('\n')[0]);
-            _message = erreur != null ? $"FEN refusée : {erreur}." : "FEN collée.";
+            string? erreur = texte == "" ? T("le presse-papiers ne contient pas de texte") : _editeur.ChargerFen(texte.Split('\n')[0]);
+            _message = erreur != null ? T("FEN refusée : {0}.", erreur) : T("FEN collée.");
             MetAJour();
         }
 
@@ -254,7 +255,7 @@ namespace BrunoGUI_GenII
             _numero.Value = Math.Clamp(_editeur.NumeroCoup, (int)_numero.Minimum, (int)_numero.Maximum);
             _fen.Text = _editeur.Fen;
             string? erreur = _editeur.Erreur;
-            _etat.Text = _message ?? (erreur == null ? "Position correcte : OK pour la jouer." : $"Position incorrecte : {erreur}.");
+            _etat.Text = _message ?? (erreur == null ? T("Position correcte : OK pour la jouer.") : T("Position incorrecte : {0}.", erreur));
             _etat.ForeColor = _message == null && erreur == null ? Color.DarkGreen : Color.Firebrick;
             _miseAJour = false;
             _plateau.Invalidate();
@@ -265,7 +266,7 @@ namespace BrunoGUI_GenII
             string? erreur = _editeur.Erreur;
             if (erreur != null)
             {
-                _message = $"Impossible de jouer cette position : {erreur}.";
+                _message = T("Impossible de jouer cette position : {0}.", erreur);
                 MetAJour();
                 return;
             }

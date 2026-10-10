@@ -65,9 +65,22 @@ namespace BrunoGUI_GenII
             return lues;
         }
 
-        public static string T(string francais) =>
-            // Phrase dans la langue choisie (la phrase française si elle n'est pas traduite)
-            !EstFrancais && _traductions.TryGetValue(francais, out string? traduction) ? traduction : francais;
+        public static string T(string francais)
+        {   // Phrase dans la langue choisie (la phrase française si elle n'est pas traduite). Les espaces autour d'un texte du
+            // designer (mise en page, ex : "     Couleur Moteur") sont gardés : le fichier de traductions ne contient que le texte
+            if (EstFrancais || string.IsNullOrEmpty(francais))
+                return francais;
+            if (_traductions.TryGetValue(francais, out string? traduction))
+                return traduction;
+            string texte = francais.Trim();
+            if (texte.Length == francais.Length || texte == "" || !_traductions.TryGetValue(texte, out traduction))
+                return francais;
+            int debut = francais.IndexOf(texte, StringComparison.Ordinal);
+            return francais[..debut] + traduction + francais[(debut + texte.Length)..];
+        }
+        public static bool EstTraduite(string francais, IReadOnlyDictionary<string, string> traductions) =>
+            // (tests) La phrase a une traduction, telle quelle ou sans ses espaces de mise en page
+            traductions.ContainsKey(francais) || traductions.ContainsKey(francais.Trim());
 
         public static string T(string francais, params object?[] valeurs) =>
             // Phrase avec des valeurs : T("Trait aux {0}", camp) ; l'ordre des {0}, {1}... peut changer d'une langue à l'autre

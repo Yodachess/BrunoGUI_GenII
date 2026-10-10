@@ -25,6 +25,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Drawing;
 using System.Windows.Forms;
+using static BrunoGUI_GenII.Langue;
 using static BrunoGUI_GenII.LogiqueMouvements;
 
 namespace BrunoGUI_GenII
@@ -375,18 +376,18 @@ namespace BrunoGUI_GenII
             {
                 // Création des champs de saisie
                 // Les valeurs ne sont recopiées dans la partie qu'à l'enregistrement (SauveBalises_Click) : "Quitter" n'en garde aucune
-                tournamentCase = CreationBalisesTextBox("Tournoi :", 20, 10);
-                lieuCase = CreationBalisesTextBox("Lieu :     ", 20, 40);
-                dateCase = CreationBalisesTextBox("Date :     ", 20, 70);
-                rondeCase = CreationBalisesTextBox("Ronde :    ", 20, 100);
-                blancsCase = CreationBalisesTextBox("Blancs :   ", 20, 130);
-                noirsCase = CreationBalisesTextBox("Noirs :    ", 20, 160);
-                resultCase = CreationBalisesTextBox("Résultat :", 20, 190);
-                ecoCase = CreationBalisesTextBox("ECO :     ", 20, 220);
-                whiteeloCase = CreationBalisesTextBox("ELO Blancs :", 20, 250);
-                blackeloCase = CreationBalisesTextBox("ELO Noirs :", 20, 280);
-                plycountCase = CreationBalisesTextBox("Demi coups :", 20, 310);
-                cadenceCase = CreationBalisesTextBox("Cadence :  ", 20, 340);      // TimeControl : "180+2" = 3 min + 2 s par coup
+                tournamentCase = CreationBalisesTextBox(T("Tournoi :"), 20, 10);
+                lieuCase = CreationBalisesTextBox(T("Lieu :"), 20, 40);
+                dateCase = CreationBalisesTextBox(T("Date :"), 20, 70);
+                rondeCase = CreationBalisesTextBox(T("Ronde :"), 20, 100);
+                blancsCase = CreationBalisesTextBox(T("Blancs :"), 20, 130);
+                noirsCase = CreationBalisesTextBox(T("Noirs :"), 20, 160);
+                resultCase = CreationBalisesTextBox(T("Résultat :"), 20, 190);
+                ecoCase = CreationBalisesTextBox("ECO :", 20, 220);
+                whiteeloCase = CreationBalisesTextBox(T("ELO Blancs :"), 20, 250);
+                blackeloCase = CreationBalisesTextBox(T("ELO Noirs :"), 20, 280);
+                plycountCase = CreationBalisesTextBox(T("Demi coups :"), 20, 310);
+                cadenceCase = CreationBalisesTextBox(T("Cadence :"), 20, 340);      // TimeControl : "180+2" = 3 min + 2 s par coup
                 // Pré-remplir les champs
                 tournamentCase.Text = partieBalises.Tournoi;
                 lieuCase.Text = partieBalises.Lieu;
@@ -403,7 +404,7 @@ namespace BrunoGUI_GenII
                 // Boutons
                 sauveEnTete = new KryptonButton
                 {
-                    Text = "Enregistrer En-têtes", // ✅ Utilise simplement `Text`
+                    Text = T("Enregistrer En-têtes"),
                     Location = new Point(20, 380),
                     Width = 110
                 };
@@ -412,7 +413,7 @@ namespace BrunoGUI_GenII
 
                 annulerEnTete = new KryptonButton
                 {
-                    Text = "Quitter En-Têtes",
+                    Text = T("Quitter En-Têtes"),
                     Location = new Point(135, 380),
                     Width = 110
                 };
@@ -420,7 +421,7 @@ namespace BrunoGUI_GenII
                 this.Controls.Add(annulerEnTete);
 
                 // Configuration de la fenêtre
-                this.Text = "Saisie des en-têtes de parties";
+                this.Text = T("Saisie des en-têtes de parties");
                 this.Size = new Size(280, 450);
             }
             private KryptonTextBox CreationBalisesTextBox(string labelText, int x, int y)
@@ -435,7 +436,7 @@ namespace BrunoGUI_GenII
 
                 KryptonTextBox textBox = new()
                 {
-                    Location = new Point(x + label.Width + 5, y),
+                    Location = new Point(x + 100, y),      // même colonne pour tous les champs, quelle que soit la langue du libellé
                     Width = 120,
                 };
                 textBox.StateCommon.Border.DrawBorders = PaletteDrawBorders.All; // ✅ Bordure

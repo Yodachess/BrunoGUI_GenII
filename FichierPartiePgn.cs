@@ -158,6 +158,7 @@ namespace BrunoGUI_GenII
         public FichierPartiePgn()
         {
             InitializeComponent();
+            TraductionFenetres.Traduit(this);      // textes du designer dans la langue choisie (voir Langue.cs)
             FormClosing += (s, e) =>
             {   // Croix rouge : la fenêtre est seulement masquée (la fenêtre principale la réaffiche avec "Affiche liste parties")
                 if (e.CloseReason == CloseReason.UserClosing)
@@ -501,7 +502,7 @@ namespace BrunoGUI_GenII
                 }
                 else
                 {
-                    KryptonMessageBox.Show("La partie sélectionnée ne contient pas de coups", "Pas de coups dans la partie", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                    KryptonMessageBox.Show(Langue.T("La partie sélectionnée ne contient pas de coups"), Langue.T("Pas de coups dans la partie"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                     Debug.WriteLine("Erreur : La partie = null !? (sans doute vide ...)");
                 }
             }

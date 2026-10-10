@@ -22,6 +22,7 @@ namespace BrunoGUI_GenII
         public FenetreAide()
         {
             InitializeComponent();
+            TraductionFenetres.Traduit(this);      // textes du designer dans la langue choisie (voir Langue.cs)
         }
 
         private void FenetreAide_Load(object? sender, EventArgs e)

@@ -34,6 +34,7 @@ namespace BrunoGUI_GenII
         public PartieForceModule()
         {
             InitializeComponent();
+            TraductionFenetres.Traduit(this);      // textes du designer dans la langue choisie (voir Langue.cs)
             foreach (Cadence cadence in Cadence.Proposees)
                 ListePendule.Items.Add(cadence);
             ListePendule.DrawMode = DrawMode.OwnerDrawFixed;    // étoile dorée des cadences officielles
