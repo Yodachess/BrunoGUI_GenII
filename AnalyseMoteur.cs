@@ -49,16 +49,16 @@ namespace BrunoGUI_GenII
                 _ => "="
             };
         public string Appreciation => MatEn is int mat
-            ? (mat < 0 ? "Gain Noir (mat)" : "Gain Blanc (mat)")
+            ? (mat < 0 ? Langue.T("Gain Noir (mat)") : Langue.T("Gain Blanc (mat)"))
             : (Centipions ?? 0) switch
             {
-                >= 250 => "Gain Blanc (+-)",
-                > 50 => "Avantage Blanc (±)",
-                <= -250 => "Gain Noir (-+)",
-                < -50 => "Avantage Noir (∓)",
-                _ => "Égal (=)"
+                >= 250 => Langue.T("Gain Blanc (+-)"),
+                > 50 => Langue.T("Avantage Blanc (±)"),
+                <= -250 => Langue.T("Gain Noir (-+)"),
+                < -50 => Langue.T("Avantage Noir (∓)"),
+                _ => Langue.T("Égal (=)")
             };
-        public string? TexteMat => MatEn is int mat ? $"MAT en {Math.Abs(mat)} pour les {(mat < 0 ? "Noirs" : "Blancs")}" : null;
+        public string? TexteMat => MatEn is int mat ? (mat < 0 ? Langue.T("MAT en {0} pour les Noirs", Math.Abs(mat)) : Langue.T("MAT en {0} pour les Blancs", Math.Abs(mat))) : null;
     }
 
     public class LigneAnalyse

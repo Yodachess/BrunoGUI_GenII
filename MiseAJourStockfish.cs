@@ -61,7 +61,7 @@ namespace BrunoGUI_GenII
                 .Select(a => (Nom: a.GetProperty("name").GetString() ?? "", Url: a.GetProperty("browser_download_url").GetString() ?? "", Taille: a.GetProperty("size").GetInt64()))
                 .ToList();
             string nomChoisi = ChoisirArchive(archives.Select(a => a.Nom), RuntimeInformation.OSArchitecture)
-                ?? throw new Exception("Aucune archive Windows adaptée à ce processeur dans la publication " + tag + ".");
+                ?? throw new Exception(Langue.T("Aucune archive Windows adaptée à ce processeur dans la publication {0}.", tag));
             var archive = archives.First(a => a.Nom == nomChoisi);
             return new VersionStockfish(tag, archive.Url, archive.Taille);
         }
@@ -96,7 +96,7 @@ namespace BrunoGUI_GenII
                     Reessayer(() => File.Copy(nouvelExe, _cheminExe, overwrite: true));
                 });
                 if (!await DemarreCorrectement())
-                    throw new Exception("La nouvelle version de Stockfish ne démarre pas.");
+                    throw new Exception(Langue.T("La nouvelle version de Stockfish ne démarre pas."));
                 Supprimer(_cheminSauvegarde);
             }
             catch
@@ -147,7 +147,7 @@ namespace BrunoGUI_GenII
         {   // Le zip contient un dossier "stockfish" avec l'exe, les sources et la documentation : on ne garde que l'exe
             using ZipArchive archive = ZipFile.OpenRead(zip);
             ZipArchiveEntry exe = archive.Entries.FirstOrDefault(e => e.FullName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-                ?? throw new Exception("Aucun fichier .exe dans l'archive téléchargée.");
+                ?? throw new Exception(Langue.T("Aucun fichier .exe dans l'archive téléchargée."));
             exe.ExtractToFile(destination, overwrite: true);
         }
 

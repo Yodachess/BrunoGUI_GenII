@@ -39,10 +39,10 @@ namespace BrunoGUI_GenII
             // une FEN mal formée ferait planter la lecture ou donnerait une position incohérente
             string[] champs = NormaliseFen(fen).Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (champs.Length != 6)
-                return $"{champs.Length} champ(s) au lieu de 6";
+                return Langue.T("{0} champ(s) au lieu de 6", champs.Length);
             string[] rangees = champs[0].Split('/');
             if (rangees.Length != 8)
-                return $"{rangees.Length} rangée(s) au lieu de 8";
+                return Langue.T("{0} rangée(s) au lieu de 8", rangees.Length);
             int roisBlancs = 0, roisNoirs = 0;
             foreach (string rangee in rangees)
             {
@@ -58,29 +58,29 @@ namespace BrunoGUI_GenII
                         if (c == 'k') roisNoirs++;
                     }
                     else
-                        return $"caractère « {c} » inconnu dans la position";
+                        return Langue.T("caractère « {0} » inconnu dans la position", c);
                 }
                 if (cases != 8)
-                    return $"la rangée « {rangee} » a {cases} case(s) au lieu de 8";
+                    return Langue.T("la rangée « {0} » a {1} case(s) au lieu de 8", rangee, cases);
             }
             if (roisBlancs != 1 || roisNoirs != 1)
-                return "il faut exactement un roi de chaque couleur";
+                return Langue.T("il faut exactement un roi de chaque couleur");
             if (rangees[0].IndexOfAny(['p', 'P']) >= 0 || rangees[7].IndexOfAny(['p', 'P']) >= 0)
-                return "pion sur la première ou la dernière rangée";
+                return Langue.T("pion sur la première ou la dernière rangée");
             if (champs[1] is not ("w" or "b"))
-                return $"trait « {champs[1]} » au lieu de w ou b";
+                return Langue.T("trait « {0} » au lieu de w ou b", champs[1]);
             if (champs[2] != "-" && (champs[2].Any(c => !"KQkq".Contains(c)) || champs[2].Distinct().Count() != champs[2].Length))
-                return $"droits de roque « {champs[2]} » illisibles";
+                return Langue.T("droits de roque « {0} » illisibles", champs[2]);
             if (champs[3] != "-" && !(champs[3].Length == 2 && champs[3][0] is >= 'a' and <= 'h' && champs[3][1] is '3' or '6'))
-                return $"case en passant « {champs[3]} » illisible";
+                return Langue.T("case en passant « {0} » illisible", champs[3]);
             if (!int.TryParse(champs[4], out int demiCoups) || demiCoups < 0)
-                return $"compteur des 50 coups « {champs[4]} » illisible";
+                return Langue.T("compteur des 50 coups « {0} » illisible", champs[4]);
             if (!int.TryParse(champs[5], out int numero) || numero < 1)
-                return $"numéro du coup « {champs[5]} » illisible";
+                return Langue.T("numéro du coup « {0} » illisible", champs[5]);
             // Position impossible : le camp qui vient de jouer ne peut pas être resté en échec
             Position position = PositionDepuisFen(string.Join(' ', champs));
             if (CalculerSur(position, () => { QuiJoue = Adversaire(QuiJoue); return CampAuTraitEnEchec(); }))
-                return "le camp qui n'a pas le trait est en échec";
+                return Langue.T("le camp qui n'a pas le trait est en échec");
             return null;
         }
 

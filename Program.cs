@@ -30,6 +30,10 @@ namespace BrunoGUI_GenII
             Journal.Info($"Démarrage de BrunoGUI GenII {EchiquierPrincipal.VersionAffichee}");
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            // Préférences lues avant toute fenêtre : la langue (Options > Langue, voir Langue.cs) et la palette valent pour toutes
+            Parametres parametres = Parametres.Charger(Chemins.RepertoireRacine);
+            Langue.Choisir(parametres.Langue, Chemins.RepertoireRacine);
+            ConfigureKrypton(parametres.Palette);
             // *** Splash Screen ***
             EcranDemarrage demarrage = new();
             demarrage.Show();
@@ -40,7 +44,6 @@ namespace BrunoGUI_GenII
                 Application.DoEvents(); // laisse le formulaire se peindre
             }
             // *** Fin du Splash ***
-            ConfigureKrypton(Parametres.Charger(Chemins.RepertoireRacine).Palette);
             Application.Run(new EchiquierPrincipal());
         }
 
@@ -50,9 +53,8 @@ namespace BrunoGUI_GenII
             Journal.Erreur("Erreur imprévue", exception);
             try
             {
-                KryptonMessageBox.Show("Une erreur imprévue s'est produite :\n" + exception.Message +
-                    "\n\nLe détail est enregistré dans le fichier BrunoGUI.log, à côté du programme.\nVous pouvez continuer ; " +
-                    "si l'erreur se reproduit, enregistrez votre partie.", "Erreur", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Error);
+                KryptonMessageBox.Show(Langue.T("Une erreur imprévue s'est produite :\n{0}\n\nLe détail est enregistré dans le fichier BrunoGUI.log, à côté du programme.\nVous pouvez continuer ; si l'erreur se reproduit, enregistrez votre partie.", exception.Message),
+                    Langue.T("Erreur"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Error);
             }
             catch (Exception ex) when (ex is InvalidOperationException || ex is ObjectDisposedException)
             {   // application en cours de fermeture : plus de fenêtre à montrer
@@ -61,20 +63,23 @@ namespace BrunoGUI_GenII
         }
 
         private static void ConfigureKrypton(string palette)
-        {   // Textes des boutons des boîtes de message en français (Krypton 95 les affiche en anglais par défaut)
+        {   // Textes des boutons des boîtes de message en français (Krypton 95 les affiche en anglais par défaut : rien à faire en anglais)
             var textes = KryptonManager.Strings.GeneralStrings;
-            textes.OK = "O&K";
-            textes.Cancel = "&Annuler";
-            textes.Yes = "&Oui";
-            textes.No = "&Non";
-            textes.Abort = "A&bandonner";
-            textes.Retry = "&Réessayer";
-            textes.Ignore = "&Ignorer";
-            textes.Close = "&Fermer";
-            textes.Today = "Au&jourd'hui";
-            textes.Help = "Ai&de";
-            textes.Continue = "&Continuer";
-            textes.TryAgain = "Réessa&yer";
+            if (Langue.EstFrancais)
+            {
+                textes.OK = "O&K";
+                textes.Cancel = "&Annuler";
+                textes.Yes = "&Oui";
+                textes.No = "&Non";
+                textes.Abort = "A&bandonner";
+                textes.Retry = "&Réessayer";
+                textes.Ignore = "&Ignorer";
+                textes.Close = "&Fermer";
+                textes.Today = "Au&jourd'hui";
+                textes.Help = "Ai&de";
+                textes.Continue = "&Continuer";
+                textes.TryAgain = "Réessa&yer";
+            }
 
             // Palette de toute l'application (clé "Palette" de BrunoGUI.ini, ex : Microsoft365Silver) ;
             // absente ou inconnue : palette par défaut de Krypton 95 (Microsoft365Blue)

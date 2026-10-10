@@ -1304,6 +1304,56 @@ public static class Scenario
             && PeutMaterDans("4k3/8/8/8/8/8/8/R3K3 w - - 0 1", L.ColorPiece.Blanc)
             && !PeutMaterDans("4k3/8/8/8/8/8/8/R3K3 w - - 0 1", L.ColorPiece.Noir), "roi seul, roi + fou, roi + cavalier : pas de mat");
 
+        // ═══════════════ Langues ═══════════════
+        Console.WriteLine("── Langues ──");
+
+        Langue.ChoisirPourLesTests(Langue.Anglais, new() { ["Trait aux {0}"] = "{0} to move", ["Blancs"] = "White" });
+        string traitAnglais = Langue.T("Trait aux {0}", L.NomCamp(L.ColorPiece.Blanc));
+        string sansTraduction = Langue.T("Phrase sans traduction");
+        string notationAnglaise = Langue.Notation("12. Cf3 Dd8-d7 13. e8=D O-O 14. Rxe5+ Tac8 exd5 Fe5# Coup joué : Cxd4");
+        Langue.ChoisirPourLesTests(Langue.Francais, []);
+        Verifie("Langue : traduction avec valeurs, phrase non traduite gardée en français, rien ne change en français",
+            traitAnglais == "White to move" && sansTraduction == "Phrase sans traduction" && Langue.T("Trait aux {0}", "Blancs") == "Trait aux Blancs"
+            && Langue.Notation("12. Cf3") == "12. Cf3", $"{traitAnglais} | {sansTraduction}");
+        Verifie("Langue : notation des coups en anglais (pièces K, Q, R, B, N), texte autour inchangé",
+            notationAnglaise == "12. Nf3 Qd8-d7 13. e8=Q O-O 14. Kxe5+ Rac8 exd5 Be5# Coup joué : Nxd4", notationAnglaise);
+
+        // Fichier des traductions anglaises (dans le dépôt) : lisible, et toute phrase T("...") du code y est traduite, avec les
+        // mêmes {0}, {1}... ; idem pour les textes du designer de la fenêtre principale
+        string racine = AppContext.BaseDirectory;     // (projet de tests sans types nullables : null à la racine du disque)
+        while (racine != null && !File.Exists(Path.Combine(racine, "BrunoGUI_GenII.sln")))
+            racine = Path.GetDirectoryName(racine.TrimEnd(Path.DirectorySeparatorChar));
+        if (racine == null)
+            Verifie("Langue : dépôt trouvé pour vérifier les traductions", false, AppContext.BaseDirectory);
+        else
+        {
+            string json = File.ReadAllText(Langue.FichierDeLaLangue(racine, Langue.Anglais));
+            Dictionary<string, string> anglais = Langue.LireTraductions(json);
+            var clesDuFichier = System.Text.RegularExpressions.Regex.Matches(json, @"^\s*""((?:[^""\\]|\\.)*)""\s*:", System.Text.RegularExpressions.RegexOptions.Multiline)
+                .Select(m => m.Groups[1].Value).Where(c => !c.StartsWith("//")).ToList();
+            var doublons = clesDuFichier.GroupBy(c => c).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
+            static string Desechappe(string texte) => texte.Replace("\\n", "\n").Replace("\\\"", "\"").Replace("\\\\", "\\");
+            static string Valeurs(string texte) => string.Join(",", System.Text.RegularExpressions.Regex.Matches(texte, @"\{(\d+)[^}]*\}")
+                .Select(m => m.Groups[1].Value).Distinct().OrderBy(v => v));
+            List<string> phrasesDuCode = [];
+            foreach (string fichier in Directory.GetFiles(racine, "*.cs").Where(f => !f.EndsWith(".Designer.cs")))
+                phrasesDuCode.AddRange(System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(fichier), @"(?<![\w.])(?:Langue\.)?T\(\s*""((?:[^""\\]|\\.)*)""")
+                    .Select(m => Desechappe(m.Groups[1].Value)));
+            // Textes du designer de la fenêtre principale (sauf noms propres et textes remplacés au démarrage)
+            string[] nonTraduits = ["-:--", "[Elo] Joueur Blanc", "[Elo] Joueur Noir", "Affichage Variante UCI", "kryptonStatusStrip1",
+                                    "Menu Interface Graphique", "Stockfish", "Rodent IV", "Sargon I 1978"];
+            List<string> textesDesigner = System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(Path.Combine(racine, "EchiquierPrincipal.Designer.cs")),
+                    @"(?:\.|^\s*)(?:Text|Heading)\s*=\s*""((?:[^""\\]|\\.)*)""", System.Text.RegularExpressions.RegexOptions.Multiline)
+                .Select(m => Desechappe(m.Groups[1].Value)).Where(t => t.Trim() != "" && !nonTraduits.Contains(t)).ToList();
+            List<string> manquantes = phrasesDuCode.Concat(textesDesigner).Distinct().Where(p => !anglais.ContainsKey(p)).ToList();
+            List<string> valeursDifferentes = anglais.Where(p => Valeurs(p.Key) != Valeurs(p.Value) || p.Value.Trim() == "").Select(p => p.Key).ToList();
+            Verifie("Langue : toutes les phrases du code et du designer ont leur traduction anglaise (Langues\\en.json)",
+                manquantes.Count == 0 && doublons.Count == 0,
+                $"{phrasesDuCode.Distinct().Count()} phrases du code, {textesDesigner.Count} textes du designer ; manquantes : {string.Join(" | ", manquantes.Take(5))} ; doublons : {string.Join(" | ", doublons)}");
+            Verifie("Langue : chaque traduction garde les mêmes {0}, {1}... que la phrase française",
+                valeursDifferentes.Count == 0, string.Join(" | ", valeursDifferentes.Take(5)));
+        }
+
         // ═══════════════ Perft ═══════════════
         Console.WriteLine("── Perft ──");
 

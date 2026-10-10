@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Krypton.Toolkit;
 using static BrunoGUI_GenII.GestionPartiePgn;
+using static BrunoGUI_GenII.Langue;
 using static BrunoGUI_GenII.LogiqueMouvements;
 using static BrunoGUI_GenII.Parametres;
 
@@ -58,23 +59,22 @@ namespace BrunoGUI_GenII
             int positions = LogiqueMouvements.ListeCoups.Count(c => !c.EstPositionDeDepart) + 1;
             TimeSpan rapide = TimeSpan.FromMilliseconds((double)positions * DureeAnalyseParPosition);
             _infobulleBilan.SetToolTip(BoutonAnalysePartie,
-                $"Analyse rapide : {DureeAnalyseParPosition / 1000} s par position, puis bilan et coup critique.\n" +
-                $"Environ {TexteDuree(rapide)} pour cette partie ({positions} positions).");
+                T("Analyse rapide : {0} s par position, puis bilan et coup critique.\nEnviron {1} pour cette partie ({2} positions).",
+                  DureeAnalyseParPosition / 1000, TexteDuree(rapide), positions));
             _infobulleBilan.SetToolTip(BoutonAnalyseComplete,
-                $"Analyse complète : l'analyse rapide, puis les positions avant et après chaque coup douteux\n" +
-                $"(?!, ?, ??) revues {DureeApprofondissement / 1000} s pour confirmer le jugement.\n" +
-                $"Environ {TexteDuree(rapide)}, plus {2 * DureeApprofondissement / 1000} s par coup douteux.");
+                T("Analyse complète : l'analyse rapide, puis les positions avant et après chaque coup douteux\n(?!, ?, ??) revues {0} s pour confirmer le jugement.\nEnviron {1}, plus {2} s par coup douteux.",
+                  DureeApprofondissement / 1000, TexteDuree(rapide), 2 * DureeApprofondissement / 1000));
         }
         private void LanceAnalyseDePartie(bool complete)
         {
             if (!LogiqueMouvements.ListeCoups.Any(c => !c.EstPositionDeDepart))
             {
-                KryptonMessageBox.Show("Aucun coup à analyser.", "Analyse de la partie", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                KryptonMessageBox.Show(T("Aucun coup à analyser."), T("Analyse de la partie"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                 return;
             }
             if (_pilote.Demande == TypeDemande.CoupDePartie)
             {
-                KryptonMessageBox.Show(_nomMoteur + " réfléchit à son coup : attendez qu'il ait joué.", "Analyse de la partie",
+                KryptonMessageBox.Show(T("{0} réfléchit à son coup : attendez qu'il ait joué.", _nomMoteur), T("Analyse de la partie"),
                     KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                 return;
             }
@@ -91,7 +91,7 @@ namespace BrunoGUI_GenII
             BarreAnalysePartie.Value = 0;
             BarreAnalysePartie.Visible = true;
             EffaceBilan();
-            InformationsPartie.Text = "Analyse de la partie...";
+            InformationsPartie.Text = T("Analyse de la partie...");
             MetAJourCommandes();        // échiquier bloqué
             AnalysePositionSuivante();
         }
@@ -110,8 +110,8 @@ namespace BrunoGUI_GenII
             int total = approfondissement ? _analyseDePartie.NombreAApprofondir : _analyseDePartie.NombreAAnalyser;
             BarreAnalysePartie.Maximum = Math.Max(1, total);
             BarreAnalysePartie.Value = Math.Min(BarreAnalysePartie.Maximum, faites);
-            BoutonAnalysePartie.Values.Text = approfondissement ? $"Interrompre (vérif. {faites + 1}/{total})" : $"Interrompre ({faites + 1}/{total})";
-            InformationsPartie.Text = approfondissement ? $"Vérification des coups douteux ({DureeApprofondissement / 1000} s)..." : "Analyse de la partie...";
+            BoutonAnalysePartie.Values.Text = approfondissement ? T("Interrompre (vérif. {0}/{1})", faites + 1, total) : T("Interrompre ({0}/{1})", faites + 1, total);
+            InformationsPartie.Text = approfondissement ? T("Vérification des coups douteux ({0} s)...", DureeApprofondissement / 1000) : T("Analyse de la partie...");
             _pilote.DemanderAnalyse(LogiqueMouvements.PositionDepuisFen(_analyseDePartie.Positions[index].Fen),
                                     approfondissement ? DureeApprofondissement : DureeAnalyseParPosition);
         }
@@ -127,13 +127,16 @@ namespace BrunoGUI_GenII
         }
         private static string TexteBilan(string camp, BilanCamp bilan) =>
             // Ex : "Blancs — précision 87 %" puis "   1 imprécision, 0 erreur, 2 gaffes" (explications dans l'infobulle du bilan)
-            $"{camp} — précision {bilan.Precision} %\n   {Pluriel(bilan.Imprecisions, "imprécision")}, {Pluriel(bilan.Erreurs, "erreur")}, {Pluriel(bilan.Gaffes, "gaffe")}";
-        private static string Pluriel(int nombre, string mot) => $"{nombre} {mot}{(nombre > 1 ? "s" : "")}";
+            T("{0} — précision {1} %", camp, bilan.Precision) + "\n   " + Pluriel(bilan.Imprecisions, T("imprécision"), T("imprécisions"))
+            + ", " + Pluriel(bilan.Erreurs, T("erreur"), T("erreurs")) + ", " + Pluriel(bilan.Gaffes, T("gaffe"), T("gaffes"));
+        private static string Pluriel(int nombre, string singulier, string pluriel) =>
+            // Pluriel au-delà de 1 en français ("0 erreur"), dès que le nombre n'est pas 1 en anglais ("0 mistakes")
+            $"{nombre} {(nombre > 1 || (nombre == 0 && !EstFrancais) ? pluriel : singulier)}";
         private readonly ToolTip _infobulleBilan = new() { AutoPopDelay = 20000 };
         private static string TexteCoupCritique(Coup coup, JugementCoup critique) =>
             // Ex : "Coup critique (clic) :" puis "   25... c5??   score -0.23 → 2.73" (évaluation avant, avec le meilleur coup, et après)
-            "Coup critique (clic) :\n   " + coup.PgnFrNumerote + coup.Annotation
-            + (critique.EvaluationMeilleur is Evaluation avant && critique.EvaluationApres is Evaluation apres ? $"   score {avant.Texte} → {apres.Texte}" : "");
+            T("Coup critique (clic) :") + "\n   " + Notation(coup.PgnFrNumerote) + coup.Annotation
+            + (critique.EvaluationMeilleur is Evaluation avant && critique.EvaluationApres is Evaluation apres ? "   " + T("score {0} → {1}", avant.Texte, apres.Texte) : "");
         private void EffaceBilan()
         {
             BilanAnalyse.Text = "";
@@ -159,7 +162,7 @@ namespace BrunoGUI_GenII
             _multiPvAvantAnalyse = null;
             analyse.AppliqueAuxCoups(LogiqueMouvements.ListeCoups);
             BilanCamp blancs = analyse.Bilan(ColorPiece.Blanc), noirs = analyse.Bilan(ColorPiece.Noir);
-            BilanAnalyse.Text = TexteBilan("Blancs", blancs) + "\n" + TexteBilan("Noirs", noirs);
+            BilanAnalyse.Text = TexteBilan(T("Blancs"), blancs) + "\n" + TexteBilan(T("Noirs"), noirs);
             if (analyse.CoupCritique() is JugementCoup critique)
             {   // en tête du bilan : le moment où la partie a basculé
                 _coupCritique = critique.IndexCoup;
@@ -167,11 +170,11 @@ namespace BrunoGUI_GenII
                 BilanAnalyse.Cursor = Cursors.Hand;
             }
             BarreAnalysePartie.Visible = false;
-            BoutonAnalysePartie.Values.Text = "Analyse rapide";
+            BoutonAnalysePartie.Values.Text = T("Analyse rapide");
             BoutonAnalysePartie.Width = BoutonAnalyseComplete.Left - 4 - BoutonAnalysePartie.Left;
             BoutonAnalyseComplete.Visible = true;
             RetourPositionCourante();       // l'échiquier, qui suivait l'analyse, revient à la partie
-            InformationsPartie.Text = interrompue ? "Analyse interrompue" : "Analyse de la partie terminée";
+            InformationsPartie.Text = interrompue ? T("Analyse interrompue") : T("Analyse de la partie terminée");
             MetAJourCommandes();
         }
     }

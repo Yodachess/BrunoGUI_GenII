@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Krypton.Toolkit;
 using static BrunoGUI_GenII.GestionPartiePgn;
+using static BrunoGUI_GenII.Langue;
 using static BrunoGUI_GenII.LogiqueMouvements;
 using static BrunoGUI_GenII.Parametres;
 
@@ -37,12 +38,12 @@ namespace BrunoGUI_GenII
         {   // On recule d'un demi-coup dans l'affichage (la partie n'est pas modifiée)
             if (LogiqueMouvements.ListeCoups.Count == 0)
             {
-                KryptonMessageBox.Show("Aucun coup à afficher.", "Info", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                KryptonMessageBox.Show(T("Aucun coup à afficher."), "Info", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                 return;
             }
             int indexActuel = ParcoursEnCours ? _indexAffiche : LogiqueMouvements.ListeCoups.Count - 1;
             if (indexActuel <= IndexPremierePosition)
-                KryptonMessageBox.Show("Vous êtes au début de la partie.", "Début de partie", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                KryptonMessageBox.Show(T("Vous êtes au début de la partie."), T("Début de partie"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
             else
                 AfficheCoupDeLaPartie(indexActuel - 1);
         }
@@ -51,9 +52,9 @@ namespace BrunoGUI_GenII
             if (ParcoursEnCours)
                 AfficheCoupDeLaPartie(_indexAffiche + 1);
             else if (LogiqueMouvements.EchecetMat)
-                KryptonMessageBox.Show("Il y a échec et mat.", "Terminé : échec et mat", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                KryptonMessageBox.Show(T("Il y a échec et mat."), T("Terminé : échec et mat"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
             else
-                KryptonMessageBox.Show("Vous êtes à la fin de la partie.", "Fin de partie", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                KryptonMessageBox.Show(T("Vous êtes à la fin de la partie."), T("Fin de partie"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
         }
         private void BoutonDebut_Click(object? sender, EventArgs e)
         {   // On affiche la position initiale de la partie (ou la position FEN de départ)
@@ -75,15 +76,15 @@ namespace BrunoGUI_GenII
             Position positionReprise = _positionAffichee ?? LogiqueMouvements.PositionActuelle;
             if (LogiqueMouvements.CalculerSur(positionReprise, () => !LogiqueMouvements.ResteCoupsValidesJouables()))
             {   // mat ou pat : il n'y a rien à jouer depuis cette position
-                KryptonMessageBox.Show("Cette position est terminée (mat ou pat) : choisissez une position antérieure avec Préc.",
-                    "Reprendre la partie d'ici", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                KryptonMessageBox.Show(T("Cette position est terminée (mat ou pat) : choisissez une position antérieure avec Préc."),
+                    T("Reprendre la partie d'ici"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                 return;
             }
-            string suppression = aSupprimer > 0 ? $"\n\nLes {aSupprimer} demi-coup(s) suivant(s) seront supprimés." : "";
+            string suppression = aSupprimer > 0 ? "\n\n" + T("Les {0} demi-coup(s) suivant(s) seront supprimés.", aSupprimer) : "";
             string message = etaitLectureSeule
-                ? $"La partie chargée devient votre partie à partir de la position affichée :\nvous jouez le camp au trait, {_nomMoteur} l'autre camp.{suppression}\n\nContinuer ?"
-                : $"La partie reprend à la position affichée.{suppression}\n\nContinuer ?";
-            if (KryptonMessageBox.Show(message, "Reprendre la partie d'ici", KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Question) != DialogResult.OK)
+                ? T("La partie chargée devient votre partie à partir de la position affichée :\nvous jouez le camp au trait, {0} l'autre camp.", _nomMoteur) + suppression + "\n\n" + T("Continuer ?")
+                : T("La partie reprend à la position affichée.") + suppression + "\n\n" + T("Continuer ?");
+            if (KryptonMessageBox.Show(message, T("Reprendre la partie d'ici"), KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Question) != DialogResult.OK)
                 return;
             AbandonneReflexion();   // la partie change
             bool etaitTerminee = _partie.Mode == ModePartie.Terminee;
@@ -100,8 +101,8 @@ namespace BrunoGUI_GenII
             if (etaitLectureSeule)
             {   // La partie chargée devient une partie d'entraînement contre le moteur (l'humain a le camp au trait)
                 AfficheJoueursDeLaPartie();
-                PartieEnCours.Tournoi = "Entrainement";
-                PartieEnCours.Lieu = "Maison";
+                PartieEnCours.Tournoi = T("Entrainement");
+                PartieEnCours.Lieu = T("Maison");
                 PartieEnCours.Date = DateTime.Today.ToString("yyyy.MM.dd");
                 PartieEnCours.Ronde = "";
             }
@@ -114,8 +115,8 @@ namespace BrunoGUI_GenII
             PartieEnCours.CompteDePLy = LogiqueMouvements.DemiCoupsJoues.ToString();
             string fen = LogiqueMouvements.RetourneChaineFenActuel();
             AfficheCoupsBibliotheque(fen);
-            InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + NomCamp(QuiJoue);
-            InformationsPartie.Text = "Partie reprise";
+            InformationPourJoueur.Text = StatusProgramme.Text = T("Trait aux {0}", NomCamp(QuiJoue));
+            InformationsPartie.Text = T("Partie reprise");
             if (_partie.MoteurAuTrait)
             {   // C'est au moteur de jouer à partir de cette position
                 PlateauEnable(false);
@@ -200,22 +201,22 @@ namespace BrunoGUI_GenII
             MetAJourCommandes();
             _vue.DessinePosition(position);
             AfficheCoupsBibliotheque(fen);
-            InformationPourJoueur.Text = "Trait aux " + NomCamp(position.QuiJoue);
+            InformationPourJoueur.Text = T("Trait aux {0}", NomCamp(position.QuiJoue));
             MiseaZeroParcours();
             AfficheTextesDuCoup(index, position);
             AffichePendules();      // partie sans pendule en cours (ex : PGN chargé) : temps notés à cette position
             if (!PartieEnLectureSeule)
-                InformationsPartie.Text = "Parcours : Fin ou clic pour revenir";
+                InformationsPartie.Text = T("Parcours : Fin ou clic pour revenir");
         }
         private void AfficheTextesDuCoup(int index, Position positionApres)
         {   // Le coup regardé (1re ligne de variante et dernière case de la barre d'état) et, s'il a été analysé, son analyse
             // (lignes 2 et 3) et ses flèches. Pendant le parcours, et pour le dernier coup d'une partie finie (AfficheDernierCoupSiPartieFinie)
             bool positionInitiale = index < 0 || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart;
             AfficheLigneCentree(VarianteMoteurUci1, positionInitiale
-                ? "[ Position initiale ]" : $"[ {TexteCoupJoue(index, positionApres)} ]"
-                  + (LogiqueMouvements.ListeCoups[index].TempsReflexion is TimeSpan reflexion ? $"   (réflexion : {TexteDuree(reflexion)})" : ""));
+                ? "[ " + T("Position initiale") + " ]" : $"[ {TexteCoupJoue(index, positionApres)} ]"
+                  + (LogiqueMouvements.ListeCoups[index].TempsReflexion is TimeSpan reflexion ? "   " + T("(réflexion : {0})", TexteDuree(reflexion)) : ""));
             VarianteMoteurUci2.Text = VarianteMoteurUci3.Text = "...";
-            VarianteMoteurCourante.Text = positionInitiale ? "Position initiale" : TexteCoupJoue(index, positionApres);
+            VarianteMoteurCourante.Text = positionInitiale ? T("Position initiale") : TexteCoupJoue(index, positionApres);
             if (!positionInitiale)
             {   // Coup analysé (analyse de partie, ou [%eval] et variante du PGN chargé) : son évaluation et le meilleur coup sur la
                 // 2e ligne, la meilleure suite sur la 3e. Commentaire du PGN : sur une ligne restée libre (2e, puis 3e), jamais à la
@@ -223,7 +224,7 @@ namespace BrunoGUI_GenII
                 Coup coup = LogiqueMouvements.ListeCoups[index];
                 string? commentaire = string.IsNullOrWhiteSpace(coup.Commentaire) ? null : $"« {coup.Commentaire} »";
                 foreach (RichTextBox ligne in new[] { VarianteMoteurUci1, VarianteMoteurUci2, VarianteMoteurUci3 })
-                    _infobulleBilan.SetToolTip(ligne, commentaire != null ? "Commentaire : " + commentaire : null);
+                    _infobulleBilan.SetToolTip(ligne, commentaire != null ? T("Commentaire : {0}", commentaire) : null);
                 if (coup.EvaluationApres != null || coup.MeilleurCoup != null)
                 {   // Le texte le plus complet qui tient sur la ligne : sinon sans le nom de l'annotation, puis sans le symbole (-+)
                     int largeur = VarianteMoteurUci2.ClientSize.Width - 14;
@@ -240,9 +241,9 @@ namespace BrunoGUI_GenII
                 if (!string.IsNullOrEmpty(coup.VarianteMeilleure))
                 {   // ligne 3 : la suite prévue ; "meilleure" seulement si l'écart avec le coup joué compte (sinon c'est juste une
                     // autre possibilité, remarque de Bruno)
-                    string libelle = coup.MeilleurJoue ? "Suite prévue : "
-                        : coup.PerteAnalyse < JugementCoups.SeuilImprecision ? "Suite du moteur : " : "Meilleure suite : ";
-                    AfficheLigneCentree(VarianteMoteurUci3, libelle + coup.VarianteMeilleure);
+                    string libelle = coup.MeilleurJoue ? T("Suite prévue : {0}")
+                        : coup.PerteAnalyse < JugementCoups.SeuilImprecision ? T("Suite du moteur : {0}") : T("Meilleure suite : {0}");
+                    AfficheLigneCentree(VarianteMoteurUci3, string.Format(libelle, Notation(coup.VarianteMeilleure)));
                 }
                 else if (commentaire != null)
                     AfficheLigneCentree(VarianteMoteurUci3, commentaire);
@@ -296,16 +297,16 @@ namespace BrunoGUI_GenII
             // "meilleur" inadapté). Coups en notation longue, avec la case de départ : "Dd8-d7", "Ta8-c8". Court pour tenir sur la
             // ligne en police 10 (sans "Analyse :", deux espaces) ; nomAnnotation et symbole à false raccourcissent encore.
             // Sans évaluation (PGN chargé sans [%eval]) : "Joué Fc8-e6 ?? [Gaffe]  — meilleur : Fc8-b7"
-            string texte = (coup.EvaluationApres is Evaluation evaluation ? evaluation.Texte + (symbole ? $" ({evaluation.Symbole})" : "") + "  joué " : "Joué ")
-                + (coup.CoupJoueLong ?? coup.PgnFrSansNumero)
+            string texte = (coup.EvaluationApres is Evaluation evaluation ? evaluation.Texte + (symbole ? $" ({evaluation.Symbole})" : "") + "  " + T("joué") + " " : T("Joué") + " ")
+                + Notation(coup.CoupJoueLong ?? coup.PgnFrSansNumero)
                 + (coup.Annotation != "" ? " " + coup.Annotation + (nomAnnotation ? $" [{Annotations.Nom(coup.Annotation)}]" : "") : "");
             if (coup.MeilleurJoue)
-                return texte + "  — meilleur coup du moteur";
+                return texte + "  — " + T("meilleur coup du moteur");
             if (coup.MeilleurCoup == null)
                 return texte;
-            string meilleur = (coup.MeilleurCoupLong ?? coup.MeilleurCoup) + (coup.EvaluationMeilleur is Evaluation e ? $" ({e.Texte})" : "");
+            string meilleur = Notation(coup.MeilleurCoupLong ?? coup.MeilleurCoup) + (coup.EvaluationMeilleur is Evaluation e ? $" ({e.Texte})" : "");
             return texte + (coup.PerteAnalyse < JugementCoups.SeuilImprecision
-                ? $"  — moteur : {meilleur}, écart négligeable" : $"  — meilleur : {meilleur}");
+                ? "  — " + T("moteur : {0}, écart négligeable", meilleur) : "  — " + T("meilleur : {0}", meilleur));
         }
 
         // Les lignes de variante 1 et 2 servent aussi aux variantes du moteur (à gauche, police normale) : pendant le parcours, le coup
@@ -358,7 +359,7 @@ namespace BrunoGUI_GenII
             string coup = LogiqueMouvements.ListeCoupsNal[index];
             coup = coup.Contains('.') ? coup.Split('.').Last().Trim() : coup.Trim();
             int numero = (int)Math.Floor(positionApres.NombreCoupsJoues - 0.5f);   // numéro du coup qui vient d'être joué
-            return positionApres.QuiJoue == ColorPiece.Blanc ? $"Coup noir : {numero}... {coup}" : $"Coup blanc : {numero}. {coup}";
+            return positionApres.QuiJoue == ColorPiece.Blanc ? T("Coup noir : {0}... {1}", numero, coup) : T("Coup blanc : {0}. {1}", numero, coup);
         }
         public void RetourPositionCourante()
         {   // Fin du parcours : l'échiquier montre de nouveau la partie
@@ -370,8 +371,8 @@ namespace BrunoGUI_GenII
             _vue.DernierCoupMasque = false;     // le dernier coup du moteur est de nouveau coloré
             AfficheDernierCoupSiPartieFinie();
             AfficheCoupsBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
-            InformationPourJoueur.Text = StatusProgramme.Text = "Trait aux " + NomCamp(QuiJoue);
-            InformationsPartie.Text = PartieEnLectureSeule ? "Fin de la partie" : "";
+            InformationPourJoueur.Text = StatusProgramme.Text = T("Trait aux {0}", NomCamp(QuiJoue));
+            InformationsPartie.Text = PartieEnLectureSeule ? T("Fin de la partie") : "";
             AffichePendules();
         }
         private void QuitteParcours()
