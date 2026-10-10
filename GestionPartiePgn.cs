@@ -404,7 +404,7 @@ namespace BrunoGUI_GenII
                 // Boutons
                 sauveEnTete = new KryptonButton
                 {
-                    Text = T("Enregistrer En-têtes"),
+                    Text = T("Enregistrer"),
                     Location = new Point(20, 380),
                     Width = 110
                 };
@@ -413,7 +413,7 @@ namespace BrunoGUI_GenII
 
                 annulerEnTete = new KryptonButton
                 {
-                    Text = T("Quitter En-Têtes"),
+                    Text = T("Quitter"),
                     Location = new Point(135, 380),
                     Width = 110
                 };
