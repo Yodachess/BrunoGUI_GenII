@@ -46,8 +46,8 @@
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <h2 id="window">2. The main window</h2>
 <figure>
-    <img src="images/01-fenetre-principale.png" alt="BrunoGUI main window">
-    <figcaption>The main window during a game.</figcaption>
+    <img src="images/01-fenetre-principale.webp" alt="BrunoGUI main window">
+    <figcaption>The main window, at startup.</figcaption>
 </figure>
 <ul>
     <li><b>At the top</b>: the players (“[Elo] Name”) and their clocks.</li>
@@ -174,7 +174,7 @@
 <h3>Opening games</h3>
 <p>Menu <b>File &gt; Open PGN file</b>: the list of the games in the file is shown. <b>Double-click</b> a game to load it.</p>
 <figure>
-    <img src="images/09-liste-parties.png" alt="List of the games of a PGN file">
+    <img src="images/09-liste-parties.webp" alt="List of the games of a PGN file">
     <figcaption>The list of the games of a PGN file.</figcaption>
 </figure>
 <ul>
@@ -248,18 +248,22 @@
 </main>
 </div>
 <script>
-    // Screenshot not taken yet: a box with its name instead of the broken image
+    // English screenshot not taken yet: the French one (../fr/images), otherwise a box with its name instead of the broken image
     document.querySelectorAll("figure img").forEach(function (image) {
         function remplace() {
+            if (!image.dataset.repli) {
+                image.dataset.repli = "1";
+                image.src = "../fr/" + image.getAttribute("src");
+                return;
+            }
             var cadre = document.createElement("div");
             cadre.className = "capture-manquante";
             cadre.textContent = "Screenshot to come: " + image.getAttribute("src");
             image.replaceWith(cadre);
         }
+        image.addEventListener("error", remplace);
         if (image.complete && image.naturalWidth === 0)
             remplace();
-        else
-            image.addEventListener("error", remplace);
     });
 </script>
 </body>
