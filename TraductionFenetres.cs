@@ -25,6 +25,19 @@ namespace BrunoGUI_GenII
             TraduitControle(controle);
         }
 
+        public static void TraduitDialogues(params FileDialog[] dialogues)
+        {   // Boîtes d'ouverture et d'enregistrement de fichiers (composants, pas des contrôles : Traduit ne les voit pas) :
+            // filtre ("Fichier PGN (*.pgn)|*.pgn") et nom de fichier proposé
+            if (Langue.EstFrancais)
+                return;
+            foreach (FileDialog dialogue in dialogues)
+            {
+                dialogue.Filter = Langue.T(dialogue.Filter);
+                if (!string.IsNullOrWhiteSpace(dialogue.FileName))
+                    dialogue.FileName = Langue.T(dialogue.FileName);
+            }
+        }
+
         private static void TraduitControle(Control controle)
         {
             if (!string.IsNullOrWhiteSpace(controle.Text))
@@ -33,6 +46,12 @@ namespace BrunoGUI_GenII
             {
                 case KryptonGroupBox cadre:
                     cadre.Values.Heading = Langue.T(cadre.Values.Heading);
+                    if (!string.IsNullOrWhiteSpace(cadre.ToolTipValues.Description))     // infobulle du cadre
+                        cadre.ToolTipValues.Description = Langue.T(cadre.ToolTipValues.Description);
+                    break;
+                case DataGridView tableau:      // en-têtes des colonnes (ex : liste des parties d'un fichier PGN)
+                    foreach (DataGridViewColumn colonne in tableau.Columns)
+                        colonne.HeaderText = Langue.T(colonne.HeaderText);
                     break;
                 case ToolStrip barre:       // menus et barre d'état
                     TraduitElements(barre.Items);

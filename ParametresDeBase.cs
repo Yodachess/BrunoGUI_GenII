@@ -24,6 +24,7 @@ namespace BrunoGUI_GenII
         public ParametresDeBase(EchiquierPrincipal brunoigInstance)
         {
             InitializeComponent();
+            TraductionFenetres.Traduit(this);      // textes du designer dans la langue choisie (voir Langue.cs)
             interfaceGraphique = brunoigInstance;
             MoteurUci = brunoigInstance.MoteurUci;
             this.FormClosing += ParametresDeBase_FormClosing;   // Gestion du click sur la croix rouge en haut à droite ...

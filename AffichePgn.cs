@@ -35,6 +35,7 @@ namespace BrunoGUI_GenII
         public AffichePgn()
         {
             InitializeComponent();
+            TraductionFenetres.Traduit(this);      // textes du designer dans la langue choisie (voir Langue.cs)
             afficheZone = this;
         }
         public void AffichePgnDansZone(string contenuPgnIntl, string contenuPgnFr)
@@ -57,7 +58,7 @@ namespace BrunoGUI_GenII
         {   // Affiche les coups au format Algébrique long + entête PGN
             afficheZone.Show();
             string contenuNal;
-            contenuNal = "Liste de coups au format Nal \nNombre de 1/2 coups = " + LogiqueMouvements.ListeCoupsNal.Count + "\n\n";
+            contenuNal = Langue.T("Liste de coups au format Nal \nNombre de 1/2 coups = {0}", LogiqueMouvements.DemiCoupsJoues) + "\n\n";
             contenuNal = contenuNal + ExtraireEntetePgn(partieFormatPgnIntl) + "\n\n";
             for (int i = 0; i < LogiqueMouvements.ListeCoupsNal.Count; i++)     // Parcours de la liste des Nal
             {
@@ -75,7 +76,7 @@ namespace BrunoGUI_GenII
         {   // Affiche les coups au format UCI + entête PGN
             afficheZone.Show();
             string contenuUci;
-            contenuUci = "Liste de coups au format UCI \nNombre de 1/2 coups = " + LogiqueMouvements.ListeCoupsFen.Count + "\n\n";
+            contenuUci = Langue.T("Liste de coups au format UCI \nNombre de 1/2 coups = {0}", LogiqueMouvements.DemiCoupsJoues) + "\n\n";
             contenuUci = contenuUci + ExtraireEntetePgn(partieFormatPgnIntl) + "\n\n";
             for (int i = 0; i < LogiqueMouvements.ListeCoupsUci.Count; i++)     // Parcours de la liste des Uci
             {
@@ -88,7 +89,7 @@ namespace BrunoGUI_GenII
         {   // Affiche la liste des FEN de la partie
             afficheZone.Show();
             string contenuFen;
-            contenuFen = "Nombre de 1/2 coups = " + LogiqueMouvements.ListeCoupsFen.Count + "\n";
+            contenuFen = Langue.T("Nombre de 1/2 coups = {0}", LogiqueMouvements.DemiCoupsJoues) + "\n";
             for (int i = 0; i < LogiqueMouvements.ListeCoupsFen.Count; i++)     // Parcours de la liste des FEN
             {
                 contenuFen = contenuFen + "  [" + i + "]: \"" + LogiqueMouvements.ListeCoupsFen[i] + "\"" + " \n";

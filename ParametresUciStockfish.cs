@@ -25,6 +25,7 @@ namespace BrunoGUI_GenII
         public ParametresUciStockfish(MoteurUci moteur)
         {
             InitializeComponent();
+            TraductionFenetres.Traduit(this);      // textes du designer dans la langue choisie (voir Langue.cs)
             MoteurUci = moteur;
             this.FormClosing += ParametresUciStockfish_FormClosing;     // Gestion du click sur la croix rouge en haut à droite ...
             this.VisibleChanged += ParametresUciStockfish_VisibleChanged;
