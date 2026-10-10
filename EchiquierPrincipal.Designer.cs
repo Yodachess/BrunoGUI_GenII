@@ -896,10 +896,10 @@ namespace BrunoGUI_GenII
             // 
             // BoutonGainBlanc
             // 
-            BoutonGainBlanc.Location = new System.Drawing.Point(830, 188);
+            BoutonGainBlanc.Location = new System.Drawing.Point(817, 188);
             BoutonGainBlanc.Name = "BoutonGainBlanc";
             BoutonGainBlanc.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
-            BoutonGainBlanc.Size = new System.Drawing.Size(78, 15);
+            BoutonGainBlanc.Size = new System.Drawing.Size(100, 15);
             BoutonGainBlanc.StateCommon.Back.Color1 = System.Drawing.Color.FromArgb(192, 192, 255);
             BoutonGainBlanc.StateCommon.Border.Color1 = System.Drawing.Color.Black;
             BoutonGainBlanc.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
@@ -912,10 +912,10 @@ namespace BrunoGUI_GenII
             // 
             // BoutonGainNoir
             // 
-            BoutonGainNoir.Location = new System.Drawing.Point(830, 209);
+            BoutonGainNoir.Location = new System.Drawing.Point(817, 209);
             BoutonGainNoir.Name = "BoutonGainNoir";
             BoutonGainNoir.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
-            BoutonGainNoir.Size = new System.Drawing.Size(78, 15);
+            BoutonGainNoir.Size = new System.Drawing.Size(100, 15);
             BoutonGainNoir.StateCommon.Back.Color1 = System.Drawing.Color.FromArgb(192, 192, 255);
             BoutonGainNoir.StateCommon.Border.Color1 = System.Drawing.Color.Black;
             BoutonGainNoir.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
@@ -928,10 +928,10 @@ namespace BrunoGUI_GenII
             // 
             // BoutonNulle
             // 
-            BoutonNulle.Location = new System.Drawing.Point(830, 230);
+            BoutonNulle.Location = new System.Drawing.Point(817, 230);
             BoutonNulle.Name = "BoutonNulle";
             BoutonNulle.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
-            BoutonNulle.Size = new System.Drawing.Size(78, 15);
+            BoutonNulle.Size = new System.Drawing.Size(100, 15);
             BoutonNulle.StateCommon.Back.Color1 = System.Drawing.Color.FromArgb(192, 192, 255);
             BoutonNulle.StateCommon.Border.Color1 = System.Drawing.Color.Black;
             BoutonNulle.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
