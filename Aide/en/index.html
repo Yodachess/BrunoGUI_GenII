@@ -249,7 +249,11 @@
 </div>
 <script>
     // English screenshot not taken yet: the French one (../fr/images), otherwise a box with its name instead of the broken image
+    // Captures prises sur un écran agrandi (150 % ou plus) : affichées au tiers de leur taille, toujours nettes
+    function tiers(image) { if (image.naturalWidth > 0) image.style.width = Math.round(image.naturalWidth / 3) + "px"; }
     document.querySelectorAll("figure img").forEach(function (image) {
+        image.addEventListener("load", function () { tiers(image); });
+        tiers(image);
         function remplace() {
             if (!image.dataset.repli) {
                 image.dataset.repli = "1";
