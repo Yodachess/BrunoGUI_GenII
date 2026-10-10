@@ -849,9 +849,20 @@ namespace BrunoGUI_GenII
             donneesBrutesUci.DonneesBrutesVue.ScrollToCaret();      // Pour garder l'affichage dans toute la fenêtre
         }
         private void AideDocumentation_Click(object? sender, EventArgs e)
-        {   // Ouvre la fenêtre d'aide et documentation
-            var fenetreAide = new FenetreAide();
-            fenetreAide.ShowDialog();
+        {   // L'aide (pages HTML avec captures d'écran, Aide\fr ou Aide\en à côté de l'exécutable) s'ouvre dans le navigateur
+            string page = Path.Combine(Chemins.RepertoireRacine, "Aide", Langue.Code, "index.html");
+            if (!File.Exists(page))
+                page = Path.Combine(Chemins.RepertoireRacine, "Aide", Langue.Francais, "index.html");
+            try
+            {
+                Process.Start(new ProcessStartInfo(page) { UseShellExecute = true });
+            }
+            catch (Exception ex) when (ex is System.ComponentModel.Win32Exception || ex is FileNotFoundException || ex is InvalidOperationException)
+            {   // page absente, ou aucun navigateur associé aux fichiers .html
+                Journal.Erreur("Ouverture de l'aide " + page, ex);
+                KryptonMessageBox.Show(T("Impossible d'ouvrir l'aide :\n{0}\n\n{1}", page, ex.Message), T("Aide"),
+                    KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+            }
         }
         // Version de l'application, lue dans l'assembly (<Version> du .csproj) : "1.16" (le mineur sur deux chiffres : "1.05")
         public static string VersionAffichee

@@ -47,6 +47,10 @@
   </ItemGroup>
   <ItemGroup>
     <!-- Traductions de l'interface (voir Langue.cs) : à côté de l'exécutable, modifiables sans recompiler -->
+    <!-- Aide (pages HTML et captures d'écran, une page par langue), ouverte dans le navigateur par le menu Aide -->
+    <None Update="Aide\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Langues\*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
