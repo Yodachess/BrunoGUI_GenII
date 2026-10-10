@@ -37,7 +37,7 @@ dotnet test Tests
 - **Types de référence nullables** : activés dans tout le projet (`<Nullable>enable</Nullable>` dans le `.csproj`). Une valeur qui peut manquer est déclarée `string?` (ex : `Coup.MeilleurCoup`, `ChargementPartie.ErreurFen`, `LogiqueMouvements.RaisonNulle()`, `EchiquierPrincipal._pendule`) ; garder zéro avertissement. Les événements sont déclarés nullables (`event … ?`) et les gestionnaires prennent `object? sender` (le designer les accepte) ; un `sender` se lit par `if (sender is not PictureBox case) return;`, jamais par un cast. Les textes de `PartieEchecsPGN` (`TimeControl`, `Fen`, `White`…) valent `""` par défaut et non plus `null` : les tester avec `string.IsNullOrEmpty`. Les `*.Designer.cs` sont du code généré (pas d'analyse nullable) : l'`InitializeComponent` de `FichierPartiePgn` y a été déplacé pour cette raison.
 - `CA1416` est désactivé dans le `.csproj`.
 - `git` n'est pas dans le PATH de PowerShell sur cette machine : utiliser celui de Visual Studio 2022 (`C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Git\cmd\git.exe`).
-- GitHub Actions (`.github/workflows/tests.yml`) compile et lance les tests à chaque push. La compilation y passe `-p:SignManifests=false` : le certificat ClickOnce n'existe que sur le PC de développement.
+- GitHub Actions (`.github/workflows/tests.yml`) compile et lance les tests à chaque push. Il n'y a plus de signature ClickOnce (réglages retirés le 2026-10-10 : la publication est un zip portable).
 - `.gitattributes` impose CRLF aux fichiers du projet (`.cs`, `.csproj`, `.sln`, `.resx`, `.md`, `.ini`, `.yml`) : écrire les nouveaux fichiers en CRLF.
 
 ## Architecture
