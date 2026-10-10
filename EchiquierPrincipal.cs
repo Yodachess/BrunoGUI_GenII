@@ -920,6 +920,9 @@ namespace BrunoGUI_GenII
             //                chargée qui restaient dans la suivante, PlyCount des parties depuis une FEN, pièce prise en main
             //                remise en place, promotion PGN sans « = » (e8Q), roque Polyglot ; code : fichiers partiels,
             //                identifiants sans accents, types nullables, tests xUnit
+            // Version 1.21 = interface en anglais (menu Options > Langue, redémarrage proposé ; phrases traduites par Langues\en.json,
+            //                notation des pièces K/Q/R/B/N), aide réécrite en HTML avec captures d'écran (français et anglais, ouverte
+            //                dans le navigateur), réglages ClickOnce retirés, boutons élargis pour les textes anglais
             // (le numéro de version vient du .csproj, <Version> : il n'est plus écrit ici)
             _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version " + VersionAffichee + "\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", T("A propos de"),
