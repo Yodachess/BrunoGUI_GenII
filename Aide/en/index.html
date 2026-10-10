@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BrunoGUI GenII Help</title>
+<link rel="stylesheet" href="../aide.css">
+</head>
+<body>
+<div class="page">
+<nav>
+    <div class="titre">BrunoGUI GenII</div>
+    <div class="version">User help</div>
+    <ol>
+        <li><a href="#start">Quick start</a></li>
+        <li><a href="#window">The main window</a></li>
+        <li><a href="#play">Playing a game</a></li>
+        <li><a href="#clock">The clock</a></li>
+        <li><a href="#sheet">The score sheet</a></li>
+        <li><a href="#annotations">Annotations</a></li>
+        <li><a href="#position-analysis">Analyzing a position</a></li>
+        <li><a href="#game-analysis">Analyzing a game</a></li>
+        <li><a href="#files">PGN and FEN files</a></li>
+        <li><a href="#setup">Setting up a position</a></li>
+        <li><a href="#engines">Engines and books</a></li>
+        <li><a href="#options">Options and language</a></li>
+        <li><a href="#program">Updates and program files</a></li>
+    </ol>
+    <div class="langue"><a href="../fr/index.html">Version française</a></div>
+</nav>
+<main>
+
+<h1>BrunoGUI GenII Help</h1>
+<p class="intro">BrunoGUI is a chess interface: you play against an engine (Stockfish by default, from 1320 to over 3000 Elo) or against a friend, and you analyze your games as with ChessBase.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="start">1. Quick start</h2>
+<ol>
+    <li>Menu <b>Stockfish &gt; New game against Stockfish</b>: choose your color, the engine strength and the clock, then <span class="bouton">OK</span>.</li>
+    <li>Play by clicking a piece, then its destination square. The possible squares are marked.</li>
+    <li>The engine replies by itself. Its moves are written on the score sheet, to the right of the board.</li>
+    <li>At the end, click <span class="bouton">Quick analysis</span> under the score sheet: the engine judges every move and gives your accuracy.</li>
+    <li>Menu <b>File &gt; Save game</b> to keep the game in PGN format.</li>
+</ol>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="window">2. The main window</h2>
+<figure>
+    <img src="images/01-fenetre-principale.png" alt="BrunoGUI main window">
+    <figcaption>The main window during a game.</figcaption>
+</figure>
+<ul>
+    <li><b>At the top</b>: the players (“[Elo] Name”) and their clocks.</li>
+    <li><b>In the center</b>: the board. The from and to squares of the engine's last move are colored.</li>
+    <li><b>Right of the board</b>: the event, the score sheet with its evaluation graph, then the “Game summary” box and the analysis buttons.</li>
+    <li><b>Far right</b>: the game buttons (Take back, result, Flip board, Computer moves…) and the moves known by the opening book.</li>
+    <li><b>Under the board</b>: three lines for the engine's lines or the analysis of the move being viewed, the clock and thinking time settings, then the status bar.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="play">3. Playing a game</h2>
+<h3>Against Stockfish</h3>
+<p>Menu <b>Stockfish &gt; New game against Stockfish</b>. Nothing changes until you click <span class="bouton">OK</span>: <span class="bouton">Cancel</span> leaves the current game untouched.</p>
+<figure>
+    <img src="images/02-nouvelle-partie.png" alt="New game against Stockfish window">
+    <figcaption>The engine's color, its strength (maximum, or limited to an Elo rating), the clock or the thinking time per move, and your name.</figcaption>
+</figure>
+<h3>Against another engine, or between humans</h3>
+<ul>
+    <li>Menu <b>New game</b>: <i>Human vs computer</i> (you have White), <i>Computer vs human</i> (you have Black), or <i>Between humans</i>: the engine does not play, for a game between friends or to enter a game (also with the <span class="bouton">Enter game</span> button).</li>
+    <li>The engine used is the one chosen in the <b>Engines/Books</b> menu (see <a href="#engines">chapter 11</a>).</li>
+</ul>
+<h3>During the game</h3>
+<ul>
+    <li><span class="bouton">Take back</span> cancels the last half-move. If it is then the engine's turn, the board waits: click Take back again to return to your move, or <span class="bouton">Computer moves</span>.</li>
+    <li><span class="bouton">Computer moves</span> makes the engine play in the current position: it takes the side to move, you the other side.</li>
+    <li><b>Promotion</b>: when a pawn reaches the last rank, choose the piece in the box that appears.</li>
+    <li><span class="bouton">Flip board</span> shows the board from Black's side, or White's.</li>
+    <li><b>End of the game</b>: checkmate, stalemate, threefold repetition, the 50-move rule and insufficient material are detected automatically. The <span class="bouton">White wins</span>, <span class="bouton">Black wins</span> and <span class="bouton">Draw</span> buttons declare a resignation or a draw by agreement.</li>
+    <li>A finished game can be resumed: Take back cancels the last move and clears the result.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="clock">4. The clock</h2>
+<figure>
+    <img src="images/03-pendule.png" alt="The clocks above the board">
+    <figcaption>The side thinking has its clock on a green background; it turns red under 10 seconds.</figcaption>
+</figure>
+<ul>
+    <li>The time control is chosen in the list under the board, or in the new game window. It applies to the <b>next game</b>.</li>
+    <li>The official FIDE time controls (3 min + 2 s, 15 min + 10 s, 90 + 30 min) are marked with a golden star. “KO” means no increment per move.</li>
+    <li>The clock starts at the first move. <b>Clicking a clock pauses the game</b>, another click resumes it.</li>
+    <li>The side that runs out of time loses, unless the opponent can no longer mate (draw). The engine can lose on time too.</li>
+    <li>Without a clock, the engine thinks for the number of seconds set in “Thinking (s)”.</li>
+    <li>The time left after each move is saved in the PGN file.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="sheet">5. The score sheet</h2>
+<figure>
+    <img src="images/04-feuille.png" alt="The score sheet and its evaluation graph">
+    <figcaption>The score sheet: one move per line, the displayed move highlighted, and the evaluation graph on the right.</figcaption>
+</figure>
+<ul>
+    <li><b>Clicking a move</b> shows the position after that move, without changing the game (the engine can keep playing). A click on the board or the <span class="bouton">End</span> button returns to the game.</li>
+    <li>The <span class="bouton">Start</span>, <span class="bouton">Prev.</span>, <span class="bouton">Next</span>, <span class="bouton">End</span> buttons and the keyboard let you browse the game:</li>
+</ul>
+<table>
+    <tr><th>Key</th><th>Effect</th></tr>
+    <tr><td><kbd>←</kbd> / <kbd>→</kbd></td><td>Previous / next half-move</td></tr>
+    <tr><td><kbd>Home</kbd> or <kbd>Page Up</kbd></td><td>Starting position</td></tr>
+    <tr><td><kbd>End</kbd> or <kbd>Page Down</kbd></td><td>Back to the game</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>Turns these keys off (to type text elsewhere)</td></tr>
+</table>
+<ul>
+    <li><span class="bouton">Resume here</span> resumes the game from the displayed position: the following moves are deleted. A game loaded from a PGN file thus becomes a training game against the engine.</li>
+    <li>An arrow on the board shows the move being viewed; on an annotated move, a green arrow shows the best move.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="annotations">6. Annotations</h2>
+<figure>
+    <img src="images/05-annotations.png" alt="Annotation menu on right-click">
+    <figcaption>Right-click on a move of the score sheet: the annotation menu.</figcaption>
+</figure>
+<ul>
+    <li><b>Right-click a move</b> to give it an annotation: !! (brilliant), ! (good), !? (interesting), ?! (dubious), ? (mistake), ?? (blunder).</li>
+    <li>The annotation is shown on a colored badge and saved in the PGN file.</li>
+    <li>Annotations suggested by the game analysis are paler. Yours are never replaced.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="position-analysis">7. Analyzing a position</h2>
+<p>The <span class="bouton">Analyze position</span> button makes the engine think about the displayed position (the game's, or the one you are viewing on the score sheet) for the “Thinking (s)” time.</p>
+<figure>
+    <img src="images/06-analyse-position.png" alt="Result of a position analysis">
+    <figcaption>The result: the best continuation, its evaluation, and a green arrow on the suggested move.</figcaption>
+</figure>
+<ul>
+    <li>Evaluations are always from White's point of view: +1.50 = White is ahead by one and a half pawns, “M3” = White mates in 3.</li>
+    <li>The analysis is always done at full strength, even if the engine is set weaker for playing.</li>
+    <li>During the analysis, the clock stops.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="game-analysis">8. Analyzing a game</h2>
+<p>Under the score sheet, two buttons analyze the whole game:</p>
+<ul>
+    <li><span class="bouton">Quick analysis</span>: the engine examines each position for 3 seconds, from the end of the game to the start, as ChessBase does.</li>
+    <li><span class="bouton">Full</span>: in addition, the positions around each doubtful move, and each “!” or “!!”, are checked again for 10 seconds to confirm the verdict.</li>
+</ul>
+<p>During the analysis, the button becomes <span class="bouton">Stop</span>: what has been analyzed is kept. Hover over the buttons to see the estimated duration.</p>
+<figure>
+    <img src="images/07-analyse-partie.png" alt="Game analysis summary">
+    <figcaption>After the analysis: the annotations on the score sheet, the evaluation graph and the summary.</figcaption>
+</figure>
+<h3>The summary</h3>
+<ul>
+    <li>The <b>critical move</b> is where the game turned: a click on the summary shows it.</li>
+    <li>For each side: the <b>accuracy</b> in % (100 % = all moves as good as the engine's) and the number of inaccuracies (?!), mistakes (?) and blunders (??).</li>
+    <li>A “!” marks the only good move in a difficult position; a “!!” an only good move that sacrifices material.</li>
+</ul>
+<h3>The evaluation graph</h3>
+<p>Right of the moves, one bar per half-move: <b>green to the right</b> when White is better, <b>red to the left</b> when Black is better, <b>yellow</b> for a mate. A click on a bar shows the move.</p>
+<h3>Details of a move</h3>
+<figure>
+    <img src="images/08-coup-analyse.png" alt="Analysis of a move under the board">
+    <figcaption>An analyzed move: its evaluation, the move played and the best move, then the best continuation, with the arrows.</figcaption>
+</figure>
+<div class="astuce">The saved PGN file keeps the evaluations and, after each mistake, the best line. Loaded again later, it gets the whole analysis back.</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="files">9. PGN and FEN files</h2>
+<h3>Opening games</h3>
+<p>Menu <b>File &gt; Open PGN file</b>: the list of the games in the file is shown. <b>Double-click</b> a game to load it.</p>
+<figure>
+    <img src="images/09-liste-parties.png" alt="List of the games of a PGN file">
+    <figcaption>The list of the games of a PGN file.</figcaption>
+</figure>
+<ul>
+    <li>A loaded game is read-only: you can browse and analyze it. Its comments, annotations, evaluations and times are kept.</li>
+    <li>To play on from a position, use <span class="bouton">Resume here</span>.</li>
+    <li>The <span class="bouton">Show game list</span> button reopens the list.</li>
+    <li>Menu <b>File &gt; Open FEN file</b>: loads a position; you play the side to move.</li>
+</ul>
+<h3>Saving</h3>
+<ul>
+    <li><b>File &gt; Save game</b>: the game in PGN format. If the file exists, you can append the game at the end or replace the file.</li>
+    <li><b>File &gt; Save position</b>: the position in FEN format.</li>
+    <li>The <span class="bouton">PGN header</span> button edits the game information (event, site, date, players, Elo, time control).</li>
+    <li>The <span class="bouton">PGN game</span> button shows the game in English or French PGN, in long algebraic notation, in UCI or in FEN.</li>
+</ul>
+<figure>
+    <img src="images/10-entete-pgn.png" alt="PGN header window">
+    <figcaption>The PGN header of the game.</figcaption>
+</figure>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="setup">10. Setting up a position</h2>
+<p>The <span class="bouton">Set up position</span> button opens a board where you place the pieces by hand, starting from the displayed position.</p>
+<figure>
+    <img src="images/11-saisie-position.png" alt="Position setup window">
+    <figcaption>Choose a piece in the palette, then click the squares.</figcaption>
+</figure>
+<ul>
+    <li><b>Left click</b>: places the chosen piece (or removes it if it is already there). <b>Right click</b>: clears the square.</li>
+    <li>Set the side to move, castling rights, en passant square and move number.</li>
+    <li><span class="bouton">Paste a FEN</span> starts from a position copied elsewhere; <span class="bouton">Copy FEN</span> copies the position you set up.</li>
+    <li><span class="bouton">OK</span> is accepted only if the position can be played: it becomes a new game, you play the side to move.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="engines">11. Engines and books</h2>
+<ul>
+    <li><b>Stockfish</b> is the default engine, one of the strongest in the world. <b>Rodent IV</b> (strong and versatile) and <b>Sargon I</b> (the first engine on a microcomputer, 1978) are provided in the <b>Engines/Books</b> menu.</li>
+    <li><b>Select an engine</b>: any other engine using the UCI protocol.</li>
+    <li><b>Select an opening book</b>: a Polyglot opening book (*.bin). Specialized books are provided to study an opening.</li>
+    <li>Right of the board, the list of the moves known by the book; ⭐ marks the one the engine played. The <b>Book</b> and <b>Random</b> boxes turn the book on and make the engine pick a move at random, to vary the openings.</li>
+    <li><b>Stockfish &gt; Basic settings / Advanced settings</b>: engine settings (strength, number of lines, threads, hash table…). They are optional.</li>
+</ul>
+<figure>
+    <img src="images/12-parametres.png" alt="Basic engine settings">
+    <figcaption>The basic engine settings.</figcaption>
+</figure>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="options">12. Options and language</h2>
+<ul>
+    <li><b>Options &gt; Customize</b>: the colors of the light and dark squares.</li>
+    <li><b>Options &gt; Language</b>: French or English. The program offers to restart to apply the choice.</li>
+    <li>The <b>Sound</b> box plays a sound when the engine moves.</li>
+    <li><span class="bouton">Hide lines</span> hides the engine lines under the board; <span class="bouton">Show protocol</span> shows the exchanges with the engine (for the curious).</li>
+</ul>
+<figure>
+    <img src="images/13-langue.png" alt="Options menu, Language">
+    <figcaption>Choosing the language.</figcaption>
+</figure>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="program">13. Updates and program files</h2>
+<ul>
+    <li><b>Stockfish update</b>: the program checks from time to time whether a new version exists and offers to install it. Menu <b>Stockfish &gt; Check for Stockfish update</b> to check right away.</li>
+    <li><b>BrunoGUI.ini</b>, next to the program: the default settings (engine, colors, palette…).</li>
+    <li><b>BrunoGUI.preferences.ini</b>: your preferences, saved when the program closes (colors, name, thinking time, language…). Delete it to go back to the default settings.</li>
+    <li><b>BrunoGUI.log</b>: the error log. If a problem occurs, this file helps to fix it.</li>
+</ul>
+
+</main>
+</div>
+<script>
+    // Screenshot not taken yet: a box with its name instead of the broken image
+    document.querySelectorAll("figure img").forEach(function (image) {
+        function remplace() {
+            var cadre = document.createElement("div");
+            cadre.className = "capture-manquante";
+            cadre.textContent = "Screenshot to come: " + image.getAttribute("src");
+            image.replaceWith(cadre);
+        }
+        if (image.complete && image.naturalWidth === 0)
+            remplace();
+        else
+            image.addEventListener("error", remplace);
+    });
+</script>
+</body>
+</html>

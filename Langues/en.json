@@ -397,5 +397,7 @@
   "bibliothèque": "book",
   "moteur": "engine",
   "fichierPgn": "pgnFile",
-  "fichierFen": "fenFile"
+  "fichierFen": "fenFile",
+  "Impossible d'ouvrir l'aide :\n{0}\n\n{1}": "Cannot open the help:\n{0}\n\n{1}",
+  "Aide": "Help"
 }

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aide de BrunoGUI GenII</title>
+<link rel="stylesheet" href="../aide.css">
+</head>
+<body>
+<div class="page">
+<nav>
+    <div class="titre">BrunoGUI GenII</div>
+    <div class="version">Aide de l'utilisateur</div>
+    <ol>
+        <li><a href="#demarrage">Démarrage rapide</a></li>
+        <li><a href="#fenetre">La fenêtre principale</a></li>
+        <li><a href="#jouer">Jouer une partie</a></li>
+        <li><a href="#pendule">La pendule</a></li>
+        <li><a href="#feuille">La feuille de partie</a></li>
+        <li><a href="#annotations">Les annotations</a></li>
+        <li><a href="#analyse-position">Analyser une position</a></li>
+        <li><a href="#analyse-partie">Analyser une partie</a></li>
+        <li><a href="#fichiers">Fichiers PGN et FEN</a></li>
+        <li><a href="#saisie">Saisir une position</a></li>
+        <li><a href="#moteurs">Moteurs et bibliothèques</a></li>
+        <li><a href="#options">Options et langue</a></li>
+        <li><a href="#programme">Mise à jour et fichiers du programme</a></li>
+    </ol>
+    <div class="langue"><a href="../en/index.html">English version</a></div>
+</nav>
+<main>
+
+<h1>Aide de BrunoGUI GenII</h1>
+<p class="intro">BrunoGUI est une interface d'échecs : vous jouez contre un moteur (Stockfish par défaut, de 1320 à plus de 3000 Elo) ou contre un ami, et vous analysez vos parties comme avec ChessBase.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="demarrage">1. Démarrage rapide</h2>
+<ol>
+    <li>Menu <b>Stockfish &gt; Nouvelle partie contre Stockfish</b> : choisissez votre couleur, la force du moteur et la pendule, puis <span class="bouton">OK</span>.</li>
+    <li>Jouez en cliquant sur une pièce, puis sur sa case d'arrivée. Les cases possibles sont marquées.</li>
+    <li>Le moteur répond tout seul. Ses coups s'inscrivent sur la feuille de partie, à droite de l'échiquier.</li>
+    <li>À la fin, cliquez sur <span class="bouton">Analyse rapide</span> sous la feuille : le moteur juge chaque coup et donne votre précision.</li>
+    <li>Menu <b>Fichier &gt; Enregistrer Partie</b> pour garder la partie au format PGN.</li>
+</ol>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="fenetre">2. La fenêtre principale</h2>
+<figure>
+    <img src="images/01-fenetre-principale.png" alt="La fenêtre principale de BrunoGUI">
+    <figcaption>La fenêtre principale pendant une partie.</figcaption>
+</figure>
+<ul>
+    <li><b>En haut</b> : les joueurs (« [Elo] Nom ») et leurs pendules.</li>
+    <li><b>Au centre</b> : l'échiquier. Les cases de départ et d'arrivée du dernier coup du moteur sont colorées.</li>
+    <li><b>À droite de l'échiquier</b> : le tournoi, la feuille de partie avec sa courbe d'évaluation, puis le cadre « Bilan partie » et les boutons d'analyse.</li>
+    <li><b>Tout à droite</b> : les boutons de jeu (Retour arrière, résultat, Tourne échiquier, Ordinateur joue…) et les coups connus de la bibliothèque d'ouvertures.</li>
+    <li><b>Sous l'échiquier</b> : trois lignes pour les variantes du moteur ou l'analyse du coup regardé, le choix de la pendule et du temps de réflexion, puis la barre d'état.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="jouer">3. Jouer une partie</h2>
+<h3>Contre Stockfish</h3>
+<p>Menu <b>Stockfish &gt; Nouvelle partie contre Stockfish</b>. Rien ne change tant que vous n'avez pas cliqué sur <span class="bouton">OK</span> : <span class="bouton">Annuler</span> laisse la partie en cours intacte.</p>
+<figure>
+    <img src="images/02-nouvelle-partie.png" alt="Fenêtre Nouvelle partie contre Stockfish">
+    <figcaption>La couleur du moteur, sa force (maximale, ou limitée à un Elo), la pendule ou le temps de réflexion par coup, et votre nom.</figcaption>
+</figure>
+<h3>Contre un autre moteur, ou entre humains</h3>
+<ul>
+    <li>Menu <b>Nouvelle Partie</b> : <i>Humain contre ordinateur</i> (vous avez les Blancs), <i>Ordinateur contre humain</i> (vous avez les Noirs), ou <i>Entre Humains</i> : le moteur ne joue pas, pour une partie entre amis ou pour saisir une partie (aussi par le bouton <span class="bouton">Saisie partie</span>).</li>
+    <li>Le moteur utilisé est celui choisi dans le menu <b>Moteurs/Bibliothèques</b> (voir <a href="#moteurs">chapitre 11</a>).</li>
+</ul>
+<h3>Pendant la partie</h3>
+<ul>
+    <li><span class="bouton">Retour arrière</span> annule le dernier demi-coup. Si c'est alors au moteur de jouer, l'échiquier attend : cliquez encore sur Retour arrière pour revenir à votre coup, ou sur <span class="bouton">Ordinateur joue</span>.</li>
+    <li><span class="bouton">Ordinateur joue</span> fait jouer le moteur dans la position actuelle : il prend le camp au trait, vous l'autre.</li>
+    <li><b>Promotion</b> : quand un pion arrive au bout, choisissez la pièce dans le cadre qui s'affiche.</li>
+    <li><span class="bouton">Tourne échiquier</span> montre l'échiquier du côté des Noirs, ou des Blancs.</li>
+    <li><b>Fin de partie</b> : le mat, le pat, la triple répétition, la règle des 50 coups et le matériel insuffisant sont reconnus automatiquement. Les boutons <span class="bouton">Gain blanc</span>, <span class="bouton">Gain noir</span> et <span class="bouton">Nulle</span> déclarent un abandon ou une nulle par accord.</li>
+    <li>Une partie terminée peut reprendre : un Retour arrière annule le dernier coup et efface le résultat.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="pendule">4. La pendule</h2>
+<figure>
+    <img src="images/03-pendule.png" alt="Les pendules au-dessus de l'échiquier">
+    <figcaption>Le camp qui réfléchit a sa pendule sur fond vert ; elle passe en rouge sous 10 secondes.</figcaption>
+</figure>
+<ul>
+    <li>La cadence se choisit dans la liste sous l'échiquier, ou dans la fenêtre de nouvelle partie. Elle vaut pour la <b>partie suivante</b>.</li>
+    <li>Les cadences officielles de la FIDE (3 min + 2 s, 15 min + 10 s, 90 + 30 min) sont marquées d'une étoile dorée. « KO » signifie sans bonus par coup.</li>
+    <li>La pendule démarre au premier coup. <b>Un clic sur une pendule met la partie en pause</b>, un autre clic la reprend.</li>
+    <li>Le camp qui n'a plus de temps perd, sauf si l'adversaire ne peut plus mater (partie nulle). Le moteur aussi peut perdre au temps.</li>
+    <li>Sans pendule, le moteur réfléchit le nombre de secondes indiqué dans « Réflexion (s) ».</li>
+    <li>Le temps restant après chaque coup est enregistré dans le fichier PGN.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="feuille">5. La feuille de partie</h2>
+<figure>
+    <img src="images/04-feuille.png" alt="La feuille de partie et sa courbe d'évaluation">
+    <figcaption>La feuille : un coup par ligne, le coup affiché surligné, et à droite la courbe d'évaluation.</figcaption>
+</figure>
+<ul>
+    <li><b>Un clic sur un coup</b> affiche la position après ce coup, sans changer la partie (le moteur peut continuer à jouer). Un clic sur l'échiquier ou le bouton <span class="bouton">Fin</span> ramène à la partie.</li>
+    <li>Les boutons <span class="bouton">Début</span>, <span class="bouton">Préc.</span>, <span class="bouton">Suiv.</span>, <span class="bouton">Fin</span> et le clavier permettent de parcourir la partie :</li>
+</ul>
+<table>
+    <tr><th>Touche</th><th>Effet</th></tr>
+    <tr><td><kbd>←</kbd> / <kbd>→</kbd></td><td>Demi-coup précédent / suivant</td></tr>
+    <tr><td><kbd>Début</kbd> ou <kbd>Page préc.</kbd></td><td>Position de départ</td></tr>
+    <tr><td><kbd>Fin</kbd> ou <kbd>Page suiv.</kbd></td><td>Retour à la partie</td></tr>
+    <tr><td><kbd>Échap</kbd></td><td>Désactive ces touches (pour taper du texte ailleurs)</td></tr>
+</table>
+<ul>
+    <li><span class="bouton">Reprendre ici</span> reprend la partie à la position affichée : les coups suivants sont effacés. Une partie chargée d'un fichier PGN devient ainsi une partie d'entraînement contre le moteur.</li>
+    <li>Une flèche montre sur l'échiquier le coup regardé ; sur un coup annoté, une flèche verte montre le meilleur coup.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="annotations">6. Les annotations</h2>
+<figure>
+    <img src="images/05-annotations.png" alt="Menu des annotations par clic droit">
+    <figcaption>Clic droit sur un coup de la feuille : le menu des annotations.</figcaption>
+</figure>
+<ul>
+    <li><b>Clic droit sur un coup</b> pour lui donner une annotation : !! (brillant), ! (bon), !? (intéressant), ?! (douteux), ? (mauvais), ?? (gaffe).</li>
+    <li>L'annotation s'affiche sur une pastille de couleur et elle est enregistrée dans le fichier PGN.</li>
+    <li>Les annotations proposées par l'analyse de partie sont plus pâles. Les vôtres ne sont jamais remplacées.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="analyse-position">7. Analyser une position</h2>
+<p>Le bouton <span class="bouton">Analyse Position</span> fait réfléchir le moteur sur la position affichée (celle de la partie, ou celle que vous regardez dans la feuille) pendant le temps de « Réflexion (s) ».</p>
+<figure>
+    <img src="images/06-analyse-position.png" alt="Résultat de l'analyse d'une position">
+    <figcaption>Le résultat : la meilleure suite, son évaluation, et une flèche verte sur le coup conseillé.</figcaption>
+</figure>
+<ul>
+    <li>Les évaluations sont toujours du point de vue des Blancs : +1.50 = les Blancs ont l'avantage d'un pion et demi, « M3 » = les Blancs matent en 3 coups.</li>
+    <li>L'analyse se fait toujours à pleine force, même si le moteur est réglé plus faible pour jouer.</li>
+    <li>Pendant l'analyse, la pendule s'arrête.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="analyse-partie">8. Analyser une partie</h2>
+<p>Sous la feuille, deux boutons lancent l'analyse de toute la partie :</p>
+<ul>
+    <li><span class="bouton">Analyse rapide</span> : le moteur examine chaque position pendant 3 secondes, de la fin de la partie vers le début, comme ChessBase.</li>
+    <li><span class="bouton">Complète</span> : en plus, les positions autour de chaque coup douteux, et de chaque « ! » ou « !! », sont revues pendant 10 secondes pour confirmer le jugement.</li>
+</ul>
+<p>Pendant l'analyse, le bouton devient <span class="bouton">Interrompre</span> : ce qui est déjà analysé est gardé. Survolez les boutons pour connaître la durée estimée.</p>
+<figure>
+    <img src="images/07-analyse-partie.png" alt="Bilan de l'analyse de partie">
+    <figcaption>Après l'analyse : les annotations sur la feuille, la courbe d'évaluation et le bilan.</figcaption>
+</figure>
+<h3>Le bilan</h3>
+<ul>
+    <li>Le <b>coup critique</b> est celui où la partie a basculé : un clic sur le bilan l'affiche.</li>
+    <li>Pour chaque camp : la <b>précision</b> en % (100 % = tous les coups aussi bons que ceux du moteur) et le nombre d'imprécisions (?!), d'erreurs (?) et de gaffes (??).</li>
+    <li>Un « ! » marque le seul bon coup d'une position difficile ; un « !! » un seul bon coup qui sacrifie du matériel.</li>
+</ul>
+<h3>La courbe d'évaluation</h3>
+<p>À droite des coups, une barre par demi-coup : <b>verte vers la droite</b> quand les Blancs sont mieux, <b>rouge vers la gauche</b> quand les Noirs sont mieux, <b>jaune</b> pour un mat. Un clic sur une barre affiche le coup.</p>
+<h3>Le détail d'un coup</h3>
+<figure>
+    <img src="images/08-coup-analyse.png" alt="Analyse d'un coup sous l'échiquier">
+    <figcaption>Un coup analysé : son évaluation, le coup joué et le meilleur coup, puis la meilleure suite, avec les flèches.</figcaption>
+</figure>
+<div class="astuce">Le fichier PGN enregistré garde les évaluations et, après chaque erreur, la meilleure variante. Rechargé plus tard, il retrouve toute l'analyse.</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="fichiers">9. Fichiers PGN et FEN</h2>
+<h3>Ouvrir des parties</h3>
+<p>Menu <b>Fichier &gt; Ouvrir fichier PGN</b> : la liste des parties du fichier s'affiche. <b>Double-cliquez</b> sur une partie pour la charger.</p>
+<figure>
+    <img src="images/09-liste-parties.png" alt="Liste des parties d'un fichier PGN">
+    <figcaption>La liste des parties d'un fichier PGN.</figcaption>
+</figure>
+<ul>
+    <li>Une partie chargée est en lecture seule : vous pouvez la parcourir et l'analyser. Ses commentaires, annotations, évaluations et temps sont repris.</li>
+    <li>Pour la jouer à partir d'une position, utilisez <span class="bouton">Reprendre ici</span>.</li>
+    <li>Le bouton <span class="bouton">Affiche liste parties</span> rouvre la liste.</li>
+    <li>Menu <b>Fichier &gt; Ouvrir fichier FEN</b> : charge une position ; vous jouez le camp au trait.</li>
+</ul>
+<h3>Enregistrer</h3>
+<ul>
+    <li><b>Fichier &gt; Enregistrer Partie</b> : la partie au format PGN. Si le fichier existe, vous pouvez l'ajouter à la fin ou remplacer le fichier.</li>
+    <li><b>Fichier &gt; Enregistrer Position</b> : la position au format FEN.</li>
+    <li>Le bouton <span class="bouton">Entête PGN</span> modifie les informations de la partie (tournoi, lieu, date, joueurs, Elo, cadence).</li>
+    <li>Le bouton <span class="bouton">Partie PGN</span> montre la partie en PGN anglais ou français, en notation algébrique longue, en UCI ou en FEN.</li>
+</ul>
+<figure>
+    <img src="images/10-entete-pgn.png" alt="Fenêtre de l'en-tête PGN">
+    <figcaption>L'en-tête PGN de la partie.</figcaption>
+</figure>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="saisie">10. Saisir une position</h2>
+<p>Le bouton <span class="bouton">Saisie position</span> ouvre un échiquier où placer les pièces à la main, en partant de la position affichée.</p>
+<figure>
+    <img src="images/11-saisie-position.png" alt="Fenêtre de saisie d'une position">
+    <figcaption>Choisissez une pièce dans la palette, puis cliquez sur les cases.</figcaption>
+</figure>
+<ul>
+    <li><b>Clic gauche</b> : pose la pièce choisie (ou la retire si elle y est déjà). <b>Clic droit</b> : vide la case.</li>
+    <li>Réglez le trait, les roques, la case en passant et le numéro du coup.</li>
+    <li><span class="bouton">Coller une FEN</span> part d'une position copiée ailleurs ; <span class="bouton">Copier FEN</span> copie la position saisie.</li>
+    <li><span class="bouton">OK</span> n'est accepté que si la position est jouable : elle devient une nouvelle partie, vous jouez le camp au trait.</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="moteurs">11. Moteurs et bibliothèques</h2>
+<ul>
+    <li><b>Stockfish</b> est le moteur par défaut, l'un des plus forts du monde. <b>Rodent IV</b> (fort et polyvalent) et <b>Sargon I</b> (le premier moteur sur micro-ordinateur, 1978) sont fournis dans le menu <b>Moteurs/Bibliothèques</b>.</li>
+    <li><b>Sélectionnez un moteur</b> : tout autre moteur au protocole UCI.</li>
+    <li><b>Sélectionnez une bibliothèque</b> : un livre d'ouvertures au format Polyglot (*.bin). Des bibliothèques spécialisées sont fournies pour travailler une ouverture.</li>
+    <li>À droite de l'échiquier, la liste des coups connus de la bibliothèque ; ⭐ marque celui que le moteur a joué. Les cases <b>Bibliothèque</b> et <b>Aléatoire</b> activent la bibliothèque et font choisir un coup au hasard, pour varier les ouvertures.</li>
+    <li><b>Stockfish &gt; Paramètres de base / Paramètres avancés</b> : réglages du moteur (force, nombre de variantes, threads, table de hachage…). Ils sont facultatifs.</li>
+</ul>
+<figure>
+    <img src="images/12-parametres.png" alt="Paramètres de base du moteur">
+    <figcaption>Les paramètres de base du moteur.</figcaption>
+</figure>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="options">12. Options et langue</h2>
+<ul>
+    <li><b>Options &gt; Personnaliser</b> : les couleurs des cases claires et sombres.</li>
+    <li><b>Options &gt; Langue</b> : français ou anglais. Le programme propose de redémarrer pour appliquer le choix.</li>
+    <li>La case <b>Son</b> émet un son quand le moteur joue.</li>
+    <li><span class="bouton">Masque variantes</span> cache les lignes de variantes sous l'échiquier ; <span class="bouton">Affiche protocole</span> montre les échanges avec le moteur (pour les curieux).</li>
+</ul>
+<figure>
+    <img src="images/13-langue.png" alt="Menu Options, Langue">
+    <figcaption>Le choix de la langue.</figcaption>
+</figure>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="programme">13. Mise à jour et fichiers du programme</h2>
+<ul>
+    <li><b>Mise à jour de Stockfish</b> : le programme vérifie de temps en temps s'il existe une nouvelle version et propose de l'installer. Menu <b>Stockfish &gt; Verifier mise à jour StockFish</b> pour vérifier tout de suite.</li>
+    <li><b>BrunoGUI.ini</b>, à côté du programme : les réglages par défaut (moteur, couleurs, palette…).</li>
+    <li><b>BrunoGUI.preferences.ini</b> : vos préférences, enregistrées à la fermeture (couleurs, nom, temps de réflexion, langue…). Supprimez-le pour revenir aux réglages par défaut.</li>
+    <li><b>BrunoGUI.log</b> : le journal des erreurs. Si un problème survient, ce fichier aide à le corriger.</li>
+</ul>
+
+</main>
+</div>
+<script>
+    // Capture pas encore faite : un cadre avec son nom à la place de l'image cassée
+    document.querySelectorAll("figure img").forEach(function (image) {
+        function remplace() {
+            var cadre = document.createElement("div");
+            cadre.className = "capture-manquante";
+            cadre.textContent = "Capture à venir : " + image.getAttribute("src");
+            image.replaceWith(cadre);
+        }
+        if (image.complete && image.naturalWidth === 0)
+            remplace();     // (déjà en échec avant ce script)
+        else
+            image.addEventListener("error", remplace);
+    });
+</script>
+</body>
+</html>
