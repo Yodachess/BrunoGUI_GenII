@@ -38,15 +38,16 @@ namespace BrunoGUI_GenII
             if (MoteurUci.NombreThreads is int threads)
                 baseThreadsNumerique.Value = Math.Clamp(threads, (int)baseThreadsNumerique.Minimum, (int)baseThreadsNumerique.Maximum);
             baseReflexionNumerique.Value = Math.Clamp(interfaceGraphique.TempsReflexionSecondes.Value, baseReflexionNumerique.Minimum, baseReflexionNumerique.Maximum);
+            if (MoteurUci.EloVoulu is int elo)     // (pleine force : la dernière valeur reste affichée)
+                baseEloNumerique.Value = Math.Clamp(elo, (int)baseEloNumerique.Minimum, (int)baseEloNumerique.Maximum);
         }
         private void BaseBoutonOk_Click(object? sender, EventArgs e)
         {
-            MoteurUci.DefinitLimiteElo(baseEloNumerique.Value.ToString());
             MoteurUci.DefinitThreads((int)baseThreadsNumerique.Value);
             MoteurUci.DefinitMultiPV((int)baseMultipvNumerique.Value);
             var champ = interfaceGraphique.TempsReflexionSecondes;
             champ.Value = Math.Clamp(baseReflexionNumerique.Value, champ.Minimum, champ.Maximum);   // met aussi à jour le temps de réflexion
-            interfaceGraphique.DefinitEloMoteur(baseEloNumerique.Value.ToString());    // affiché au(x) camp(s) joué(s) par le moteur
+            interfaceGraphique.DefinitEloMoteur((int)baseEloNumerique.Value);    // force du moteur, et Elo affiché au(x) camp(s) qu'il joue
             this.DialogResult = DialogResult.OK;
             this.Hide();
         }

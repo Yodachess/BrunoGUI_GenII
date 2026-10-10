@@ -13,8 +13,7 @@
 //                      ├─ "StandardInputDataToUci"     Envoi de données de l'interface vers moteur UCI
 //                      ├─ "PositionFenUci"             Position Fen courante envoyée au Moteur UCI
 //                      ├─ "JeuMoteurUci"               Envoie au moteur UCI le Fen actuel
-//                      ├─ "ActiveLimiteElo"            Activation de la limitation du ELO
-//                      ├─ "DefinitLimiteElo"           Définition de la force ELO du moteur  
+//                      ├─ "DefinitForce"               Force pour jouer : un Elo (UCI_LimitStrength + UCI_Elo), ou pleine force
 //                      ├─ "DefinitNiveau"              "Skill Level" pour jouer
 //                      ├─ "AppliqueForce"              Force limitée pour jouer, pleine force pour analyser (avant chaque "go")
 //                      ├─ "DefinitMultiPV"            Nombre de variantes demandées au moteur
@@ -56,7 +55,8 @@ namespace BrunoGUI_GenII
 
         // Force du moteur : limitée pour jouer (Elo, niveau), jamais pour analyser. Ce qui est voulu pour jouer est mémorisé, et ce
         // qui est actuellement réglé dans le moteur aussi : avant chaque "go", JeuMoteurUci n'envoie que ce qui doit changer
-        private bool _limiteEloVoulue;          // UCI_LimitStrength voulu pour jouer (ActiveLimiteElo)
+        public int? EloVoulu { get; private set; }  // force pour jouer : Elo limité (UCI_LimitStrength + UCI_Elo) ; null : pleine force
+        private bool _limiteEloVoulue;          // UCI_LimitStrength voulu pour jouer (EloVoulu != null)
         private bool _limiteEloDansMoteur;      // valeur actuelle de UCI_LimitStrength dans le moteur
         public int? NiveauVoulu { get; private set; }   // "Skill Level" réglé pour jouer (null : jamais réglé, 20 chez Stockfish)
         private int? _niveauDansMoteur;
@@ -110,7 +110,8 @@ namespace BrunoGUI_GenII
             OptionsUci.Clear();
             NomAnnonce = null;
             _optionsDemarrageEnvoyees = false;
-            _limiteEloVoulue = _limiteEloDansMoteur = false;    // un moteur qui démarre a ses réglages par défaut
+            _limiteEloDansMoteur = false;       // un moteur qui démarre a ses réglages par défaut (l'Elo voulu est envoyé à "uciok")
+            _limiteEloVoulue = EloVoulu != null;
             NiveauVoulu = _niveauDansMoteur = null;
             Demandes.Reinitialiser();
             StandardInputDataToUci("uci");  // On demande les infos au moteur (il répond par ses options puis "uciok")
@@ -167,8 +168,6 @@ namespace BrunoGUI_GenII
                     case "option":
                         if (DerniereLigne.NomOption != null && !OptionsUci.Contains(DerniereLigne.NomOption))
                             OptionsUci.Add(DerniereLigne.NomOption);
-                        if (DerniereLigne.NomOption == "UCI_LimitStrength")  // il est possible de régler la force ELO
-                            ActiveLimiteElo();
                         break;
                 }
             }
@@ -182,6 +181,14 @@ namespace BrunoGUI_GenII
             if (_optionsDemarrageEnvoyees)
                 return;
             _optionsDemarrageEnvoyees = true;
+            // Force pour jouer (tout moteur qui sait limiter sa force) : l'Elo choisi, dès le démarrage. Sinon une partie lancée
+            // juste après le démarrage se jouait à l'Elo par défaut du moteur (1320 pour Stockfish), quel que soit l'Elo affiché
+            if (EloVoulu is int elo && OptionsUci.Contains("UCI_LimitStrength"))
+            {
+                StandardInputDataToUci("setoption name UCI_Elo value " + elo);
+                StandardInputDataToUci("setoption name UCI_LimitStrength value true");
+                _limiteEloDansMoteur = true;
+            }
             if (NomAnnonce?.StartsWith("Stockfish", StringComparison.OrdinalIgnoreCase) != true)
                 return;
             if (NombreThreads is int threads && OptionsUci.Contains("Threads"))
@@ -233,10 +240,17 @@ namespace BrunoGUI_GenII
             TailleHachageMo = tailleMo;
             StandardInputDataToUci("setoption name Hash value " + tailleMo);
         }
-        public void ActiveLimiteElo()
-        {   // Activation de la limitation du ELO (pour jouer : une analyse la retire le temps de sa recherche, voir AppliqueForce)
-            _limiteEloVoulue = _limiteEloDansMoteur = true;
-            StandardInputDataToUci("setoption name UCI_LimitStrength value true");
+        public void DefinitForce(int? elo)
+        {   // Force pour jouer (une analyse se fait toujours à pleine force, voir AppliqueForce) : un Elo, ou null pour la pleine force.
+            // La pleine force RETIRE la limite : un Elo élevé ne suffit pas, car avec UCI_LimitStrength Stockfish convertit l'Elo en
+            // niveau (3190 donne environ 18,4 sur 20) et tire au sort entre ses meilleurs coups (Skill::pick_best, stockfish\src\search.cpp).
+            // Mémorisé : renvoyé à chaque démarrage du moteur (EnvoieOptionsDemarrage)
+            EloVoulu = elo;
+            _limiteEloVoulue = elo != null;
+            if (elo is int valeur)
+                StandardInputDataToUci("setoption name UCI_Elo value " + valeur);
+            StandardInputDataToUci("setoption name UCI_LimitStrength value " + (elo != null ? "true" : "false"));
+            _limiteEloDansMoteur = elo != null;
         }
         public void DefinitNiveau(int niveau)
         {   // "Skill Level" (0 à 20 chez Stockfish) pour jouer ; une analyse se fait toujours au niveau maximal
@@ -269,10 +283,6 @@ namespace BrunoGUI_GenII
                     _niveauDansMoteur = niveau;
                 }
             }
-        }
-        public void DefinitLimiteElo(string ValeurElo)
-        {   // Définition de la force ELO du moteur (default 1320 min 1320 max 3190 pour Stockfish)
-            StandardInputDataToUci("setoption name UCI_Elo value " + ValeurElo);
         }
         public void SpecialeSargon()
         {   // Sinon Sargon  mouline sans fin !!

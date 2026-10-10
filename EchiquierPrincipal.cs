@@ -102,7 +102,8 @@ namespace BrunoGUI_GenII
             _forceMoteurElo = parametres.ForceMoteur;
             MoteurUci.NombreLignesPV = parametres.NombreLignesPV;
             _bibliotheque = parametres.Bibliotheque;
-            _moteurElo = _forceMoteurElo.ToString();
+            _moteurElo = parametres.ForceMaximale ? "3150" : _forceMoteurElo.ToString();     // (affiché ; la pleine force n'a pas d'Elo précis)
+            MoteurUci.DefinitForce(parametres.ForceMaximale ? null : _forceMoteurElo);      // envoyée au moteur dès son démarrage
             // Préférences : la fenêtre "Nouvelle partie" propose les derniers choix, le curseur reprend le dernier temps de réflexion
             maNouvellePartieForceModule.ChoixCouleur = parametres.CouleurMoteur;
             maNouvellePartieForceModule.ForceMaximale = parametres.ForceMaximale;
@@ -240,13 +241,9 @@ namespace BrunoGUI_GenII
                 ChoisitCadence(maNouvellePartieForceModule.ChoixCadence);     // la pendule de cette partie (et des suivantes)
 
                 MiseaZeroAffichages();
-                if (forceMaximale)
-                {   // Moteur à sa force Elo maximale
-                    _forceMoteurElo = 3150;
-                }
-                _moteurElo = _forceMoteurElo.ToString();
-                MoteurUci.ActiveLimiteElo();
-                MoteurUci.DefinitLimiteElo(_moteurElo);
+                // Force maximale : sans limite (pas un Elo de 3150 avec la limite, qui garde le tirage au sort de Stockfish)
+                _moteurElo = forceMaximale ? "3150" : _forceMoteurElo.ToString();     // (affiché ; la pleine force n'a pas d'Elo précis)
+                MoteurUci.DefinitForce(forceMaximale ? null : _forceMoteurElo);
                 MoteurUci.DefinitMultiPV(MoteurUci.NombreLignesPV);
                 if (couleurMoteur == ColorPiece.Blanc)
                 {   // Le moteur joue les blancs
@@ -566,8 +563,7 @@ namespace BrunoGUI_GenII
                 AfficheJoueurs(_nomHumain, _joueurElo, T("Adversaire"), "");
                 StatusProgramme.Text = T("Humain contre humain");
                 InformationsPartie.Text = " " + T("Bruno vous souhaite une bonne partie !");
-                MoteurUci.ActiveLimiteElo();        // Préparation du moteur en cas de demande d'analyse
-                MoteurUci.DefinitLimiteElo("3190");
+                MoteurUci.DefinitForce(null);       // le moteur ne joue pas ; s'il joue (« Ordinateur joue »), à pleine force
                 MoteurUci.DefinitMultiPV(MoteurUci.NombreLignesPV);
                 maNouvellePartieForceModule.DureeReflexionSeconde = 10;
                 CommencerPartie(Joueur.Humain, Joueur.Humain);
@@ -684,9 +680,13 @@ namespace BrunoGUI_GenII
                            noirs ? _nomMoteur : PartieEnCours.Black, noirs ? _moteurElo : PartieEnCours.BlackElo);
             _nomsHumainMoteur = true;
         }
-        public void DefinitEloMoteur(string elo)
-        {   // Elo du moteur réglé dans les paramètres de base
-            _moteurElo = elo;
+        public void DefinitEloMoteur(int elo)
+        {   // Elo du moteur réglé dans les paramètres de base : il joue désormais à cet Elo (aussi proposé dans « Nouvelle partie »)
+            MoteurUci.DefinitForce(elo);
+            _forceMoteurElo = elo;
+            maNouvellePartieForceModule.ForceModule = elo;
+            maNouvellePartieForceModule.ForceMaximale = false;
+            _moteurElo = elo.ToString();
             AfficheMoteurDansLaPartie();
         }
         private void ParametresDeBase_Click(object? sender, EventArgs e)
