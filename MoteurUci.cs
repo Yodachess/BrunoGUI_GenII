@@ -92,8 +92,8 @@ namespace BrunoGUI_GenII
             Proc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             // gestionnaire d'événement de sortie de données
             Proc.OutputDataReceived += ProcOutputDataReceived;
-            // démarrer le processus (fichier absent ou illisible : exception pour l'appelant, et pas de moteur plutôt qu'un
-            // processus jamais démarré)
+            // démarrer le processus (fichier absent ou illisible : exception pour l'appelant,
+            // et pas de moteur plutôt qu'un processus jamais démarré)
             try
             {
                 Proc.Start();
@@ -151,9 +151,9 @@ namespace BrunoGUI_GenII
                     case "bestmove": // le moteur UCI propose le meilleur coup
                         // Un moteur retourne "(none)" ou "0000" en cas de mat ou de pat : aucun coup à jouer.
                         // Ce cas est traité par l'interface (AfficheUci, sur son thread), pas ici sur le thread du moteur
-                        if (!DerniereLigne.AucunCoupLegal && !LigneAbandonnee)     // réponse périmée : ignorée
+                        if (!DerniereLigne.AucunCoupLegal && !LigneAbandonnee)  // réponse périmée : ignorée
                         {
-                            CoupAuFormatUci = DerniereLigne.MeilleurCoup ?? "";     // (jamais null ici : AucunCoupLegal est faux)
+                            CoupAuFormatUci = DerniereLigne.MeilleurCoup ?? ""; // (jamais null ici : AucunCoupLegal est faux)
                             AfficheCoupMoteur?.Invoke();
                         }
                         break;
