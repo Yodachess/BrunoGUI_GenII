@@ -86,6 +86,9 @@ namespace BrunoGUI_GenII
             LigneAnalyse? ligneAnalyse = _pilote.Lignes.Ajouter(ligne, PositionDesVariantes);
             if (ligneAnalyse == null)
                 return;     // ni score ni variante (ex : "info depth 12")
+            if (_fenetreAnalyse != null && _analyseDePartie != null && ligneAnalyse.Numero == 1 && ligneAnalyse.Evaluation is Evaluation evaluationPartie)
+                _fenetreAnalyse.MontreScore(T("Score : {0} — {1}", evaluationPartie.Texte, evaluationPartie.Appreciation),
+                    T("Meilleure suite : {0}", Notation(ligneAnalyse.VariantePgn)));     // (analyse de partie : suivi en direct)
             // On affiche seulement le score de la meilleure variante (un moteur sans MultiPV, comme Sargon, n'a que celle-là)
             if (ligneAnalyse.Numero == 1 && ligneAnalyse.Evaluation is Evaluation evaluation)
             {
