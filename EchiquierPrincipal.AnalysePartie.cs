@@ -43,6 +43,8 @@ namespace BrunoGUI_GenII
         private int _positionEnAnalyse = -1;                // position demandée au moteur (index dans _analyseDePartie.Positions)
         private int? _coupCritique;                         // index dans ListeCoups du coup critique de la dernière analyse (clic sur le bilan)
         private int? _multiPvAvantAnalyse;                  // nombre de variantes à rétablir à la fin de l'analyse
+        private FenetreAnalyse? _fenetreAnalyse;            // suivi de l'analyse (position, score, suite, temps restant) ; null : fermée
+        private bool _analyseComplete;                      // analyse complète : la vérification des coups douteux suivra le 1er passage
 
         private void BoutonAnalysePartie_Click(object? sender, EventArgs e)
         {   // "Analyse rapide" (3 s par position), ou "Interrompre" si une analyse est en cours (ce bouton occupe alors toute la largeur)
@@ -93,6 +95,7 @@ namespace BrunoGUI_GenII
             EffaceBilan();
             InformationsPartie.Text = T("Analyse de la partie...");
             MetAJourCommandes();        // échiquier bloqué
+            OuvreFenetreAnalyse(complete);
             AnalysePositionSuivante();
         }
         private void AnalysePositionSuivante()
@@ -112,6 +115,17 @@ namespace BrunoGUI_GenII
             BarreAnalysePartie.Value = Math.Min(BarreAnalysePartie.Maximum, faites);
             BoutonAnalysePartie.Values.Text = approfondissement ? T("Interrompre (vérif. {0}/{1})", faites + 1, total) : T("Interrompre ({0}/{1})", faites + 1, total);
             InformationsPartie.Text = approfondissement ? T("Vérification des coups douteux ({0} s)...", DureeApprofondissement / 1000) : T("Analyse de la partie...");
+            if (_fenetreAnalyse != null)
+            {   // Fenêtre de suivi : étape, position examinée, progression et temps restant estimé (au rythme de 3 ou 10 s par position)
+                int indexCoup = _analyseDePartie.IndexDansListeCoups(index);
+                string position = indexCoup < 0 || LogiqueMouvements.ListeCoups[indexCoup].EstPositionDeDepart ? T("Position de départ")
+                    : T("Position après {0}", Notation(LogiqueMouvements.ListeCoups[indexCoup].PgnFrNumerote));
+                TimeSpan reste = TimeSpan.FromMilliseconds((double)(total - faites) * (approfondissement ? DureeApprofondissement : DureeAnalyseParPosition));
+                string temps = T("Temps restant : environ {0}", TexteDuree(reste))
+                    + (_analyseComplete && !approfondissement ? " " + T("(puis la vérification des coups douteux)") : "");
+                _fenetreAnalyse.MontreEtape(approfondissement ? T("Vérification des coups douteux : {0} / {1}", faites + 1, total)
+                                                              : T("Position {0} / {1}", faites + 1, total), position, faites, total, temps);
+            }
             _pilote.DemanderAnalyse(LogiqueMouvements.PositionDepuisFen(_analyseDePartie.Positions[index].Fen),
                                     approfondissement ? DureeApprofondissement : DureeAnalyseParPosition);
         }
@@ -124,6 +138,26 @@ namespace BrunoGUI_GenII
             // analysée et le coup joué dans celle-ci peut être jugé tout de suite ; la feuille est redessinée avec la position suivante
             _analyseDePartie.AppliqueAuxCoups(LogiqueMouvements.ListeCoups);
             AnalysePositionSuivante();
+        }
+        private void OuvreFenetreAnalyse(bool complete)
+        {   // Fenêtre de suivi, non bloquante (choix de Bruno : la barre sous la feuille était trop discrète) : à droite de la
+            // fenêtre principale s'il y a la place à l'écran, sinon par-dessus sa colonne de boutons
+            FermeFenetreAnalyse();
+            _analyseComplete = complete;
+            FenetreAnalyse fenetre = new(complete);
+            Rectangle ecran = Screen.FromControl(this).WorkingArea;
+            int x = Right + 8 + fenetre.Width <= ecran.Right ? Right + 8 : Right - fenetre.Width - 16;
+            fenetre.Location = new Point(Math.Max(ecran.Left, x), Math.Max(ecran.Top, Top + 120));
+            fenetre.Interrompre += () => TermineAnalyseDePartie(interrompue: true);
+            fenetre.FormClosed += (s, e) => { if (_fenetreAnalyse == fenetre) _fenetreAnalyse = null; };     // croix : l'analyse continue
+            _fenetreAnalyse = fenetre;
+            fenetre.Show(this);     // (appartient à la fenêtre principale : reste devant elle)
+        }
+        private void FermeFenetreAnalyse()
+        {
+            FenetreAnalyse? fenetre = _fenetreAnalyse;
+            _fenetreAnalyse = null;
+            fenetre?.Close();
         }
         private static string TexteBilan(string camp, BilanCamp bilan) =>
             // Ex : "Blancs — précision 87 %" puis "   1 imprécision, 0 erreur, 2 gaffes" (explications dans l'infobulle du bilan)
@@ -155,6 +189,7 @@ namespace BrunoGUI_GenII
             if (analyse == null)
                 return;
             _analyseDePartie = null;        // avant AbandonneReflexion, qui sinon reviendrait ici
+            FermeFenetreAnalyse();
             _positionEnAnalyse = -1;
             AbandonneReflexion();           // la position en cours d'analyse (interruption) : sa réponse sera ignorée
             if (_multiPvAvantAnalyse is int multiPv && multiPv != MoteurUci.NombreLignesPV)
