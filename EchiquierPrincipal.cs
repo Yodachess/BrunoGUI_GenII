@@ -551,8 +551,10 @@ namespace BrunoGUI_GenII
                 JeuMoteurAvecBibliotheque(FenDepart);
             }
         }
-        private void HumainContreHumain_Click(object? sender, EventArgs e)
-        {   // 2 joueurs humains s'affrontent, pas de moteur UCI.
+        private void HumainContreHumain_Click(object? sender, EventArgs e) => NouvellePartieEntreHumains(saisie: false);
+        private void NouvellePartieEntreHumains(bool saisie)
+        {   // 2 joueurs humains s'affrontent, pas de moteur UCI ; saisie (bouton « Saisie partie ») : on recopie une partie, sans pendule
+            // (avec la pendule, elle tournait pendant la saisie et ses temps allaient dans le PGN)
             // On demande d'abord confirmation (la partie est remise à zéro) : "Annuler" laisse la partie en cours intacte
             string confirmation = T("Vous jouez contre votre ami/partenaire,\nou vous saisissez une partie ...\nToute position précédente sera effacée,\n confirmez avec OK, sinon Annuler");
             DialogResult Resultat = KryptonMessageBox.Show(confirmation, T("Jeu entre amis, ou saisie de partie"), KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
@@ -567,6 +569,11 @@ namespace BrunoGUI_GenII
                 MoteurUci.DefinitMultiPV(MoteurUci.NombreLignesPV);
                 maNouvellePartieForceModule.DureeReflexionSeconde = 10;
                 CommencerPartie(Joueur.Humain, Joueur.Humain);
+                if (saisie)
+                {   // (la cadence choisie reste celle des parties suivantes)
+                    SupprimePendule();
+                    PartieEnCours.TimeControl = "";     // pas de balise [TimeControl] dans le PGN
+                }
             }
         }
         private void SelectionAutreMoteur_Click(object? sender, EventArgs e)
@@ -719,8 +726,8 @@ namespace BrunoGUI_GenII
         // Gestion des boutons
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void SaisiePartieBouton_Click(object? sender, EventArgs e)
-        {   // Permet de saisir une partie en cours, ou terminée, pour l'analyser ou la faire rejouer
-            HumainContreHumain_Click(sender, e);
+        {   // Permet de saisir une partie en cours, ou terminée, pour l'analyser ou la faire rejouer (sans pendule)
+            NouvellePartieEntreHumains(saisie: true);
         }
         private void AnalysePosition_Click(object? sender, EventArgs e)
         {   // Analyse la position affichée : la position courante de la partie, ou le coup passé que l'on regarde (parcours)
