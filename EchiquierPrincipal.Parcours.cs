@@ -179,6 +179,7 @@ namespace BrunoGUI_GenII
         public void AfficheCoupDeLaPartie(int index)
         {   // Affiche la position après le coup n° index de ListeCoups (-1 : position initiale), sans modifier la partie.
             // Au-delà du dernier coup : retour à la position courante
+            ArreteRejeu(reaffiche: false);  // (meilleure suite en cours de rejeu : la nouvelle position la remplace)
             int dernier = LogiqueMouvements.ListeCoups.Count - 1;
             if (index >= dernier)
             {
@@ -212,6 +213,8 @@ namespace BrunoGUI_GenII
         {   // Le coup regardé (1re ligne de variante et dernière case de la barre d'état) et, s'il a été analysé, son analyse
             // (lignes 2 et 3) et ses flèches. Pendant le parcours, et pour le dernier coup d'une partie finie (AfficheDernierCoupSiPartieFinie)
             bool positionInitiale = index < 0 || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart;
+            _coupARejouer = null;           // (ligne 3 cliquable seulement si elle montre une suite à rejouer, voir plus bas)
+            VarianteMoteurUci3.Cursor = Cursors.Default;
             AfficheLigneCentree(VarianteMoteurUci1, positionInitiale
                 ? "[ " + T("Position initiale") + " ]" : $"[ {TexteCoupJoue(index, positionApres)} ]"
                   + (LogiqueMouvements.ListeCoups[index].TempsReflexion is TimeSpan reflexion ? "   " + T("(réflexion : {0})", TexteDuree(reflexion)) : ""));
@@ -244,6 +247,13 @@ namespace BrunoGUI_GenII
                     string libelle = coup.MeilleurJoue ? T("Suite prévue : {0}")
                         : coup.PerteAnalyse < JugementCoups.SeuilImprecision ? T("Suite du moteur : {0}") : T("Meilleure suite : {0}");
                     AfficheLigneCentree(VarianteMoteurUci3, string.Format(libelle, Notation(coup.VarianteMeilleure)));
+                    if (!string.IsNullOrEmpty(coup.VarianteMeilleureUci))
+                    {   // un clic sur la ligne rejoue la suite sur l'échiquier (RejoueSuite, choix de Bruno)
+                        _coupARejouer = index;
+                        VarianteMoteurUci3.Cursor = Cursors.Hand;
+                        _infobulleBilan.SetToolTip(VarianteMoteurUci3, (string.IsNullOrWhiteSpace(coup.Commentaire) ? "" : T("Commentaire : {0}", $"« {coup.Commentaire} »") + "\n")
+                            + T("Clic : rejouer la suite sur l'échiquier"));
+                    }
                 }
                 else if (commentaire != null)
                     AfficheLigneCentree(VarianteMoteurUci3, commentaire);
@@ -363,6 +373,7 @@ namespace BrunoGUI_GenII
         }
         public void RetourPositionCourante()
         {   // Fin du parcours : l'échiquier montre de nouveau la partie
+            ArreteRejeu(reaffiche: false);
             if (!ParcoursEnCours)
                 return;
             _positionAffichee = null;
@@ -377,12 +388,75 @@ namespace BrunoGUI_GenII
         }
         private void QuitteParcours()
         {   // La partie va être remplacée (nouvelle partie, chargement, "Reprendre ici") : l'échiquier suivra la partie
+            ArreteRejeu(reaffiche: false);
             _positionAffichee = null;
             _vue.DernierCoupMasque = false;
             _vue.EffaceFleches();
             EffaceBilan();              // le bilan de l'analyse portait sur l'ancienne partie
             MetAJourCommandes();
         }
+        // ═══ Meilleure suite rejouée sur l'échiquier (choix de Bruno) ═══
+        // Clic sur la 3e ligne de variante d'un coup analysé : la suite du moteur (Coup.VarianteMeilleureUci, depuis la position
+        // d'avant le coup) est rejouée coup par coup, une seconde par coup, avec sa flèche ; puis l'échiquier revient au coup regardé.
+        // Un nouveau clic l'arrête, et toute autre action aussi (parcours, AbandonneReflexion). La partie n'est jamais modifiée
+        private const int MaximumDemiCoupsRejoues = 16;
+        private readonly System.Windows.Forms.Timer _minuterieRejeu = new() { Interval = 1000 };
+        private List<(Position Position, string Uci)> _rejeu = [];
+        private int _etapeRejeu;
+        private int? _coupARejouer;         // coup regardé dont la ligne 3 montre une suite à rejouer (null : rien à rejouer)
+        private void LigneSuite_Click(object? sender, EventArgs e)
+        {
+            if (_rejeu.Count > 0)
+            {   // 2e clic : arrêt
+                ArreteRejeu(reaffiche: true);
+                return;
+            }
+            if (_coupARejouer is not int index || index >= LogiqueMouvements.ListeCoups.Count || !CoupRegarde(index))
+                return;
+            string fenAvant = index == 0 ? FenDepart : LogiqueMouvements.ListeCoups[index - 1].Fen;
+            _rejeu = ChargementPartie.PositionsDeLaVariante(LogiqueMouvements.PositionDepuisFen(fenAvant),
+                                                            LogiqueMouvements.ListeCoups[index].VarianteMeilleureUci, MaximumDemiCoupsRejoues);
+            if (_rejeu.Count == 0)
+                return;
+            _etapeRejeu = 0;
+            MontreEtapeRejeu();
+            _minuterieRejeu.Start();
+        }
+        private bool CoupRegarde(int index) =>
+            // le coup est bien celui affiché : pendant le parcours, ou dernier coup d'une partie finie (AfficheDernierCoupSiPartieFinie)
+            ParcoursEnCours ? _indexAffiche == index : index == LogiqueMouvements.ListeCoups.Count - 1;
+        private void MinuterieRejeu_Tick(object? sender, EventArgs e)
+        {   // Coup suivant de la suite ; après le dernier (resté affiché une seconde), retour au coup regardé
+            _etapeRejeu++;
+            if (_etapeRejeu < _rejeu.Count)
+                MontreEtapeRejeu();
+            else
+                ArreteRejeu(reaffiche: true);
+        }
+        private void MontreEtapeRejeu()
+        {
+            var (position, uci) = _rejeu[_etapeRejeu];
+            _vue.DessinePosition(position);
+            _vue.MontreFleches((RenvoieCaseIndex120(uci[..2]), RenvoieCaseIndex120(uci.Substring(2, 2)), CouleurFlecheMeilleurCoup));
+            VarianteMoteurCourante.Text = T("Suite rejouée : coup {0} / {1} (clic pour arrêter)", _etapeRejeu + 1, _rejeu.Count);
+        }
+        private void ArreteRejeu(bool reaffiche)
+        {   // Fin du rejeu ; reaffiche : l'échiquier montre de nouveau le coup regardé (sinon, l'appelant redessine lui-même)
+            _minuterieRejeu.Stop();
+            if (_rejeu.Count == 0)
+                return;
+            _rejeu = [];
+            if (!reaffiche)
+                return;
+            if (ParcoursEnCours)
+                AfficheCoupDeLaPartie(_indexAffiche);
+            else
+            {   // dernier coup d'une partie finie
+                LogiqueMouvements.DessinPieces();
+                AfficheDernierCoupSiPartieFinie();
+            }
+        }
+
         private void DessinePieceDeLaPartie(int IndexCase, LogiqueMouvements.TypePiece Piece)
         {   // Dessins demandés par la partie (coups joués...) : ignorés pendant le parcours, l'échiquier est redessiné au retour
             if (!ParcoursEnCours)

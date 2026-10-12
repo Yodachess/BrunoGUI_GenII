@@ -324,6 +324,7 @@ namespace BrunoGUI_GenII
         {   // Rend périmée la réflexion en cours (partie ou analyse) : le moteur s'arrête et sa réponse sera ignorée.
             // A appeler avant toute action qui change la partie ou la position (retour arrière, résultat, nouvelle partie, chargement...)
             AnnuleSelectionPiece();     // une pièce prise en main revient sur sa case
+            ArreteRejeu(reaffiche: true);   // une suite en cours de rejeu : l'échiquier revient au coup regardé
             if (_analyseDePartie != null)
                 TermineAnalyseDePartie(interrompue: true);  // la partie va changer : on garde ce qui est déjà analysé
             _vue?.EffaceFleches();      // (flèche du coup conseillé par une analyse : elle ne vaut plus ; le parcours remet les siennes)

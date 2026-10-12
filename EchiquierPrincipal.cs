@@ -122,6 +122,8 @@ namespace BrunoGUI_GenII
             PenduleBlanc.ReduitPourTenir = PenduleNoir.ReduitPourTenir = true;     // "1:30:00" toujours lisible en entier
             _infobulleBilan.SetToolTip(BilanAnalyse, T("Précision : 100 % = tous les coups aussi bons que ceux du moteur (formule de Lichess).\nImprécision (?!), erreur (?), gaffe (??) : le coup fait perdre au moins 10, 20 ou 30 %\ndes chances de gain (une perte dans une position déjà gagnée compte peu).\nAnalyse complète : les coups douteux sont revus 10 s pour confirmer le jugement.\nCoup critique : celui où la partie a basculé (la plus grosse perte) ; un clic l'affiche."));
             BilanAnalyse.Click += BilanAnalyse_Click;
+            VarianteMoteurUci3.Click += LigneSuite_Click;          // clic sur la meilleure suite d'un coup analysé : elle est rejouée
+            _minuterieRejeu.Tick += MinuterieRejeu_Tick;
             BoutonAnalysePartie.MouseEnter += MetAJourInfobullesAnalyse;
             BoutonAnalyseComplete.MouseEnter += MetAJourInfobullesAnalyse;
             foreach (RichTextBox ligne in new[] { VarianteMoteurUci1, VarianteMoteurUci2, VarianteMoteurUci3 })

@@ -186,6 +186,7 @@ namespace BrunoGUI_GenII
             string premier = uci.Split(' ')[0];
             coup.VarianteLue = true;
             coup.MeilleurCoupUci = premier;
+            coup.VarianteMeilleureUci = uci;
             coup.VarianteMeilleure = Outils.VarianteUciVersPgn(uci, DemiCoupAvant(avant), false, avant).Trim();
             coup.MeilleurCoup = AnalyseDePartie.PremierCoup(coup.VarianteMeilleure);
             coup.MeilleurCoupLong = AnalyseDePartie.NotationLongue(fenAvant, premier, coup.MeilleurCoup);
@@ -267,6 +268,24 @@ namespace BrunoGUI_GenII
                     return source + destination + (derniereRangee ? char.ToLower(promotion == '\0' ? 'Q' : promotion).ToString() : "");
                 }
             return null;
+        }
+
+        public static List<(Position Position, string Uci)> PositionsDeLaVariante(Position depart, string? varianteUci, int maximum)
+        {   // Les positions successives d'une variante UCI ("e2e4 e7e5 ..."), jouée sur une copie de la position de départ (rien n'est
+            // modifié ni redessiné) : au plus "maximum" demi-coups, arrêt au premier coup mal formé. Sert à rejouer la meilleure suite
+            List<(Position, string)> positions = [];
+            CalculerSur(depart, () =>
+            {
+                foreach (string uci in (varianteUci ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(maximum))
+                {
+                    if (uci.Length < 4 || RenvoieCaseIndex120(uci[..2]) < 0 || RenvoieCaseIndex120(uci.Substring(2, 2)) < 0)
+                        break;
+                    JoueSurLaCopie(uci);
+                    positions.Add((PositionActuelle.Copier(), uci));
+                }
+                return 0;
+            });
+            return positions;
         }
 
         public static void JoueSurLaCopie(string uci)

@@ -397,7 +397,9 @@
   "Vérification des coups douteux : {0} / {1}": "Checking doubtful moves: {0} / {1}",
   "Position après {0}": "Position after {0}",
   "Temps restant : environ {0}": "Time left: about {0}",
-  "(puis la vérification des coups douteux)": "(then the doubtful moves are checked)",  "Donnees Brutes protocole Uci": "Raw UCI protocol data",
+  "(puis la vérification des coups douteux)": "(then the doubtful moves are checked)",  "Clic : rejouer la suite sur l'échiquier": "Click: replay the line on the board",
+  "Suite rejouée : coup {0} / {1} (clic pour arrêter)": "Line replay: move {0} / {1} (click to stop)",
+  "Donnees Brutes protocole Uci": "Raw UCI protocol data",
 
   "// ── Boîtes d'ouverture et d'enregistrement de fichiers ──": "",
   "Fichier FEN (*.fen)|*.fen": "FEN file (*.fen)|*.fen",
