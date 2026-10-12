@@ -32,13 +32,16 @@ namespace BrunoGUI_GenII
     public partial class EchiquierPrincipal
     {
         // ═══ Analyse de partie (voir AnalysePartie.cs) : bouton, barre et bilan sous la feuille ═══
-        // Chaque position est analysée DureeAnalyseParPosition ms par l'analyse de position habituelle (_pilote.DemanderAnalyse),
+        // Chaque position est analysée DureeAnalyseParPosition ms (réglable, 10 s par défaut) par l'analyse de position habituelle (_pilote.DemanderAnalyse),
         // enchaînée à chaque réponse du moteur. Pendant l'analyse, l'échiquier est bloqué et la pendule en pause ; toute action qui
         // change la partie l'interrompt (AbandonneReflexion) en gardant ce qui est analysé. On peut parcourir la partie pendant ce temps.
-        // Puis 2e passage : les positions avant et après chaque coup douteux sont revues DureeApprofondissement ms (un ?? à 3 s
+        // Puis 2e passage : les positions avant et après chaque coup douteux sont revues DureeApprofondissement ms (30 s par défaut ; un ?? trouvé vite
         // peut n'être qu'une illusion d'une recherche trop courte). Le bilan donne ensuite le coup critique (clic : il est affiché)
-        private const int DureeAnalyseParPosition = 3000;   // 3 s par position (choix de Bruno)
-        private const int DureeApprofondissement = 10000;   // 10 s par position revue
+        // Durées par position, en secondes (choix de Bruno : réglables par Options > Durées de l'analyse de partie, préférences
+        // DureeAnalyseRapide et DureeAnalyseComplete ; 10 et 30 s par défaut, d'abord 3 et 10 s)
+        private int _dureeAnalyseRapide = 10, _dureeAnalyseComplete = 30;
+        private int DureeAnalyseParPosition => _dureeAnalyseRapide * 1000;      // en ms : 1er passage
+        private int DureeApprofondissement => _dureeAnalyseComplete * 1000;     // en ms : 2e passage (analyse complète)
         private AnalyseDePartie? _analyseDePartie;           // analyse en cours (null : aucune)
         private int _positionEnAnalyse = -1;                // position demandée au moteur (index dans _analyseDePartie.Positions)
         private int? _coupCritique;                         // index dans ListeCoups du coup critique de la dernière analyse (clic sur le bilan)
@@ -47,14 +50,14 @@ namespace BrunoGUI_GenII
         private bool _analyseComplete;                      // analyse complète : la vérification des coups douteux suivra le 1er passage
 
         private void BoutonAnalysePartie_Click(object? sender, EventArgs e)
-        {   // "Analyse rapide" (3 s par position), ou "Interrompre" si une analyse est en cours (ce bouton occupe alors toute la largeur)
+        {   // "Analyse rapide" (10 s par position par défaut), ou "Interrompre" si une analyse est en cours (ce bouton occupe alors toute la largeur)
             if (_analyseDePartie != null)
                 TermineAnalyseDePartie(interrompue: true);
             else
                 LanceAnalyseDePartie(complete: false);
         }
         private void BoutonAnalyseComplete_Click(object? sender, EventArgs e) =>
-            // "Analyse complète" : la rapide, puis les coups douteux revus 10 s (masqué pendant une analyse)
+            // "Analyse complète" : la rapide, puis les coups douteux revus plus longtemps (masqué pendant une analyse)
             LanceAnalyseDePartie(complete: true);
         private void MetAJourInfobullesAnalyse(object? sender, EventArgs e)
         {   // Au survol des boutons : ce que fait chaque analyse et sa durée pour la partie en cours
@@ -138,6 +141,14 @@ namespace BrunoGUI_GenII
             // analysée et le coup joué dans celle-ci peut être jugé tout de suite ; la feuille est redessinée avec la position suivante
             _analyseDePartie.AppliqueAuxCoups(LogiqueMouvements.ListeCoups);
             AnalysePositionSuivante();
+        }
+        private void ChoisitDureesAnalyse()
+        {   // Options > Durées de l'analyse de partie : valables dès la position suivante (même pendant une analyse)
+            using FenetreDureesAnalyse fenetre = new(_dureeAnalyseRapide, _dureeAnalyseComplete);
+            if (fenetre.ShowDialog(this) != DialogResult.OK)
+                return;
+            _dureeAnalyseRapide = fenetre.DureeRapide;
+            _dureeAnalyseComplete = fenetre.DureeComplete;
         }
         private void OuvreFenetreAnalyse(bool complete)
         {   // Fenêtre de suivi, non bloquante (choix de Bruno : la barre sous la feuille était trop discrète) : à droite de la

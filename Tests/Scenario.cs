@@ -392,6 +392,8 @@ public static class Scenario
         prefs.CouleurMoteur = L.ColorPiece.Blanc;
         prefs.TailleHachageMo = 512;
         prefs.Cadence = Cadence.Minutes(5, 3);
+        prefs.DureeAnalyseRapide = 20;
+        prefs.DureeAnalyseComplete = 45;
         prefs.SauverPreferences(iniSauve);
         string[] lignesSauvees = System.IO.File.ReadAllLines(iniSauve);
         Parametres relus = new();
@@ -403,7 +405,8 @@ public static class Scenario
             string.Join(" | ", lignesSauvees.Take(4)));
         Verifie("Préférences : relecture de toutes les valeurs",
             relus.CaseSombre == "#B58863" && relus.NombreLignesPV == 2 && !relus.ForceMaximale && relus.CouleurMoteur == L.ColorPiece.Blanc && relus.TailleHachageMo == 512 && relus.ForceMoteur == 1850
-            && relus.Cadence == Cadence.Minutes(5, 3) && new Parametres().Cadence.EstSansPendule,
+            && relus.Cadence == Cadence.Minutes(5, 3) && new Parametres().Cadence.EstSansPendule
+            && relus.DureeAnalyseRapide == 20 && relus.DureeAnalyseComplete == 45 && new Parametres().DureeAnalyseRapide == 10 && new Parametres().DureeAnalyseComplete == 30,
             $"{relus.CaseSombre}, PV={relus.NombreLignesPV}, max={relus.ForceMaximale}, moteur={relus.CouleurMoteur}, Hash={relus.TailleHachageMo}, pendule={relus.Cadence}");
 
         // Deux fichiers : BrunoGUI.ini (valeurs par défaut, jamais écrit) + BrunoGUI.preferences.ini (préférences, par-dessus)

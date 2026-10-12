@@ -240,6 +240,8 @@ namespace BrunoGUI_GenII
         public string Bibliotheque { get; set; } = "rodent.bin";
         public string Langue { get; set; } = "";              // langue de l'interface ("fr", "en") ; vide : celle de Windows
         public string Palette { get; set; } = "";               // palette Krypton (ex : Microsoft365Silver) ; vide : palette par défaut
+        public int DureeAnalyseRapide { get; set; } = 10;       // analyse de partie : secondes par position (1er passage)
+        public int DureeAnalyseComplete { get; set; } = 30;     // analyse complète : secondes par position revue (coups douteux)
         public int VerificationMiseAJourJours { get; set; } = 30;       // intervalle entre deux vérifications automatiques de Stockfish (0 : jamais)
         public DateTime? DerniereVerificationMiseAJour { get; set; }    // date de la dernière vérification réussie (préférences)
 
@@ -312,6 +314,8 @@ namespace BrunoGUI_GenII
                     case "Bibliotheque": Bibliotheque = valeur; break;
                     case "Palette": Palette = valeur; break;
                     case "Langue": Langue = valeur; break;
+                    case "DureeAnalyseRapide": DureeAnalyseRapide = PremierEntier(valeur) ?? DureeAnalyseRapide; break;
+                    case "DureeAnalyseComplete": DureeAnalyseComplete = PremierEntier(valeur) ?? DureeAnalyseComplete; break;
                     case "VerificationMiseAJourJours": VerificationMiseAJourJours = PremierEntier(valeur) ?? VerificationMiseAJourJours; break;
                     case "DerniereVerificationMiseAJour":
                         if (DateTime.TryParseExact(valeur, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime date))
@@ -356,6 +360,8 @@ namespace BrunoGUI_GenII
                 ["NombrelignesPV"] = NombreLignesPV.ToString(),
                 ["NombreCoeursThread"] = NombreCoeursThread.ToString(),
                 ["Bibliotheque"] = Bibliotheque,
+                ["DureeAnalyseRapide"] = DureeAnalyseRapide.ToString(),
+                ["DureeAnalyseComplete"] = DureeAnalyseComplete.ToString(),
             };
             if (!string.IsNullOrWhiteSpace(Langue))
                 valeurs["Langue"] = Langue;
