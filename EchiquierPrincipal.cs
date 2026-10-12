@@ -932,6 +932,10 @@ namespace BrunoGUI_GenII
             // Version 1.21 = interface en anglais (menu Options > Langue, redémarrage proposé ; phrases traduites par Langues\en.json,
             //                notation des pièces K/Q/R/B/N), aide réécrite en HTML avec captures d'écran (français et anglais, ouverte
             //                dans le navigateur), réglages ClickOnce retirés, boutons élargis pour les textes anglais
+            // Version 1.22 = force du moteur corrigée (« maximum » = vraie pleine force, Elo choisi envoyé dès le démarrage), léger
+            //                avantage (appréciation en 7 niveaux), fenêtre de suivi de l'analyse de partie, durées d'analyse réglables
+            //                (10 et 30 s par défaut), meilleure suite rejouée sur l'échiquier, saisie de partie sans pendule, parcours
+            //                sans retour à la partie par un clic sur l'échiquier
             // (le numéro de version vient du .csproj, <Version> : il n'est plus écrit ici)
             _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version " + VersionAffichee + "\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", T("A propos de"),
