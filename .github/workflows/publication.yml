@@ -61,10 +61,10 @@ jobs:
           Remove-Item "$sortie/*.application", "$sortie/*.manifest", "$sortie/*.pdb" -Force -ErrorAction SilentlyContinue
           Compress-Archive -Path "$sortie/*" -DestinationPath "BrunoGUI_GenII-${{ github.ref_name }}.zip"
 
-      - name: Création de la Release GitHub
+      # Notes de la release : installation, déblocage du zip et avertissement SmartScreen (programme non signé), en français et en anglais
         env:
           GH_TOKEN: ${{ github.token }}
         run: >
           gh release create "${{ github.ref_name }}" "BrunoGUI_GenII-${{ github.ref_name }}.zip"
           --title "BrunoGUI GenII ${{ github.ref_name }}"
-          --notes "Archive portable : décompresser puis lancer BrunoGUI_GenII.exe (nécessite le .NET 8 Desktop Runtime : https://dotnet.microsoft.com/download/dotnet/8.0)."
+          --notes-file .github/notes-publication.md
