@@ -167,7 +167,7 @@ namespace BrunoGUI_GenII
         // ═══ Position affichée (parcours de la partie) ═══
         // L'échiquier montre soit la partie (LogiqueMouvements.PositionActuelle), soit une position passée (_positionAffichee).
         // Parcourir ne modifie jamais la partie : le moteur peut jouer pendant le parcours, et l'humain rejoue après être revenu
-        // à la position courante (clic sur l'échiquier ou "Fin").
+        // à la position courante ("Fin", ou clic sur le dernier coup de la feuille ; pas par un clic sur l'échiquier, inactif pendant le parcours).
         private Position? _positionAffichee;     // null : l'échiquier montre la partie
         private int _indexAffiche;              // index dans ListeCoups de la position affichée (-1 : position initiale FenDepart)
         private bool ParcoursEnCours => _positionAffichee != null;
@@ -206,7 +206,7 @@ namespace BrunoGUI_GenII
             AfficheTextesDuCoup(index, position);
             AffichePendules();      // partie sans pendule en cours (ex : PGN chargé) : temps notés à cette position
             if (!PartieEnLectureSeule)
-                InformationsPartie.Text = T("Parcours : Fin ou clic pour revenir");
+                InformationsPartie.Text = T("Parcours : Fin pour revenir");
         }
         private void AfficheTextesDuCoup(int index, Position positionApres)
         {   // Le coup regardé (1re ligne de variante et dernière case de la barre d'état) et, s'il a été analysé, son analyse

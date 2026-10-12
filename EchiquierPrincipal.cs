@@ -308,10 +308,7 @@ namespace BrunoGUI_GenII
                 if (PartieEnLectureSeule)
                     return;     // partie PGN chargée : on ne joue pas de coup
                 if (ParcoursEnCours)
-                {   // On regardait un coup passé : le clic ramène à la position courante de la partie (il ne joue pas de coup)
-                    RetourPositionCourante();
-                    return;
-                }
+                    return;     // (sécurité : l'échiquier est inactif pendant le parcours, voir MetAJourPlateau)
                 if (sender is PictureBox CaseClick)
                 {
                     int IndexCase120 = _vue.IndexDeLaCase(CaseClick);    // (tient compte de la vue côté Noirs)
@@ -1137,15 +1134,14 @@ namespace BrunoGUI_GenII
             MetAJourPlateau();
         }
         private void MetAJourPlateau()
-        {   // Pendant le parcours, les cases restent cliquables : le clic ramène à la partie (voir CaseMouseDown), sans jouer de coup.
-            // Exception : partie PGN en lecture seule, où l'échiquier n'est jamais cliquable.
+        {   // Pendant le parcours, l'échiquier est inactif : on revient à la partie par Fin (bouton, touche) ou par le dernier coup de la
+            // feuille (choix de Bruno : un clic sur l'échiquier y ramenait, souvent sans le vouloir).
             // Avant toute partie, le clic affiche "Veuillez choisir votre couleur"
             if (!_vue.CasesCreees)
                 return;     // cases pas encore créées
             // Pendant la pause (clic sur une pendule) et l'analyse de la partie, on ne joue pas : l'échiquier est bloqué
-            bool actif = !_pauseJoueur && _analyseDePartie == null && (ParcoursEnCours
-                ? !PartieEnLectureSeule
-                : _plateauAutorise && (_partie.Mode == ModePartie.EnCours || _partie.Mode == ModePartie.AucunePartie));
+            bool actif = !_pauseJoueur && _analyseDePartie == null && !ParcoursEnCours
+                && _plateauAutorise && (_partie.Mode == ModePartie.EnCours || _partie.Mode == ModePartie.AucunePartie);
             _vue.ActiverCases(actif);
         }
 
