@@ -898,6 +898,16 @@ public static class Scenario
             matNoirsAuTrait?.Texte == "M3" && matNoirsAuTrait?.Symbole == "#+" && matNoirsAuTrait?.TexteMat == "MAT en 3 pour les Blancs"
             && matBlancsAuTrait?.Texte == "-M3" && matBlancsAuTrait?.Appreciation == "Gain Noir (mat)",
             $"{matNoirsAuTrait?.TexteMat} / {matBlancsAuTrait?.Appreciation}");
+        // Meilleure suite rejouée : positions successives d'une variante UCI, sur une copie (la position de départ ne change pas)
+        Position departVariante = L.PositionDepuisFen(L.FenDepart);
+        var etapesVariante = ChargementPartie.PositionsDeLaVariante(departVariante, "e2e4 e7e5 g1f3 zz99 b8c6", 10);
+        var etapesLimitees = ChargementPartie.PositionsDeLaVariante(departVariante, "e2e4 e7e5 g1f3", 2);
+        Verifie("Meilleure suite rejouée : une position par coup, arrêt au coup mal formé, limite respectée, départ inchangé",
+            etapesVariante.Count == 3 && etapesVariante[2].Uci == "g1f3"
+            && etapesVariante[2].Position.Pieces[L.RenvoieCaseIndex120("f3")] == L.TypePiece.CavalierBlanc
+            && etapesVariante[1].Position.Pieces[L.RenvoieCaseIndex120("e5")] == L.TypePiece.PionNoir
+            && etapesLimitees.Count == 2 && departVariante.Pieces[L.RenvoieCaseIndex120("e2")] == L.TypePiece.PionBlanc,
+            $"{etapesVariante.Count} étapes, {etapesLimitees.Count} limitées");
         // Sept niveaux : = (moins de 0.30), ⩲ ⩱ léger avantage (0.30 à 0.70), ± ∓ avantage (0.70 à 2.00), +- -+ gain (2.00 et plus)
         int[] scoresNiveaux = [0, 29, 30, 69, 70, 199, 200, -30, -70, -200];
         string symbolesNiveaux = string.Join(" ", scoresNiveaux.Select(cp => new Evaluation(cp, null).Symbole));
