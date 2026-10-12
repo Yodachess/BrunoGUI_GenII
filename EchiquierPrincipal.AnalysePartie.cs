@@ -126,8 +126,8 @@ namespace BrunoGUI_GenII
                 TimeSpan reste = TimeSpan.FromMilliseconds((double)(total - faites) * (approfondissement ? DureeApprofondissement : DureeAnalyseParPosition));
                 string temps = T("Temps restant : environ {0}", TexteDuree(reste))
                     + (_analyseComplete && !approfondissement ? " " + T("(puis la vérification des coups douteux)") : "");
-                _fenetreAnalyse.MontreEtape(approfondissement ? T("Vérification des coups douteux : {0} / {1}", faites + 1, total)
-                                                              : T("Position {0} / {1}", faites + 1, total), position, faites, total, temps);
+                _fenetreAnalyse.MontreEtape(position, approfondissement ? T("vérification {0}/{1}", faites + 1, total) : $"{faites + 1}/{total}",
+                                            faites, total, temps);
             }
             _pilote.DemanderAnalyse(LogiqueMouvements.PositionDepuisFen(_analyseDePartie.Positions[index].Fen),
                                     approfondissement ? DureeApprofondissement : DureeAnalyseParPosition);
