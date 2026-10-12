@@ -898,6 +898,13 @@ public static class Scenario
             matNoirsAuTrait?.Texte == "M3" && matNoirsAuTrait?.Symbole == "#+" && matNoirsAuTrait?.TexteMat == "MAT en 3 pour les Blancs"
             && matBlancsAuTrait?.Texte == "-M3" && matBlancsAuTrait?.Appreciation == "Gain Noir (mat)",
             $"{matNoirsAuTrait?.TexteMat} / {matBlancsAuTrait?.Appreciation}");
+        // Sept niveaux : = (moins de 0.30), ⩲ ⩱ léger avantage (0.30 à 0.70), ± ∓ avantage (0.70 à 2.00), +- -+ gain (2.00 et plus)
+        int[] scoresNiveaux = [0, 29, 30, 69, 70, 199, 200, -30, -70, -200];
+        string symbolesNiveaux = string.Join(" ", scoresNiveaux.Select(cp => new Evaluation(cp, null).Symbole));
+        Verifie("Appréciation en 7 niveaux, avec le léger avantage",
+            symbolesNiveaux == "= = ⩲ ⩲ ± ± +- ⩱ ∓ -+" && new Evaluation(45, null).Appreciation == "Léger avantage Blanc (⩲)"
+            && new Evaluation(-45, null).Appreciation == "Léger avantage Noir (⩱)" && new Evaluation(-250, null).Appreciation == "Gain Noir (-+)",
+            symbolesNiveaux);
         Verifie("Ligne sans score : pas d'évaluation", Evaluation.Depuis(LigneUci.Analyser("info depth 12 pv e2e4"), L.ColorPiece.Blanc) == null, "null");
 
         SuiviAnalyse suiviAnalyse = new();

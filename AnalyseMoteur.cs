@@ -38,24 +38,28 @@ namespace BrunoGUI_GenII
         public string Texte => MatEn is int mat
             ? (mat < 0 ? "-M" : "M") + Math.Abs(mat)
             : ((Centipions ?? 0) / 100m).ToString("N2", CultureInfo.InvariantCulture);
+        // Appréciation en 7 niveaux, symboles classiques des livres d'échecs (choix de Bruno, 2026-10-12) :
+        // = égal (moins de 0.30), ⩲ / ⩱ léger avantage (0.30 à 0.70), ± / ∓ avantage (0.70 à 2.00), +- / -+ gain (2.00 et plus)
+        public const int SeuilLegerAvantage = 30, SeuilAvantage = 70, SeuilGain = 200;     // en centipions
+        private int Niveau => (Centipions ?? 0) switch
+        {   // de -3 (gain noir) à +3 (gain blanc)
+            >= SeuilGain => 3, >= SeuilAvantage => 2, >= SeuilLegerAvantage => 1,
+            <= -SeuilGain => -3, <= -SeuilAvantage => -2, <= -SeuilLegerAvantage => -1,
+            _ => 0
+        };
         public string Symbole => MatEn is int mat
             ? (mat < 0 ? "#-" : "#+")
-            : (Centipions ?? 0) switch
-            {
-                >= 250 => "+-",
-                > 50 => "±",
-                <= -250 => "-+",
-                < -50 => "∓",
-                _ => "="
-            };
+            : Niveau switch { 3 => "+-", 2 => "±", 1 => "⩲", -1 => "⩱", -2 => "∓", -3 => "-+", _ => "=" };
         public string Appreciation => MatEn is int mat
             ? (mat < 0 ? Langue.T("Gain Noir (mat)") : Langue.T("Gain Blanc (mat)"))
-            : (Centipions ?? 0) switch
+            : Niveau switch
             {
-                >= 250 => Langue.T("Gain Blanc (+-)"),
-                > 50 => Langue.T("Avantage Blanc (±)"),
-                <= -250 => Langue.T("Gain Noir (-+)"),
-                < -50 => Langue.T("Avantage Noir (∓)"),
+                3 => Langue.T("Gain Blanc (+-)"),
+                2 => Langue.T("Avantage Blanc (±)"),
+                1 => Langue.T("Léger avantage Blanc (⩲)"),
+                -1 => Langue.T("Léger avantage Noir (⩱)"),
+                -2 => Langue.T("Avantage Noir (∓)"),
+                -3 => Langue.T("Gain Noir (-+)"),
                 _ => Langue.T("Égal (=)")
             };
         public string? TexteMat => MatEn is int mat ? (mat < 0 ? Langue.T("MAT en {0} pour les Noirs", Math.Abs(mat)) : Langue.T("MAT en {0} pour les Blancs", Math.Abs(mat))) : null;
