@@ -683,7 +683,7 @@ namespace BrunoGUI_GenII
             EvaluationUci.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left | System.Windows.Forms.ToolStripStatusLabelBorderSides.Top | System.Windows.Forms.ToolStripStatusLabelBorderSides.Right | System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom;
             EvaluationUci.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             EvaluationUci.Name = "EvaluationUci";
-            EvaluationUci.Size = new System.Drawing.Size(130, 21);
+            EvaluationUci.Size = new System.Drawing.Size(185, 21);
             EvaluationUci.Text = "Evaluation";
             // 
             // ScoreMoteur
