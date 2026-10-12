@@ -84,6 +84,7 @@ namespace BrunoGUI_GenII
             TraductionFenetres.Traduit(this);          // textes du designer dans la langue choisie (voir Langue.cs)
             TraductionFenetres.TraduitDialogues(SauvegardeFen, SauvegardeFichier, OuvertureChoixBibliotheque, OuvertureChoixMoteur, ChargerPartiesPgn, ChargerPositionFen);
             CreeMenuLangue();
+            OptionsMenu.DropDownItems.Add(new ToolStripMenuItem(T("Durées de l'analyse de partie…"), null, (s, e) => ChoisitDureesAnalyse()));
             InformationsPartie.AutoEllipsis = true;     // message trop long pour le cadre : "…" et texte complet au survol de la souris
 
             parametres =Parametres.Charger(Chemins.RepertoireRacine);   // BrunoGUI.ini puis préférences personnelles (à côté de l'exécutable)
@@ -98,6 +99,8 @@ namespace BrunoGUI_GenII
             _nomHumain = parametres.NomHumain;
             _joueurElo = parametres.EloHumain;
             _dureeReflexionMilliSeconde = parametres.DureeReflexionSeconde * 1000;
+            _dureeAnalyseRapide = Math.Clamp(parametres.DureeAnalyseRapide, FenetreDureesAnalyse.Minimum, FenetreDureesAnalyse.Maximum);
+            _dureeAnalyseComplete = Math.Clamp(parametres.DureeAnalyseComplete, FenetreDureesAnalyse.Minimum, FenetreDureesAnalyse.Maximum);
             _nomMoteur = parametres.Moteur;
             _forceMoteurElo = parametres.ForceMoteur;
             MoteurUci.NombreLignesPV = parametres.NombreLignesPV;
@@ -120,7 +123,7 @@ namespace BrunoGUI_GenII
             PenduleBlanc.Click += Pendule_Click;        // un clic sur une pendule : pause / reprise
             PenduleNoir.Click += Pendule_Click;
             PenduleBlanc.ReduitPourTenir = PenduleNoir.ReduitPourTenir = true;     // "1:30:00" toujours lisible en entier
-            _infobulleBilan.SetToolTip(BilanAnalyse, T("Précision : 100 % = tous les coups aussi bons que ceux du moteur (formule de Lichess).\nImprécision (?!), erreur (?), gaffe (??) : le coup fait perdre au moins 10, 20 ou 30 %\ndes chances de gain (une perte dans une position déjà gagnée compte peu).\nAnalyse complète : les coups douteux sont revus 10 s pour confirmer le jugement.\nCoup critique : celui où la partie a basculé (la plus grosse perte) ; un clic l'affiche."));
+            _infobulleBilan.SetToolTip(BilanAnalyse, T("Précision : 100 % = tous les coups aussi bons que ceux du moteur (formule de Lichess).\nImprécision (?!), erreur (?), gaffe (??) : le coup fait perdre au moins 10, 20 ou 30 %\ndes chances de gain (une perte dans une position déjà gagnée compte peu).\nAnalyse complète : les coups douteux sont revus plus longtemps pour confirmer le jugement.\nCoup critique : celui où la partie a basculé (la plus grosse perte) ; un clic l'affiche."));
             BilanAnalyse.Click += BilanAnalyse_Click;
             VarianteMoteurUci3.Click += LigneSuite_Click;          // clic sur la meilleure suite d'un coup analysé : elle est rejouée
             _minuterieRejeu.Tick += MinuterieRejeu_Tick;
@@ -1036,6 +1039,8 @@ namespace BrunoGUI_GenII
             parametres.CouleurCaseDestination = Parametres.FormatCouleur(_vue.CaseDestination);
             parametres.NomHumain = _nomHumain;
             parametres.DureeReflexionSeconde = (int)TempsReflexionSecondes.Value;
+            parametres.DureeAnalyseRapide = _dureeAnalyseRapide;
+            parametres.DureeAnalyseComplete = _dureeAnalyseComplete;
             parametres.Cadence = _cadence;
             parametres.ForceMoteur = maNouvellePartieForceModule.ForceModule;       // l'Elo choisi, même si la dernière partie était en force maximale
             parametres.ForceMaximale = maNouvellePartieForceModule.ForceMaximale;
