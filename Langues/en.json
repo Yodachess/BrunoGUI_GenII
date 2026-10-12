@@ -258,6 +258,8 @@
   "Gain Blanc (mat)": "White wins (mate)",
   "Gain Blanc (+-)": "White is winning (+-)",
   "Avantage Blanc (±)": "White is better (±)",
+  "Léger avantage Blanc (⩲)": "White is slightly better (⩲)",
+  "Léger avantage Noir (⩱)": "Black is slightly better (⩱)",
   "Gain Noir (-+)": "Black is winning (-+)",
   "Avantage Noir (∓)": "Black is better (∓)",
   "Égal (=)": "Equal (=)",
