@@ -85,7 +85,8 @@ namespace BrunoGUI_GenII
             }
             AbandonneReflexion();       // une analyse de position en cours est remplacée
             _pendule?.Pause();          // le temps ne compte pas pendant l'analyse (reprise dans MinuteriePendule_Tick à la fin)
-            _analyseDePartie = new AnalyseDePartie(LogiqueMouvements.ListeCoups, approfondir: complete);
+            _analyseDePartie = new AnalyseDePartie(LogiqueMouvements.ListeCoups, approfondir: complete,
+                                                 coupDeBibliotheque: PolyglotBibliotheque.ContientCoup);   // jamais annotés
             // Au moins 2 variantes pendant l'analyse : la 2e dit si le meilleur coup était le seul bon ("!") ; réglage rétabli à la fin
             _multiPvAvantAnalyse = MoteurUci.NombreLignesPV;
             if (MoteurUci.NombreLignesPV < 2)
