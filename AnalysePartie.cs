@@ -31,12 +31,30 @@ namespace BrunoGUI_GenII
         // Perte de chances de gain (de -1 à +1) à partir de laquelle un coup est annoté (seuils de Lichess)
         public const double SeuilImprecision = 0.1, SeuilErreur = 0.2, SeuilGaffe = 0.3;
         // "!" : le meilleur coup était le seul bon, la meilleure alternative (2e variante du moteur) aurait été au moins une erreur ;
-        // et la partie n'est pas déjà décidée après le coup (chances entre -0,6 et +0,6, environ ±2,5 pions : choix B de Bruno)
+        // et la partie n'est pas déjà décidée après le coup (chances entre -0,6 et +0,6, environ ±2,5 pions : choix B de Bruno).
+        // Quand on sait si le coup était difficile à trouver (ProfondeurDecouverte), "!" va au seul bon coup difficile et au sacrifice
+        // correct, jamais au coup naturel (reprise, roque...) : voir AnalyseDePartie.BonCoup
         public const double SeuilSeulBonCoup = SeuilErreur, LimitePartieDecidee = 0.6;
         // "!!" : un "!" qui sacrifie du matériel : dans la variante du moteur, après une réponse de l'adversaire, le joueur a au
         // moins 2 points de matériel de moins qu'avant son coup (pion 1, cavalier et fou 3, tour 5, dame 9 : une pièce contre un pion,
-        // la qualité ; un échange ou un pion ne suffisent pas)
+        // la qualité ; un échange ou un pion ne suffisent pas), compté seulement une fois les prises terminées (pas au milieu
+        // d'une suite d'échanges : 27... Fxf3 28. Fxg7 Fxg2 29. Rxg2 Rxg7 n'est pas un sacrifice)
         public const int SacrificeMinimum = 2, DemiCoupsSacrifice = 6;
+        // Coup difficile à trouver : un 2e moteur (table de hachage vide, 1 thread) cherche jusqu'à ProfondeurMesureDifficulte ;
+        // le coup est "difficile" s'il ne devient durablement son choix qu'à partir de ProfondeurCoupDifficile (mesures sur les
+        // parties de Bruno : 13. Cd5 du sacrifice à 12, 31. a4 à 10 ; reprises, roques et coups évidents de 1 à 7)
+        public const int ProfondeurCoupDifficile = 9, ProfondeurMesureDifficulte = 14;
+
+        public static int? ProfondeurDecouverte(IReadOnlyList<(int Profondeur, string Coup)> meilleursCoups, string coup)
+        {   // Profondeur à partir de laquelle le coup est le choix du moteur à TOUTES les profondeurs suivantes (meilleur coup à
+            // chaque profondeur, dans l'ordre) ; int.MaxValue : pas son choix à la dernière ; null : aucune mesure
+            if (meilleursCoups.Count == 0)
+                return null;
+            int? depuis = null;
+            foreach ((int profondeur, string choix) in meilleursCoups)
+                depuis = choix == coup ? depuis ?? profondeur : null;
+            return depuis ?? int.MaxValue;
+        }
 
         public static int Valeur(TypePiece piece) => piece switch
         {
@@ -85,6 +103,10 @@ namespace BrunoGUI_GenII
         public string? VarianteMeilleureUci { get; set; }   // la même au format UCI ("g1f3 f8e7 ...") : sert à voir un sacrifice ("!!")
         public Evaluation? EvaluationSeconde { get; set; }  // évaluation de la 2e variante du moteur (la meilleure alternative), null : inconnue
         public int NombreCoupsLegaux { get; init; }          // 1 : coup forcé (jamais "!")
+        // Coup JOUÉ depuis cette position : profondeur à partir de laquelle un moteur sans mémoire le choisit (JugementCoups.
+        // ProfondeurDecouverte) ; mesurée seulement pour un seul bon coup (DifficultesAMesurer) ; null : inconnue (règle sans difficulté)
+        public int? ProfondeurDecouverte { get; set; }
+        public bool DifficulteMesuree { get; set; }
         public bool Ignoree { get; set; }                   // le moteur n'a donné aucun score : position sautée (sinon l'analyse tournerait en rond)
         public bool AApprofondir { get; set; }              // 2e passage : position avant ou après un coup douteux, à revoir plus longtemps
         public bool Approfondie { get; set; }               // ... et revue (avec ou sans score : elle n'est pas redemandée)
@@ -181,8 +203,10 @@ namespace BrunoGUI_GenII
             if (!_approfondir)
                 return;
             // (et les "!" et "!!" : leur 2e variante, celle qui fait d'un coup le seul bon, mérite aussi une recherche plus longue)
+            HashSet<int> seulsBonsCoups = [.. DifficultesAMesurer().Select(d => _indexCoups[d.IndexPosition])];   // (difficulté pas encore mesurée)
             foreach (JugementCoup jugement in Jugements().Where(j => !EstCoupDeBibliotheque(j.IndexCoup)
-                                                                     && (j.Perte >= JugementCoups.SeuilImprecision || j.Annotation is "!" or "!!")).ToList())
+                                                                     && (j.Perte >= JugementCoups.SeuilImprecision || j.Annotation is "!" or "!!"
+                                                                         || seulsBonsCoups.Contains(j.IndexCoup))).ToList())
             {
                 int k = _indexCoups.IndexOf(jugement.IndexCoup);
                 foreach (PositionAnalysee position in new[] { _positions[k], _positions[k + 1] })
@@ -267,15 +291,58 @@ namespace BrunoGUI_GenII
             double perte = meilleurJoue ? 0 : Math.Max(0, sens * (avant - apres));
             double precision = meilleurJoue ? 100 : JugementCoups.Precision(sens * avant, sens * apres);
             string annotation = EstCoupDeBibliotheque(indexCoup) ? ""
-                              : meilleurJoue && SeulBonCoup(k, indexCoup, sens) ? (Sacrifie(k) ? "!!" : "!") : JugementCoups.Annotation(perte);
+                              : meilleurJoue ? BonCoup(k, indexCoup, sens) : JugementCoups.Annotation(perte);
             return new JugementCoup(indexCoup, camp, perte, annotation, _positions[k + 1].Evaluation, meilleur, meilleurJoue,
                                     positionAvant.Evaluation, positionAvant.MeilleurCoupLong, positionAvant.VarianteMeilleure, precision);
         }
 
+        private string BonCoup(int k, int indexCoup, double sens)
+        {   // Le meilleur coup a été joué : "!", "!!" ou rien.
+            // Difficulté inconnue (pas de 2e moteur) : "!" au seul bon coup (l'alternative est une erreur), "!!" s'il sacrifie.
+            // Difficulté mesurée (choix de Bruno, octobre 2026) : un sacrifice correct a "!", et "!!" s'il était difficile à trouver
+            // (13. Cd5!! : une pièce, trouvé à la profondeur 12 ; il n'est pas "le seul bon coup", une alternative restait à +0.11) ;
+            // sans sacrifice, "!" seulement au seul bon coup difficile à trouver (21. Th3!) ; un seul bon coup naturel n'a rien
+            // (29. gxf3, 15... O-O, 47. Rd4)
+            if (_positions[k].ProfondeurDecouverte is not int profondeur)
+                return SeulBonCoup(k, indexCoup, sens) ? (Sacrifie(k) ? "!!" : "!") : "";
+            bool difficile = profondeur >= JugementCoups.ProfondeurCoupDifficile;
+            if (SacrificeCorrect(k))
+                return difficile ? "!!" : "!";
+            return difficile && SeulBonCoup(k, indexCoup, sens) ? "!" : "";
+        }
+
+        private bool SacrificeCorrect(int k) =>
+            // Le meilleur coup (déjà vérifié) sacrifie, et la partie n'est pas déjà décidée après lui (dans une position gagnée, donner
+            // du matériel pour conclure n'a rien de remarquable)
+            _positions[k + 1].Chances is double apres && Math.Abs(apres) <= JugementCoups.LimitePartieDecidee && Sacrifie(k);
+
+        public IEnumerable<(int IndexPosition, string Fen, string CoupUci)> DifficultesAMesurer()
+        {   // Meilleurs coups joués, seuls bons coups ou sacrifices, dont on ne sait pas encore s'ils étaient difficiles à trouver :
+            // l'interface les fait mesurer par un 2e moteur (EnregistreDifficulte). Positions avant et après déjà analysées ; jamais un
+            // coup de la bibliothèque
+            for (int k = 0; k < _indexCoups.Count; k++)
+            {
+                PositionAnalysee avant = _positions[k];
+                int indexCoup = _indexCoups[k];
+                if (avant.DifficulteMesuree || avant.MeilleurCoupUci == null || EstCoupDeBibliotheque(indexCoup)
+                    || avant.MeilleurCoupUci != _coups[indexCoup].Uci.Trim() || _positions[k + 1].Chances == null)
+                    continue;
+                double sens = avant.AuTrait == ColorPiece.Blanc ? 1 : -1;
+                if (SeulBonCoup(k, indexCoup, sens) || SacrificeCorrect(k))
+                    yield return (k, avant.Fen, avant.MeilleurCoupUci);
+            }
+        }
+
+        public void EnregistreDifficulte(int indexPosition, int? profondeurDecouverte)
+        {   // Résultat de la mesure (null : échec, la règle sans difficulté s'applique) ; une position n'est mesurée qu'une fois
+            _positions[indexPosition].ProfondeurDecouverte = profondeurDecouverte;
+            _positions[indexPosition].DifficulteMesuree = true;
+        }
+
         private bool SeulBonCoup(int k, int indexCoup, double sens)
         {   // "!" (bon coup, choix de Bruno) : le meilleur coup a été joué ET c'était le seul bon : la 2e variante du moteur aurait fait
-            // perdre au moins JugementCoups.SeuilSeulBonCoup de chances de gain (une erreur). Exclus : un coup forcé (un seul coup
-            // légal) et une reprise immédiate (on reprend sur la case où l'adversaire vient de prendre : rien de remarquable)
+            // perdre au moins JugementCoups.SeuilSeulBonCoup de chances de gain (une erreur). Exclus : un coup
+            // forcé (un seul coup légal) et une reprise immédiate (on reprend sur la case où l'adversaire vient de prendre : rien de remarquable)
             // Pas non plus quand la partie est déjà décidée après le coup (ex : la seule défense qui perd moins dans une position
             // perdue) : chances hors de ±JugementCoups.LimitePartieDecidee
             PositionAnalysee avant = _positions[k];
@@ -338,9 +405,12 @@ namespace BrunoGUI_GenII
         }
 
         private bool Sacrifie(int k)
-        {   // "!!" : le seul bon coup sacrifie du matériel. La variante du moteur (qui commence par ce coup) est jouée sur une copie :
-            // après une réponse de l'adversaire (dans les DemiCoupsSacrifice premiers demi-coups), le joueur a au moins
-            // SacrificeMinimum points de matériel de moins qu'avant son coup (voir JugementCoups.SacrificeMinimum)
+        {   // Le meilleur coup sacrifie du matériel. La variante du moteur (qui commence par ce coup) est jouée sur une copie : à la
+            // PREMIÈRE position calme après la réponse de l'adversaire (le demi-coup suivant de la variante n'est pas une prise, ou la
+            // variante s'arrête), dans les DemiCoupsSacrifice premiers demi-coups, le joueur a au moins SacrificeMinimum points de
+            // matériel de moins qu'avant son coup. Au milieu d'une suite d'échanges, le matériel ne veut rien dire (27... Fxf3 28. Fxg7
+            // Fxg2 29. Rxg2 Rxg7 : à égalité au bout) ; et un sacrifice plus loin dans la variante est celui d'un AUTRE coup
+            // (12. The1 b4 13. Cd5 exd5 : c'est 13. Cd5 qui sacrifie)
             PositionAnalysee avant = _positions[k];
             string[] variante = (avant.VarianteMeilleureUci ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (variante.Length < 2)
@@ -349,16 +419,26 @@ namespace BrunoGUI_GenII
             return CalculerSur(PositionDepuisFen(avant.Fen), () =>
             {
                 int depart = Materiel(camp);
-                for (int i = 0; i < Math.Min(variante.Length, JugementCoups.DemiCoupsSacrifice); i++)
+                for (int i = 0; i < Math.Min(variante.Length, JugementCoups.DemiCoupsSacrifice + 1); i++)
                 {
                     if (variante[i].Length < 4)
                         return false;
                     ChargementPartie.JoueSurLaCopie(variante[i]);
-                    if (i % 2 == 1 && Materiel(camp) <= depart - JugementCoups.SacrificeMinimum)
-                        return true;
+                    bool calme = i + 1 >= variante.Length || !EstUnePrise(variante[i + 1]);
+                    if (i >= 1 && calme)
+                        return Materiel(camp) <= depart - JugementCoups.SacrificeMinimum;
                 }
                 return false;
             });
+        }
+
+        private static bool EstUnePrise(string coupUci)
+        {   // Sur la position actuelle (une copie) : la case d'arrivée est occupée, ou un pion change de colonne (prise en passant)
+            if (coupUci.Length < 4)
+                return false;
+            TypePiece piece = PiecesEchiquier[RenvoieCaseIndex120(coupUci[..2])];
+            return PiecesEchiquier[RenvoieCaseIndex120(coupUci.Substring(2, 2))] != TypePiece.Vide
+                || (piece is TypePiece.PionBlanc or TypePiece.PionNoir && coupUci[0] != coupUci[2]);
         }
 
         private static int Materiel(ColorPiece camp)
