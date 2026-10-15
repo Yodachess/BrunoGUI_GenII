@@ -62,6 +62,7 @@ jobs:
           Compress-Archive -Path "$sortie/*" -DestinationPath "BrunoGUI_GenII-${{ github.ref_name }}.zip"
 
       # Notes de la release : installation, déblocage du zip et avertissement SmartScreen (programme non signé), en français et en anglais
+      - name: Création de la Release GitHub
         env:
           GH_TOKEN: ${{ github.token }}
         run: >
