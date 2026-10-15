@@ -231,9 +231,10 @@ namespace BrunoGUI_GenII
                 if (coup.EvaluationApres != null || coup.MeilleurCoup != null)
                 {   // Le texte le plus complet qui tient sur la ligne : sinon sans le nom de l'annotation, puis sans le symbole (-+)
                     int largeur = VarianteMoteurUci2.ClientSize.Width - 14;
-                    string texte = new[] { TexteAnalyseDuCoup(coup, true, true), TexteAnalyseDuCoup(coup, false, true), TexteAnalyseDuCoup(coup, false, false) }
+                    bool bibliotheque = PolyglotBibliotheque.ContientCoup(index == 0 ? FenDepart : LogiqueMouvements.ListeCoups[index - 1].Fen, coup.Uci);
+                    string texte = new[] { TexteAnalyseDuCoup(coup, true, true, bibliotheque), TexteAnalyseDuCoup(coup, false, true, bibliotheque), TexteAnalyseDuCoup(coup, false, false, bibliotheque) }
                         .FirstOrDefault(t => TextRenderer.MeasureText(t, _policesLignes[VarianteMoteurUci2].Grasse).Width <= largeur)
-                        ?? TexteAnalyseDuCoup(coup, false, false);
+                        ?? TexteAnalyseDuCoup(coup, false, false, bibliotheque);
                     AfficheLigneCentree(VarianteMoteurUci2, texte);
                 }
                 else if (commentaire != null)
@@ -300,16 +301,20 @@ namespace BrunoGUI_GenII
             if (fleches.TrueForAll(f => f.Item1 > 0 && f.Item2 > 0))
                 _vue.MontreFleches([.. fleches]);
         }
-        private static string TexteAnalyseDuCoup(Coup coup, bool nomAnnotation, bool symbole)
+        private static string TexteAnalyseDuCoup(Coup coup, bool nomAnnotation, bool symbole, bool bibliotheque)
         {   // Ex : "-9.05 (-+)  joué Dh2 ?? [Gaffe]  — meilleur : Rd3 (0.00)" : l'évaluation après le coup, le coup joué et son jugement
             // ("?? [Gaffe]", choix de Bruno), puis le meilleur coup avec SON évaluation. Si le coup joué ne perd presque rien (ex : mat
             // en 3 au lieu de 2), le meilleur n'est qu'une préférence : "— moteur : Rd3 (0.00), écart négligeable" (Bruno trouvait
             // "meilleur" inadapté). Coups en notation longue, avec la case de départ : "Dd8-d7", "Ta8-c8". Court pour tenir sur la
             // ligne en police 10 (sans "Analyse :", deux espaces) ; nomAnnotation et symbole à false raccourcissent encore.
-            // Sans évaluation (PGN chargé sans [%eval]) : "Joué Fc8-e6 ?? [Gaffe]  — meilleur : Fc8-b7"
+            // Sans évaluation (PGN chargé sans [%eval]) : "Joué Fc8-e6 ?? [Gaffe]  — meilleur : Fc8-b7".
+            // Coup connu de la bibliothèque d'ouvertures (choix de Bruno) : "— coup de la bibliothèque" au lieu de "— meilleur coup du
+            // moteur" ou "— moteur : …, écart négligeable" ; s'il perd vraiment (imprécision ou pire), le meilleur coup reste affiché
             string texte = (coup.EvaluationApres is Evaluation evaluation ? evaluation.Texte + (symbole ? $" ({evaluation.Symbole})" : "") + "  " + T("joué") + " " : T("Joué") + " ")
                 + Notation(coup.CoupJoueLong ?? coup.PgnFrSansNumero)
                 + (coup.Annotation != "" ? " " + coup.Annotation + (nomAnnotation ? $" [{Annotations.Nom(coup.Annotation)}]" : "") : "");
+            if (bibliotheque && (coup.MeilleurJoue || coup.MeilleurCoup == null || coup.PerteAnalyse < JugementCoups.SeuilImprecision))
+                return texte + "  — " + T("coup de la bibliothèque");
             if (coup.MeilleurJoue)
                 return texte + "  — " + T("meilleur coup du moteur");
             if (coup.MeilleurCoup == null)
