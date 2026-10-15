@@ -294,6 +294,13 @@ namespace BrunoGUI_GenII
             }
             return ' ';
         }
+        public static bool ContientCoup(string fenAvant, string? uci)
+        {   // Le coup (UCI, "g1f3") est-il connu de la bibliothèque chargée dans cette position ? (analyse du coup : "coup de la bibliothèque")
+            string coup = (uci ?? "").Trim();
+            if (coup.Length < 4 || !Disponible)
+                return false;
+            return TrouverLesEntrees(CalculeClefPolyglot(fenAvant)).Any(e => DecodeCoup(e.CoupBiblio, fenAvant) == coup);
+        }
         public static ulong CalculeClefPolyglot(string fen)
         {   // Calcule la clé Zobrist 64 bits pour une position donnée en FEN
             ulong[] RandomPiece = Random64;
