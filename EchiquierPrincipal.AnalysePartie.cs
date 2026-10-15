@@ -48,6 +48,9 @@ namespace BrunoGUI_GenII
         private int? _multiPvAvantAnalyse;                  // nombre de variantes à rétablir à la fin de l'analyse
         private FenetreAnalyse? _fenetreAnalyse;            // suivi de l'analyse (position, score, suite, temps restant) ; null : fermée
         private bool _analyseComplete;                      // analyse complète : la vérification des coups douteux suivra le 1er passage
+        // 2e Stockfish (celui livré avec BrunoGUI, quel que soit le moteur choisi) : un seul bon coup était-il difficile à trouver ?
+        // (voir MoteurAuxiliaire.cs et JugementCoups.ProfondeurDecouverte) ; lancé avec l'analyse, arrêté à la fin
+        private MoteurAuxiliaire? _moteurAuxiliaire;
 
         private void BoutonAnalysePartie_Click(object? sender, EventArgs e)
         {   // "Analyse rapide" (10 s par position par défaut), ou "Interrompre" si une analyse est en cours (ce bouton occupe alors toute la largeur)
@@ -87,6 +90,8 @@ namespace BrunoGUI_GenII
             _pendule?.Pause();          // le temps ne compte pas pendant l'analyse (reprise dans MinuteriePendule_Tick à la fin)
             _analyseDePartie = new AnalyseDePartie(LogiqueMouvements.ListeCoups, approfondir: complete,
                                                  coupDeBibliotheque: PolyglotBibliotheque.ContientCoup);   // jamais annotés
+            _moteurAuxiliaire?.Dispose();
+            _moteurAuxiliaire = new MoteurAuxiliaire(CheminStockfish);
             // Au moins 2 variantes pendant l'analyse : la 2e dit si le meilleur coup était le seul bon ("!") ; réglage rétabli à la fin
             _multiPvAvantAnalyse = MoteurUci.NombreLignesPV;
             if (MoteurUci.NombreLignesPV < 2)
@@ -133,15 +138,32 @@ namespace BrunoGUI_GenII
             _pilote.DemanderAnalyse(LogiqueMouvements.PositionDepuisFen(_analyseDePartie.Positions[index].Fen),
                                     approfondissement ? DureeApprofondissement : DureeAnalyseParPosition);
         }
-        private void PositionAnalyseeParLeMoteur(LigneAnalyse? meilleure)
+        private async void PositionAnalyseeParLeMoteur(LigneAnalyse? meilleure)
         {   // Réponse du moteur pour la position demandée (null : aucun score) : on l'enregistre et on passe à la suivante
-            if (_analyseDePartie == null)
+            AnalyseDePartie? analyse = _analyseDePartie;
+            if (analyse == null)
                 return;
-            _analyseDePartie.Enregistre(_positionEnAnalyse, meilleure, meilleure != null ? _pilote.Lignes.Seconde : null);
+            analyse.Enregistre(_positionEnAnalyse, meilleure, meilleure != null ? _pilote.Lignes.Seconde : null);
+            await MesureDifficultes(analyse);
+            if (_analyseDePartie != analyse)
+                return;         // interrompue pendant la mesure (TermineAnalyseDePartie a déjà tout rangé)
             // Annotations au fur et à mesure (choix de Bruno) : l'analyse allant de la fin vers le début, la position d'après est déjà
             // analysée et le coup joué dans celle-ci peut être jugé tout de suite ; la feuille est redessinée avec la position suivante
-            _analyseDePartie.AppliqueAuxCoups(LogiqueMouvements.ListeCoups);
+            analyse.AppliqueAuxCoups(LogiqueMouvements.ListeCoups);
             AnalysePositionSuivante();
+        }
+        private async Task MesureDifficultes(AnalyseDePartie analyse)
+        {   // Seuls bons coups devenus jugeables : le 2e moteur dit à quelle profondeur il les trouve (quelques dixièmes de seconde
+            // chacun, hors du thread de l'interface ; le moteur principal attend, rien ne tourne en même temps)
+            if (_moteurAuxiliaire is not MoteurAuxiliaire moteur)
+                return;
+            foreach ((int index, string fen, string coup) in analyse.DifficultesAMesurer().ToList())
+            {
+                List<(int, string)> meilleurs = await Task.Run(() => moteur.MeilleursCoupsParProfondeur(fen, JugementCoups.ProfondeurMesureDifficulte));
+                if (_analyseDePartie != analyse)
+                    return;
+                analyse.EnregistreDifficulte(index, JugementCoups.ProfondeurDecouverte(meilleurs, coup));
+            }
         }
         private void ChoisitDureesAnalyse()
         {   // Options > Durées de l'analyse de partie : valables dès la position suivante (même pendant une analyse)
@@ -201,6 +223,8 @@ namespace BrunoGUI_GenII
             if (analyse == null)
                 return;
             _analyseDePartie = null;        // avant AbandonneReflexion, qui sinon reviendrait ici
+            _moteurAuxiliaire?.Dispose();   // (une mesure en cours s'arrête : son coup garde la règle sans difficulté)
+            _moteurAuxiliaire = null;
             FermeFenetreAnalyse();
             _positionEnAnalyse = -1;
             AbandonneReflexion();           // la position en cours d'analyse (interruption) : sa réponse sera ignorée

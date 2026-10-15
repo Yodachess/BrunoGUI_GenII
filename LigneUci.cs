@@ -37,6 +37,7 @@ namespace BrunoGUI_GenII
         // info ... multipv <n> score cp <x> | score mate <y> ... pv <coups>
         public bool DansBibliotheque { get; private set; }     // mot "book" (certains moteurs l'indiquent)
         public int? NumeroVariante { get; private set; }       // multipv
+        public int? Profondeur { get; private set; }           // depth (pas seldepth)
         public int? ScoreCentipions { get; private set; }      // score cp, du point de vue du camp au trait
         public int? MatEn { get; private set; }                // score mate, négatif si le camp au trait est maté
         public string? Variante { get; private set; }           // coups UCI après "pv", séparés par des espaces
@@ -91,6 +92,9 @@ namespace BrunoGUI_GenII
                         break;
                     case "multipv":
                         resultat.NumeroVariante = EntierApres(mots, i);
+                        break;
+                    case "depth":
+                        resultat.Profondeur = EntierApres(mots, i);
                         break;
                     case "cp":
                         resultat.ScoreCentipions = EntierApres(mots, i);

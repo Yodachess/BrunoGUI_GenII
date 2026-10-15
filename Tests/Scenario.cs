@@ -1076,6 +1076,51 @@ public static class Scenario
         Verifie("« !! » : le seul bon coup sacrifie du matériel (4. Fxf7+ Rxf7 : un fou pour un pion) ; « ! » sans sacrifice",
             analyseSacrifice.Jugement(6).Annotation == "!!" && analyseEchange.Jugement(6).Annotation == "!",
             $"Fxf7+ Rxf7 : « {analyseSacrifice.Jugement(6).Annotation} », Fxf7+ Re7 : « {analyseEchange.Jugement(6).Annotation} »");
+        Verifie("Difficulté : profondeur à partir de laquelle le coup reste le choix du moteur",
+            JugementCoups.ProfondeurDecouverte([(1, "a2a3"), (2, "b1c3"), (3, "b1c3"), (4, "a2a3"), (5, "a2a3")], "a2a3") == 4
+            && JugementCoups.ProfondeurDecouverte([(1, "a2a3"), (2, "b1c3")], "a2a3") == int.MaxValue
+            && JugementCoups.ProfondeurDecouverte([], "a2a3") == null, "");
+        List<string> mesures = [.. analyseSacrifice.DifficultesAMesurer().Select(d => $"{d.IndexPosition}:{d.CoupUci}")];
+        analyseSacrifice.EnregistreDifficulte(6, 3);        // sacrifice trouvé tout de suite : "!" seulement
+        string sacrificeFacile = analyseSacrifice.Jugement(6).Annotation;
+        analyseSacrifice.EnregistreDifficulte(6, 12);       // sacrifice difficile à trouver : "!!"
+        Verifie("Difficulté mesurée : un seul bon coup est à mesurer une fois ; sacrifice facile « ! », difficile « !! »",
+            string.Join(",", mesures) == "6:c4f7" && !analyseSacrifice.DifficultesAMesurer().Any() && sacrificeFacile == "!"
+            && analyseSacrifice.Jugement(6).Annotation == "!!", $"{string.Join(",", mesures)} / « {sacrificeFacile} » / « {analyseSacrifice.Jugement(6).Annotation} »");
+        Charger("6k1/8/4p3/3p4/8/1BN5/8/6K1 w - - 0 1");      // 1. Cxd5 exd5 2. Fxd5 : un échange (un cavalier pour deux pions), pas un sacrifice
+        L.ExecutionCoup("c3", "d5");
+        int indexCxd5 = L.ListeCoups.Count - 1;
+        AnalyseDePartie EchangeAnalyse(int evaluationSeconde)
+        {
+            AnalyseDePartie analyse = new(L.ListeCoups);
+            analyse.Enregistre(1, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(72, null), VariantePgn = "1 ... exd5 2. Fxd5", VarianteUci = "e6d5 b3d5" });
+            analyse.Enregistre(0, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(72, null), VariantePgn = "1. Cxd5 exd5 2. Fxd5", VarianteUci = "c3d5 e6d5 b3d5" },
+                               new LigneAnalyse { Numero = 2, Evaluation = new Evaluation(evaluationSeconde, null) });
+            return analyse;
+        }
+        AnalyseDePartie echangeErreur = EchangeAnalyse(-300), echangeImprecision = EchangeAnalyse(7);
+        string echangeSansMesure = echangeErreur.Jugement(indexCxd5)?.Annotation;
+        echangeErreur.EnregistreDifficulte(0, 2);           // seul bon coup, mais naturel : rien
+        string echangeNaturel = echangeErreur.Jugement(indexCxd5)?.Annotation;
+        echangeErreur.EnregistreDifficulte(0, 12);          // seul bon coup difficile à trouver : "!"
+        echangeImprecision.EnregistreDifficulte(0, 12);     // difficile, mais l'alternative est à peine moins bonne (+0.07 au lieu de +0.72) : rien
+        Verifie("« !! » : pas pour un échange (matériel compté une fois les prises finies) ; seul bon coup naturel sans « ! », difficile avec",
+            echangeSansMesure == "!" && echangeNaturel == "" && echangeErreur.Jugement(indexCxd5)?.Annotation == "!"
+            && echangeImprecision.Jugement(indexCxd5)?.Annotation == "",
+            $"sans mesure « {echangeSansMesure} », naturel « {echangeNaturel} », difficile « {echangeErreur.Jugement(indexCxd5)?.Annotation} » / « {echangeImprecision.Jugement(indexCxd5)?.Annotation} »");
+        Charger(L.FenDepart);
+        foreach (string coupSacrifice in new[] { "e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "g8f6", "c4f7" })
+            L.ExecutionCoup(coupSacrifice[..2], coupSacrifice[2..]);
+        AnalyseDePartie sacrificeParmiDautres = new(L.ListeCoups);     // 4. Fxf7+ meilleur coup, mais une alternative presque aussi bonne
+        sacrificeParmiDautres.Enregistre(7, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(50, null), VariantePgn = "4 ... Rxf7 5. Cg5+", VarianteUci = "e8f7 f3g5" });
+        sacrificeParmiDautres.Enregistre(6, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(50, null), VariantePgn = "4. Fxf7+ Rxf7 5. Cg5+", VarianteUci = "c4f7 e8f7 f3g5" },
+                                         new LigneAnalyse { Numero = 2, Evaluation = new Evaluation(40, null) });
+        bool aMesurer = sacrificeParmiDautres.DifficultesAMesurer().Any(d => d.IndexPosition == 6);
+        string sansMesure = sacrificeParmiDautres.Jugement(6).Annotation;
+        sacrificeParmiDautres.EnregistreDifficulte(6, 3);
+        Verifie("Sacrifice correct sans être le seul bon coup (13. Cd5 de la partie de Bruno) : mesuré, « ! » (rien sans mesure)",
+            aMesurer && sansMesure == "" && sacrificeParmiDautres.Jugement(6).Annotation == "!",
+            $"à mesurer : {aMesurer}, sans mesure « {sansMesure} », mesuré « {sacrificeParmiDautres.Jugement(6).Annotation} »");
         Verifie("Variante PGN vers UCI : roque, prise, promotion, coup illégal (arrêt)",
             ChargementPartie.VarianteSanVersUci("1. O-O Kd7 2. exd5", L.PositionDepuisFen("r3k3/8/8/3p4/4P3/8/8/4K2R w K - 0 1")) == "e1g1 e8d7 e4d5"
             && ChargementPartie.VarianteSanVersUci("1. e8=N+ Kh8", L.PositionDepuisFen("7k/4P3/8/8/8/8/8/4K3 w - - 0 1")) == "e7e8n"
