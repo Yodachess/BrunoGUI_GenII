@@ -116,10 +116,12 @@ namespace BrunoGUI_GenII
             // "position de départ") pour une partie commencée depuis un FEN
             indexPosition > 0 ? _indexCoups[indexPosition - 1] : _coups.Count > 0 && _coups[0].EstPositionDeDepart ? 0 : -1;
 
-        public AnalyseDePartie(IReadOnlyList<Coup> coups, bool approfondir = false)
+        public AnalyseDePartie(IReadOnlyList<Coup> coups, bool approfondir = false, Func<string, string, bool>? coupDeBibliotheque = null)
         {   // Les positions de la partie : celle de départ (position initiale ou FEN de départ), puis celle après chaque coup.
             // approfondir : après le 1er passage, les positions avant et après chaque coup douteux (?!, ?, ??) sont revues plus
             // longtemps (voir EnApprofondissement) : un jugement sévère mérite d'être confirmé, et le temps n'est pas perdu sur les autres
+            // coupDeBibliotheque(fen d'avant, coup UCI) : le coup est-il dans la bibliothèque d'ouvertures ? Un tel coup n'est jamais
+            // annoté, ni compté dans le bilan ni retenu comme coup critique (choix de Bruno, comme Lichess : la théorie n'est pas jugée)
             _coups = [.. coups];
             _approfondir = approfondir;
             string fenDepart = _coups.Count > 0 && _coups[0].EstPositionDeDepart ? _coups[0].Fen : FenDepart;
@@ -127,10 +129,15 @@ namespace BrunoGUI_GenII
             for (int i = 0; i < _coups.Count; i++)
                 if (!_coups[i].EstPositionDeDepart)
                 {
+                    if (coupDeBibliotheque != null && coupDeBibliotheque(_positions[^1].Fen, _coups[i].Uci))
+                        _coupsDeBibliotheque.Add(i);
                     _indexCoups.Add(i);
                     _positions.Add(NouvellePosition(_coups[i].Fen));
                 }
         }
+
+        private readonly HashSet<int> _coupsDeBibliotheque = [];    // place dans ListeCoups des coups connus de la bibliothèque
+        public bool EstCoupDeBibliotheque(int indexCoup) => _coupsDeBibliotheque.Contains(indexCoup);
 
         private static PositionAnalysee NouvellePosition(string fen)
         {   // Mat ou pat : la position est jugée tout de suite (le moteur n'aurait aucun coup à proposer)
@@ -174,7 +181,8 @@ namespace BrunoGUI_GenII
             if (!_approfondir)
                 return;
             // (et les "!" et "!!" : leur 2e variante, celle qui fait d'un coup le seul bon, mérite aussi une recherche plus longue)
-            foreach (JugementCoup jugement in Jugements().Where(j => j.Perte >= JugementCoups.SeuilImprecision || j.Annotation is "!" or "!!").ToList())
+            foreach (JugementCoup jugement in Jugements().Where(j => !EstCoupDeBibliotheque(j.IndexCoup)
+                                                                     && (j.Perte >= JugementCoups.SeuilImprecision || j.Annotation is "!" or "!!")).ToList())
             {
                 int k = _indexCoups.IndexOf(jugement.IndexCoup);
                 foreach (PositionAnalysee position in new[] { _positions[k], _positions[k + 1] })
@@ -258,7 +266,8 @@ namespace BrunoGUI_GenII
             double sens = camp == ColorPiece.Blanc ? 1 : -1;                // chances vues du camp qui joue
             double perte = meilleurJoue ? 0 : Math.Max(0, sens * (avant - apres));
             double precision = meilleurJoue ? 100 : JugementCoups.Precision(sens * avant, sens * apres);
-            string annotation = meilleurJoue && SeulBonCoup(k, indexCoup, sens) ? (Sacrifie(k) ? "!!" : "!") : JugementCoups.Annotation(perte);
+            string annotation = EstCoupDeBibliotheque(indexCoup) ? ""
+                              : meilleurJoue && SeulBonCoup(k, indexCoup, sens) ? (Sacrifie(k) ? "!!" : "!") : JugementCoups.Annotation(perte);
             return new JugementCoup(indexCoup, camp, perte, annotation, _positions[k + 1].Evaluation, meilleur, meilleurJoue,
                                     positionAvant.Evaluation, positionAvant.MeilleurCoupLong, positionAvant.VarianteMeilleure, precision);
         }
@@ -407,8 +416,8 @@ namespace BrunoGUI_GenII
         }
 
         public BilanCamp Bilan(ColorPiece camp)
-        {   // Imprécisions, erreurs, gaffes et précision moyenne (en %) des coups jugés du camp
-            List<JugementCoup> jugements = [.. Jugements().Where(j => j.Camp == camp)];
+        {   // Imprécisions, erreurs, gaffes et précision moyenne (en %) des coups jugés du camp, hors coups de la bibliothèque
+            List<JugementCoup> jugements = [.. Jugements().Where(j => j.Camp == camp && !EstCoupDeBibliotheque(j.IndexCoup))];
             int precision = jugements.Count == 0 ? 0 : (int)Math.Round(jugements.Average(j => j.Precision));
             return new BilanCamp(jugements.Count(j => j.Annotation == "?!"), jugements.Count(j => j.Annotation == "?"),
                                  jugements.Count(j => j.Annotation == "??"), precision);
@@ -417,6 +426,6 @@ namespace BrunoGUI_GenII
         public JugementCoup? CoupCritique() =>
             // Le moment où la partie a basculé : le coup qui a fait perdre le plus de chances de gain, s'il est au moins une erreur (?)
             // (null : aucun coup n'a vraiment changé le cours de la partie). À égalité, le premier
-            Jugements().Where(j => j.Perte >= JugementCoups.SeuilErreur).OrderByDescending(j => j.Perte).ThenBy(j => j.IndexCoup).FirstOrDefault();
+            Jugements().Where(j => j.Perte >= JugementCoups.SeuilErreur && !EstCoupDeBibliotheque(j.IndexCoup)).OrderByDescending(j => j.Perte).ThenBy(j => j.IndexCoup).FirstOrDefault();
     }
 }

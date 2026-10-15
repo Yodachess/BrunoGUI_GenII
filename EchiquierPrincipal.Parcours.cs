@@ -309,11 +309,12 @@ namespace BrunoGUI_GenII
             // ligne en police 10 (sans "Analyse :", deux espaces) ; nomAnnotation et symbole à false raccourcissent encore.
             // Sans évaluation (PGN chargé sans [%eval]) : "Joué Fc8-e6 ?? [Gaffe]  — meilleur : Fc8-b7".
             // Coup connu de la bibliothèque d'ouvertures (choix de Bruno) : "— coup de la bibliothèque" au lieu de "— meilleur coup du
-            // moteur" ou "— moteur : …, écart négligeable" ; s'il perd vraiment (imprécision ou pire), le meilleur coup reste affiché
+            // moteur", "— moteur : …, écart négligeable" ou "— meilleur : …" : la théorie n'est pas jugée (ni annotée par l'analyse ;
+            // le meilleur coup du moteur reste sur la 3e ligne)
             string texte = (coup.EvaluationApres is Evaluation evaluation ? evaluation.Texte + (symbole ? $" ({evaluation.Symbole})" : "") + "  " + T("joué") + " " : T("Joué") + " ")
                 + Notation(coup.CoupJoueLong ?? coup.PgnFrSansNumero)
                 + (coup.Annotation != "" ? " " + coup.Annotation + (nomAnnotation ? $" [{Annotations.Nom(coup.Annotation)}]" : "") : "");
-            if (bibliotheque && (coup.MeilleurJoue || coup.MeilleurCoup == null || coup.PerteAnalyse < JugementCoups.SeuilImprecision))
+            if (bibliotheque)
                 return texte + "  — " + T("coup de la bibliothèque");
             if (coup.MeilleurJoue)
                 return texte + "  — " + T("meilleur coup du moteur");

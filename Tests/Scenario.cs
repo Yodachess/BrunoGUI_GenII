@@ -982,6 +982,15 @@ public static class Scenario
             bilanBlancs == bilanBlancs with { Imprecisions = 1, Erreurs = 0, Gaffes = 0 } && bilanNoirs.Gaffes == 1 && bilanNoirs.Precision < bilanBlancs.Precision
             && bilanBlancs.Precision is > 50 and < 100,
             $"Blancs {bilanBlancs}, Noirs {bilanNoirs}");
+        // Même partie, 2. Dh5 étant un coup de la bibliothèque : ni annoté, ni compté dans le bilan (la théorie n'est pas jugée)
+        AnalyseDePartie analyseTheorie = new(L.ListeCoups, coupDeBibliotheque: (fen, uci) => uci.Trim() == "d1h5");
+        for (int p = 6; p >= 0; p--)
+            analyseTheorie.Enregistre(p, new LigneAnalyse { Numero = 1, Evaluation = p == 6 ? new Evaluation(null, 1) : new Evaluation(reponses[p].cp, null),
+                                                            VariantePgn = reponses[p].variante, VarianteUci = reponses[p].uci });
+        Verifie("Analyse : un coup de la bibliothèque n'est ni annoté ni compté dans le bilan",
+            analyseTheorie.EstCoupDeBibliotheque(2) && !analyseTheorie.EstCoupDeBibliotheque(5) && analyseTheorie.Jugement(2)?.Annotation == ""
+            && analyseTheorie.Jugement(5)?.Annotation == "??" && analyseTheorie.Bilan(L.ColorPiece.Blanc).Imprecisions == 0,
+            $"Dh5 « {analyseTheorie.Jugement(2)?.Annotation} », bilan blanc {analyseTheorie.Bilan(L.ColorPiece.Blanc)}");
         L.ListeCoups[5].Annotation = "!";       // le joueur pense que 3... Cf6 est un bon coup : l'analyse ne doit pas l'écraser
         analyseBerger.AppliqueAuxCoups(L.ListeCoups);
         Verifie("Analyse appliquée aux coups : annotation proposée (marquée), évaluation et meilleur coup ; celle du joueur est gardée",
