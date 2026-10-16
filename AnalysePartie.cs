@@ -31,7 +31,8 @@ namespace BrunoGUI_GenII
         // Perte de chances de gain (de -1 à +1) à partir de laquelle un coup est annoté (seuils de Lichess)
         public const double SeuilImprecision = 0.1, SeuilErreur = 0.2, SeuilGaffe = 0.3;
         // "!" : le meilleur coup était le seul bon, la meilleure alternative (2e variante du moteur) aurait été au moins une erreur ;
-        // et la partie n'est pas déjà décidée après le coup (chances entre -0,6 et +0,6, environ ±2,5 pions : choix B de Bruno).
+        // et le joueur n'est pas perdu après le coup (ses chances au-dessus de -0,6, environ -3,8 pions : choix B de Bruno, limité au
+        // camp perdu en octobre 2026).
         // Quand on sait si le coup était difficile à trouver (ProfondeurDecouverte), "!" va au seul bon coup difficile et au sacrifice
         // correct, jamais au coup naturel (reprise, roque...) : voir AnalyseDePartie.BonCoup
         public const double SeuilSeulBonCoup = SeuilErreur, LimitePartieDecidee = 0.6;
@@ -306,15 +307,20 @@ namespace BrunoGUI_GenII
             if (_positions[k].ProfondeurDecouverte is not int profondeur)
                 return SeulBonCoup(k, indexCoup, sens) ? (Sacrifie(k) ? "!!" : "!") : "";
             bool difficile = profondeur >= JugementCoups.ProfondeurCoupDifficile;
-            if (SacrificeCorrect(k))
+            if (SacrificeCorrect(k, indexCoup, sens))
                 return difficile ? "!!" : "!";
             return difficile && SeulBonCoup(k, indexCoup, sens) ? "!" : "";
         }
 
-        private bool SacrificeCorrect(int k) =>
-            // Le meilleur coup (déjà vérifié) sacrifie, et la partie n'est pas déjà décidée après lui (dans une position gagnée, donner
-            // du matériel pour conclure n'a rien de remarquable)
-            _positions[k + 1].Chances is double apres && Math.Abs(apres) <= JugementCoups.LimitePartieDecidee && Sacrifie(k);
+        private bool SacrificeCorrect(int k, int indexCoup, double sens)
+        {   // Le meilleur coup (déjà vérifié) sacrifie, et le joueur n'est pas perdu après lui. Dans une position déjà gagnée, donner du
+            // matériel pour conclure n'est remarquable que si c'est le seul coup qui gagne (25... Cfe4!! après la gaffe 25. Ff5??)
+            if (_positions[k + 1].Chances is not double apres || sens * apres < -JugementCoups.LimitePartieDecidee)
+                return false;
+            if (sens * apres > JugementCoups.LimitePartieDecidee && !SeulBonCoup(k, indexCoup, sens))
+                return false;
+            return Sacrifie(k);
+        }
 
         public IEnumerable<(int IndexPosition, string Fen, string CoupUci)> DifficultesAMesurer()
         {   // Meilleurs coups joués, seuls bons coups ou sacrifices, dont on ne sait pas encore s'ils étaient difficiles à trouver :
@@ -328,7 +334,7 @@ namespace BrunoGUI_GenII
                     || avant.MeilleurCoupUci != _coups[indexCoup].Uci.Trim() || _positions[k + 1].Chances == null)
                     continue;
                 double sens = avant.AuTrait == ColorPiece.Blanc ? 1 : -1;
-                if (SeulBonCoup(k, indexCoup, sens) || SacrificeCorrect(k))
+                if (SeulBonCoup(k, indexCoup, sens) || SacrificeCorrect(k, indexCoup, sens))
                     yield return (k, avant.Fen, avant.MeilleurCoupUci);
             }
         }
@@ -343,12 +349,13 @@ namespace BrunoGUI_GenII
         {   // "!" (bon coup, choix de Bruno) : le meilleur coup a été joué ET c'était le seul bon : la 2e variante du moteur aurait fait
             // perdre au moins JugementCoups.SeuilSeulBonCoup de chances de gain (une erreur). Exclus : un coup
             // forcé (un seul coup légal) et une reprise immédiate (on reprend sur la case où l'adversaire vient de prendre : rien de remarquable)
-            // Pas non plus quand la partie est déjà décidée après le coup (ex : la seule défense qui perd moins dans une position
-            // perdue) : chances hors de ±JugementCoups.LimitePartieDecidee
+            // Pas non plus quand le joueur reste perdu après le coup (la seule défense qui perd moins dans une position perdue) : ses
+            // chances sous -JugementCoups.LimitePartieDecidee. Le seul coup qui GARDE une partie gagnée a son "!" (25... Cfe4 après
+            // 25. Ff5?? : -3.82, l'alternative ne donnait que -0.56 ; avant octobre 2026, la limite valait dans les deux sens)
             PositionAnalysee avant = _positions[k];
             if (avant.EvaluationSeconde is not Evaluation seconde || avant.Chances is not double chances || avant.NombreCoupsLegaux <= 1)
                 return false;
-            if (_positions[k + 1].Chances is not double apres || Math.Abs(apres) > JugementCoups.LimitePartieDecidee)
+            if (_positions[k + 1].Chances is not double apres || sens * apres < -JugementCoups.LimitePartieDecidee)
                 return false;
             if (k > 0 && EstReprise(k, indexCoup))
                 return false;
