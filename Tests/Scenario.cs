@@ -1179,8 +1179,14 @@ public static class Scenario
             analyseDecidee.Enregistre(p, p == 5 ? new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(-600, null), VariantePgn = reponses[p].variante, VarianteUci = reponses[p].uci }
                                                 : ReponseBerger(p),
                                       p == 4 ? new LigneAnalyse { Numero = 2, Evaluation = new Evaluation(-1500, null) } : null);
-        Verifie("« ! » : pas quand la partie est déjà décidée après le coup (chances au-delà de ±0,6)",
-            analyseDecidee.Jugement(4).Annotation == "", $"« {analyseDecidee.Jugement(4).Annotation} »");
+        AnalyseDePartie analyseGagnee = new(L.ListeCoups);
+        for (int p = 6; p >= 0; p--)       // le même coup GARDE une partie gagnée (+6.00), l'alternative la perdait
+            analyseGagnee.Enregistre(p, p == 5 ? new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(600, null), VariantePgn = reponses[p].variante, VarianteUci = reponses[p].uci }
+                                               : ReponseBerger(p),
+                                     p == 4 ? new LigneAnalyse { Numero = 2, Evaluation = new Evaluation(-1500, null) } : null);
+        Verifie("« ! » : pas quand le joueur reste perdu après le coup (chances sous -0,6) ; oui pour le seul coup qui garde une partie gagnée",
+            analyseDecidee.Jugement(4).Annotation == "" && analyseGagnee.Jugement(4).Annotation == "!",
+            $"perdue « {analyseDecidee.Jugement(4).Annotation} », gagnée « {analyseGagnee.Jugement(4).Annotation} »");
         Verifie("Analyse approfondie : le nouveau résultat remplace le premier (2. Dh5 n'est plus douteux), sans score le premier est gardé (Cf6 ??)",
             analyseApprofondie.Jugement(2).Annotation == "" && analyseApprofondie.Jugement(5).Annotation == "??" && analyseApprofondie.CoupCritique()?.IndexCoup == 5,
             $"Dh5 {analyseApprofondie.Jugement(2).Annotation} ({analyseApprofondie.Jugement(2).Perte:F3}), Cf6 {analyseApprofondie.Jugement(5).Annotation}");
