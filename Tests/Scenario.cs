@@ -1052,6 +1052,7 @@ public static class Scenario
         Verifie("« ! » : pas pour une pièce attaquée par une pièce de moindre valeur qui va sur sa seule case sûre (Caro-Kann, 8. h5 Fh7)",
             analyseFuite.Jugement(15) is { MeilleurJoue: true, Annotation: "" }, $"« {analyseFuite.Jugement(15)?.Annotation} »");
         Charger("4k3/8/8/3p4/4N3/8/8/4K3 w - - 0 1");      // cavalier e4 attaqué par le pion d5, mais plusieurs cases sûres : g3 est un vrai choix
+        L.AjoutePositionDeDepart("4k3/8/8/3p4/4N3/8/8/4K3 w - - 0 1");
         L.ExecutionCoup("e4", "g3");
         int indexCg3 = L.ListeCoups.Count - 1;
         AnalyseDePartie analyseChoix = new(L.ListeCoups, approfondir: true);
@@ -1069,12 +1070,12 @@ public static class Scenario
         analyseSacrifice.Enregistre(7, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(50, null), VariantePgn = "4 ... Rxf7 5. Cg5+", VarianteUci = "e8f7 f3g5" });
         analyseSacrifice.Enregistre(6, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(50, null), VariantePgn = "4. Fxf7+ Rxf7 5. Cg5+", VarianteUci = "c4f7 e8f7 f3g5" },
                                     new LigneAnalyse { Numero = 2, Evaluation = new Evaluation(-150, null) });
-        AnalyseDePartie analyseEchange = new(L.ListeCoups);     // même coup, mais la variante ne montre pas la reprise du fou : pas de sacrifice
+        AnalyseDePartie analyseEchange = new(L.ListeCoups);     // même coup, refusé dans la variante (4... Re7) : sacrifice OFFERT, toujours « !! »
         analyseEchange.Enregistre(7, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(50, null), VariantePgn = "4 ... Re7", VarianteUci = "e8e7" });
         analyseEchange.Enregistre(6, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(50, null), VariantePgn = "4. Fxf7+ Re7", VarianteUci = "c4f7 e8e7" },
                                   new LigneAnalyse { Numero = 2, Evaluation = new Evaluation(-150, null) });
-        Verifie("« !! » : le seul bon coup sacrifie du matériel (4. Fxf7+ Rxf7 : un fou pour un pion) ; « ! » sans sacrifice",
-            analyseSacrifice.Jugement(6).Annotation == "!!" && analyseEchange.Jugement(6).Annotation == "!",
+        Verifie("« !! » : le seul bon coup sacrifie du matériel (4. Fxf7+ Rxf7 : un fou pour un pion), même refusé (4... Re7 : le fou était offert)",
+            analyseSacrifice.Jugement(6).Annotation == "!!" && analyseEchange.Jugement(6).Annotation == "!!",
             $"Fxf7+ Rxf7 : « {analyseSacrifice.Jugement(6).Annotation} », Fxf7+ Re7 : « {analyseEchange.Jugement(6).Annotation} »");
         Verifie("Difficulté : profondeur à partir de laquelle le coup reste le choix du moteur",
             JugementCoups.ProfondeurDecouverte([(1, "a2a3"), (2, "b1c3"), (3, "b1c3"), (4, "a2a3"), (5, "a2a3")], "a2a3") == 4
@@ -1088,6 +1089,7 @@ public static class Scenario
             string.Join(",", mesures) == "6:c4f7" && !analyseSacrifice.DifficultesAMesurer().Any() && sacrificeFacile == "!"
             && analyseSacrifice.Jugement(6).Annotation == "!!", $"{string.Join(",", mesures)} / « {sacrificeFacile} » / « {analyseSacrifice.Jugement(6).Annotation} »");
         Charger("6k1/8/4p3/3p4/8/1BN5/8/6K1 w - - 0 1");      // 1. Cxd5 exd5 2. Fxd5 : un échange (un cavalier pour deux pions), pas un sacrifice
+        L.AjoutePositionDeDepart("6k1/8/4p3/3p4/8/1BN5/8/6K1 w - - 0 1");
         L.ExecutionCoup("c3", "d5");
         int indexCxd5 = L.ListeCoups.Count - 1;
         AnalyseDePartie EchangeAnalyse(int evaluationSeconde)
@@ -1108,6 +1110,16 @@ public static class Scenario
             echangeSansMesure == "!" && echangeNaturel == "" && echangeErreur.Jugement(indexCxd5)?.Annotation == "!"
             && echangeImprecision.Jugement(indexCxd5)?.Annotation == "",
             $"sans mesure « {echangeSansMesure} », naturel « {echangeNaturel} », difficile « {echangeErreur.Jugement(indexCxd5)?.Annotation} » / « {echangeImprecision.Jugement(indexCxd5)?.Annotation} »");
+        Charger("r4rk1/2R5/8/8/8/8/8/6K1 b - - 0 1");      // 1... Tfc8 2. Txc8+ et la variante s'arrête : la tour a8 reprend, pas un sacrifice
+        L.AjoutePositionDeDepart("r4rk1/2R5/8/8/8/8/8/6K1 b - - 0 1");     // (sinon l'analyse partirait de la position initiale)
+        L.ExecutionCoup("f8", "c8");
+        int indexTfc8 = L.ListeCoups.Count - 1;
+        AnalyseDePartie echangeCoupe = new(L.ListeCoups);
+        echangeCoupe.Enregistre(1, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(-50, null), VariantePgn = "2. Txc8+", VarianteUci = "c7c8" });
+        echangeCoupe.Enregistre(0, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(-50, null), VariantePgn = "1 ... Tfc8 2. Txc8+", VarianteUci = "f8c8 c7c8" },
+                                new LigneAnalyse { Numero = 2, Evaluation = new Evaluation(300, null) });
+        Verifie("Sacrifice : pas pour un échange dont la variante s'arrête avant la reprise (1... Tfc8 2. Txc8+)",
+            echangeCoupe.Jugement(indexTfc8)?.Annotation == "!", $"« {echangeCoupe.Jugement(indexTfc8)?.Annotation} »");
         Charger(L.FenDepart);
         foreach (string coupSacrifice in new[] { "e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "g8f6", "c4f7" })
             L.ExecutionCoup(coupSacrifice[..2], coupSacrifice[2..]);

@@ -308,7 +308,10 @@ namespace BrunoGUI_GenII
                 return SeulBonCoup(k, indexCoup, sens) ? (Sacrifie(k) ? "!!" : "!") : "";
             bool difficile = profondeur >= JugementCoups.ProfondeurCoupDifficile;
             if (SacrificeCorrect(k, indexCoup, sens))
-                return difficile ? "!!" : "!";
+            {   // (un mat forcé était déjà là : lâcher du matériel en route n'est remarquable que si c'était difficile, 34... Rg8)
+                bool matDejaForce = _positions[k].Evaluation?.MatEn is int mat && sens * mat > 0;
+                return difficile ? "!!" : matDejaForce ? "" : "!";
+            }
             return difficile && SeulBonCoup(k, indexCoup, sens) ? "!" : "";
         }
 
@@ -417,12 +420,18 @@ namespace BrunoGUI_GenII
             // variante s'arrête), dans les DemiCoupsSacrifice premiers demi-coups, le joueur a au moins SacrificeMinimum points de
             // matériel de moins qu'avant son coup. Au milieu d'une suite d'échanges, le matériel ne veut rien dire (27... Fxf3 28. Fxg7
             // Fxg2 29. Rxg2 Rxg7 : à égalité au bout) ; et un sacrifice plus loin dans la variante est celui d'un AUTRE coup
-            // (12. The1 b4 13. Cd5 exd5 : c'est 13. Cd5 qui sacrifie)
+            // (12. The1 b4 13. Cd5 exd5 : c'est 13. Cd5 qui sacrifie).
+            // Sacrifice OFFERT (refusé dans la variante, parce que l'accepter perd) : juste après le coup, l'adversaire peut gagner au
+            // moins SacrificeMinimum points en prenant (GainImmediat) ; ex : 25... Cfe4!! laisse la tour c8 au fou f5, et la variante
+            // du moteur continue par 26. c3 (choix de Bruno). Seulement pour une pièce NOUVELLEMENT en prise (case qui ne l'était pas
+            // après le coup précédent du joueur, ou qui l'est davantage) : sinon 16. Dh4, qui laisse le cavalier g7 offert par
+            // 15. Cxg7, serait un nouveau sacrifice ; avant 25... Cfe4, c'était la tour g6 qui était en prise (au fou d3), pas c8
             PositionAnalysee avant = _positions[k];
             string[] variante = (avant.VarianteMeilleureUci ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (variante.Length < 2)
+            if (variante.Length < 1 || variante[0].Length < 4)
                 return false;
             ColorPiece camp = avant.AuTrait;
+            Dictionary<string, int> dejaEnPrise = k > 0 ? CalculerSur(PositionDepuisFen(_positions[k - 1].Fen), PiecesEnPrise) : [];
             return CalculerSur(PositionDepuisFen(avant.Fen), () =>
             {
                 int depart = Materiel(camp);
@@ -431,12 +440,46 @@ namespace BrunoGUI_GenII
                     if (variante[i].Length < 4)
                         return false;
                     ChargementPartie.JoueSurLaCopie(variante[i]);
-                    bool calme = i + 1 >= variante.Length || !EstUnePrise(variante[i + 1]);
-                    if (i >= 1 && calme)
-                        return Materiel(camp) <= depart - JugementCoups.SacrificeMinimum;
+                    if (i == 0 && PiecesEnPrise().Where(p => p.Value > dejaEnPrise.GetValueOrDefault(p.Key)).Select(p => p.Value)
+                                                     .DefaultIfEmpty(0).Max() is int gain
+                        && gain > 0 && Materiel(camp) - gain <= depart - JugementCoups.SacrificeMinimum)
+                        return true;        // offert
+                    bool fin = i + 1 >= variante.Length;
+                    if (i >= 1 && (fin || !EstUnePrise(variante[i + 1])))
+                    {   // Variante arrêtée au milieu d'un échange (25... Tfc8 26. Txc8+ et rien après) : le camp au trait reprend ce qu'il peut
+                        int materiel = Materiel(camp);
+                        if (fin)
+                            materiel += QuiJoue == camp ? GainImmediat() : -GainImmediat();
+                        return materiel <= depart - JugementCoups.SacrificeMinimum;
+                    }
                 }
                 return false;
             });
+        }
+
+        private static int GainImmediat() => PiecesEnPrise().Values.DefaultIfEmpty(0).Max();
+
+        private static Dictionary<string, int> PiecesEnPrise()
+        {   // Sur la position actuelle (une copie) : pour chaque case où le camp au trait gagne du matériel en prenant tout de suite,
+            // ce qu'il gagne au mieux, reprise comprise (pièce défendue : il perd celle qui a pris). Calcul simple (pas de suite
+            // d'échanges au-delà de la reprise) : il suffit à voir une pièce laissée en prise
+            Dictionary<string, int> enPrise = [];
+            foreach ((string source, string destination) in CoupsLegaux())
+            {
+                int cible = JugementCoups.Valeur(PiecesEchiquier[RenvoieCaseIndex120(destination)]);
+                if (cible == 0)
+                    continue;
+                int preneur = JugementCoups.Valeur(PiecesEchiquier[RenvoieCaseIndex120(source)]);
+                bool defendue = CalculerSurCopie(() =>
+                {
+                    ChargementPartie.JoueSurLaCopie(source + destination);
+                    return CoupsLegaux().Any(reprise => reprise.Destination == destination);
+                });
+                int gain = cible - (defendue ? preneur : 0);
+                if (gain > 0 && gain > enPrise.GetValueOrDefault(destination))
+                    enPrise[destination] = gain;
+            }
+            return enPrise;
         }
 
         private static bool EstUnePrise(string coupUci)
