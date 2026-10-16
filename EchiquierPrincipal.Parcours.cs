@@ -215,9 +215,11 @@ namespace BrunoGUI_GenII
             bool positionInitiale = index < 0 || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart;
             _coupARejouer = null;           // (ligne 3 cliquable seulement si elle montre une suite à rejouer, voir plus bas)
             VarianteMoteurUci3.Cursor = Cursors.Default;
+            // (coup annoté : la ligne prend la couleur de son annotation, comme sa flèche ; choix de Bruno, ex : orange pour « ? »)
             AfficheLigneCentree(VarianteMoteurUci1, positionInitiale
                 ? "[ " + T("Position initiale") + " ]" : $"[ {TexteCoupJoue(index, positionApres)} ]"
-                  + (LogiqueMouvements.ListeCoups[index].TempsReflexion is TimeSpan reflexion ? "   " + T("(réflexion : {0})", TexteDuree(reflexion)) : ""));
+                  + (LogiqueMouvements.ListeCoups[index].TempsReflexion is TimeSpan reflexion ? "   " + T("(réflexion : {0})", TexteDuree(reflexion)) : ""),
+                !positionInitiale && LogiqueMouvements.ListeCoups[index].Annotation is { Length: > 0 } annotation ? FeuilleCoups.CouleurAnnotation(annotation) : null);
             VarianteMoteurUci2.Text = VarianteMoteurUci3.Text = "...";
             VarianteMoteurCourante.Text = positionInitiale ? T("Position initiale") : TexteCoupJoue(index, positionApres);
             if (!positionInitiale)
@@ -345,13 +347,15 @@ namespace BrunoGUI_GenII
             };
             SendMessage(ligne.Handle, EM_SETRECT, IntPtr.Zero, ref zone);
         }
-        private void AfficheLigneCentree(RichTextBox ligne, string texte)
-        {   // Texte centré en gras, toujours dans la police de la ligne (Bruno ne veut pas de police réduite)
+        private void AfficheLigneCentree(RichTextBox ligne, string texte, Color? couleur = null)
+        {   // Texte centré en gras, toujours dans la police de la ligne (Bruno ne veut pas de police réduite) ; couleur : celle de
+            // l'annotation du coup regardé (1re ligne), sinon la couleur normale de la ligne
             _ecritureCentree = true;
             ligne.Text = texte;
             ligne.SelectAll();
             ligne.SelectionAlignment = HorizontalAlignment.Center;
             ligne.SelectionFont = _policesLignes[ligne].Grasse;
+            ligne.SelectionColor = couleur ?? ligne.ForeColor;
             ligne.DeselectAll();
             _ecritureCentree = false;
         }
@@ -362,6 +366,7 @@ namespace BrunoGUI_GenII
             ligne.SelectAll();
             ligne.SelectionAlignment = HorizontalAlignment.Left;
             ligne.SelectionFont = _policesLignes[ligne].Normale;
+            ligne.SelectionColor = ligne.ForeColor;     // (le coup regardé a pu être écrit dans la couleur de son annotation)
             ligne.DeselectAll();
         }
         private static string TexteDuree(TimeSpan duree) =>
