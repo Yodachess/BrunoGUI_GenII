@@ -306,8 +306,8 @@ namespace BrunoGUI_GenII
         private static string TexteAnalyseDuCoup(Coup coup, bool nomAnnotation, bool symbole, bool bibliotheque)
         {   // Ex : "-9.05 (-+)  joué Dh2 ?? [Gaffe]  — meilleur : Rd3 (0.00)" : l'évaluation après le coup, le coup joué et son jugement
             // ("?? [Gaffe]", choix de Bruno), puis le meilleur coup avec SON évaluation. Si le coup joué ne perd presque rien (ex : mat
-            // en 3 au lieu de 2), le meilleur n'est qu'une préférence : "— moteur : Rd3 (0.00), écart négligeable" (Bruno trouvait
-            // "meilleur" inadapté). Coups en notation longue, avec la case de départ : "Dd8-d7", "Ta8-c8". Court pour tenir sur la
+            // en 3 au lieu de 2), le meilleur n'est qu'une préférence : "— moteur : Rd3 (0.00)" (Bruno trouvait
+            // "meilleur" inadapté, puis ", écart négligeable" inutile). Coups en notation longue, avec la case de départ : "Dd8-d7", "Ta8-c8". Court pour tenir sur la
             // ligne en police 10 (sans "Analyse :", deux espaces) ; nomAnnotation et symbole à false raccourcissent encore.
             // Sans évaluation (PGN chargé sans [%eval]) : "Joué Fc8-e6 ?? [Gaffe]  — meilleur : Fc8-b7".
             // Coup connu de la bibliothèque d'ouvertures (choix de Bruno) : "— coup de la bibliothèque" au lieu de "— moteur : …, écart
@@ -323,7 +323,7 @@ namespace BrunoGUI_GenII
                 return texte;
             string meilleur = Notation(coup.MeilleurCoupLong ?? coup.MeilleurCoup) + (coup.EvaluationMeilleur is Evaluation e ? $" ({e.Texte})" : "");
             return texte + (coup.PerteAnalyse < JugementCoups.SeuilImprecision
-                ? "  — " + T("moteur : {0}, écart négligeable", meilleur) : "  — " + T("meilleur : {0}", meilleur));
+                ? "  — " + T("moteur : {0}", meilleur) : "  — " + T("meilleur : {0}", meilleur));
         }
 
         // Les lignes de variante 1 et 2 servent aussi aux variantes du moteur (à gauche, police normale) : pendant le parcours, le coup
