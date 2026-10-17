@@ -120,7 +120,22 @@ namespace BrunoGUI_GenII
     // celle du meilleur coup du moteur ; MeilleurCoupLong : avec sa case de départ ; VarianteMeilleure : la suite prévue
     public record JugementCoup(int IndexCoup, ColorPiece Camp, double Perte, string Annotation, Evaluation? EvaluationApres,
                                string? MeilleurCoup, bool MeilleurJoue, Evaluation? EvaluationMeilleur, string? MeilleurCoupLong,
-                               string? VarianteMeilleure, double Precision);
+                               string? VarianteMeilleure, double Precision, string? Commentaire = null);
+
+    // Un sacrifice du meilleur coup : la pièce perdue (ou offerte) et sa case, offert (refusé dans la variante du moteur) ou
+    // accepté, et s'il ne s'agit que de la qualité (une tour contre une pièce légère)
+    public sealed record DetailSacrifice(TypePiece Piece, string Case, bool Offert, bool Qualite)
+    {
+        public string Texte => Offert ? Langue.T("{0} (offert en {1})", Nom, Case) : Nom;     // "Sacrifice de la tour (offert en c8)"
+        private string Nom => Qualite ? Langue.T("Sacrifice de la qualité") : Piece switch
+        {
+            TypePiece.CavalierBlanc or TypePiece.CavalierNoir => Langue.T("Sacrifice du cavalier"),
+            TypePiece.FouBlanc or TypePiece.FouNoir => Langue.T("Sacrifice du fou"),
+            TypePiece.TourBlanche or TypePiece.TourNoire => Langue.T("Sacrifice de la tour"),
+            TypePiece.ReineBlanche or TypePiece.ReineNoire => Langue.T("Sacrifice de la dame"),
+            _ => Langue.T("Sacrifice de matériel")
+        };
+    }
 
     public record BilanCamp(int Imprecisions, int Erreurs, int Gaffes, int Precision);     // précision moyenne des coups, en %
 
@@ -291,38 +306,44 @@ namespace BrunoGUI_GenII
             double sens = camp == ColorPiece.Blanc ? 1 : -1;                // chances vues du camp qui joue
             double perte = meilleurJoue ? 0 : Math.Max(0, sens * (avant - apres));
             double precision = meilleurJoue ? 100 : JugementCoups.Precision(sens * avant, sens * apres);
-            string annotation = EstCoupDeBibliotheque(indexCoup) ? ""
-                              : meilleurJoue ? BonCoup(k, indexCoup, sens) : JugementCoups.Annotation(perte);
+            (string annotation, DetailSacrifice? sacrifice) = EstCoupDeBibliotheque(indexCoup) ? ("", null)
+                              : meilleurJoue ? BonCoup(k, indexCoup, sens) : (JugementCoups.Annotation(perte), null);
             return new JugementCoup(indexCoup, camp, perte, annotation, _positions[k + 1].Evaluation, meilleur, meilleurJoue,
-                                    positionAvant.Evaluation, positionAvant.MeilleurCoupLong, positionAvant.VarianteMeilleure, precision);
+                                    positionAvant.Evaluation, positionAvant.MeilleurCoupLong, positionAvant.VarianteMeilleure, precision,
+                                    sacrifice?.Texte);
         }
 
-        private string BonCoup(int k, int indexCoup, double sens)
-        {   // Le meilleur coup a été joué : "!", "!!" ou rien.
+        private (string Annotation, DetailSacrifice? Sacrifice) BonCoup(int k, int indexCoup, double sens)
+        {   // Le meilleur coup a été joué : "!", "!!" ou rien, et le sacrifice qui lui vaut son annotation (commentaire de l'analyse).
             // Difficulté inconnue (pas de 2e moteur) : "!" au seul bon coup (l'alternative est une erreur), "!!" s'il sacrifie.
             // Difficulté mesurée (choix de Bruno, octobre 2026) : un sacrifice correct a "!", et "!!" s'il était difficile à trouver
             // (13. Cd5!! : une pièce, trouvé à la profondeur 12 ; il n'est pas "le seul bon coup", une alternative restait à +0.11) ;
             // sans sacrifice, "!" seulement au seul bon coup difficile à trouver (21. Th3!) ; un seul bon coup naturel n'a rien
             // (29. gxf3, 15... O-O, 47. Rd4)
             if (_positions[k].ProfondeurDecouverte is not int profondeur)
-                return SeulBonCoup(k, indexCoup, sens) ? (Sacrifie(k) ? "!!" : "!") : "";
+            {
+                if (!SeulBonCoup(k, indexCoup, sens))
+                    return ("", null);
+                DetailSacrifice? sacrificeSeul = Sacrifice(k);
+                return (sacrificeSeul != null ? "!!" : "!", sacrificeSeul);
+            }
             bool difficile = profondeur >= JugementCoups.ProfondeurCoupDifficile;
-            if (SacrificeCorrect(k, indexCoup, sens))
+            if (SacrificeCorrect(k, indexCoup, sens) is DetailSacrifice sacrifice)
             {   // (un mat forcé était déjà là : lâcher du matériel en route n'est remarquable que si c'était difficile, 34... Rg8)
                 bool matDejaForce = _positions[k].Evaluation?.MatEn is int mat && sens * mat > 0;
-                return difficile ? "!!" : matDejaForce ? "" : "!";
+                return difficile ? ("!!", sacrifice) : matDejaForce ? ("", null) : ("!", sacrifice);
             }
-            return difficile && SeulBonCoup(k, indexCoup, sens) ? "!" : "";
+            return (difficile && SeulBonCoup(k, indexCoup, sens) ? "!" : "", null);
         }
 
-        private bool SacrificeCorrect(int k, int indexCoup, double sens)
+        private DetailSacrifice? SacrificeCorrect(int k, int indexCoup, double sens)
         {   // Le meilleur coup (déjà vérifié) sacrifie, et le joueur n'est pas perdu après lui. Dans une position déjà gagnée, donner du
             // matériel pour conclure n'est remarquable que si c'est le seul coup qui gagne (25... Cfe4!! après la gaffe 25. Ff5??)
             if (_positions[k + 1].Chances is not double apres || sens * apres < -JugementCoups.LimitePartieDecidee)
-                return false;
+                return null;
             if (sens * apres > JugementCoups.LimitePartieDecidee && !SeulBonCoup(k, indexCoup, sens))
-                return false;
-            return Sacrifie(k);
+                return null;
+            return Sacrifice(k);
         }
 
         public IEnumerable<(int IndexPosition, string Fen, string CoupUci)> DifficultesAMesurer()
@@ -337,7 +358,7 @@ namespace BrunoGUI_GenII
                     || avant.MeilleurCoupUci != _coups[indexCoup].Uci.Trim() || _positions[k + 1].Chances == null)
                     continue;
                 double sens = avant.AuTrait == ColorPiece.Blanc ? 1 : -1;
-                if (SeulBonCoup(k, indexCoup, sens) || SacrificeCorrect(k, indexCoup, sens))
+                if (SeulBonCoup(k, indexCoup, sens) || SacrificeCorrect(k, indexCoup, sens) != null)
                     yield return (k, avant.Fen, avant.MeilleurCoupUci);
             }
         }
@@ -414,8 +435,8 @@ namespace BrunoGUI_GenII
             });
         }
 
-        private bool Sacrifie(int k)
-        {   // Le meilleur coup sacrifie du matériel. La variante du moteur (qui commence par ce coup) est jouée sur une copie : à la
+        private DetailSacrifice? Sacrifice(int k)
+        {   // Le meilleur coup sacrifie du matériel (null : non), et lequel. La variante du moteur (qui commence par ce coup) est jouée sur une copie : à la
             // PREMIÈRE position calme après la réponse de l'adversaire (le demi-coup suivant de la variante n'est pas une prise, ou la
             // variante s'arrête), dans les DemiCoupsSacrifice premiers demi-coups, le joueur a au moins SacrificeMinimum points de
             // matériel de moins qu'avant son coup. Au milieu d'une suite d'échanges, le matériel ne veut rien dire (27... Fxf3 28. Fxg7
@@ -429,31 +450,55 @@ namespace BrunoGUI_GenII
             PositionAnalysee avant = _positions[k];
             string[] variante = (avant.VarianteMeilleureUci ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (variante.Length < 1 || variante[0].Length < 4)
-                return false;
+                return null;
             ColorPiece camp = avant.AuTrait;
             Dictionary<string, int> dejaEnPrise = k > 0 ? CalculerSur(PositionDepuisFen(_positions[k - 1].Fen), PiecesEnPrise) : [];
             return CalculerSur(PositionDepuisFen(avant.Fen), () =>
             {
                 int depart = Materiel(camp);
+                // la 1re pièce du joueur prise par l'adversaire dans la variante ; Qualite : une tour prise par une pièce légère sur une
+                // case défendue (elle sera reprise, même après un coup intermédiaire : 25... Cfe4 26. Fxc8 b3 … Fxc8)
+                (TypePiece Piece, string Case, bool Qualite)? perdue = null;
+                DetailSacrifice? offert = null;     // pièce laissée en prise ; accepté si la variante la fait prendre, sinon offert
                 for (int i = 0; i < Math.Min(variante.Length, JugementCoups.DemiCoupsSacrifice + 1); i++)
                 {
                     if (variante[i].Length < 4)
-                        return false;
+                        return null;
+                    string arrivee = variante[i].Substring(2, 2);
+                    if (i % 2 == 1 && perdue == null && PiecesEchiquier[RenvoieCaseIndex120(arrivee)] is TypePiece prise && prise != TypePiece.Vide)
+                    {
+                        string coupAdverse = variante[i];
+                        bool legere = JugementCoups.Valeur(PiecesEchiquier[RenvoieCaseIndex120(coupAdverse[..2])]) == 3;
+                        bool defendue = CalculerSurCopie(() =>
+                        {
+                            ChargementPartie.JoueSurLaCopie(coupAdverse);
+                            return CoupsLegaux().Any(reprise => reprise.Destination == arrivee);
+                        });
+                        perdue = (prise, arrivee, JugementCoups.Valeur(prise) == 5 && legere && defendue);
+                    }
                     ChargementPartie.JoueSurLaCopie(variante[i]);
-                    if (i == 0 && PiecesEnPrise().Where(p => p.Value > dejaEnPrise.GetValueOrDefault(p.Key)).Select(p => p.Value)
-                                                     .DefaultIfEmpty(0).Max() is int gain
-                        && gain > 0 && Materiel(camp) - gain <= depart - JugementCoups.SacrificeMinimum)
-                        return true;        // offert
+                    if (i == 0 && PiecesEnPrise().Where(p => p.Value > dejaEnPrise.GetValueOrDefault(p.Key)).OrderByDescending(p => p.Value)
+                                                 .FirstOrDefault() is { Value: > 0 } offerte
+                        && Materiel(camp) - offerte.Value <= depart - JugementCoups.SacrificeMinimum)
+                    {   // offert : la pièce laissée en prise, ou la qualité si c'est une tour défendue que prendrait une pièce légère
+                        TypePiece piece = PiecesEchiquier[RenvoieCaseIndex120(offerte.Key)];
+                        offert = new DetailSacrifice(piece, offerte.Key, true, JugementCoups.Valeur(piece) == 5 && offerte.Value < 5);
+                    }
                     bool fin = i + 1 >= variante.Length;
                     if (i >= 1 && (fin || !EstUnePrise(variante[i + 1])))
                     {   // Variante arrêtée au milieu d'un échange (25... Tfc8 26. Txc8+ et rien après) : le camp au trait reprend ce qu'il peut
                         int materiel = Materiel(camp);
                         if (fin)
                             materiel += QuiJoue == camp ? GainImmediat() : -GainImmediat();
-                        return materiel <= depart - JugementCoups.SacrificeMinimum;
+                        int perte = depart - materiel;
+                        if (perte < JugementCoups.SacrificeMinimum)
+                            return offert;
+                        TypePiece pieceDonnee = perdue?.Piece ?? TypePiece.Vide;
+                        return new DetailSacrifice(pieceDonnee, perdue?.Case ?? "", false,
+                                                   JugementCoups.Valeur(pieceDonnee) == 5 && (perte < 5 || perdue?.Qualite == true));
                     }
                 }
-                return false;
+                return offert;
             });
         }
 
@@ -532,6 +577,7 @@ namespace BrunoGUI_GenII
                 coup.MeilleurCoupLong = jugement.MeilleurCoupLong;
                 coup.VarianteMeilleure = jugement.VarianteMeilleure;
                 coup.VarianteLue = false;       // la variante est maintenant celle du moteur (plus celle du PGN chargé)
+                coup.CommentaireAuto = jugement.Commentaire;    // (celui d'une analyse précédente est remplacé, ou effacé)
                 // (la notation NAL du coup est en lettres anglaises : la notation longue française est calculée ici)
                 PositionAnalysee positionAvant = _positions[_indexCoups.IndexOf(jugement.IndexCoup)];
                 coup.MeilleurCoupUci = positionAvant.MeilleurCoupUci;
