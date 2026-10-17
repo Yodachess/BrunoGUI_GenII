@@ -258,6 +258,7 @@
   "Les Noirs sont mieux": "Black is better",
   "Les Blancs ont un avantage décisif": "White has a decisive advantage",
   "Les Noirs ont un avantage décisif": "Black has a decisive advantage",
+  "Mat en {0} manqué": "Missed mate in {0}",
   "Mat en {0} pour les Blancs": "White mates in {0}",
   "Mat en {0} pour les Noirs": "Black mates in {0}",
   "moteur : {0}": "engine: {0}",
