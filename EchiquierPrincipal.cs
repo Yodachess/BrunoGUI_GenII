@@ -749,7 +749,14 @@ namespace BrunoGUI_GenII
             _pendule?.Pause();  // l'analyse est une aide : la pendule s'arrête pendant ce temps (voir MinuteriePendule_Tick)
             AffichePendules();
             LancerReflexion();  // Décompte le temps de réflexion
+            // Fenêtre de suivi, comme pour l'analyse de partie (choix de Bruno) : position, score et meilleure suite en direct, temps
+            // restant ; "Arrêter" demande au moteur de répondre tout de suite (le résultat est affiché comme à la fin du temps)
+            OuvreFenetreSuivi(T("Analyse de la position"), T("Arrêter"), () => MoteurUci.StandardInputDataToUci("stop"));
+            _fenetreAnalyse?.MontreEtape(NomDeLaPosition(ParcoursEnCours ? _indexAffiche : LogiqueMouvements.ListeCoups.Count - 1), "",
+                                         0, _dureeReflexionMilliSeconde, TexteTempsRestant(TimeSpan.FromMilliseconds(_dureeReflexionMilliSeconde)));
         }
+        private static string TexteTempsRestant(TimeSpan reste) =>
+            T("Temps restant : {0}", reste.TotalSeconds >= 60 ? $"{(int)reste.TotalMinutes} min {reste.Seconds:00} s" : $"{Math.Ceiling(reste.TotalSeconds)} s");
         private void InverseEchiquier_Click(object? sender, EventArgs e)
         {   // Permet d'inverser la vue de l'échiquier (côté Blanc ou côté Noir) : ne change pas le droit de jouer
             TourneEchiquier();
