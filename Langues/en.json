@@ -233,7 +233,7 @@
   "imprécisions": "inaccuracies",
   "meilleur : {0}": "best: {0}",
   "coup de la bibliothèque": "book move",
-  "moteur : {0}, écart négligeable": "engine: {0}, negligible difference",
+  "moteur : {0}": "engine: {0}",
   "score {0} → {1}": "score {0} → {1}",
   "{0} / ronde {1}": "{0} / round {1}",
   "{0} est installé.": "{0} is installed.",
