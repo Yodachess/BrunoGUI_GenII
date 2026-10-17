@@ -44,6 +44,9 @@ namespace BrunoGUI_GenII
         public string? VarianteMeilleureUci { get; set; }        // la même au format UCI ("a8c8 g1f3 ...") : rejouée sur l'échiquier (ligne 3)
         public string? CoupJoueLong { get; set; }                // le coup lui-même avec sa case de départ, en français ("Dd8-d7")
         public string? Commentaire { get; set; }                 // texte du commentaire du coup dans le PGN chargé (null : aucun), réécrit à l'enregistrement
+        // Commentaire écrit par l'analyse de partie (ex : "Sacrifice du cavalier"), remplacé à chaque analyse ; dans le PGN, un bloc
+        // à part marqué [%autocom], relu comme tel (jamais confondu avec le commentaire d'un joueur ou d'un auteur)
+        public string? CommentaireAuto { get; set; }
         public bool VarianteLue { get; set; }                   // la variante (meilleur coup) vient du PGN chargé : réécrite à l'enregistrement
 
         public static Coup PositionDeDepart(string fen) => new() { Fen = fen, EstPositionDeDepart = true };

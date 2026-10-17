@@ -319,6 +319,8 @@ namespace BrunoGUI_GenII
                 + (coup.Annotation != "" ? " " + coup.Annotation + (nomAnnotation ? $" [{Annotations.Nom(coup.Annotation)}]" : "") : "");
             if (bibliotheque)
                 return texte + "  — " + T("coup de la bibliothèque");
+            if (!string.IsNullOrEmpty(coup.CommentaireAuto))
+                texte += "  — " + coup.CommentaireAuto;     // commentaire de l'analyse, ex : "Sacrifice du cavalier"
             if (coup.MeilleurJoue || coup.MeilleurCoup == null)
                 return texte;
             string meilleur = Notation(coup.MeilleurCoupLong ?? coup.MeilleurCoup) + (coup.EvaluationMeilleur is Evaluation e ? $" ({e.Texte})" : "");

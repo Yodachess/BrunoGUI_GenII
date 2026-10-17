@@ -54,6 +54,7 @@ namespace BrunoGUI_GenII
         public List<string?> Commentaires { get; set; } = [];
         public List<string?> Variantes { get; set; } = [];
         public List<bool> AnnotationsAuto { get; set; } = [];       // [%auto] : l'annotation du coup a été posée par l'analyse de partie
+        public List<string?> CommentairesAuto { get; set; } = [];   // [%autocom] : texte écrit par l'analyse de partie (Coup.CommentaireAuto)
     }
 
     public class GestionPartiePgn
@@ -79,8 +80,17 @@ namespace BrunoGUI_GenII
                     texteCoup = coup.NumeroDuCoup + "... " + texteCoup;
                 apresCommentaire = false;
                 List<string> commentaires = [];
-                if (!string.IsNullOrWhiteSpace(coup.Commentaire))   // commentaire du PGN chargé : gardé (fichier et affichage)
-                    commentaires.Add(coup.Commentaire.Replace("{", "(").Replace("}", ")"));
+                string? commentaireJoueur = string.IsNullOrWhiteSpace(coup.Commentaire) ? null : coup.Commentaire.Replace("{", "(").Replace("}", ")");
+                if (!string.IsNullOrWhiteSpace(coup.CommentaireAuto))
+                {   // Commentaire de l'analyse ("Sacrifice du cavalier") : lisible par les autres logiciels ; dans le fichier, marqué
+                    // [%autocom] pour être relu comme tel, et celui du joueur va alors dans un bloc à part (chaque bloc est relu seul)
+                    if (commentaireJoueur != null)
+                        texteCoup += " {" + commentaireJoueur + "}";
+                    commentaireJoueur = null;
+                    commentaires.Add(coup.CommentaireAuto.Replace("{", "(").Replace("}", ")") + (pourFichier ? " [%autocom]" : ""));
+                }
+                if (commentaireJoueur != null)      // commentaire du PGN chargé : gardé (fichier et affichage)
+                    commentaires.Add(commentaireJoueur);
                 if (pourFichier && coup.AnnotationProposee && coup.Annotation != "")
                     commentaires.Add("[%auto]");    // annotation posée par l'analyse : elle redeviendra "proposée" à la relecture (remplaçable)
                 TimeSpan? temps = coup.EstCoupBlanc ? coup.TempsBlancs : coup.TempsNoirs;     // pendule du camp qui vient de jouer

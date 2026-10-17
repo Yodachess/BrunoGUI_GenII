@@ -1077,6 +1077,17 @@ public static class Scenario
         Verifie("« !! » : le seul bon coup sacrifie du matériel (4. Fxf7+ Rxf7 : un fou pour un pion), même refusé (4... Re7 : le fou était offert)",
             analyseSacrifice.Jugement(6).Annotation == "!!" && analyseEchange.Jugement(6).Annotation == "!!",
             $"Fxf7+ Rxf7 : « {analyseSacrifice.Jugement(6).Annotation} », Fxf7+ Re7 : « {analyseEchange.Jugement(6).Annotation} »");
+        Verifie("Commentaire du sacrifice : la pièce donnée, et sa case quand il est seulement offert (refusé dans la variante)",
+            analyseSacrifice.Jugement(6).Commentaire == "Sacrifice du fou" && analyseEchange.Jugement(6).Commentaire == "Sacrifice du fou (offert en f7)",
+            $"« {analyseSacrifice.Jugement(6).Commentaire} » / « {analyseEchange.Jugement(6).Commentaire} »");
+        analyseSacrifice.AppliqueAuxCoups(L.ListeCoups);
+        L.ListeCoups[6].Commentaire = "Le coup du joueur";
+        string pgnSacrifice = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "*" }, "Intl", pourFichier: true);
+        ChargementPartie.ChargerPartiePgn(FichierPartiePgn.DecodePartiePGN(pgnSacrifice), new Partie());
+        Verifie("PGN : commentaire de l'analyse dans son propre bloc [%autocom], relu à part du commentaire du joueur",
+            pgnSacrifice.Replace("\r\n", " ").Replace("\n", " ").Contains("{Le coup du joueur} {Sacrifice du fou [%autocom]")
+            && L.ListeCoups[6].CommentaireAuto == "Sacrifice du fou" && L.ListeCoups[6].Commentaire == "Le coup du joueur",
+            $"{pgnSacrifice.Replace("\r\n", " ")} / auto « {L.ListeCoups[6].CommentaireAuto} », joueur « {L.ListeCoups[6].Commentaire} »");
         Verifie("Difficulté : profondeur à partir de laquelle le coup reste le choix du moteur",
             JugementCoups.ProfondeurDecouverte([(1, "a2a3"), (2, "b1c3"), (3, "b1c3"), (4, "a2a3"), (5, "a2a3")], "a2a3") == 4
             && JugementCoups.ProfondeurDecouverte([(1, "a2a3"), (2, "b1c3")], "a2a3") == int.MaxValue
@@ -1088,6 +1099,16 @@ public static class Scenario
         Verifie("Difficulté mesurée : un seul bon coup est à mesurer une fois ; sacrifice facile « ! », difficile « !! »",
             string.Join(",", mesures) == "6:c4f7" && !analyseSacrifice.DifficultesAMesurer().Any() && sacrificeFacile == "!"
             && analyseSacrifice.Jugement(6).Annotation == "!!", $"{string.Join(",", mesures)} / « {sacrificeFacile} » / « {analyseSacrifice.Jugement(6).Annotation} »");
+        Charger("2r3k1/1b6/5n2/5B2/8/8/8/6K1 b - - 0 1");      // 1... Ce4 2. Fxc8 Rf8 : la tour défendue par le fou b7, c'est la qualité
+        L.AjoutePositionDeDepart("2r3k1/1b6/5n2/5B2/8/8/8/6K1 b - - 0 1");
+        L.ExecutionCoup("f6", "e4");
+        int indexCe4 = L.ListeCoups.Count - 1;
+        AnalyseDePartie analyseQualite = new(L.ListeCoups);
+        analyseQualite.Enregistre(1, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(-50, null), VariantePgn = "2. Fxc8", VarianteUci = "f5c8" });
+        analyseQualite.Enregistre(0, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(-50, null), VariantePgn = "1 ... Ce4 2. Fxc8 Rf8", VarianteUci = "f6e4 f5c8 g8f8" },
+                                  new LigneAnalyse { Numero = 2, Evaluation = new Evaluation(300, null) });
+        Verifie("Commentaire du sacrifice : la qualité (tour prise par une pièce légère sur une case défendue, reprise plus tard)",
+            analyseQualite.Jugement(indexCe4)?.Commentaire == "Sacrifice de la qualité", $"« {analyseQualite.Jugement(indexCe4)?.Commentaire} »");
         Charger("6k1/8/4p3/3p4/8/1BN5/8/6K1 w - - 0 1");      // 1. Cxd5 exd5 2. Fxd5 : un échange (un cavalier pour deux pions), pas un sacrifice
         L.AjoutePositionDeDepart("6k1/8/4p3/3p4/8/1BN5/8/6K1 w - - 0 1");
         L.ExecutionCoup("c3", "d5");
