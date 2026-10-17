@@ -1229,6 +1229,18 @@ public static class Scenario
             analyseDecidee.Enregistre(p, p == 5 ? new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(-600, null), VariantePgn = reponses[p].variante, VarianteUci = reponses[p].uci }
                                                 : ReponseBerger(p),
                                       p == 4 ? new LigneAnalyse { Numero = 2, Evaluation = new Evaluation(-1500, null) } : null);
+        AnalyseDePartie analyseMatManque = new(L.ListeCoups), analyseMatGarde = new(L.ListeCoups);
+        for (int p = 6; p >= 0; p--)       // avant 2. Dh5, les Blancs mataient en 5 par 2. Cf3 (réponse fictive) ; ou le gardaient (mat en 7)
+        {
+            LigneAnalyse matEn5 = new() { Numero = 1, Evaluation = new Evaluation(null, 5), VariantePgn = "2. Cf3 Cc6", VarianteUci = "g1f3 b8c6" };
+            analyseMatManque.Enregistre(p, p == 2 ? matEn5 : ReponseBerger(p));
+            analyseMatGarde.Enregistre(p, p == 2 ? matEn5 : p == 3 ? new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(null, 7), VariantePgn = reponses[p].variante, VarianteUci = reponses[p].uci }
+                                                           : ReponseBerger(p));
+        }
+        Verifie("Mat manqué : « Mat en 5 manqué » quand le mat n'est plus là après le coup ; rien s'il est gardé (même plus long)",
+            analyseMatManque.Jugement(2)?.Commentaire == "Mat en 5 manqué" && analyseMatGarde.Jugement(2)?.Commentaire == null
+            && analyseMatManque.Jugement(0)?.Commentaire == null,
+            $"« {analyseMatManque.Jugement(2)?.Commentaire} » / « {analyseMatGarde.Jugement(2)?.Commentaire} »");
         AnalyseDePartie analyseGagnee = new(L.ListeCoups);
         for (int p = 6; p >= 0; p--)       // le même coup GARDE une partie gagnée (+6.00), l'alternative la perdait
             analyseGagnee.Enregistre(p, p == 5 ? new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(600, null), VariantePgn = reponses[p].variante, VarianteUci = reponses[p].uci }

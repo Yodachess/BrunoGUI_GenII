@@ -374,7 +374,18 @@ namespace BrunoGUI_GenII
                               : meilleurJoue ? BonCoup(k, indexCoup, sens) : (JugementCoups.Annotation(perte), null);
             return new JugementCoup(indexCoup, camp, perte, annotation, _positions[k + 1].Evaluation, meilleur, meilleurJoue,
                                     positionAvant.Evaluation, positionAvant.MeilleurCoupLong, positionAvant.VarianteMeilleure, precision,
-                                    sacrifice?.Texte);
+                                    sacrifice?.Texte ?? MatManque(k, indexCoup, sens, meilleurJoue));
+        }
+
+        private string? MatManque(int k, int indexCoup, double sens, bool meilleurJoue)
+        {   // "Mat en 8 manqué" (étape B, choix de Bruno) : le joueur avait un mat forcé avant son coup, et ne l'a plus après (s'il le
+            // garde, même plus long, rien). Le coup à jouer est déjà dans la 2e ligne ("— meilleur : Dh4xg5 (M8)") et dans la variante
+            // du PGN ; laisser un mat à l'adversaire est dit par l'appréciation ("Mat en 8 pour les Blancs")
+            if (meilleurJoue || EstCoupDeBibliotheque(indexCoup) || _positions[k].Evaluation?.MatEn is not int mat || sens * mat <= 0)
+                return null;
+            PositionAnalysee apres = _positions[k + 1];
+            bool matGarde = apres.Evaluation?.MatEn is int matApres ? sens * matApres > 0 : apres.ChancesFinDePartie is double fin && sens * fin > 0;
+            return matGarde ? null : Langue.T("Mat en {0} manqué", Math.Abs(mat));
         }
 
         private (string Annotation, DetailSacrifice? Sacrifice) BonCoup(int k, int indexCoup, double sens)
