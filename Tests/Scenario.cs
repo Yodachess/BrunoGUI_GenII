@@ -1241,6 +1241,11 @@ public static class Scenario
             analyseMatManque.Jugement(2)?.Commentaire == "Mat en 5 manqué" && analyseMatGarde.Jugement(2)?.Commentaire == null
             && analyseMatManque.Jugement(0)?.Commentaire == null,
             $"« {analyseMatManque.Jugement(2)?.Commentaire} » / « {analyseMatGarde.Jugement(2)?.Commentaire} »");
+        analyseMatManque.AppliqueAuxCoups(L.ListeCoups);
+        string commentaireMatManque = L.ListeCoups[2].CommentaireAuto;
+        analyseBerger.AppliqueAuxCoups(L.ListeCoups);      // (la partie retrouve l'analyse des tests suivants)
+        Verifie("Mat manqué : pas d'appréciation à la suite (« La position est équilibrée » ferait double emploi)",
+            commentaireMatManque == "Mat en 5 manqué", $"« {commentaireMatManque} »");
         AnalyseDePartie analyseGagnee = new(L.ListeCoups);
         for (int p = 6; p >= 0; p--)       // le même coup GARDE une partie gagnée (+6.00), l'alternative la perdait
             analyseGagnee.Enregistre(p, p == 5 ? new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(600, null), VariantePgn = reponses[p].variante, VarianteUci = reponses[p].uci }
