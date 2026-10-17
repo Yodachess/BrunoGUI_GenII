@@ -982,6 +982,15 @@ public static class Scenario
             bilanBlancs == bilanBlancs with { Imprecisions = 1, Erreurs = 0, Gaffes = 0 } && bilanNoirs.Gaffes == 1 && bilanNoirs.Precision < bilanBlancs.Precision
             && bilanBlancs.Precision is > 50 and < 100,
             $"Blancs {bilanBlancs}, Noirs {bilanNoirs}");
+        static int NiveauApres(int? cp, int? mat, int actuel) => JugementCoups.NiveauAppreciation(new Evaluation(cp, mat), actuel);
+        Verifie("Appréciation : niveaux avec marge (0.75 reste équilibré, 0.60 reste « mieux », l'avantage peut changer de camp)",
+            NiveauApres(75, null, 0) == 0 && NiveauApres(90, null, 0) == 1 && NiveauApres(60, null, 1) == 1 && NiveauApres(50, null, 1) == 0
+            && NiveauApres(-60, null, 1) == 0 && NiveauApres(-90, null, 1) == -1 && NiveauApres(230, null, 1) == 2 && NiveauApres(190, null, 2) == 2
+            && NiveauApres(170, null, 2) == 1 && NiveauApres(null, -3, 2) == -2 && NiveauApres(0, null, 1) == 0, "");
+        Dictionary<int, string> appreciationsBerger = analyseBerger.CommentairesAppreciation();
+        Verifie("Appréciation commentée seulement quand elle change : 3... Cf6?? (mat en 1), rien sur les coups à ±0.60",
+            appreciationsBerger.Count == 1 && appreciationsBerger.GetValueOrDefault(5) == "Mat en 1 pour les Blancs",
+            string.Join(" / ", appreciationsBerger.Select(a => $"{a.Key} : {a.Value}")));
         // Même partie, 2. Dh5 étant un coup de la bibliothèque : ni annoté, ni compté dans le bilan (la théorie n'est pas jugée)
         AnalyseDePartie analyseTheorie = new(L.ListeCoups, coupDeBibliotheque: (fen, uci) => uci.Trim() == "d1h5");
         for (int p = 6; p >= 0; p--)
@@ -1006,7 +1015,7 @@ public static class Scenario
         string pgnAnalyseAffiche = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "1-0" }, "Intl");
         Verifie("PGN enregistré après analyse : %eval après chaque coup, meilleure variante (notation anglaise) après l'erreur, numéro repris",
             pgnAnalyseFichier.Replace("\n", " ").Contains("2. Qh5?! {[%auto] [%eval -0.60]} (2. Nf3 Nc6) 2... Nc6 {[%eval -0.40]}")
-            && pgnAnalyseFichier.Replace("\n", " ").Contains("3... Nf6! {[%eval #1]} 4. Qxf7#") && pgnAnalyseFichier.Contains("1. e4 {[%eval 0.30]} 1... e5"),
+            && pgnAnalyseFichier.Replace("\n", " ").Contains("3... Nf6! {Mat en 1 pour les Blancs [%autocom] [%eval #1]} 4. Qxf7#") && pgnAnalyseFichier.Contains("1. e4 {[%eval 0.30]} 1... e5"),
             pgnAnalyseFichier.Replace("\n", " "));
         Verifie("PGN affiché après analyse : ni %eval ni variante",
             !pgnAnalyseAffiche.Contains("%eval") && !pgnAnalyseAffiche.Contains('(') && pgnAnalyseAffiche.Contains("2. Qh5?! Nc6"),

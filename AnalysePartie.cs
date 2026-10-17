@@ -83,6 +83,33 @@ namespace BrunoGUI_GenII
             _ => ""
         };
 
+        // Appréciation commentée par l'analyse (étape B, choix de Bruno) : seulement quand elle change de niveau, sur 5 niveaux de
+        // -2 à +2 : équilibré (moins de ±0.70, léger avantage compris), mieux (± / ∓), avantage décisif (+- / -+ ou mat). Marge
+        // autour des seuils (MargeAppreciation) : une évaluation qui hésite entre 0.65 et 0.75 n'est pas commentée à chaque coup
+        public const int MargeAppreciation = 15;    // en centipions : entrer dans un niveau au seuil + 15, en sortir au seuil - 15
+
+        public static int NiveauAppreciation(Evaluation evaluation, int actuel)
+        {   // Niveau après le coup, de -2 (avantage décisif noir) à +2, compte tenu du niveau actuel (marge, voir MargeAppreciation)
+            if (evaluation.MatEn is int mat)
+                return mat > 0 ? 2 : -2;
+            int cp = evaluation.Centipions ?? 0, signe = Math.Sign(cp), valeur = Math.Abs(cp);
+            int Niveau(int marge) => valeur >= Evaluation.SeuilGain + marge ? 2 : valeur >= Evaluation.SeuilAvantage + marge ? 1 : 0;
+            int pourMonter = Niveau(MargeAppreciation), pourRester = Niveau(-MargeAppreciation);
+            if (actuel != 0 && Math.Sign(actuel) != signe)
+                return signe * pourMonter;          // l'avantage change de camp
+            int niveau = Math.Abs(actuel);
+            return signe * (pourMonter > niveau ? pourMonter : pourRester < niveau ? pourRester : niveau);
+        }
+
+        public static string TexteAppreciation(int niveau, Evaluation evaluation) => niveau switch
+        {
+            2 => evaluation.MatEn is int mat ? Langue.T("Mat en {0} pour les Blancs", mat) : Langue.T("Les Blancs ont un avantage décisif"),
+            1 => Langue.T("Les Blancs sont mieux"),
+            -1 => Langue.T("Les Noirs sont mieux"),
+            -2 => evaluation.MatEn is int matNoir ? Langue.T("Mat en {0} pour les Noirs", -matNoir) : Langue.T("Les Noirs ont un avantage décisif"),
+            _ => Langue.T("La position est équilibrée")
+        };
+
         public static double Precision(double chancesAvant, double chancesApres)
         {   // Précision d'un coup en % (formule de Lichess), à partir des chances de gain du camp qui joue avant et après le coup :
             // 100 % s'il ne perd rien, environ 60 % pour une gaffe dans une position égale
@@ -563,8 +590,28 @@ namespace BrunoGUI_GenII
 
         public IEnumerable<JugementCoup> Jugements() => _indexCoups.Select(Jugement).OfType<JugementCoup>();
 
+        public Dictionary<int, string> CommentairesAppreciation()
+        {   // Coups (place dans ListeCoups) après lesquels l'appréciation change de niveau (JugementCoups.NiveauAppreciation), avec son
+            // texte : "Les Blancs sont mieux", "La position est équilibrée"… La partie est parcourue dans l'ordre ; une position pas
+            // (encore) analysée est sautée, le niveau de départ est celui de la 1re position connue (sans commentaire) ; jamais sur
+            // un coup de la bibliothèque (la théorie n'est pas commentée)
+            Dictionary<int, string> textes = [];
+            int? actuel = null;
+            for (int k = 0; k < _positions.Count; k++)
+            {
+                if (_positions[k].Evaluation is not Evaluation evaluation)
+                    continue;               // (pas analysée, ou mat/pat final, jugé sans le moteur)
+                int niveau = JugementCoups.NiveauAppreciation(evaluation, actuel ?? 0);
+                if (actuel != null && niveau != actuel && k > 0 && !EstCoupDeBibliotheque(_indexCoups[k - 1]))
+                    textes[_indexCoups[k - 1]] = JugementCoups.TexteAppreciation(niveau, evaluation);
+                actuel = niveau;
+            }
+            return textes;
+        }
+
         public void AppliqueAuxCoups(IReadOnlyList<Coup> coups)
-        {   // Range les résultats dans les coups jugés (même liste qu'à la construction) : évaluation, meilleur coup, et annotation
+        {
+            Dictionary<int, string> appreciations = CommentairesAppreciation();   // Range les résultats dans les coups jugés (même liste qu'à la construction) : évaluation, meilleur coup, et annotation
             // proposée, sauf si le joueur en a mis une lui-même (une annotation proposée par une analyse précédente est remplacée)
             foreach (JugementCoup jugement in Jugements())
             {
@@ -577,7 +624,9 @@ namespace BrunoGUI_GenII
                 coup.MeilleurCoupLong = jugement.MeilleurCoupLong;
                 coup.VarianteMeilleure = jugement.VarianteMeilleure;
                 coup.VarianteLue = false;       // la variante est maintenant celle du moteur (plus celle du PGN chargé)
-                coup.CommentaireAuto = jugement.Commentaire;    // (celui d'une analyse précédente est remplacé, ou effacé)
+                // (celui d'une analyse précédente est remplacé, ou effacé) : le sacrifice, puis le changement d'appréciation
+                string?[] textes = [jugement.Commentaire, appreciations.GetValueOrDefault(jugement.IndexCoup)];
+                coup.CommentaireAuto = textes.Any(t => t != null) ? string.Join(". ", textes.OfType<string>()) : null;
                 // (la notation NAL du coup est en lettres anglaises : la notation longue française est calculée ici)
                 PositionAnalysee positionAvant = _positions[_indexCoups.IndexOf(jugement.IndexCoup)];
                 coup.MeilleurCoupUci = positionAvant.MeilleurCoupUci;
