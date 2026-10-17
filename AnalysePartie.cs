@@ -126,8 +126,8 @@ namespace BrunoGUI_GenII
     // accepté, et s'il ne s'agit que de la qualité (une tour contre une pièce légère)
     public sealed record DetailSacrifice(TypePiece Piece, string Case, bool Offert, bool Qualite)
     {
-        public string Texte => Offert ? Langue.T("{0} (offert en {1})", Nom, Case) : Nom;     // "Sacrifice de la tour (offert en c8)"
-        private string Nom => Qualite ? Langue.T("Sacrifice de la qualité") : Piece switch
+        // "Sacrifice du cavalier" : sans la case ni "offert" (choix de Bruno, « (offert en c8) » ne servait à rien)
+        public string Texte => Qualite ? Langue.T("Sacrifice de la qualité") : Piece switch
         {
             TypePiece.CavalierBlanc or TypePiece.CavalierNoir => Langue.T("Sacrifice du cavalier"),
             TypePiece.FouBlanc or TypePiece.FouNoir => Langue.T("Sacrifice du fou"),

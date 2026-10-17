@@ -1077,8 +1077,8 @@ public static class Scenario
         Verifie("« !! » : le seul bon coup sacrifie du matériel (4. Fxf7+ Rxf7 : un fou pour un pion), même refusé (4... Re7 : le fou était offert)",
             analyseSacrifice.Jugement(6).Annotation == "!!" && analyseEchange.Jugement(6).Annotation == "!!",
             $"Fxf7+ Rxf7 : « {analyseSacrifice.Jugement(6).Annotation} », Fxf7+ Re7 : « {analyseEchange.Jugement(6).Annotation} »");
-        Verifie("Commentaire du sacrifice : la pièce donnée, et sa case quand il est seulement offert (refusé dans la variante)",
-            analyseSacrifice.Jugement(6).Commentaire == "Sacrifice du fou" && analyseEchange.Jugement(6).Commentaire == "Sacrifice du fou (offert en f7)",
+        Verifie("Commentaire du sacrifice : la pièce donnée, qu'il soit accepté ou seulement offert (refusé dans la variante)",
+            analyseSacrifice.Jugement(6).Commentaire == "Sacrifice du fou" && analyseEchange.Jugement(6).Commentaire == "Sacrifice du fou",
             $"« {analyseSacrifice.Jugement(6).Commentaire} » / « {analyseEchange.Jugement(6).Commentaire} »");
         analyseSacrifice.AppliqueAuxCoups(L.ListeCoups);
         L.ListeCoups[6].Commentaire = "Le coup du joueur";
