@@ -693,7 +693,11 @@ namespace BrunoGUI_GenII
                 coup.VarianteMeilleure = jugement.VarianteMeilleure;
                 coup.VarianteLue = false;       // la variante est maintenant celle du moteur (plus celle du PGN chargé)
                 // (celui d'une analyse précédente est remplacé, ou effacé) : le sacrifice, la finale, puis le changement d'appréciation
-                string?[] textes = [jugement.Commentaire, finales.GetValueOrDefault(jugement.IndexCoup), appreciations.GetValueOrDefault(jugement.IndexCoup)];
+                // (pas l'appréciation après "Mat en 8 manqué" : elle ferait double emploi, choix de Bruno ; le commentaire d'un coup
+                // qui n'est pas le meilleur ne peut être que celui du mat manqué, le sacrifice étant celui du meilleur coup)
+                bool matManque = jugement.Commentaire != null && !jugement.MeilleurJoue;
+                string?[] textes = [jugement.Commentaire, finales.GetValueOrDefault(jugement.IndexCoup),
+                                    matManque ? null : appreciations.GetValueOrDefault(jugement.IndexCoup)];
                 coup.CommentaireAuto = textes.Any(t => t != null) ? string.Join(". ", textes.OfType<string>()) : null;
                 // (la notation NAL du coup est en lettres anglaises : la notation longue française est calculée ici)
                 PositionAnalysee positionAvant = _positions[_indexCoups.IndexOf(jugement.IndexCoup)];
