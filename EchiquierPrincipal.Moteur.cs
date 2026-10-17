@@ -86,9 +86,9 @@ namespace BrunoGUI_GenII
             LigneAnalyse? ligneAnalyse = _pilote.Lignes.Ajouter(ligne, PositionDesVariantes);
             if (ligneAnalyse == null)
                 return;     // ni score ni variante (ex : "info depth 12")
-            if (_fenetreAnalyse != null && _analyseDePartie != null && ligneAnalyse.Numero == 1 && ligneAnalyse.Evaluation is Evaluation evaluationPartie)
+            if (_fenetreAnalyse != null && ligneAnalyse.Numero == 1 && ligneAnalyse.Evaluation is Evaluation evaluationPartie)
                 _fenetreAnalyse.MontreScore(T("Score : {0} — {1}", evaluationPartie.Texte, evaluationPartie.Appreciation),
-                    T("Meilleure suite : {0}", Notation(ligneAnalyse.VariantePgn)));     // (analyse de partie : suivi en direct)
+                    T("Meilleure suite : {0}", Notation(ligneAnalyse.VariantePgn)));     // (analyse de partie ou de position : suivi en direct)
             // On affiche seulement le score de la meilleure variante (un moteur sans MultiPV, comme Sargon, n'a que celle-là)
             if (ligneAnalyse.Numero == 1 && ligneAnalyse.Evaluation is Evaluation evaluation)
             {
@@ -192,6 +192,8 @@ namespace BrunoGUI_GenII
                     // lignes 2 et 3), dans la barre d'état, et une flèche verte montre le coup conseillé sur l'échiquier (effacée par
                     // toute action qui change la position)
                     LigneAnalyse? meilleure = _pilote.Lignes.Meilleure;
+                    FermeFenetreAnalyse();      // (la boîte de message donne le résultat)
+                    MiseaZeroTimer();           // (réponse avant la fin du temps : bouton Arrêter de la fenêtre de suivi)
                     InformationPourJoueur.Text = StatusProgramme.Text = T("Analyse terminée ...");
                     string titre = T("Analyse Moteur ({0} sec.) par {1}", _dureeReflexionMilliSeconde / 1000, _nomMoteur);
                     if (meilleure?.VariantePgn == null)
@@ -327,7 +329,9 @@ namespace BrunoGUI_GenII
             ArreteRejeu(reaffiche: true);   // une suite en cours de rejeu : l'échiquier revient au coup regardé
             if (_analyseDePartie != null)
                 TermineAnalyseDePartie(interrompue: true);  // la partie va changer : on garde ce qui est déjà analysé
-            _vue?.EffaceFleches();      // (flèche du coup conseillé par une analyse : elle ne vaut plus ; le parcours remet les siennes)
+            else
+                FermeFenetreAnalyse();      // analyse de position abandonnée : sa fenêtre de suivi n'a plus d'objet
+            _vue?.EffaceFleches();     // (flèche du coup conseillé par une analyse : elle ne vaut plus ; le parcours remet les siennes)
             if (!_pilote.Abandonner())
                 return;     // le moteur ne réfléchissait pas : rien à signaler
             MiseaZeroTimer();
@@ -355,6 +359,12 @@ namespace BrunoGUI_GenII
         {   // Tous les dixièmes de seconde : part du temps de réflexion écoulée (la barre reste pleine jusqu'à la réponse du moteur)
             double ecoule = (_chrono.Elapsed - _debutReflexion).TotalMilliseconds / Math.Max(1, _dureeReflexionMilliSeconde);
             BarreReflexion.Value = (int)Math.Round(Math.Min(1, ecoule) * BarreReflexion.Maximum);
+            if (_fenetreAnalyse != null && _analyseDePartie == null)
+            {   // analyse de position : sa fenêtre de suivi avance avec la barre
+                double ms = Math.Min(1, ecoule) * _dureeReflexionMilliSeconde;
+                _fenetreAnalyse.MontreProgression((int)ms, _dureeReflexionMilliSeconde,
+                    ecoule < 1 ? TexteTempsRestant(TimeSpan.FromMilliseconds(_dureeReflexionMilliSeconde - ms)) : T("Le moteur termine sa réflexion..."));
+            }
             if (ecoule >= 1)
                 timer.Stop();
         }

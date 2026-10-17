@@ -126,9 +126,7 @@ namespace BrunoGUI_GenII
             InformationsPartie.Text = approfondissement ? T("Vérification des coups douteux ({0} s)...", DureeApprofondissement / 1000) : T("Analyse de la partie...");
             if (_fenetreAnalyse != null)
             {   // Fenêtre de suivi : étape, position examinée, progression et temps restant estimé (au rythme de 3 ou 10 s par position)
-                int indexCoup = _analyseDePartie.IndexDansListeCoups(index);
-                string position = indexCoup < 0 || LogiqueMouvements.ListeCoups[indexCoup].EstPositionDeDepart ? T("Position de départ")
-                    : T("Position après {0}", Notation(LogiqueMouvements.ListeCoups[indexCoup].PgnFrNumerote));
+                string position = NomDeLaPosition(_analyseDePartie.IndexDansListeCoups(index));
                 TimeSpan reste = TimeSpan.FromMilliseconds((double)(total - faites) * (approfondissement ? DureeApprofondissement : DureeAnalyseParPosition));
                 string temps = T("Temps restant : environ {0}", TexteDuree(reste))
                     + (_analyseComplete && !approfondissement ? " " + T("(puis la vérification des coups douteux)") : "");
@@ -138,6 +136,10 @@ namespace BrunoGUI_GenII
             _pilote.DemanderAnalyse(LogiqueMouvements.PositionDepuisFen(_analyseDePartie.Positions[index].Fen),
                                     approfondissement ? DureeApprofondissement : DureeAnalyseParPosition);
         }
+        private string NomDeLaPosition(int indexCoup) =>
+            // Pour la fenêtre de suivi : "Position après 25... c5", ou "Position de départ" (position initiale, ou départ FEN)
+            indexCoup < 0 || indexCoup >= LogiqueMouvements.ListeCoups.Count || LogiqueMouvements.ListeCoups[indexCoup].EstPositionDeDepart
+                ? T("Position de départ") : T("Position après {0}", Notation(LogiqueMouvements.ListeCoups[indexCoup].PgnFrNumerote));
         private async void PositionAnalyseeParLeMoteur(LigneAnalyse? meilleure)
         {   // Réponse du moteur pour la position demandée (null : aucun score) : on l'enregistre et on passe à la suivante
             AnalyseDePartie? analyse = _analyseDePartie;
@@ -174,15 +176,20 @@ namespace BrunoGUI_GenII
             _dureeAnalyseComplete = fenetre.DureeComplete;
         }
         private void OuvreFenetreAnalyse(bool complete)
-        {   // Fenêtre de suivi, non bloquante (choix de Bruno : la barre sous la feuille était trop discrète) : à droite de la
-            // fenêtre principale s'il y a la place à l'écran, sinon par-dessus sa colonne de boutons
-            FermeFenetreAnalyse();
+        {   // Analyse de partie : fenêtre de suivi, bouton Interrompre (ce qui est analysé est gardé)
             _analyseComplete = complete;
-            FenetreAnalyse fenetre = new(complete);
+            OuvreFenetreSuivi(complete ? T("Analyse complète de la partie") : T("Analyse rapide de la partie"), T("Interrompre"),
+                              () => TermineAnalyseDePartie(interrompue: true));
+        }
+        private void OuvreFenetreSuivi(string titre, string texteBouton, Action arret)
+        {   // Fenêtre de suivi, non bloquante (choix de Bruno : la barre sous la feuille était trop discrète) : à droite de la
+            // fenêtre principale s'il y a la place à l'écran, sinon par-dessus sa colonne de boutons ; une seule à la fois
+            FermeFenetreAnalyse();
+            FenetreAnalyse fenetre = new(titre, texteBouton);
             Rectangle ecran = Screen.FromControl(this).WorkingArea;
             int x = Right + 8 + fenetre.Width <= ecran.Right ? Right + 8 : Right - fenetre.Width - 16;
             fenetre.Location = new Point(Math.Max(ecran.Left, x), Math.Max(ecran.Top, Top + 120));
-            fenetre.Interrompre += () => TermineAnalyseDePartie(interrompue: true);
+            fenetre.Interrompre += arret;
             fenetre.FormClosed += (s, e) => { if (_fenetreAnalyse == fenetre) _fenetreAnalyse = null; };     // croix : l'analyse continue
             _fenetreAnalyse = fenetre;
             fenetre.Show(this);     // (appartient à la fenêtre principale : reste devant elle)
