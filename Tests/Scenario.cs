@@ -987,6 +987,14 @@ public static class Scenario
             NiveauApres(75, null, 0) == 0 && NiveauApres(90, null, 0) == 1 && NiveauApres(60, null, 1) == 1 && NiveauApres(50, null, 1) == 0
             && NiveauApres(-60, null, 1) == 0 && NiveauApres(-90, null, 1) == -1 && NiveauApres(230, null, 1) == 2 && NiveauApres(190, null, 2) == 2
             && NiveauApres(170, null, 2) == 1 && NiveauApres(null, -3, 2) == -2 && NiveauApres(0, null, 1) == 0, "");
+        static string Finale(string fen) => JugementCoups.TypeDeFinale(L.PositionDepuisFen(fen)) ?? "-";
+        Verifie("Type de finale : pions, tours, fous de couleurs opposées, tour contre fou, dames ; pas de finale avec dame et tour",
+            Finale("4k3/4p3/8/8/8/8/4P3/4K3 w - - 0 1") == "Finale de pions" && Finale("r3k3/4p3/8/8/8/8/4P3/R3K3 w - - 0 1") == "Finale de tours"
+            && Finale("4k3/4p3/8/2b5/8/8/4P3/2B1K3 w - - 0 1") == "Finale de fous"     // (c5 et c1 : deux cases noires)
+            && Finale("4k3/4p3/8/8/2b5/8/4P3/2B1K3 w - - 0 1") == "Finale de fous de couleurs opposées" &&Finale("r3k3/8/8/8/8/8/8/2B1K3 w - - 0 1") == "Finale tour contre fou"
+            && Finale("3qk3/8/8/8/8/8/8/3QK3 w - - 0 1") == "Finale de dames" && Finale("r2qk3/8/8/8/8/8/8/R2QK3 w - - 0 1") == "-"
+            && Finale(L.FenDepart) == "-",
+            $"{Finale("4k3/4p3/8/2b5/8/8/4P3/2B1K3 w - - 0 1")} / {Finale("4k3/4p3/8/8/2b5/8/4P3/2B1K3 w - - 0 1")}");
         Dictionary<int, string> appreciationsBerger = analyseBerger.CommentairesAppreciation();
         Verifie("Appréciation commentée seulement quand elle change : 3... Cf6?? (mat en 1), rien sur les coups à ±0.60",
             appreciationsBerger.Count == 1 && appreciationsBerger.GetValueOrDefault(5) == "Mat en 1 pour les Blancs",

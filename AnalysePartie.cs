@@ -110,6 +110,43 @@ namespace BrunoGUI_GenII
             _ => Langue.T("La position est équilibrée")
         };
 
+        public static string? TypeDeFinale(Position position)
+        {   // Nom de la finale de la position (null : pas une finale) : sans dames, ou dame contre dame seules, et au plus une tour et
+            // une pièce légère par camp (matériel hors pions jusqu'à 8). Finale de pions, de tours, de fous (de couleurs opposées),
+            // de cavaliers, cavalier contre fou, tour contre pièce légère ; sinon "Finale"
+            List<(TypePiece Piece, int Case)>[] camps = [[], []];   // [0] : Blancs, [1] : Noirs ; pièces hors rois et pions
+            for (int i = 21; i <= 98; i++)
+            {
+                TypePiece piece = position.Pieces[i];
+                if (piece is TypePiece.Vide or TypePiece.Bordure or TypePiece.RoiBlanc or TypePiece.RoiNoir or TypePiece.PionBlanc or TypePiece.PionNoir)
+                    continue;
+                camps[(int)piece % 2 == 1 ? 0 : 1].Add((piece, i));     // (pièces blanches : valeurs impaires)
+            }
+            int[] materiel = [camps[0].Sum(p => Valeur(p.Piece)), camps[1].Sum(p => Valeur(p.Piece))];
+            string Signature(int camp) => string.Concat(camps[camp].Select(p => Valeur(p.Piece) switch { 9 => "D", 5 => "T", _ => p.Piece is TypePiece.FouBlanc or TypePiece.FouNoir ? "F" : "C" })
+                                                                   .OrderBy(c => c));
+            string blancs = Signature(0), noirs = Signature(1);
+            if (blancs == "D" && noirs == "D")
+                return Langue.T("Finale de dames");
+            if (blancs.Contains('D') || noirs.Contains('D') || materiel[0] > 8 || materiel[1] > 8)
+                return null;
+            string[] paire = [blancs, noirs];
+            Array.Sort(paire, StringComparer.Ordinal);
+            return (paire[0], paire[1]) switch
+            {
+                ("", "") => Langue.T("Finale de pions"),
+                ("T", "T") => Langue.T("Finale de tours"),
+                ("C", "C") => Langue.T("Finale de cavaliers"),
+                ("F", "F") => CouleurCase(camps[0][0].Case) == CouleurCase(camps[1][0].Case)
+                              ? Langue.T("Finale de fous") : Langue.T("Finale de fous de couleurs opposées"),
+                ("C", "F") => Langue.T("Finale cavalier contre fou"),
+                ("F", "T") => Langue.T("Finale tour contre fou"),
+                ("C", "T") => Langue.T("Finale tour contre cavalier"),
+                _ => Langue.T("Finale")
+            };
+            static int CouleurCase(int index) => (index % 10 + index / 10) % 2;     // (cases claires et foncées du tableau 120 cases)
+        }
+
         public static double Precision(double chancesAvant, double chancesApres)
         {   // Précision d'un coup en % (formule de Lichess), à partir des chances de gain du camp qui joue avant et après le coup :
             // 100 % s'il ne perd rien, environ 60 % pour une gaffe dans une position égale
@@ -609,9 +646,29 @@ namespace BrunoGUI_GenII
             return textes;
         }
 
+        public Dictionary<int, string> CommentairesFinale()
+        {   // Coups (place dans ListeCoups) qui amènent une finale, ou une autre sorte de finale ("Finale de tours") : le type doit
+            // rester le même pendant les deux demi-coups suivants (sinon, au milieu de l'échange des fous 28. Fxg7 Rxg7 29. gxf3,
+            // "Finale" puis "Finale de tours" un coup plus tard) ; sans moteur, d'après les pièces de la position
+            List<string?> types = [.. _positions.Select(p => JugementCoups.TypeDeFinale(PositionDepuisFen(p.Fen)))];
+            Dictionary<int, string> textes = [];
+            string? annoncee = null;
+            for (int k = 1; k < _positions.Count; k++)
+            {
+                string? finale = types[k];
+                bool stable = types.Skip(k + 1).Take(2).All(t => t == finale);
+                if (finale != null && stable && finale != annoncee)
+                {
+                    textes[_indexCoups[k - 1]] = finale;
+                    annoncee = finale;
+                }
+            }
+            return textes;
+        }
+
         public void AppliqueAuxCoups(IReadOnlyList<Coup> coups)
         {
-            Dictionary<int, string> appreciations = CommentairesAppreciation();   // Range les résultats dans les coups jugés (même liste qu'à la construction) : évaluation, meilleur coup, et annotation
+            Dictionary<int, string> appreciations = CommentairesAppreciation(), finales = CommentairesFinale();   // Range les résultats dans les coups jugés (même liste qu'à la construction) : évaluation, meilleur coup, et annotation
             // proposée, sauf si le joueur en a mis une lui-même (une annotation proposée par une analyse précédente est remplacée)
             foreach (JugementCoup jugement in Jugements())
             {
@@ -624,8 +681,8 @@ namespace BrunoGUI_GenII
                 coup.MeilleurCoupLong = jugement.MeilleurCoupLong;
                 coup.VarianteMeilleure = jugement.VarianteMeilleure;
                 coup.VarianteLue = false;       // la variante est maintenant celle du moteur (plus celle du PGN chargé)
-                // (celui d'une analyse précédente est remplacé, ou effacé) : le sacrifice, puis le changement d'appréciation
-                string?[] textes = [jugement.Commentaire, appreciations.GetValueOrDefault(jugement.IndexCoup)];
+                // (celui d'une analyse précédente est remplacé, ou effacé) : le sacrifice, la finale, puis le changement d'appréciation
+                string?[] textes = [jugement.Commentaire, finales.GetValueOrDefault(jugement.IndexCoup), appreciations.GetValueOrDefault(jugement.IndexCoup)];
                 coup.CommentaireAuto = textes.Any(t => t != null) ? string.Join(". ", textes.OfType<string>()) : null;
                 // (la notation NAL du coup est en lettres anglaises : la notation longue française est calculée ici)
                 PositionAnalysee positionAvant = _positions[_indexCoups.IndexOf(jugement.IndexCoup)];
