@@ -43,6 +43,7 @@ namespace BrunoGUI_GenII
             MasqueAffichePgn = new Krypton.Toolkit.KryptonButton();
             AffichePgnFr = new Krypton.Toolkit.KryptonButton();
             AfficheCoupsUci = new Krypton.Toolkit.KryptonButton();
+            AffichePgnCommente = new Krypton.Toolkit.KryptonButton();
             SuspendLayout();
             // 
             // ZoneAffichage
@@ -68,7 +69,7 @@ namespace BrunoGUI_GenII
             AffichePgnIntl.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             AffichePgnIntl.Name = "AffichePgnIntl";
             AffichePgnIntl.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
-            AffichePgnIntl.Size = new System.Drawing.Size(115, 29);
+            AffichePgnIntl.Size = new System.Drawing.Size(100, 29);
             AffichePgnIntl.StateCommon.Border.Color1 = System.Drawing.Color.Gray;
             AffichePgnIntl.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
             AffichePgnIntl.StateCommon.Border.Rounding = 20F;
@@ -80,11 +81,11 @@ namespace BrunoGUI_GenII
             // 
             // ListeNalAfficheNal
             // 
-            ListeNalAfficheNal.Location = new System.Drawing.Point(257, 576);
+            ListeNalAfficheNal.Location = new System.Drawing.Point(329, 576);
             ListeNalAfficheNal.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             ListeNalAfficheNal.Name = "ListeNalAfficheNal";
             ListeNalAfficheNal.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
-            ListeNalAfficheNal.Size = new System.Drawing.Size(115, 29);
+            ListeNalAfficheNal.Size = new System.Drawing.Size(100, 29);
             ListeNalAfficheNal.StateCommon.Border.Color1 = System.Drawing.Color.Gray;
             ListeNalAfficheNal.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
             ListeNalAfficheNal.StateCommon.Border.Rounding = 20F;
@@ -96,11 +97,11 @@ namespace BrunoGUI_GenII
             // 
             // ListeFenAffichePgn
             // 
-            ListeFenAffichePgn.Location = new System.Drawing.Point(503, 576);
+            ListeFenAffichePgn.Location = new System.Drawing.Point(541, 576);
             ListeFenAffichePgn.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             ListeFenAffichePgn.Name = "ListeFenAffichePgn";
             ListeFenAffichePgn.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
-            ListeFenAffichePgn.Size = new System.Drawing.Size(115, 29);
+            ListeFenAffichePgn.Size = new System.Drawing.Size(100, 29);
             ListeFenAffichePgn.StateCommon.Border.Color1 = System.Drawing.Color.Gray;
             ListeFenAffichePgn.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
             ListeFenAffichePgn.StateCommon.Border.Rounding = 20F;
@@ -112,11 +113,11 @@ namespace BrunoGUI_GenII
             // 
             // MasqueAffichePgn
             // 
-            MasqueAffichePgn.Location = new System.Drawing.Point(661, 576);
+            MasqueAffichePgn.Location = new System.Drawing.Point(647, 576);
             MasqueAffichePgn.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             MasqueAffichePgn.Name = "MasqueAffichePgn";
             MasqueAffichePgn.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
-            MasqueAffichePgn.Size = new System.Drawing.Size(90, 29);
+            MasqueAffichePgn.Size = new System.Drawing.Size(100, 29);
             MasqueAffichePgn.StateCommon.Border.Color1 = System.Drawing.Color.Gray;
             MasqueAffichePgn.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
             MasqueAffichePgn.StateCommon.Border.Rounding = 20F;
@@ -128,11 +129,11 @@ namespace BrunoGUI_GenII
             // 
             // AffichePgnFr
             // 
-            AffichePgnFr.Location = new System.Drawing.Point(134, 576);
+            AffichePgnFr.Location = new System.Drawing.Point(223, 576);
             AffichePgnFr.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             AffichePgnFr.Name = "AffichePgnFr";
             AffichePgnFr.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
-            AffichePgnFr.Size = new System.Drawing.Size(115, 29);
+            AffichePgnFr.Size = new System.Drawing.Size(100, 29);
             AffichePgnFr.StateCommon.Border.Color1 = System.Drawing.Color.Gray;
             AffichePgnFr.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
             AffichePgnFr.StateCommon.Border.Rounding = 20F;
@@ -144,11 +145,11 @@ namespace BrunoGUI_GenII
             // 
             // AfficheCoupsUci
             // 
-            AfficheCoupsUci.Location = new System.Drawing.Point(380, 576);
+            AfficheCoupsUci.Location = new System.Drawing.Point(435, 576);
             AfficheCoupsUci.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             AfficheCoupsUci.Name = "AfficheCoupsUci";
             AfficheCoupsUci.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
-            AfficheCoupsUci.Size = new System.Drawing.Size(115, 29);
+            AfficheCoupsUci.Size = new System.Drawing.Size(100, 29);
             AfficheCoupsUci.StateCommon.Border.Color1 = System.Drawing.Color.Gray;
             AfficheCoupsUci.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
             AfficheCoupsUci.StateCommon.Border.Rounding = 20F;
@@ -157,12 +158,29 @@ namespace BrunoGUI_GenII
             AfficheCoupsUci.Values.DropDownArrowColor = System.Drawing.Color.Empty;
             AfficheCoupsUci.Values.Text = "Liste UCI";
             AfficheCoupsUci.Click += AfficheCoupsUci_Click;
-            // 
+            //
+            // AffichePgnCommente
+            //
+            AffichePgnCommente.Location = new System.Drawing.Point(117, 576);
+            AffichePgnCommente.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            AffichePgnCommente.Name = "AffichePgnCommente";
+            AffichePgnCommente.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
+            AffichePgnCommente.Size = new System.Drawing.Size(100, 29);
+            AffichePgnCommente.StateCommon.Border.Color1 = System.Drawing.Color.Gray;
+            AffichePgnCommente.StateCommon.Border.DrawBorders = Krypton.Toolkit.PaletteDrawBorders.Top | Krypton.Toolkit.PaletteDrawBorders.Bottom | Krypton.Toolkit.PaletteDrawBorders.Left | Krypton.Toolkit.PaletteDrawBorders.Right;
+            AffichePgnCommente.StateCommon.Border.Rounding = 20F;
+            AffichePgnCommente.StateCommon.Border.Width = 3;
+            AffichePgnCommente.TabIndex = 7;
+            AffichePgnCommente.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            AffichePgnCommente.Values.Text = "PGN commenté";
+            AffichePgnCommente.Click += AffichePgnCommente_Click;
+            //
             // AffichePgn
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             ClientSize = new System.Drawing.Size(764, 611);
+            Controls.Add(AffichePgnCommente);
             Controls.Add(AfficheCoupsUci);
             Controls.Add(AffichePgnFr);
             Controls.Add(MasqueAffichePgn);
@@ -183,6 +201,7 @@ namespace BrunoGUI_GenII
 
         private Krypton.Toolkit.KryptonRichTextBox ZoneAffichage;
         private Krypton.Toolkit.KryptonButton AffichePgnIntl;
+        private Krypton.Toolkit.KryptonButton AffichePgnCommente;
         private Krypton.Toolkit.KryptonButton ListeNalAfficheNal;
         private Krypton.Toolkit.KryptonButton ListeFenAffichePgn;
         private Krypton.Toolkit.KryptonButton MasqueAffichePgn;
