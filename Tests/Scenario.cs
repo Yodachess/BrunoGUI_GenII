@@ -1126,6 +1126,25 @@ public static class Scenario
                                   new LigneAnalyse { Numero = 2, Evaluation = new Evaluation(300, null) });
         Verifie("Commentaire du sacrifice : la qualité (tour prise par une pièce légère sur une case défendue, reprise plus tard)",
             analyseQualite.Jugement(indexCe4)?.Commentaire == "Sacrifice de la qualité", $"« {analyseQualite.Jugement(indexCe4)?.Commentaire} »");
+        Charger("6k1/8/8/3r4/8/8/3Q4/6K1 w - - 0 1");      // la tour d5 semble en prise, les Blancs jouent 1. Rh1 : Dxd5 était-elle un piège ?
+        L.AjoutePositionDeDepart("6k1/8/8/3r4/8/8/3Q4/6K1 w - - 0 1");
+        L.ExecutionCoup("g1", "h1");
+        AnalyseDePartie PiegeAnalyse()
+        {
+            AnalyseDePartie analyse = new(L.ListeCoups);
+            analyse.Enregistre(1, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(0, null), VariantePgn = "1 ... Rg7", VarianteUci = "g8g7" });
+            analyse.Enregistre(0, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(0, null), VariantePgn = "1. Rh2", VarianteUci = "g1h2" });
+            return analyse;
+        }
+        AnalyseDePartie avecPiege = PiegeAnalyse(), sansPiege = PiegeAnalyse();
+        List<(int IndexPosition, string Fen, string PriseUci)> piegesDemandes = avecPiege.PiegesAChercher();
+        avecPiege.EnregistrePiege(0, "d2d5", -500, null, "d2d5");      // (réponse simulée du 2e moteur : -5.00 pour les Blancs)
+        sansPiege.PiegesAChercher();
+        sansPiege.EnregistrePiege(0, "d2d5", -10, null, "d2d5");       // la prise ne perdait presque rien : pas un piège
+        Verifie("Piège : la prise tentante non jouée est demandée, « La tour d5 est imprenable » si elle perd au moins une erreur",
+            piegesDemandes.Count == 1 && piegesDemandes[0].PriseUci == "d2d5" && avecPiege.Positions[0].TextePiege == "La tour d5 est imprenable : 1. Dxd5+? (-5.00)"
+            && sansPiege.Positions[0].TextePiege == null && avecPiege.PiegesAChercher().Count == 0,
+            $"{piegesDemandes.Count} demande(s) / « {avecPiege.Positions[0].TextePiege} » / « {sansPiege.Positions[0].TextePiege} »");
         Charger("6k1/8/4p3/3p4/8/1BN5/8/6K1 w - - 0 1");      // 1. Cxd5 exd5 2. Fxd5 : un échange (un cavalier pour deux pions), pas un sacrifice
         L.AjoutePositionDeDepart("6k1/8/4p3/3p4/8/1BN5/8/6K1 w - - 0 1");
         L.ExecutionCoup("c3", "d5");

@@ -74,6 +74,41 @@ namespace BrunoGUI_GenII
             return resultat;
         }
 
+        public (int? Centipions, int? MatEn, string Variante)? Cherche(string fen, string coupImpose, int profondeur, int delaiMaxMs = 15000)
+        {   // Score (du point de vue du camp au trait) et variante du coup imposé (searchmoves), à la profondeur donnée ; null si le
+            // moteur ne répond pas. Sert aux pièges de l'analyse : que donne la prise tentante que le joueur n'a pas jouée ?
+            lock (_verrou)
+            {
+                if (Demarre() is not Process processus)
+                    return null;
+                try
+                {
+                    Envoie(processus, "ucinewgame");
+                    Envoie(processus, "position fen " + fen);
+                    Envoie(processus, $"go depth {profondeur} searchmoves {coupImpose}");
+                    using Timer arret = new(_ => EnvoieSansErreur(processus, "stop"), null, delaiMaxMs, Timeout.Infinite);
+                    (int?, int?, string)? resultat = null;
+                    string? ligne;
+                    while ((ligne = processus.StandardOutput.ReadLine()) != null && !ligne.StartsWith("bestmove"))
+                    {
+                        LigneUci info = LigneUci.Analyser(ligne);
+                        if ((info.ScoreCentipions != null || info.MatEn != null) && info.Variante != null && (info.NumeroVariante ?? 1) == 1)
+                            resultat = (info.ScoreCentipions, info.MatEn, info.Variante);
+                    }
+                    if (ligne != null)
+                        return resultat;
+                    Arrete();
+                }
+                catch (Exception ex) when (ex is IOException or InvalidOperationException)
+                {
+                    if (!_arrete)
+                        Journal.Erreur("Moteur auxiliaire de l'analyse (piège)", ex);
+                    Arrete();
+                }
+                return null;
+            }
+        }
+
         private Process? Demarre()
         {
             if (_processus != null || _arrete)
