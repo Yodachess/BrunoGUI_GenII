@@ -166,6 +166,15 @@ namespace BrunoGUI_GenII
                     return;
                 analyse.EnregistreDifficulte(index, JugementCoups.ProfondeurDecouverte(meilleurs, coup));
             }
+            if (!_analyseComplete)
+                return;     // les pièges ne sont cherchés que par l'analyse complète (choix de Bruno, pour commencer)
+            foreach ((int index, string fen, string prise) in analyse.PiegesAChercher())
+            {   // la prise tentante que le joueur n'a pas jouée : que donnait-elle ? (une ou deux secondes chacune)
+                var resultat = await Task.Run(() => moteur.Cherche(fen, prise, JugementCoups.ProfondeurPiege));
+                if (_analyseDePartie != analyse)
+                    return;
+                analyse.EnregistrePiege(index, prise, resultat?.Centipions, resultat?.MatEn, resultat?.Variante);
+            }
         }
         private void ChoisitDureesAnalyse()
         {   // Options > Durées de l'analyse de partie : valables dès la position suivante (même pendant une analyse)

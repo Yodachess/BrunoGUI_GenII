@@ -45,6 +45,8 @@ namespace BrunoGUI_GenII
         // le coup est "difficile" s'il ne devient durablement son choix qu'à partir de ProfondeurCoupDifficile (mesures sur les
         // parties de Bruno : 13. Cd5 du sacrifice à 12, 31. a4 à 10 ; reprises, roques et coups évidents de 1 à 7)
         public const int ProfondeurCoupDifficile = 9, ProfondeurMesureDifficulte = 14;
+        // Piège : la prise tentante non jouée est cherchée par le même 2e moteur, jusqu'à cette profondeur
+        public const int ProfondeurPiege = 16;
 
         public static int? ProfondeurDecouverte(IReadOnlyList<(int Profondeur, string Coup)> meilleursCoups, string coup)
         {   // Profondeur à partir de laquelle le coup est le choix du moteur à TOUTES les profondeurs suivantes (meilleur coup à
@@ -172,6 +174,10 @@ namespace BrunoGUI_GenII
         // ProfondeurDecouverte) ; mesurée seulement pour un seul bon coup (DifficultesAMesurer) ; null : inconnue (règle sans difficulté)
         public int? ProfondeurDecouverte { get; set; }
         public bool DifficulteMesuree { get; set; }
+        // Piège (analyse complète) : une prise tentante, pas jouée, qui perdait ("La tour g6 est imprenable : 22. Fxg6? fxg6 …")
+        public bool PiegeCherche { get; set; }
+        public string? TextePiege { get; set; }
+        public string? CasePiege { get; set; }     // case de la pièce imprenable (annoncée seulement la 1re fois : AppliqueAuxCoups)
         public bool Ignoree { get; set; }                   // le moteur n'a donné aucun score : position sautée (sinon l'analyse tournerait en rond)
         public bool AApprofondir { get; set; }              // 2e passage : position avant ou après un coup douteux, à revoir plus longtemps
         public bool Approfondie { get; set; }               // ... et revue (avec ou sans score : elle n'est pas redemandée)
@@ -584,6 +590,15 @@ namespace BrunoGUI_GenII
             // ce qu'il gagne au mieux, reprise comprise (pièce défendue : il perd celle qui a pris). Calcul simple (pas de suite
             // d'échanges au-delà de la reprise) : il suffit à voir une pièce laissée en prise
             Dictionary<string, int> enPrise = [];
+            foreach ((string _, string destination, int gain) in PrisesGagnantes())
+                if (gain > enPrise.GetValueOrDefault(destination))
+                    enPrise[destination] = gain;
+            return enPrise;
+        }
+
+        private static List<(string Source, string Destination, int Gain)> PrisesGagnantes()
+        {   // Les prises du camp au trait (position actuelle, une copie) qui gagnent du matériel à première vue (voir PiecesEnPrise)
+            List<(string, string, int)> prises = [];
             foreach ((string source, string destination) in CoupsLegaux())
             {
                 int cible = JugementCoups.Valeur(PiecesEchiquier[RenvoieCaseIndex120(destination)]);
@@ -596,10 +611,72 @@ namespace BrunoGUI_GenII
                     return CoupsLegaux().Any(reprise => reprise.Destination == destination);
                 });
                 int gain = cible - (defendue ? preneur : 0);
-                if (gain > 0 && gain > enPrise.GetValueOrDefault(destination))
-                    enPrise[destination] = gain;
+                if (gain > 0)
+                    prises.Add((source, destination, gain));
             }
-            return enPrise;
+            return prises;
+        }
+
+        public List<(int IndexPosition, string Fen, string PriseUci)> PiegesAChercher()
+        {   // Analyse complète : pour chaque coup jugeable, la prise la plus tentante (au moins SacrificeMinimum de matériel gagné à
+            // première vue) que le joueur n'a pas jouée et qui n'est pas le meilleur coup ; l'interface la fait chercher par le 2e
+            // moteur (EnregistrePiege). Une position sans prise tentante est notée cherchée tout de suite
+            List<(int, string, string)> demandes = [];
+            for (int k = 0; k < _indexCoups.Count; k++)
+            {
+                PositionAnalysee avant = _positions[k];
+                if (avant.PiegeCherche || avant.Evaluation is not Evaluation meilleure || avant.MeilleurCoupUci == null)
+                    continue;
+                double sens = avant.AuTrait == ColorPiece.Blanc ? 1 : -1;
+                if (meilleure.MatEn != null || sens * JugementCoups.ChancesDeGain(meilleure) < -JugementCoups.LimitePartieDecidee)
+                {   // un mat est déjà là (pour l'un ou l'autre), ou le joueur est perdu : ne pas commenter ce qu'il ne prend pas
+                    avant.PiegeCherche = true;
+                    continue;
+                }
+                int indexCoup = _indexCoups[k];
+                string joue = _coups[indexCoup].Uci.Trim();
+                (string Source, string Destination, int Gain) tentante = EstCoupDeBibliotheque(indexCoup) ? default
+                    : CalculerSur(PositionDepuisFen(avant.Fen), PrisesGagnantes)
+                        .Where(p => p.Gain >= JugementCoups.SacrificeMinimum && p.Source + p.Destination is string uci
+                                    && !joue.StartsWith(uci) && !avant.MeilleurCoupUci.StartsWith(uci))
+                        .OrderByDescending(p => p.Gain).FirstOrDefault();
+                if (tentante.Source == null)
+                    avant.PiegeCherche = true;
+                else
+                    demandes.Add((k, avant.Fen, tentante.Source + tentante.Destination));
+            }
+            return demandes;
+        }
+
+        public void EnregistrePiege(int indexPosition, string priseUci, int? centipions, int? matEn, string? varianteUci)
+        {   // Réponse du 2e moteur pour la prise tentante (score du point de vue du camp au trait ; rien : null). C'est un piège si elle
+            // fait perdre au moins une erreur (SeuilErreur) par rapport au meilleur coup : "La tour g6 est imprenable : 22. Fxg6? fxg6
+            // 23. g4 Tc8 (-5.57)" (choix de Bruno, partie Parkhov–Bruzon : pourquoi 22. g4 et pas 22. Fxg6 ?)
+            PositionAnalysee avant = _positions[indexPosition];
+            avant.PiegeCherche = true;
+            if ((centipions == null && matEn == null) || avant.Evaluation is not Evaluation meilleure)
+                return;
+            double sens = avant.AuTrait == ColorPiece.Blanc ? 1 : -1;
+            Evaluation prise = new(centipions is int cp ? (int)sens * cp : null, matEn is int mat ? (int)sens * mat : null);   // (point de vue des Blancs)
+            if (sens * (JugementCoups.ChancesDeGain(meilleure) - JugementCoups.ChancesDeGain(prise)) < JugementCoups.SeuilErreur)
+                return;
+            Position position = PositionDepuisFen(avant.Fen);
+            string caseCible = priseUci.Substring(2, 2);
+            string uci = string.Join(" ", (varianteUci ?? priseUci).Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(4));
+            List<string> mots = [.. Outils.VarianteUciVersPgn(uci, DemiCoupAvant(position), false, position).Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries)];
+            int premier = mots.FindIndex(m => m.Any(char.IsLetter));
+            if (premier >= 0)
+                mots[premier] += "?";       // la prise tentante est une erreur
+            string variante = Langue.Notation(string.Join(" ", mots)) + $" ({prise.Texte})";
+            avant.CasePiege = caseCible;
+            avant.TextePiege = position.Pieces[RenvoieCaseIndex120(caseCible)] switch
+            {
+                TypePiece.ReineBlanche or TypePiece.ReineNoire => Langue.T("La dame {0} est imprenable : {1}", caseCible, variante),
+                TypePiece.TourBlanche or TypePiece.TourNoire => Langue.T("La tour {0} est imprenable : {1}", caseCible, variante),
+                TypePiece.FouBlanc or TypePiece.FouNoir => Langue.T("Le fou {0} est imprenable : {1}", caseCible, variante),
+                TypePiece.CavalierBlanc or TypePiece.CavalierNoir => Langue.T("Le cavalier {0} est imprenable : {1}", caseCible, variante),
+                _ => Langue.T("Le pion {0} est imprenable : {1}", caseCible, variante)
+            };
         }
 
         private static bool EstUnePrise(string coupUci)
@@ -696,8 +773,13 @@ namespace BrunoGUI_GenII
                 // (pas l'appréciation après "Mat en 8 manqué" : elle ferait double emploi, choix de Bruno ; le commentaire d'un coup
                 // qui n'est pas le meilleur ne peut être que celui du mat manqué, le sacrifice étant celui du meilleur coup)
                 bool matManque = jugement.Commentaire != null && !jugement.MeilleurJoue;
-                string?[] textes = [jugement.Commentaire, finales.GetValueOrDefault(jugement.IndexCoup),
-                                    matManque ? null : appreciations.GetValueOrDefault(jugement.IndexCoup)];
+                // (piège : seulement la 1re fois qu'une pièce est imprenable, pas au coup suivant du même camp s'il l'est encore :
+                // la tour g6 de la partie de Bruno l'était cinq coups de suite)
+                int k = _indexCoups.IndexOf(jugement.IndexCoup);
+                string? piege = k >= 2 && _positions[k].CasePiege != null && _positions[k - 2].CasePiege == _positions[k].CasePiege
+                    ? null : _positions[k].TextePiege;
+                string?[] textes = [jugement.Commentaire, piege,
+                                    finales.GetValueOrDefault(jugement.IndexCoup), matManque ? null : appreciations.GetValueOrDefault(jugement.IndexCoup)];
                 coup.CommentaireAuto = textes.Any(t => t != null) ? string.Join(". ", textes.OfType<string>()) : null;
                 // (la notation NAL du coup est en lettres anglaises : la notation longue française est calculée ici)
                 PositionAnalysee positionAvant = _positions[_indexCoups.IndexOf(jugement.IndexCoup)];
