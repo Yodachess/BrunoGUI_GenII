@@ -84,7 +84,11 @@ namespace BrunoGUI_GenII
             TraductionFenetres.Traduit(this);          // textes du designer dans la langue choisie (voir Langue.cs)
             TraductionFenetres.TraduitDialogues(SauvegardeFen, SauvegardeFichier, OuvertureChoixBibliotheque, OuvertureChoixMoteur, ChargerPartiesPgn, ChargerPositionFen);
             CreeMenuLangue();
-            OptionsMenu.DropDownItems.Add(new ToolStripMenuItem(T("Durées de l'analyse de partie…"), null, (s, e) => ChoisitDureesAnalyse()));
+            OptionsMenu.DropDownItems.Add(new ToolStripMenuItem(T("Durées de l'analyse de partie…"), Properties.Resources.Pendule, (s, e) => ChoisitDureesAnalyse()));
+            // Icônes des options qui n'en avaient pas (choix de Bruno) : celles qui existaient déjà dans les ressources
+            BtnMiseAJour.Image = Properties.Resources.Stockfish;
+            if (Icon != null)
+                Apropos.Image = new Icon(Icon, 16, 16).ToBitmap();     // l'icône de BrunoGUI
             InformationsPartie.AutoEllipsis = true;     // message trop long pour le cadre : "…" et texte complet au survol de la souris
 
             parametres =Parametres.Charger(Chemins.RepertoireRacine);   // BrunoGUI.ini puis préférences personnelles (à côté de l'exécutable)
@@ -390,14 +394,51 @@ namespace BrunoGUI_GenII
         private bool _redemarrageDemande;     // changement de langue : fermeture sans confirmation, puis relance (Application.Restart)
         private void CreeMenuLangue()
         {   // Menu Options > Langue ; les noms des langues ne sont jamais traduits (chacun reconnaît la sienne)
-            ToolStripMenuItem menuLangue = new(T("Langue"));
+            // (icônes : le drapeau de chaque langue, et celui de la langue en cours pour "Langue")
+            ToolStripMenuItem menuLangue = new(T("Langue"), Drapeau(Langue.Code));
             foreach (var (code, nom) in new[] { (Langue.Francais, "Français"), (Langue.Anglais, "English") })
             {
-                ToolStripMenuItem element = new(nom) { Checked = code == Langue.Code };
+                ToolStripMenuItem element = new(nom, Drapeau(code)) { Checked = code == Langue.Code };
                 element.Click += (s, e) => ChangeLangue(code);
                 menuLangue.DropDownItems.Add(element);
             }
             OptionsMenu.DropDownItems.Add(menuLangue);
+        }
+        private static Bitmap Drapeau(string code)
+        {   // Petit drapeau dessiné (16 x 16, drapeau de 16 x 11 au milieu) : Windows n'affiche pas les drapeaux en emoji.
+            // Français : bleu, blanc, rouge ; anglais : Union Jack simplifié (fond bleu, croix et diagonales blanches et rouges)
+            Bitmap image = new(16, 16);
+            using Graphics g = Graphics.FromImage(image);
+            Rectangle drapeau = new(0, 2, 16, 11);
+            Color bleu = Color.FromArgb(0, 36, 125), rouge = Color.FromArgb(207, 20, 43);
+            g.SetClip(drapeau);         // (les diagonales ne débordent pas du drapeau)
+            if (code == Langue.Anglais)
+            {
+                using (SolidBrush fond = new(bleu))
+                    g.FillRectangle(fond, drapeau);
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                using Pen blancLarge = new(Color.White, 3), rougeFin = new(rouge, 1);
+                g.DrawLine(blancLarge, drapeau.Left, drapeau.Top, drapeau.Right, drapeau.Bottom);       // diagonales
+                g.DrawLine(blancLarge, drapeau.Left, drapeau.Bottom, drapeau.Right, drapeau.Top);
+                g.DrawLine(rougeFin, drapeau.Left, drapeau.Top, drapeau.Right, drapeau.Bottom);
+                g.DrawLine(rougeFin, drapeau.Left, drapeau.Bottom, drapeau.Right, drapeau.Top);
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
+                g.FillRectangle(Brushes.White, 6, drapeau.Top, 4, drapeau.Height);                      // croix
+                g.FillRectangle(Brushes.White, 0, drapeau.Top + 4, 16, 3);
+                using SolidBrush brosseRouge = new(rouge);
+                g.FillRectangle(brosseRouge, 7, drapeau.Top, 2, drapeau.Height);
+                g.FillRectangle(brosseRouge, 0, drapeau.Top + 5, 16, 1);
+            }
+            else
+            {
+                using SolidBrush brosseBleue = new(bleu), brosseRouge = new(rouge);
+                g.FillRectangle(brosseBleue, 0, drapeau.Top, 5, drapeau.Height);
+                g.FillRectangle(Brushes.White, 5, drapeau.Top, 6, drapeau.Height);
+                g.FillRectangle(brosseRouge, 11, drapeau.Top, 5, drapeau.Height);
+            }
+            g.ResetClip();
+            g.DrawRectangle(Pens.Gray, drapeau.Left, drapeau.Top, drapeau.Width - 1, drapeau.Height - 1);
+            return image;
         }
         private void ChangeLangue(string code)
         {   // La langue est enregistrée dans les préférences (à la fermeture) et ne change qu'au démarrage : on propose de relancer
@@ -837,7 +878,8 @@ namespace BrunoGUI_GenII
             affichePgn.Show();
             string contenuPgnIntl = GestionPartiePgn.RetourneContenuPgn(PartieEnCours, "Intl");
             string contenuPgnFr = GestionPartiePgn.RetourneContenuPgn(PartieEnCours, "Fr");
-            affichePgn.AffichePgnDansZone(contenuPgnIntl, contenuPgnFr);
+            string contenuPgnCommente = GestionPartiePgn.RetourneContenuPgn(PartieEnCours, "Intl", pourFichier: true);   // comme le fichier enregistré
+            affichePgn.AffichePgnDansZone(contenuPgnIntl, contenuPgnFr, contenuPgnCommente);
         }
         private void VisualiserPgn_Click(object? sender, EventArgs e)
         {   // Option de menu  pour voir la partie en PGN

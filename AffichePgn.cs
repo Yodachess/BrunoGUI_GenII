@@ -31,6 +31,7 @@ namespace BrunoGUI_GenII
         private readonly AffichePgn afficheZone;
         private string partieFormatPgnIntl = "";
         private string partieFormatPgnFr = "";
+        private string partieFormatPgnCommente = "";
 
         public AffichePgn()
         {
@@ -38,16 +39,23 @@ namespace BrunoGUI_GenII
             TraductionFenetres.Traduit(this);      // textes du designer dans la langue choisie (voir Langue.cs)
             afficheZone = this;
         }
-        public void AffichePgnDansZone(string contenuPgnIntl, string contenuPgnFr)
+        public void AffichePgnDansZone(string contenuPgnIntl, string contenuPgnFr, string contenuPgnCommente)
         {
             partieFormatPgnIntl = contenuPgnIntl;
             partieFormatPgnFr = contenuPgnFr;
+            partieFormatPgnCommente = contenuPgnCommente;
             ZoneAffichage.Text = partieFormatPgnIntl;
         }
         private void AffichePgnIntl_Click(object? sender, EventArgs e)
         {   // Affiche la partie au format PGN international
             afficheZone.Show();
             afficheZone.ZoneAffichage.Text = partieFormatPgnIntl;
+        }
+        private void AffichePgnCommente_Click(object? sender, EventArgs e)
+        {   // Affiche la partie telle qu'elle serait enregistrée (choix de Bruno) : PGN international avec les annotations, les
+            // commentaires et variantes de l'analyse, les [%eval] et les temps de pendule [%clk]
+            afficheZone.Show();
+            afficheZone.ZoneAffichage.Text = partieFormatPgnCommente;
         }
         private void AffichePgnFr_Click(object? sender, EventArgs e)
         {   // Affiche la partie au format PGN francais
