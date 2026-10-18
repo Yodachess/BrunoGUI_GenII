@@ -47,6 +47,8 @@ namespace BrunoGUI_GenII
         public const int ProfondeurCoupDifficile = 9, ProfondeurMesureDifficulte = 14;
         // Piège : la prise tentante non jouée est cherchée par le même 2e moteur, jusqu'à cette profondeur
         public const int ProfondeurPiege = 16;
+        // ... c'est un piège si elle perd une erreur en chances de gain, ou au moins 1,5 pion ; pas cherché si le joueur est perdu de 6 pions
+        public const int PiegePerteMinimum = 150, PiegeJoueurPerdu = 600;     // en centipions
 
         public static int? ProfondeurDecouverte(IReadOnlyList<(int Profondeur, string Coup)> meilleursCoups, string coup)
         {   // Profondeur à partir de laquelle le coup est le choix du moteur à TOUTES les profondeurs suivantes (meilleur coup à
@@ -628,8 +630,9 @@ namespace BrunoGUI_GenII
                 if (avant.PiegeCherche || avant.Evaluation is not Evaluation meilleure || avant.MeilleurCoupUci == null)
                     continue;
                 double sens = avant.AuTrait == ColorPiece.Blanc ? 1 : -1;
-                if (meilleure.MatEn != null || sens * JugementCoups.ChancesDeGain(meilleure) < -JugementCoups.LimitePartieDecidee)
-                {   // un mat est déjà là (pour l'un ou l'autre), ou le joueur est perdu : ne pas commenter ce qu'il ne prend pas
+                if (meilleure.MatEn != null || sens * (meilleure.Centipions ?? 0) <= -JugementCoups.PiegeJoueurPerdu)
+                {   // un mat est déjà là (pour l'un ou l'autre), ou le joueur est perdu de beaucoup : ne pas commenter ce qu'il ne prend
+                    // pas (perdu de moins, le piège reste instructif : 28. Fxg7 de la partie de Bruno, à -4.5, « le fou f3 est imprenable »)
                     avant.PiegeCherche = true;
                     continue;
                 }
@@ -658,7 +661,12 @@ namespace BrunoGUI_GenII
                 return;
             double sens = avant.AuTrait == ColorPiece.Blanc ? 1 : -1;
             Evaluation prise = new(centipions is int cp ? (int)sens * cp : null, matEn is int mat ? (int)sens * mat : null);   // (point de vue des Blancs)
-            if (sens * (JugementCoups.ChancesDeGain(meilleure) - JugementCoups.ChancesDeGain(prise)) < JugementCoups.SeuilErreur)
+            // (ou au moins PiegePerteMinimum en pions : dans une position déjà perdue, les chances de gain ne bougent presque plus,
+            // -4.53 → -6.67 pour 28. gxf3?, et le piège est pourtant instructif)
+            bool perteEnChances = sens * (JugementCoups.ChancesDeGain(meilleure) - JugementCoups.ChancesDeGain(prise)) >= JugementCoups.SeuilErreur;
+            bool perteEnPions = meilleure.Centipions is int cpMeilleur && prise.Centipions is int cpPrise && sens * (cpMeilleur - cpPrise) >= JugementCoups.PiegePerteMinimum;
+            bool matPerdu = prise.MatEn is int matPrise && sens * matPrise < 0;
+            if (!perteEnChances && !perteEnPions && !matPerdu)
                 return;
             Position position = PositionDepuisFen(avant.Fen);
             string caseCible = priseUci.Substring(2, 2);
