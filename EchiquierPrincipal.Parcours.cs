@@ -304,8 +304,8 @@ namespace BrunoGUI_GenII
                 _vue.MontreFleches([.. fleches]);
         }
         private static string TexteAnalyseDuCoup(Coup coup, bool nomAnnotation, bool symbole, bool bibliotheque)
-        {   // Ex : "-+  joué Dd1-h2 (-9.05) ?? [Gaffe]  — meilleur : Rd3 (0.00)" : le symbole de l'évaluation après le coup, le coup joué
-            // suivi de cette évaluation (choix de Bruno, 2026-10-18 : comme celle du meilleur coup) et son jugement ("?? [Gaffe]"),
+        {   // Ex : "-+  joué Dd1-h2 ?? [Gaffe] (-9.05)  — meilleur : Rd3 (0.00)" : le symbole de l'évaluation après le coup, le coup
+            // joué et son jugement ("?? [Gaffe]"), suivis de cette évaluation (choix de Bruno, 2026-10-18 : comme celle du meilleur coup),
             // puis le meilleur coup avec SON évaluation. Si le coup joué ne perd presque rien (ex : mat
             // en 3 au lieu de 2), le meilleur n'est qu'une préférence : "— moteur : Rd3 (0.00)" (Bruno trouvait
             // "meilleur" inadapté, puis ", écart négligeable" inutile). Coups en notation longue, avec la case de départ : "Dd8-d7", "Ta8-c8". Court pour tenir sur la
@@ -318,8 +318,8 @@ namespace BrunoGUI_GenII
             Evaluation? evaluation = coup.EvaluationApres;
             string texte = (evaluation is Evaluation symbolique && symbole ? symbolique.Symbole + "  " + T("joué") : T("Joué")) + " "
                 + Notation(coup.CoupJoueLong ?? coup.PgnFrSansNumero)
-                + (evaluation is Evaluation apres ? $" ({apres.Texte})" : "")
-                + (coup.Annotation != "" ? " " + coup.Annotation + (nomAnnotation ? $" [{Annotations.Nom(coup.Annotation)}]" : "") : "");
+                + (coup.Annotation != "" ? " " + coup.Annotation + (nomAnnotation ? $" [{Annotations.Nom(coup.Annotation)}]" : "") : "")
+                + (evaluation is Evaluation apres ? $" ({apres.Texte})" : "");
             if (bibliotheque)
                 return texte + "  — " + T("coup de la bibliothèque");
             if (!string.IsNullOrEmpty(coup.CommentaireAuto))
