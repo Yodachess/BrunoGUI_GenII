@@ -52,6 +52,35 @@ namespace BrunoGUI_GenII
         // (voir MoteurAuxiliaire.cs et JugementCoups.ProfondeurDecouverte) ; lancé avec l'analyse, arrêté à la fin
         private MoteurAuxiliaire? _moteurAuxiliaire;
 
+        // Noms des ouvertures (Ouvertures\ouvertures.tsv, table de Lichess) : lus à la première demande ; null : fichier absent ou illisible
+        private CatalogueOuvertures? _catalogueOuvertures;
+        private bool _catalogueOuverturesLu;
+
+        private CatalogueOuvertures? CatalogueDesOuvertures()
+        {
+            if (!_catalogueOuverturesLu)
+            {
+                _catalogueOuverturesLu = true;
+                try
+                {
+                    _catalogueOuvertures = CatalogueOuvertures.Lire(File.ReadAllText(Chemins.FichierOuvertures));
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {   // sans le fichier, l'analyse se fait sans le nom de l'ouverture
+                    Journal.Erreur("Lecture de " + Chemins.FichierOuvertures, ex);
+                }
+            }
+            return _catalogueOuvertures;
+        }
+
+        private void CompleteEco()
+        {   // Balise [ECO] vide (partie jouée, ou PGN sans elle) : le code de l'ouverture de la partie, d'après la table de Lichess ;
+            // celle d'un PGN chargé ou saisie dans "Entête PGN" est gardée
+            if (string.IsNullOrWhiteSpace(PartieEnCours.ECO)
+                && CatalogueDesOuvertures()?.DerniereConnue(LogiqueMouvements.ListeCoups) is (_, Ouverture ouverture))
+                PartieEnCours.ECO = ouverture.Eco;
+        }
+
         private void BoutonAnalysePartie_Click(object? sender, EventArgs e)
         {   // "Analyse rapide" (10 s par position par défaut), ou "Interrompre" si une analyse est en cours (ce bouton occupe alors toute la largeur)
             if (_analyseDePartie != null)
@@ -89,7 +118,9 @@ namespace BrunoGUI_GenII
             AbandonneReflexion();       // une analyse de position en cours est remplacée
             _pendule?.Pause();          // le temps ne compte pas pendant l'analyse (reprise dans MinuteriePendule_Tick à la fin)
             _analyseDePartie = new AnalyseDePartie(LogiqueMouvements.ListeCoups, approfondir: complete,
-                                                 coupDeBibliotheque: PolyglotBibliotheque.ContientCoup);   // jamais annotés
+                                                 coupDeBibliotheque: PolyglotBibliotheque.ContientCoup,   // jamais annotés
+                                                 ouvertures: CatalogueDesOuvertures());
+            CompleteEco();
             _moteurAuxiliaire?.Dispose();
             _moteurAuxiliaire = new MoteurAuxiliaire(CheminStockfish);
             // Au moins 2 variantes pendant l'analyse : la 2e dit si le meilleur coup était le seul bon ("!") ; réglage rétabli à la fin

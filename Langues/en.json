@@ -260,6 +260,7 @@
   "Les Blancs ont un avantage décisif": "White has a decisive advantage",
   "Les Noirs ont un avantage décisif": "Black has a decisive advantage",
   "Mat en {0} manqué": "Missed mate in {0}",
+  "Hors bibliothèque": "Out of book",
   "La dame {0} est imprenable : {1}": "The queen on {0} cannot be taken: {1}",
   "La tour {0} est imprenable : {1}": "The rook on {0} cannot be taken: {1}",
   "Le fou {0} est imprenable : {1}": "The bishop on {0} cannot be taken: {1}",

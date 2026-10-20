@@ -226,7 +226,8 @@ namespace BrunoGUI_GenII
             // "position de départ") pour une partie commencée depuis un FEN
             indexPosition > 0 ? _indexCoups[indexPosition - 1] : _coups.Count > 0 && _coups[0].EstPositionDeDepart ? 0 : -1;
 
-        public AnalyseDePartie(IReadOnlyList<Coup> coups, bool approfondir = false, Func<string, string, bool>? coupDeBibliotheque = null)
+        public AnalyseDePartie(IReadOnlyList<Coup> coups, bool approfondir = false, Func<string, string, bool>? coupDeBibliotheque = null,
+                               CatalogueOuvertures? ouvertures = null)
         {   // Les positions de la partie : celle de départ (position initiale ou FEN de départ), puis celle après chaque coup.
             // approfondir : après le 1er passage, les positions avant et après chaque coup douteux (?!, ?, ??) sont revues plus
             // longtemps (voir EnApprofondissement) : un jugement sévère mérite d'être confirmé, et le temps n'est pas perdu sur les autres
@@ -244,6 +245,27 @@ namespace BrunoGUI_GenII
                     _indexCoups.Add(i);
                     _positions.Add(NouvellePosition(_coups[i].Fen));
                 }
+            // ouvertures : nom de l'ouverture (code ECO) d'après la table de Lichess, au dernier coup qui y mène (CommentairesOuverture)
+            if (ouvertures?.DerniereConnue(_coups) is (int indexOuverture, Ouverture ouverture))
+                (IndexOuverture, Ouverture) = (indexOuverture, ouverture);
+        }
+
+        public Ouverture? Ouverture { get; }           // l'ouverture de la partie (null : aucune position de la table)
+        public int IndexOuverture { get; } = -1;      // le coup (place dans ListeCoups) qui y mène
+
+        public Dictionary<int, string> CommentairesOuverture()
+        {   // Coups (place dans ListeCoups) commentés pour l'ouverture : son nom ("Défense sicilienne : variante Najdorf (B90)") au
+            // dernier coup qui mène à une position de la table, et "Hors bibliothèque" au premier coup qui n'est plus dans la
+            // bibliothèque chargée (seulement si les coups d'avant y étaient tous, et qu'il y en a au moins un : sans bibliothèque, ou
+            // pour une partie commencée à une position inconnue de la bibliothèque, rien)
+            Dictionary<int, string> textes = [];
+            if (Ouverture != null && IndexOuverture >= 0 && !_coups[IndexOuverture].EstPositionDeDepart)
+                textes[IndexOuverture] = Ouverture.Texte;
+            int? horsBibliotheque = _indexCoups.Cast<int?>().FirstOrDefault(i => !EstCoupDeBibliotheque(i!.Value));
+            if (horsBibliotheque is int sortie && _indexCoups.IndexOf(sortie) > 0)
+                textes[sortie] = textes.TryGetValue(sortie, out string? nom) ? nom + ". " + Langue.T("Hors bibliothèque")
+                                                                              : Langue.T("Hors bibliothèque");
+            return textes;
         }
 
         private readonly HashSet<int> _coupsDeBibliotheque = [];    // place dans ListeCoups des coups connus de la bibliothèque
@@ -764,7 +786,9 @@ namespace BrunoGUI_GenII
 
         public void AppliqueAuxCoups(IReadOnlyList<Coup> coups)
         {
-            Dictionary<int, string> appreciations = CommentairesAppreciation(), finales = CommentairesFinale();   // Range les résultats dans les coups jugés (même liste qu'à la construction) : évaluation, meilleur coup, et annotation
+            Dictionary<int, string> appreciations = CommentairesAppreciation(), finales = CommentairesFinale(),
+                                    ouverture = CommentairesOuverture();
+            // Range les résultats dans les coups jugés (même liste qu'à la construction) : évaluation, meilleur coup, et annotation
             // proposée, sauf si le joueur en a mis une lui-même (une annotation proposée par une analyse précédente est remplacée)
             foreach (JugementCoup jugement in Jugements())
             {
@@ -777,7 +801,8 @@ namespace BrunoGUI_GenII
                 coup.MeilleurCoupLong = jugement.MeilleurCoupLong;
                 coup.VarianteMeilleure = jugement.VarianteMeilleure;
                 coup.VarianteLue = false;       // la variante est maintenant celle du moteur (plus celle du PGN chargé)
-                // (celui d'une analyse précédente est remplacé, ou effacé) : le sacrifice, la finale, puis le changement d'appréciation
+                // (celui d'une analyse précédente est remplacé, ou effacé) : l'ouverture, le sacrifice, le piège, la finale, puis le
+                // changement d'appréciation
                 // (pas l'appréciation après "Mat en 8 manqué" : elle ferait double emploi, choix de Bruno ; le commentaire d'un coup
                 // qui n'est pas le meilleur ne peut être que celui du mat manqué, le sacrifice étant celui du meilleur coup)
                 bool matManque = jugement.Commentaire != null && !jugement.MeilleurJoue;
@@ -786,7 +811,7 @@ namespace BrunoGUI_GenII
                 int k = _indexCoups.IndexOf(jugement.IndexCoup);
                 string? piege = k >= 2 && _positions[k].CasePiege != null && _positions[k - 2].CasePiege == _positions[k].CasePiege
                     ? null : _positions[k].TextePiege;
-                string?[] textes = [jugement.Commentaire, piege,
+                string?[] textes = [ouverture.GetValueOrDefault(jugement.IndexCoup), jugement.Commentaire, piege,
                                     finales.GetValueOrDefault(jugement.IndexCoup), matManque ? null : appreciations.GetValueOrDefault(jugement.IndexCoup)];
                 coup.CommentaireAuto = textes.Any(t => t != null) ? string.Join(". ", textes.OfType<string>()) : null;
                 // (la notation NAL du coup est en lettres anglaises : la notation longue française est calculée ici)

@@ -54,6 +54,10 @@
     <None Update="Langues\*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <!-- Noms des ouvertures (table de Lichess, CC0, voir Ouvertures.cs) -->
+    <None Update="Ouvertures\*.tsv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="BibliothèquesPolyglot\baron30.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -1470,6 +1470,58 @@ public static class Scenario
             && PeutMaterDans("4k3/8/8/8/8/8/8/R3K3 w - - 0 1", L.ColorPiece.Blanc)
             && !PeutMaterDans("4k3/8/8/8/8/8/8/R3K3 w - - 0 1", L.ColorPiece.Noir), "roi seul, roi + fou, roi + cavalier : pas de mat");
 
+        // ═══════════════ Ouvertures ═══════════════
+        Console.WriteLine("── Ouvertures ──");
+
+        string texteOuvertures = System.IO.File.ReadAllText(System.IO.Path.Combine(AppContext.BaseDirectory, "Ouvertures", "ouvertures.tsv"));
+        CatalogueOuvertures catalogue = CatalogueOuvertures.Lire(texteOuvertures);
+        Verifie("Ouvertures : la table de Lichess est lue entièrement (plus de 3 800 positions, aucune ligne illisible)",
+            catalogue.Nombre > 3800 && catalogue.LignesIllisibles == 0, $"{catalogue.Nombre} positions, {catalogue.LignesIllisibles} illisibles");
+        // La position de chaque ligne est calculée d'avance (4e colonne) : elle doit être celle des coups (une ligne sur 10 rejouée)
+        List<string> clesFausses = [];
+        string[] lignesOuvertures = texteOuvertures.Split('\n');
+        for (int i = 2; i < lignesOuvertures.Length; i += 10)
+        {
+            string[] colonnes = lignesOuvertures[i].TrimEnd('\r').Split('\t');
+            if (colonnes.Length == 4 && CatalogueOuvertures.CleDesCoups(colonnes[2]) != colonnes[3])
+                clesFausses.Add(colonnes[1]);
+        }
+        Verifie("Ouvertures : la position calculée d'avance est celle des coups de la ligne", clesFausses.Count == 0, string.Join(" / ", clesFausses.Take(3)));
+        Charger(L.FenDepart);
+        Joue("e2e4", "c7c5", "g1f3", "d7d6", "d2d4", "c5d4", "f3d4", "g8f6", "b1c3", "a7a6", "c1e3");
+        var najdorf = catalogue.DerniereConnue(L.ListeCoups);
+        Verifie("Ouvertures : la partie jouée est reconnue (5... a6 : Sicilienne Najdorf, B90 ; 6. Fe3 : attaque anglaise)",
+            najdorf is (int indexNajdorf, Ouverture ouvertureNajdorf) && ouvertureNajdorf.Eco == "B90" && indexNajdorf == 10
+            && ouvertureNajdorf.NomFrancais == "Défense sicilienne : variante Najdorf, attaque anglaise",
+            najdorf is (int i2, Ouverture o2) ? $"{i2} : {o2.Eco} {o2.NomAnglais} → {o2.NomFrancais}" : "aucune");
+        Charger(L.FenDepart);
+        Joue("g1f3", "d7d5", "d2d4");       // 1. Cf3 d5 2. d4 : même position que 1. d4 d5 2. Cf3
+        Ouverture? transposition = catalogue.Trouver(L.ListeCoups[^1].Fen);
+        Verifie("Ouvertures : une transposition est reconnue (1. Cf3 d5 2. d4 = 1. d4 d5 2. Cf3)",
+            transposition != null && transposition == catalogue.Trouver(CatalogueOuvertures.CleDesCoups("1. d4 d5 2. Nf3")!), transposition?.Texte ?? "aucune");
+        Verifie("Ouvertures : noms traduits (familles, variantes, adjectifs accordés, noms propres, coups en notation française)",
+            TraductionOuvertures.Traduit("Ruy Lopez: Closed, Breyer Defense") == "Partie espagnole : fermée, défense Breyer"
+            && TraductionOuvertures.Traduit("Queen's Gambit Declined: Exchange Variation") == "Gambit dame refusé : variante d'échange"
+            && TraductionOuvertures.Traduit("Caro-Kann Defense: Advance Variation, Short Variation") == "Défense Caro-Kann : variante d'avance, variante courte"
+            && TraductionOuvertures.Traduit("Italian Game: Two Knights Defense, Fried Liver Attack") == "Partie italienne : défense des deux cavaliers, attaque Fried Liver"
+            && TraductionOuvertures.Traduit("English Opening: Symmetrical Variation, Botvinnik System Reversed") == "Ouverture anglaise : variante symétrique, système Botvinnik inversé"
+            && TraductionOuvertures.Traduit("French Defense: Classical, 4. Bg5") == "Défense française : classique, 4. Fg5"
+            && TraductionOuvertures.Traduit("Sodium Attack") == "Attaque Sodium",
+            TraductionOuvertures.Traduit("English Opening: Symmetrical Variation, Botvinnik System Reversed"));
+        // Analyse : le nom au dernier coup de la table, "Hors bibliothèque" au premier coup qui n'est plus dans la bibliothèque
+        Charger(L.FenDepart);
+        Joue("e2e4", "c7c5", "g1f3", "d7d6", "d2d4", "c5d4", "f3d4", "g8f6", "b1c3", "a7a6", "h2h3", "e7e5");
+        AnalyseDePartie analyseOuverture = new(L.ListeCoups, coupDeBibliotheque: (fen, uci) => L.ListeCoups.Take(10).Any(c => c.Uci.Trim() == uci.Trim()),
+                                              ouvertures: catalogue);
+        Dictionary<int, string> commentairesOuverture = analyseOuverture.CommentairesOuverture();
+        Verifie("Ouvertures : nom au dernier coup connu de la table (6. h3, attaque Adams), suivi de « Hors bibliothèque » (1er coup hors de la bibliothèque)",
+            commentairesOuverture.Count == 1
+            && commentairesOuverture.GetValueOrDefault(10) == "Défense sicilienne : variante Najdorf, attaque Adams (B90). Hors bibliothèque",
+            string.Join(" / ", commentairesOuverture.Select(c => $"{c.Key} : {c.Value}")));
+        AnalyseDePartie sansBibliotheque = new(L.ListeCoups, coupDeBibliotheque: (fen, uci) => false, ouvertures: catalogue);
+        Verifie("Ouvertures : sans aucun coup de la bibliothèque, pas de « Hors bibliothèque »",
+            !sansBibliotheque.CommentairesOuverture().Values.Any(t => t.Contains("Hors bibliothèque")), "");
+
         // ═══════════════ Langues ═══════════════
         Console.WriteLine("── Langues ──");
 

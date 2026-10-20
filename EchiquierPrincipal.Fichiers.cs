@@ -135,6 +135,7 @@ namespace BrunoGUI_GenII
             {
                 // La partie au format PGN, avec les temps de la pendule après chaque coup (seulement dans le fichier, pas à l'affichage)
                 // Fins de ligne Windows (CRLF) dans le fichier : certains logiciels n'affichent pas un simple "\n" comme un retour à la ligne
+                CompleteEco();      // balise [ECO] vide : le code de l'ouverture jouée
                 string contenuPgn = GestionPartiePgn.RetourneContenuPgn(PartieEnCours, "Intl", pourFichier: true).Replace("\n", "\r\n");
                 // Ecriture du fichier PGN (Partie complète + en-tête)
                 {
