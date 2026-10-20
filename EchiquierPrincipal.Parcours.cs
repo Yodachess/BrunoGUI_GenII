@@ -281,6 +281,8 @@ namespace BrunoGUI_GenII
             IReadOnlyList<Coup> coups = LogiqueMouvements.ListeCoups;
             if (CatalogueDesOuvertures() is not CatalogueOuvertures catalogue || index < 0 || index >= coups.Count)
                 return null;
+            if (!coups.Take(index).Any(c => !c.EstPositionDeDepart))
+                return null;        // 1er coup de la partie : rien ("Partie du pion roi" n'apprend rien, choix de Bruno)
             int finOuverture = catalogue.DerniereConnue(coups) is (int derniere, _) ? derniere : -1;
             bool dansLaBibliotheque = false;
             for (int i = 0; i < coups.Count; i++)
