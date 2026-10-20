@@ -216,9 +216,17 @@ namespace BrunoGUI_GenII
             _coupARejouer = null;           // (ligne 3 cliquable seulement si elle montre une suite à rejouer, voir plus bas)
             VarianteMoteurUci3.Cursor = Cursors.Default;
             // (coup annoté : la ligne prend la couleur de son annotation, comme sa flèche ; choix de Bruno, ex : orange pour « ? »)
-            AfficheLigneCentree(VarianteMoteurUci1, positionInitiale
+            string texteCoup = positionInitiale
                 ? "[ " + T("Position initiale") + " ]" : $"[ {TexteCoupJoue(index, positionApres)} ]"
-                  + (LogiqueMouvements.ListeCoups[index].TempsReflexion is TimeSpan reflexion ? "   " + T("(réflexion : {0})", TexteDuree(reflexion)) : ""),
+                  + (LogiqueMouvements.ListeCoups[index].TempsReflexion is TimeSpan reflexion ? "   " + T("(réflexion : {0})", TexteDuree(reflexion)) : "");
+            if (!positionInitiale && OuvertureAffichee(index) is Ouverture ouverture)
+            {   // Pendant l'ouverture, son nom à la suite du coup (choix de Bruno) : en entier s'il tient, sinon la famille seule
+                string famille = ouverture.Nom.Split(':')[0].Trim();
+                int largeur = VarianteMoteurUci1.ClientSize.Width - 14;
+                texteCoup = new[] { $"{texteCoup}   {ouverture.Texte}", $"{texteCoup}   {famille} ({ouverture.Eco})" }
+                    .FirstOrDefault(t => TextRenderer.MeasureText(t, _policesLignes[VarianteMoteurUci1].Grasse).Width <= largeur) ?? texteCoup;
+            }
+            AfficheLigneCentree(VarianteMoteurUci1, texteCoup,
                 !positionInitiale && LogiqueMouvements.ListeCoups[index].Annotation is { Length: > 0 } annotation ? FeuilleCoups.CouleurAnnotation(annotation) : null);
             VarianteMoteurUci2.Text = VarianteMoteurUci3.Text = "...";
             VarianteMoteurCourante.Text = positionInitiale ? T("Position initiale") : TexteCoupJoue(index, positionApres);
@@ -265,6 +273,29 @@ namespace BrunoGUI_GenII
                 foreach (RichTextBox ligne in new[] { VarianteMoteurUci1, VarianteMoteurUci2, VarianteMoteurUci3 })
                     _infobulleBilan.SetToolTip(ligne, null);
             MontreFlechesDuCoup(index);
+        }
+        private Ouverture? OuvertureAffichee(int index)
+        {   // L'ouverture de la position du coup regardé (la plus précise connue jusqu'à ce coup), tant que la partie est dans
+            // l'ouverture : jusqu'au premier coup hors de la bibliothèque chargée, ou jusqu'au dernier coup qui mène à une position
+            // de la table (sans bibliothèque, ou si elle est quittée plus tôt) ; null ensuite
+            IReadOnlyList<Coup> coups = LogiqueMouvements.ListeCoups;
+            if (CatalogueDesOuvertures() is not CatalogueOuvertures catalogue || index < 0 || index >= coups.Count)
+                return null;
+            int finOuverture = catalogue.DerniereConnue(coups) is (int derniere, _) ? derniere : -1;
+            bool dansLaBibliotheque = false;
+            for (int i = 0; i < coups.Count; i++)
+            {
+                if (coups[i].EstPositionDeDepart)
+                    continue;
+                if (!PolyglotBibliotheque.ContientCoup(i == 0 ? FenDepart : coups[i - 1].Fen, coups[i].Uci))
+                {
+                    if (dansLaBibliotheque)
+                        finOuverture = Math.Max(finOuverture, i);      // "Hors bibliothèque" : ce coup montre encore l'ouverture
+                    break;
+                }
+                dansLaBibliotheque = true;
+            }
+            return index <= finOuverture && catalogue.DerniereConnue([.. coups.Take(index + 1)]) is (_, Ouverture ouverture) ? ouverture : null;
         }
         private void AfficheDernierCoupSiPartieFinie()
         {   // Retour à la position courante : le dernier coup d'une partie qui ne continue plus (PGN chargé, partie terminée) est montré
