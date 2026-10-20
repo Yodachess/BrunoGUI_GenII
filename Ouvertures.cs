@@ -54,7 +54,7 @@ namespace BrunoGUI_GenII
                     continue;
                 }
                 int demiCoups = colonnes[2].Split(' ', StringSplitOptions.RemoveEmptyEntries).Count(m => !m.EndsWith('.'));
-                catalogue._parPosition.TryAdd(cle, new Ouverture(colonnes[0], colonnes[1], demiCoups));
+                catalogue._parPosition.TryAdd(cle, new Ouverture(colonnes[0], Simplifie(colonnes[1]), demiCoups));
             }
             return catalogue;
         }
@@ -87,12 +87,40 @@ namespace BrunoGUI_GenII
         public Ouverture? Trouver(string fen) => _parPosition.GetValueOrDefault(Cle(fen));
 
         public (int Index, Ouverture Ouverture)? DerniereConnue(IReadOnlyList<Coup> coups)
-        {   // Le dernier coup (place dans la liste) qui mène à une position de la table, et son ouverture : le nom le plus précis
-            // de la partie. Une partie commencée à une position (FEN) : sa position de départ compte aussi (index 0)
+        {   // Le dernier coup (place dans la liste) qui mène à une position de la table, et l'ouverture de la partie à ce coup
+            // (OuvertureAuCoup). Une partie commencée à une position (FEN) : sa position de départ compte aussi (index 0)
             for (int i = coups.Count - 1; i >= 0; i--)
-                if (Trouver(coups[i].Fen) is Ouverture ouverture)
+                if (Trouver(coups[i].Fen) != null && OuvertureAuCoup(coups, i) is Ouverture ouverture)
                     return (i, ouverture);
             return null;
+        }
+
+        public Ouverture? OuvertureAuCoup(IReadOnlyList<Coup> coups, int index)
+        {   // L'ouverture de la partie après le coup "index" : la dernière position de la table rencontrée, sauf si son nom est moins
+            // précis que celui déjà trouvé (la table de Lichess donne "French Defense: Normal Variation" après 2. d4, puis "French
+            // Defense" après 2... d5 : le nom revenait en arrière, remarque de Bruno) ; null si aucune position n'est connue
+            Ouverture? courante = null;
+            for (int i = 0; i <= index && i < coups.Count; i++)
+                if (Trouver(coups[i].Fen) is Ouverture ouverture && (courante == null || !EstMoinsPrecis(ouverture, courante)))
+                    courante = ouverture;
+            return courante;
+        }
+
+        private static bool EstMoinsPrecis(Ouverture nouvelle, Ouverture courante) =>
+            // "French Defense" est moins précis que "French Defense: Advance Variation" ; un nom égal remplace l'ancien (code ECO
+            // de la position la plus récente)
+            courante.NomAnglais.Length > nouvelle.NomAnglais.Length && courante.NomAnglais.StartsWith(nouvelle.NomAnglais)
+            && courante.NomAnglais[nouvelle.NomAnglais.Length] is ':' or ',';
+
+        public static string Simplifie(string nomAnglais)
+        {   // Sans les variantes "normales" ("French Defense: Normal Variation" → "French Defense") : ce mot ne dit rien (remarque
+            // de Bruno) ; la famille reste toujours
+            int deuxPoints = nomAnglais.IndexOf(':');
+            if (deuxPoints < 0)
+                return nomAnglais;
+            string[] variantes = [.. nomAnglais[(deuxPoints + 1)..].Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                                                                  .Where(v => v != "Normal" && !v.StartsWith("Normal "))];
+            return variantes.Length == 0 ? nomAnglais[..deuxPoints] : nomAnglais[..deuxPoints] + ": " + string.Join(", ", variantes);
         }
     }
 

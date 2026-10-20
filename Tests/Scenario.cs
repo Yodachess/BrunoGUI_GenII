@@ -1495,6 +1495,13 @@ public static class Scenario
             && ouvertureNajdorf.NomFrancais == "Défense sicilienne : variante Najdorf, attaque anglaise",
             najdorf is (int i2, Ouverture o2) ? $"{i2} : {o2.Eco} {o2.NomAnglais} → {o2.NomFrancais}" : "aucune");
         Charger(L.FenDepart);
+        Joue("e2e4", "e7e6", "d2d4", "d7d5", "e4e5");
+        string NomAuCoup(int i) => catalogue.OuvertureAuCoup(L.ListeCoups, i)?.NomFrancais ?? "-";
+        Verifie("Ouvertures : le nom ne revient pas en arrière et la « variante normale » est retirée (française : 2. d4, 2... d5, 3. e5)",
+            NomAuCoup(1) == "Défense française" && NomAuCoup(2) == "Défense française" && NomAuCoup(3) == "Défense française"
+            && NomAuCoup(4) == "Défense française : variante d'avance",
+            string.Join(" / ", Enumerable.Range(1, 4).Select(NomAuCoup)));
+        Charger(L.FenDepart);
         Joue("g1f3", "d7d5", "d2d4");       // 1. Cf3 d5 2. d4 : même position que 1. d4 d5 2. Cf3
         var transposition = catalogue.Trouver(L.ListeCoups[^1].Fen);
         Verifie("Ouvertures : une transposition est reconnue (1. Cf3 d5 2. d4 = 1. d4 d5 2. Cf3)",
