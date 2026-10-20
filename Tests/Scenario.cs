@@ -1496,7 +1496,7 @@ public static class Scenario
             najdorf is (int i2, Ouverture o2) ? $"{i2} : {o2.Eco} {o2.NomAnglais} → {o2.NomFrancais}" : "aucune");
         Charger(L.FenDepart);
         Joue("g1f3", "d7d5", "d2d4");       // 1. Cf3 d5 2. d4 : même position que 1. d4 d5 2. Cf3
-        Ouverture? transposition = catalogue.Trouver(L.ListeCoups[^1].Fen);
+        var transposition = catalogue.Trouver(L.ListeCoups[^1].Fen);
         Verifie("Ouvertures : une transposition est reconnue (1. Cf3 d5 2. d4 = 1. d4 d5 2. Cf3)",
             transposition != null && transposition == catalogue.Trouver(CatalogueOuvertures.CleDesCoups("1. d4 d5 2. Nf3")!), transposition?.Texte ?? "aucune");
         Verifie("Ouvertures : noms traduits (familles, variantes, adjectifs accordés, noms propres, coups en notation française)",
