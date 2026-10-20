@@ -220,10 +220,12 @@ namespace BrunoGUI_GenII
                 ? "[ " + T("Position initiale") + " ]" : $"[ {TexteCoupJoue(index, positionApres)} ]"
                   + (LogiqueMouvements.ListeCoups[index].TempsReflexion is TimeSpan reflexion ? "   " + T("(réflexion : {0})", TexteDuree(reflexion)) : "");
             if (!positionInitiale && OuvertureAffichee(index) is Ouverture ouverture)
-            {   // Pendant l'ouverture, son nom à la suite du coup (choix de Bruno) : en entier s'il tient, sinon la famille seule
-                string famille = ouverture.Nom.Split(':')[0].Trim();
+            {   // Pendant l'ouverture, son nom à la suite du coup (choix de Bruno) : en entier s'il tient, sinon sans ses dernières
+                // précisions, une à une ("Partie espagnole : attaque Marshall, variante moderne" → "… : attaque Marshall" ; la
+                // famille seule perdait l'attaque Marshall, remarque de Bruno)
                 int largeur = VarianteMoteurUci1.ClientSize.Width - 14;
-                texteCoup = new[] { $"{texteCoup}   {ouverture.Texte}", $"{texteCoup}   {famille} ({ouverture.Eco})" }
+                string coupSeul = texteCoup;
+                texteCoup = NomsRaccourcis(ouverture.Nom).Select(nom => $"{coupSeul}   {nom} ({ouverture.Eco})")
                     .FirstOrDefault(t => TextRenderer.MeasureText(t, _policesLignes[VarianteMoteurUci1].Grasse).Width <= largeur) ?? texteCoup;
             }
             AfficheLigneCentree(VarianteMoteurUci1, texteCoup,
@@ -274,6 +276,20 @@ namespace BrunoGUI_GenII
                     _infobulleBilan.SetToolTip(ligne, null);
             MontreFlechesDuCoup(index);
         }
+        private static IEnumerable<string> NomsRaccourcis(string nom)
+        {   // Le nom, puis sans sa dernière variante, et ainsi de suite jusqu'à la famille ("Défense sicilienne : variante Najdorf,
+            // attaque anglaise", "Défense sicilienne : variante Najdorf", "Défense sicilienne")
+            yield return nom;
+            int deuxPoints = nom.IndexOf(':');     // (" : " en français, ": " en anglais)
+            if (deuxPoints < 0)
+                yield break;
+            string famille = nom[..deuxPoints].TrimEnd();
+            List<string> variantes = [.. nom[(deuxPoints + 1)..].Trim().Split(", ")];
+            string separateur = nom[..deuxPoints].EndsWith(' ') ? " : " : ": ";
+            for (int n = variantes.Count - 1; n >= 1; n--)
+                yield return famille + separateur + string.Join(", ", variantes.Take(n));
+            yield return famille;
+        }
         private Ouverture? OuvertureAffichee(int index)
         {   // L'ouverture de la position du coup regardé (la plus précise connue jusqu'à ce coup), tant que la partie est dans
             // l'ouverture : jusqu'au premier coup hors de la bibliothèque chargée, ou jusqu'au dernier coup qui mène à une position
@@ -297,7 +313,7 @@ namespace BrunoGUI_GenII
                 }
                 dansLaBibliotheque = true;
             }
-            return index <= finOuverture && catalogue.DerniereConnue([.. coups.Take(index + 1)]) is (_, Ouverture ouverture) ? ouverture : null;
+            return index <= finOuverture ? catalogue.OuvertureAuCoup(coups, index) : null;
         }
         private void AfficheDernierCoupSiPartieFinie()
         {   // Retour à la position courante : le dernier coup d'une partie qui ne continue plus (PGN chargé, partie terminée) est montré
