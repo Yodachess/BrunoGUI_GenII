@@ -259,7 +259,7 @@ namespace BrunoGUI_GenII
                     // autre possibilité, remarque de Bruno)
                     string libelle = coup.MeilleurJoue ? T("Suite prévue : {0}")
                         : coup.PerteAnalyse < JugementCoups.SeuilImprecision ? T("Suite du moteur : {0}") : T("Meilleure suite : {0}");
-                    AfficheLigneCentree(VarianteMoteurUci3, string.Format(libelle, Notation(coup.VarianteMeilleure)));
+                    AfficheLigneCentree(VarianteMoteurUci3, string.Format(libelle, Notation(coup.VarianteMeilleure)), CouleurSuite);
                     if (!string.IsNullOrEmpty(coup.VarianteMeilleureUci))
                     {   // un clic sur la ligne rejoue la suite sur l'échiquier (RejoueSuite, choix de Bruno)
                         _coupARejouer = index;
@@ -402,6 +402,8 @@ namespace BrunoGUI_GenII
             };
             SendMessage(ligne.Handle, EM_SETRECT, IntPtr.Zero, ref zone);
         }
+        // Meilleure suite (3e ligne) : bleu foncé, pour la distinguer de l'analyse du coup sur la 2e ligne (choix de Bruno)
+        private static readonly Color CouleurSuite = Color.FromArgb(0, 70, 150);
         private void AfficheLigneCentree(RichTextBox ligne, string texte, Color? couleur = null)
         {   // Texte centré en gras, toujours dans la police de la ligne (Bruno ne veut pas de police réduite) ; couleur : celle de
             // l'annotation du coup regardé (1re ligne), sinon la couleur normale de la ligne
