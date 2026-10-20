@@ -77,6 +77,7 @@ namespace BrunoGUI_GenII
                 return Path.Combine(RepertoireRacine, "Moteurs_UCI");
             }
         }
+        public static string FichierOuvertures => Path.Combine(RepertoireRacine, "Ouvertures", "ouvertures.tsv");   // noms ECO (Lichess)
     }
     public class Outils
     {
