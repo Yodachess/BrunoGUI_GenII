@@ -74,9 +74,10 @@ namespace BrunoGUI_GenII
             return resultat;
         }
 
-        public (int? Centipions, int? MatEn, string Variante)? Cherche(string fen, string coupImpose, int profondeur, int delaiMaxMs = 15000)
-        {   // Score (du point de vue du camp au trait) et variante du coup imposé (searchmoves), à la profondeur donnée ; null si le
-            // moteur ne répond pas. Sert aux pièges de l'analyse : que donne la prise tentante que le joueur n'a pas jouée ?
+        public (int? Centipions, int? MatEn, string Variante)? Cherche(string fen, string? coupImpose, int profondeur, int delaiMaxMs = 15000)
+        {   // Score (du point de vue du camp au trait) et variante du coup imposé (searchmoves ; null : le meilleur coup), à la
+            // profondeur donnée ; null si le moteur ne répond pas. Sert aux pièges de l'analyse (que donne la prise tentante que le
+            // joueur n'a pas jouée ?) et aux menaces (que jouerait le joueur après un coup nul ?)
             lock (_verrou)
             {
                 if (Demarre() is not Process processus)
@@ -85,7 +86,7 @@ namespace BrunoGUI_GenII
                 {
                     Envoie(processus, "ucinewgame");
                     Envoie(processus, "position fen " + fen);
-                    Envoie(processus, $"go depth {profondeur} searchmoves {coupImpose}");
+                    Envoie(processus, coupImpose == null ? $"go depth {profondeur}" : $"go depth {profondeur} searchmoves {coupImpose}");
                     using Timer arret = new(_ => EnvoieSansErreur(processus, "stop"), null, delaiMaxMs, Timeout.Infinite);
                     (int?, int?, string)? resultat = null;
                     string? ligne;

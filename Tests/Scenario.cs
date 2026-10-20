@@ -1145,6 +1145,24 @@ public static class Scenario
             piegesDemandes.Count == 1 && piegesDemandes[0].PriseUci == "d2d5" && avecPiege.Positions[0].TextePiege == "La tour d5 est imprenable : 1. Dxd5+? (-5.00)"
             && sansPiege.Positions[0].TextePiege == null && avecPiege.PiegesAChercher().Count == 0,
             $"{piegesDemandes.Count} demande(s) / « {avecPiege.Positions[0].TextePiege} » / « {sansPiege.Positions[0].TextePiege} »");
+        // Menace : 3. Dh5 menace 4. Dxf7# (coup nul), 3... De7 la pare ; réponses simulées du 2e moteur
+        const string fenMenace = "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR w KQkq - 2 3";
+        Charger(fenMenace);
+        L.AjoutePositionDeDepart(fenMenace);
+        Joue("d1h5", "d8e7");
+        AnalyseDePartie analyseMenace = new(L.ListeCoups);
+        analyseMenace.Enregistre(2, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(20, null), VariantePgn = "4. Cf3", VarianteUci = "g1f3" });
+        analyseMenace.Enregistre(1, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(20, null), VariantePgn = "3 ... De7", VarianteUci = "d8e7" },
+                                 new LigneAnalyse { Numero = 2, Evaluation = new Evaluation(null, 1) });     // (2e variante : mat, De7 était le seul bon coup)
+        analyseMenace.Enregistre(0, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(20, null), VariantePgn = "3. Dh5", VarianteUci = "d1h5" });
+        List<(int IndexPosition, string FenCoupNul)> menacesDemandees = analyseMenace.MenacesAChercher();
+        analyseMenace.EnregistreMenace(1, null, 1, "h5f7");        // après 3. Dh5, si les Noirs passaient : mat en 1
+        analyseMenace.EnregistreMenace(2, 30, null, "g1f3");       // après 3... De7 : rien de sérieux
+        analyseMenace.AppliqueAuxCoups(L.ListeCoups);
+        Verifie("Menace : coup nul demandé après chaque coup calme, « Menace de mat : 4. Dxf7# » puis « Pare la menace » au coup qui la pare",
+            menacesDemandees.Count == 2 && menacesDemandees[0].FenCoupNul.Contains(" w KQkq - 3 4")
+            && L.ListeCoups[1].CommentaireAuto == "Menace de mat : 4. Dxf7#" && L.ListeCoups[2].CommentaireAuto == "Pare la menace 4. Dxf7#",
+            $"{menacesDemandees.Count} demande(s) ({menacesDemandees.FirstOrDefault().FenCoupNul}) / « {L.ListeCoups[1].CommentaireAuto} » / « {L.ListeCoups[2].CommentaireAuto} »");
         Charger("6k1/8/4p3/3p4/8/1BN5/8/6K1 w - - 0 1");      // 1. Cxd5 exd5 2. Fxd5 : un échange (un cavalier pour deux pions), pas un sacrifice
         L.AjoutePositionDeDepart("6k1/8/4p3/3p4/8/1BN5/8/6K1 w - - 0 1");
         L.ExecutionCoup("c3", "d5");

@@ -49,6 +49,12 @@ namespace BrunoGUI_GenII
         public const int ProfondeurPiege = 16;
         // ... c'est un piège si elle perd une erreur en chances de gain, ou au moins 1,5 pion ; pas cherché si le joueur est perdu de 6 pions
         public const int PiegePerteMinimum = 150, PiegeJoueurPerdu = 600;     // en centipions
+        // Menace (coup nul) : ce que le joueur jouerait s'il pouvait rejouer, cherché par le 2e moteur jusqu'à cette profondeur ; c'est
+        // une menace si elle gagne une gaffe en chances de gain (SeuilGaffe) ou au moins MenaceGainMinimum, ou si elle mate ; pas
+        // cherchée dans une partie décidée (PiegeJoueurPerdu, d'un côté ou de l'autre). Avec les seuils des pièges (une erreur,
+        // 1,5 pion), il y avait une menace presque à chaque coup (un pion attaqué, une poussée) : trop bavard
+        public const int ProfondeurMenace = 14;
+        public const int MenaceGainMinimum = 200;      // en centipions : environ une pièce (un pion menacé n'est pas commenté)
 
         public static int? ProfondeurDecouverte(IReadOnlyList<(int Profondeur, string Coup)> meilleursCoups, string coup)
         {   // Profondeur à partir de laquelle le coup est le choix du moteur à TOUTES les profondeurs suivantes (meilleur coup à
@@ -180,6 +186,12 @@ namespace BrunoGUI_GenII
         public bool PiegeCherche { get; set; }
         public string? TextePiege { get; set; }
         public string? CasePiege { get; set; }     // case de la pièce imprenable (annoncée seulement la 1re fois : AppliqueAuxCoups)
+        // Menace (analyse complète) du joueur qui vient de jouer le coup menant à cette position : son coup suivant si l'adversaire
+        // ne faisait rien (coup nul), "15. Cxf7" ; null : pas de menace sérieuse (ou pas cherchée)
+        public bool MenaceCherchee { get; set; }
+        public string? MenaceUci { get; set; }
+        public string? TexteMenace { get; set; }   // "15. Cxf7", ou "15. Dh7#"
+        public int? MenaceMatEn { get; set; }      // la menace est un mat en N (du point de vue du joueur qui menace)
         public bool Ignoree { get; set; }                   // le moteur n'a donné aucun score : position sautée (sinon l'analyse tournerait en rond)
         public bool AApprofondir { get; set; }              // 2e passage : position avant ou après un coup douteux, à revoir plus longtemps
         public bool Approfondie { get; set; }               // ... et revue (avec ou sans score : elle n'est pas redemandée)
@@ -709,6 +721,107 @@ namespace BrunoGUI_GenII
             };
         }
 
+        public List<(int IndexPosition, string FenCoupNul)> MenacesAChercher()
+        {   // Analyse complète : pour chaque position analysée après un coup, la même position avec le trait rendu au joueur qui vient
+            // de jouer (coup nul) ; l'interface demande au 2e moteur ce qu'il y jouerait (EnregistreMenace). Pas de menace cherchée
+            // après un coup de la bibliothèque, après une prise (la reprise attendue serait la "menace") ou un échec (pas de coup nul
+            // possible), ni quand un mat est déjà annoncé ou la partie décidée ; une telle position est notée cherchée tout de suite
+            List<(int, string)> demandes = [];
+            for (int k = 1; k < _positions.Count; k++)
+            {
+                PositionAnalysee apres = _positions[k];
+                if (apres.MenaceCherchee || apres.Evaluation is not Evaluation evaluation)
+                    continue;
+                int indexCoup = _indexCoups[k - 1];
+                string fenAvant = _positions[k - 1].Fen;
+                bool sansMenace = EstCoupDeBibliotheque(indexCoup) || evaluation.MatEn != null
+                    || Math.Abs(evaluation.Centipions ?? 0) >= JugementCoups.PiegeJoueurPerdu
+                    || CalculerSur(PositionDepuisFen(fenAvant), () => EstUnePrise(_coups[indexCoup].Uci.Trim()))
+                    || CalculerSur(PositionDepuisFen(apres.Fen), CampAuTraitEnEchec);
+                if (sansMenace)
+                {
+                    apres.MenaceCherchee = true;
+                    continue;
+                }
+                demandes.Add((k, FenCoupNul(apres.Fen)));
+            }
+            return demandes;
+        }
+
+        public static string FenCoupNul(string fen)
+        {   // La même position, le trait à l'autre camp et sans case en passant (le coup nul : "et si l'adversaire ne faisait rien ?") ;
+            // les Noirs passant leur tour, le coup suivant des Blancs a le numéro suivant (menace "4. Dxf7#" après 3. Dh5)
+            string[] champs = fen.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (champs.Length >= 4)
+            {
+                if (champs[1] == "b" && champs.Length >= 6 && int.TryParse(champs[5], out int numero))
+                    champs[5] = (numero + 1).ToString();
+                champs[1] = champs[1] == "w" ? "b" : "w";
+                champs[3] = "-";
+            }
+            return string.Join(" ", champs);
+        }
+
+        public void EnregistreMenace(int indexPosition, int? centipions, int? matEn, string? varianteUci)
+        {   // Réponse du 2e moteur dans la position du coup nul (score du point de vue du joueur qui menace ; rien : null). C'est une
+            // menace si son coup gagne au moins une erreur en chances (SeuilErreur), ou PiegePerteMinimum en pions, par rapport à
+            // l'évaluation de la position, ou s'il mate (sans mat déjà annoncé)
+            PositionAnalysee apres = _positions[indexPosition];
+            apres.MenaceCherchee = true;
+            string? coupUci = (varianteUci ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+            if ((centipions == null && matEn == null) || coupUci == null || apres.Evaluation is not Evaluation actuelle)
+                return;
+            double sens = apres.AuTrait == ColorPiece.Blanc ? -1 : 1;      // le joueur qui menace n'est pas celui qui a le trait
+            Evaluation menace = new(centipions is int cp ? (int)sens * cp : null, matEn is int mat ? (int)sens * mat : null);   // (point de vue des Blancs)
+            bool mate = matEn is int matJoueur && matJoueur > 0;
+            bool gainEnChances = sens * (JugementCoups.ChancesDeGain(menace) - JugementCoups.ChancesDeGain(actuelle)) >= JugementCoups.SeuilGaffe;
+            bool gainEnPions = actuelle.Centipions is int cpActuel && menace.Centipions is int cpMenace && sens * (cpMenace - cpActuel) >= JugementCoups.MenaceGainMinimum;
+            if (!mate && !gainEnChances && !gainEnPions)
+                return;
+            Position positionNulle = PositionDepuisFen(FenCoupNul(apres.Fen));
+            // Seulement une menace concrète : une prise ou un échec (ou un mat). Le coup nul donne un temps gratuit, que le moteur
+            // emploie souvent à un coup calme ("Menace : 11... Tb8", une poussée de pion) : ce n'est pas une menace
+            bool concrete = mate || CalculerSur(positionNulle, () =>
+            {
+                if (EstUnePrise(coupUci))
+                    return true;
+                ChargementPartie.JoueSurLaCopie(coupUci);
+                return CampAuTraitEnEchec();
+            });
+            if (!concrete)
+                return;
+            string texte = Outils.VarianteUciVersPgn(coupUci, DemiCoupAvant(positionNulle), false, positionNulle).Trim().Replace(" ... ", "... ");
+            apres.MenaceUci = coupUci;
+            apres.MenaceMatEn = mate ? matEn : null;
+            apres.TexteMenace = Langue.Notation(texte);
+        }
+
+        private string? CommentaireMenace(int k)
+        {   // La menace créée par le coup qui mène à la position k (pas celle qui existait déjà au coup précédent du même joueur)
+            PositionAnalysee apres = _positions[k];
+            if (apres.MenaceUci == null || apres.TexteMenace == null || (k >= 3 && _positions[k - 2].MenaceUci == apres.MenaceUci))
+                return null;
+            return apres.MenaceMatEn is int mat
+                ? (mat == 1 ? Langue.T("Menace de mat : {0}", apres.TexteMenace) : Langue.T("Menace de mat en {0} : {1}", mat, apres.TexteMenace))
+                : Langue.T("Menace : {0}", apres.TexteMenace);
+        }
+
+        private string? CommentaireParade(int k, JugementCoup jugement)
+        {   // Le coup qui part de la position k face à une menace (créée par le coup d'avant) : "Pare la menace" seulement s'il était
+            // le seul bon coup (la 2e variante du moteur perdait une erreur ; sinon presque chaque réponse "parait" une menace) ; s'il
+            // perd et que la menace est justement le meilleur coup de l'adversaire ensuite, il ne l'a pas parée
+            PositionAnalysee avant = _positions[k];
+            if (avant.MenaceUci == null || avant.TexteMenace == null || EstCoupDeBibliotheque(jugement.IndexCoup))
+                return null;
+            double sens = avant.AuTrait == ColorPiece.Blanc ? 1 : -1;
+            bool seulBonCoup = avant.EvaluationSeconde is Evaluation seconde && avant.Evaluation is Evaluation meilleure
+                && sens * (JugementCoups.ChancesDeGain(meilleure) - JugementCoups.ChancesDeGain(seconde)) >= JugementCoups.SeuilSeulBonCoup;
+            if (jugement.Perte < JugementCoups.SeuilImprecision)
+                return seulBonCoup ? Langue.T("Pare la menace {0}", avant.TexteMenace) : null;
+            return k + 1 < _positions.Count && _positions[k + 1].MeilleurCoupUci is string suite && suite.StartsWith(avant.MenaceUci)
+                ? Langue.T("Ne pare pas la menace {0}", avant.TexteMenace) : null;
+        }
+
         private static bool EstUnePrise(string coupUci)
         {   // Sur la position actuelle (une copie) : la case d'arrivée est occupée, ou un pion change de colonne (prise en passant)
             if (coupUci.Length < 4)
@@ -801,8 +914,8 @@ namespace BrunoGUI_GenII
                 coup.MeilleurCoupLong = jugement.MeilleurCoupLong;
                 coup.VarianteMeilleure = jugement.VarianteMeilleure;
                 coup.VarianteLue = false;       // la variante est maintenant celle du moteur (plus celle du PGN chargé)
-                // (celui d'une analyse précédente est remplacé, ou effacé) : l'ouverture, le sacrifice, le piège, la finale, puis le
-                // changement d'appréciation
+                // (celui d'une analyse précédente est remplacé, ou effacé) : l'ouverture, le sacrifice, la menace parée (ou non), la
+                // menace créée par le coup, le piège, la finale, puis le changement d'appréciation
                 // (pas l'appréciation après "Mat en 8 manqué" : elle ferait double emploi, choix de Bruno ; le commentaire d'un coup
                 // qui n'est pas le meilleur ne peut être que celui du mat manqué, le sacrifice étant celui du meilleur coup)
                 bool matManque = jugement.Commentaire != null && !jugement.MeilleurJoue;
@@ -811,7 +924,8 @@ namespace BrunoGUI_GenII
                 int k = _indexCoups.IndexOf(jugement.IndexCoup);
                 string? piege = k >= 2 && _positions[k].CasePiege != null && _positions[k - 2].CasePiege == _positions[k].CasePiege
                     ? null : _positions[k].TextePiege;
-                string?[] textes = [ouverture.GetValueOrDefault(jugement.IndexCoup), jugement.Commentaire, piege,
+                string?[] textes = [ouverture.GetValueOrDefault(jugement.IndexCoup), jugement.Commentaire,
+                                    CommentaireParade(k, jugement), k + 1 < _positions.Count ? CommentaireMenace(k + 1) : null, piege,
                                     finales.GetValueOrDefault(jugement.IndexCoup), matManque ? null : appreciations.GetValueOrDefault(jugement.IndexCoup)];
                 coup.CommentaireAuto = textes.Any(t => t != null) ? string.Join(". ", textes.OfType<string>()) : null;
                 // (la notation NAL du coup est en lettres anglaises : la notation longue française est calculée ici)

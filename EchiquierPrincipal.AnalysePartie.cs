@@ -206,6 +206,13 @@ namespace BrunoGUI_GenII
                     return;
                 analyse.EnregistrePiege(index, prise, resultat?.Centipions, resultat?.MatEn, resultat?.Variante);
             }
+            foreach ((int index, string fenCoupNul) in analyse.MenacesAChercher())
+            {   // la menace du coup joué : ce que son auteur jouerait si l'adversaire ne faisait rien (coup nul, environ 0,5 s)
+                var resultat = await Task.Run(() => moteur.Cherche(fenCoupNul, null, JugementCoups.ProfondeurMenace));
+                if (_analyseDePartie != analyse)
+                    return;
+                analyse.EnregistreMenace(index, resultat?.Centipions, resultat?.MatEn, resultat?.Variante);
+            }
         }
         private void ChoisitDureesAnalyse()
         {   // Options > Durées de l'analyse de partie : valables dès la position suivante (même pendant une analyse)
