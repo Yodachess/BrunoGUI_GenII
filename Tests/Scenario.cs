@@ -865,6 +865,8 @@ public static class Scenario
         Verifie("Commande go : temps fixe (au moins 1 s), sans limite",
             LimiteTemps.Duree(5000).CommandeGo == "go movetime 5000" && LimiteTemps.Duree(0).CommandeGo == "go movetime 1000" && LimiteTemps.SansLimite.CommandeGo == "go infinite",
             $"{LimiteTemps.Duree(0).CommandeGo}");
+        Verifie("Commande go : profondeur visée, la durée servant de plafond (analyse de partie)",
+            LimiteTemps.ProfondeurEtDuree(20, 10000).CommandeGo == "go depth 20 movetime 10000", LimiteTemps.ProfondeurEtDuree(20, 10000).CommandeGo);
         Verifie("Commande go : temps de la pendule en millisecondes (jamais 0)",
             LimiteTemps.ParPendule(TimeSpan.FromSeconds(291), TimeSpan.FromSeconds(280.5), TimeSpan.FromSeconds(3)).CommandeGo == "go wtime 291000 btime 280500 winc 3000 binc 3000"
             && LimiteTemps.ParPendule(TimeSpan.Zero, TimeSpan.FromMinutes(30), TimeSpan.Zero).CommandeGo == "go wtime 1 btime 1800000 winc 0 binc 0",
@@ -1008,6 +1010,14 @@ public static class Scenario
             analyseTheorie.EstCoupDeBibliotheque(2) && !analyseTheorie.EstCoupDeBibliotheque(5) && analyseTheorie.Jugement(2)?.Annotation == ""
             && analyseTheorie.Jugement(5)?.Annotation == "??" && analyseTheorie.Bilan(L.ColorPiece.Blanc).Imprecisions == 0,
             $"Dh5 « {analyseTheorie.Jugement(2)?.Annotation} », bilan blanc {analyseTheorie.Bilan(L.ColorPiece.Blanc)}");
+        // Profondeur visée : la position 1 (entre 1. e4 et 1... e5, tous deux de la bibliothèque) est de la théorie ; la position 5
+        // (avant 3... Cf6??, qui laisse un mat) garde la profondeur normale : la perte d'une gaffe doit être bien mesurée
+        AnalyseDePartie analyseProfondeurs = new(L.ListeCoups, coupDeBibliotheque: (fen, uci) => uci.Trim() is "e2e4" or "e7e5");
+        analyseProfondeurs.Enregistre(6, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(null, 1), VariantePgn = "4. Dxf7#", VarianteUci = "h5f7" });
+        Verifie("Analyse : profondeur visée 12 pour la théorie, 20 sinon (même avant une gaffe)",
+            analyseProfondeurs.ProfondeurVisee(1) == JugementCoups.ProfondeurTheorie && analyseProfondeurs.ProfondeurVisee(5) == JugementCoups.ProfondeurAnalyse
+            && analyseProfondeurs.ProfondeurVisee(3) == JugementCoups.ProfondeurAnalyse && analyseProfondeurs.ProfondeurVisee(2) == JugementCoups.ProfondeurAnalyse,
+            string.Join(" ", Enumerable.Range(0, 7).Select(analyseProfondeurs.ProfondeurVisee)));
         L.ListeCoups[5].Annotation = "!";       // le joueur pense que 3... Cf6 est un bon coup : l'analyse ne doit pas l'écraser
         analyseBerger.AppliqueAuxCoups(L.ListeCoups);
         Verifie("Analyse appliquée aux coups : annotation proposée (marquée), évaluation et meilleur coup ; celle du joueur est gardée",

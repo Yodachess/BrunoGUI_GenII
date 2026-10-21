@@ -25,6 +25,7 @@ namespace BrunoGUI_GenII
     {   // Temps donné au moteur pour une recherche : un temps fixe ("go movetime"), sans limite ("go infinite", jusqu'à "stop"),
         // ou les temps de la pendule ("go wtime ... btime ... winc ... binc ...") : le moteur gère alors son temps lui-même
         public int? DureeMilliSecondes { get; private init; }       // temps fixe (null : pendule ou sans limite)
+        public int? Profondeur { get; private init; }               // avec une durée : profondeur visée, la durée servant de plafond
         public bool Infinie { get; private init; }
         public TimeSpan TempsBlancs { get; private init; }          // pendule : temps restant de chaque camp et bonus par coup
         public TimeSpan TempsNoirs { get; private init; }
@@ -34,6 +35,9 @@ namespace BrunoGUI_GenII
         public static LimiteTemps Duree(int dureeMilliSecondes) =>
             // Au moins 1 s : "go movetime 0" ferait réfléchir certains moteurs (Stockfish) sans fin
             new() { DureeMilliSecondes = Math.Max(1000, dureeMilliSecondes) };
+        public static LimiteTemps ProfondeurEtDuree(int profondeur, int dureeMaximaleMilliSecondes) =>
+            // "go depth 20 movetime 10000" : le moteur s'arrête à la profondeur visée, ou au bout de la durée si elle vient avant
+            new() { Profondeur = Math.Max(1, profondeur), DureeMilliSecondes = Math.Max(1000, dureeMaximaleMilliSecondes) };
         public static readonly LimiteTemps SansLimite = new() { Infinie = true };
         public static LimiteTemps ParPendule(TimeSpan tempsBlancs, TimeSpan tempsNoirs, TimeSpan increment, int? coupsAvantControle = null) =>
             new() { TempsBlancs = tempsBlancs, TempsNoirs = tempsNoirs, Increment = increment, CoupsAvantControle = coupsAvantControle };
@@ -53,7 +57,7 @@ namespace BrunoGUI_GenII
                 if (Infinie)
                     return "go infinite";
                 if (DureeMilliSecondes is int duree)
-                    return "go movetime " + duree;
+                    return (Profondeur is int profondeur ? $"go depth {profondeur} movetime " : "go movetime ") + duree;
                 static long Ms(TimeSpan temps) => Math.Max(1, (long)temps.TotalMilliseconds);
                 return $"go wtime {Ms(TempsBlancs)} btime {Ms(TempsNoirs)} winc {(long)Increment.TotalMilliseconds} binc {(long)Increment.TotalMilliseconds}"
                     + (CoupsAvantControle is int coups ? $" movestogo {coups}" : "");
@@ -109,15 +113,17 @@ namespace BrunoGUI_GenII
             return ResultatDemandeCoup.EnvoyeAuMoteur;
         }
 
-        public void DemanderAnalyse(Position position, int dureeMilliSecondes)
-        {   // Analyse d'une position (celle affichée) : ses variantes seront converties sur PositionAnalysee.
+        public void DemanderAnalyse(Position position, int dureeMilliSecondes, int? profondeur = null)
+        {   // Analyse d'une position (celle affichée) : ses variantes seront converties sur PositionAnalysee. Avec une profondeur
+            // (analyse de partie), la durée n'est qu'un plafond.
             // Toujours à pleine force : un moteur limité (Elo, niveau) joue exprès des coups plus faibles, et Stockfish annonce alors
             // ce coup faible comme sa variante principale, souvent avec une variante très courte et un score de 0.00
             Abandonner();
             PositionAnalysee = position.Copier();
             Demande = TypeDemande.Analyse;
             Lignes.Reinitialiser();
-            _moteur.Chercher(CalculerSur(position, RetourneChaineFenActuel), LimiteTemps.Duree(dureeMilliSecondes), forceMaximale: true);
+            LimiteTemps limite = profondeur is int visee ? LimiteTemps.ProfondeurEtDuree(visee, dureeMilliSecondes) : LimiteTemps.Duree(dureeMilliSecondes);
+            _moteur.Chercher(CalculerSur(position, RetourneChaineFenActuel), limite, forceMaximale: true);
         }
 
         public bool Abandonner()

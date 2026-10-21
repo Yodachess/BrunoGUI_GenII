@@ -161,13 +161,15 @@ namespace BrunoGUI_GenII
             {   // Fenêtre de suivi : étape, position examinée, progression et temps restant estimé (au rythme de 3 ou 10 s par position)
                 string position = NomDeLaPosition(_analyseDePartie.IndexDansListeCoups(index));
                 TimeSpan reste = TimeSpan.FromMilliseconds((double)(total - faites) * (approfondissement ? DureeApprofondissement : DureeAnalyseParPosition));
-                string temps = T("Temps restant : environ {0}", TexteDuree(reste))
+                // (la durée par position n'est qu'un plafond depuis la profondeur visée : le reste est un maximum)
+                string temps = T("Temps restant : au plus {0}", TexteDuree(reste))
                     + (_analyseComplete && !approfondissement ? " " + T("(puis la vérification des coups douteux)") : "");
                 _fenetreAnalyse.MontreEtape(position, approfondissement ? T("vérification {0}/{1}", faites + 1, total) : $"{faites + 1}/{total}",
                                             faites, total, temps);
             }
+            // (profondeur visée, la durée réglée n'étant plus qu'un plafond : AnalyseDePartie.ProfondeurVisee)
             _pilote.DemanderAnalyse(LogiqueMouvements.PositionDepuisFen(_analyseDePartie.Positions[index].Fen),
-                                    approfondissement ? DureeApprofondissement : DureeAnalyseParPosition);
+                                    approfondissement ? DureeApprofondissement : DureeAnalyseParPosition, _analyseDePartie.ProfondeurVisee(index));
         }
         private string NomDeLaPosition(int indexCoup) =>
             // Pour la fenêtre de suivi : "Position après 25... c5", ou "Position de départ" (position initiale, ou départ FEN)

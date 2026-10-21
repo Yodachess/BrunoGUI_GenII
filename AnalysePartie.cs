@@ -54,6 +54,8 @@ namespace BrunoGUI_GenII
         // cherchée dans une partie décidée (PiegeJoueurPerdu, d'un côté ou de l'autre). Avec les seuils des pièges (une erreur,
         // 1,5 pion), il y avait une menace presque à chaque coup (un pion attaqué, une poussée) : trop bavard
         public const int ProfondeurMenace = 14;
+        // Profondeurs demandées au moteur principal (AnalyseDePartie.ProfondeurVisee), la durée réglée servant de plafond
+        public const int ProfondeurAnalyse = 20, ProfondeurTheorie = 12, ProfondeurApprofondissement = 24;
         public const int MenaceGainMinimum = 200;      // en centipions : environ une pièce (un pion menacé n'est pas commenté)
 
         public static int? ProfondeurDecouverte(IReadOnlyList<(int Profondeur, string Coup)> meilleursCoups, string coup)
@@ -310,6 +312,22 @@ namespace BrunoGUI_GenII
                 return index < 0 ? null : index;
             }
         }
+        public int ProfondeurVisee(int indexPosition)
+        {   // Profondeur demandée au moteur pour cette position (la durée réglée reste un plafond, "go depth … movetime …") : plus
+            // rapide qu'un temps fixe, qui était trop long pour les positions faciles (mesuré sur les deux parties de Bruno, octobre
+            // 2026 : 40 à 73 % de temps en moins à la profondeur 20, mêmes « ! », « !! », « ?? » et coup critique qu'à 10 s fixes).
+            // Moins profond pour la théorie (position entre deux coups de la bibliothèque : ces coups ne sont pas jugés) ; plus
+            // profond pour le 2e passage de l'analyse complète (profondeur 24, plafond 30 s : 13 à 28 % de temps en moins, mêmes
+            // annotations importantes). Essayé puis retiré : moins profond quand la position suivante est déjà décidée ; c'est
+            // justement la position d'avant une gaffe, où la perte doit être bien mesurée (le coup critique de la partie de Bruno
+            // passait de 27. Fd4?? à 28... Rxg7)
+            if (EnApprofondissement)
+                return JugementCoups.ProfondeurApprofondissement;
+            bool coupSuivantTheorique = indexPosition < _indexCoups.Count && EstCoupDeBibliotheque(_indexCoups[indexPosition]);
+            bool coupPrecedentTheorique = indexPosition == 0 || EstCoupDeBibliotheque(_indexCoups[indexPosition - 1]);
+            return coupSuivantTheorique && coupPrecedentTheorique ? JugementCoups.ProfondeurTheorie : JugementCoups.ProfondeurAnalyse;
+        }
+
         public int NombreAAnalyser => _positions.Count(p => p.ChancesFinDePartie == null);
         public int NombreAnalysees => _positions.Count(p => p.ChancesFinDePartie == null && p.Evaluation != null);
         public bool EnApprofondissement => _premierPassageFini && !Terminee;     // la position suivante est à revoir plus longtemps
