@@ -49,6 +49,19 @@ namespace BrunoGUI_GenII
         public string? CommentaireAuto { get; set; }
         public bool VarianteLue { get; set; }                   // la variante (meilleur coup) vient du PGN chargé : réécrite à l'enregistrement
 
+        public void EffaceAnalyse()
+        {   // Au lancement d'une analyse de partie (choix de Bruno, 2026-10-21) : plus rien de l'analyse précédente, ou de celle du PGN
+            // chargé ; sinon une analyse interrompue laissait un mélange (fin analysée de nouveau, début de l'ancienne). Restent
+            // l'annotation et le commentaire du joueur (ou de l'auteur du PGN)
+            EvaluationApres = EvaluationMeilleur = null;
+            MeilleurCoup = MeilleurCoupLong = MeilleurCoupUci = VarianteMeilleure = VarianteMeilleureUci = CommentaireAuto = null;
+            MeilleurJoue = VarianteLue = false;
+            PerteAnalyse = null;
+            if (AnnotationProposee)
+                Annotation = "";
+            AnnotationProposee = false;
+        }
+
         public static Coup PositionDeDepart(string fen) => new() { Fen = fen, EstPositionDeDepart = true };
 
         // Après un coup blanc, ce sont les Noirs qui ont le trait (2e champ de la FEN de la position après le coup)

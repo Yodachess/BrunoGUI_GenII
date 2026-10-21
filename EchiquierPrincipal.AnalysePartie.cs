@@ -117,6 +117,8 @@ namespace BrunoGUI_GenII
             }
             AbandonneReflexion();       // une analyse de position en cours est remplacée
             _pendule?.Pause();          // le temps ne compte pas pendant l'analyse (reprise dans MinuteriePendule_Tick à la fin)
+            foreach (Coup coup in LogiqueMouvements.ListeCoups)
+                coup.EffaceAnalyse();   // une analyse interrompue ne mélange plus l'ancienne et la nouvelle (choix de Bruno)
             _analyseDePartie = new AnalyseDePartie(LogiqueMouvements.ListeCoups, approfondir: complete,
                                                  coupDeBibliotheque: PolyglotBibliotheque.ContientCoup,   // jamais annotés
                                                  ouvertures: CatalogueDesOuvertures());
