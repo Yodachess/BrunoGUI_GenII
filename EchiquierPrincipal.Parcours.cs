@@ -241,12 +241,13 @@ namespace BrunoGUI_GenII
                 foreach (RichTextBox ligne in new[] { VarianteMoteurUci1, VarianteMoteurUci2, VarianteMoteurUci3 })
                     _infobulleBilan.SetToolTip(ligne, commentaire != null ? T("Commentaire : {0}", commentaire) : null);
                 if (coup.EvaluationApres != null || coup.MeilleurCoup != null)
-                {   // Le texte le plus complet qui tient sur la ligne : sinon sans le nom de l'annotation, puis sans le symbole (-+)
+                {   // Le texte complet s'il tient sur la ligne, sinon sans le nom de l'annotation
                     int largeur = VarianteMoteurUci2.ClientSize.Width - 14;
                     bool bibliotheque = PolyglotBibliotheque.ContientCoup(index == 0 ? FenDepart : LogiqueMouvements.ListeCoups[index - 1].Fen, coup.Uci);
-                    string texte = new[] { TexteAnalyseDuCoup(coup, true, true, bibliotheque), TexteAnalyseDuCoup(coup, false, true, bibliotheque), TexteAnalyseDuCoup(coup, false, false, bibliotheque) }
-                        .FirstOrDefault(t => TextRenderer.MeasureText(t, _policesLignes[VarianteMoteurUci2].Grasse).Width <= largeur)
-                        ?? TexteAnalyseDuCoup(coup, false, false, bibliotheque);
+                    // (le symbole de l'évaluation reste toujours, choix de Bruno, 2026-10-21 : seul le nom de l'annotation peut tomber)
+                    string texte = TexteAnalyseDuCoup(coup, true, true, bibliotheque) is string complet
+                        && TextRenderer.MeasureText(complet, _policesLignes[VarianteMoteurUci2].Grasse).Width <= largeur
+                        ? complet : TexteAnalyseDuCoup(coup, false, true, bibliotheque);
                     AfficheLigneCentree(VarianteMoteurUci2, texte);
                 }
                 else if (commentaire != null)
@@ -376,7 +377,9 @@ namespace BrunoGUI_GenII
                 texte += "  — " + coup.CommentaireAuto;     // commentaire de l'analyse, ex : "Sacrifice du cavalier"
             if (coup.MeilleurJoue || coup.MeilleurCoup == null)
                 return texte;
-            string meilleur = Notation(coup.MeilleurCoupLong ?? coup.MeilleurCoup) + (coup.EvaluationMeilleur is Evaluation e ? $" ({e.Texte})" : "");
+            // (le meilleur coup a lui aussi le symbole de son évaluation devant lui : "meilleur : +- Dd1-e1 (2.00)", choix de Bruno)
+            string meilleur = (coup.EvaluationMeilleur is Evaluation symboleMeilleur ? symboleMeilleur.Symbole + " " : "")
+                + Notation(coup.MeilleurCoupLong ?? coup.MeilleurCoup) + (coup.EvaluationMeilleur is Evaluation e ? $" ({e.Texte})" : "");
             return texte + (coup.PerteAnalyse < JugementCoups.SeuilImprecision
                 ? "  — " + T("moteur : {0}", meilleur) : "  — " + T("meilleur : {0}", meilleur));
         }
