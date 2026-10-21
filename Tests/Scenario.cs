@@ -1033,7 +1033,7 @@ public static class Scenario
         string pgnAnalyseAffiche = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "1-0" }, "Intl");
         Verifie("PGN enregistré après analyse : %eval après chaque coup, meilleure variante (notation anglaise) après l'erreur, numéro repris",
             pgnAnalyseFichier.Replace("\n", " ").Contains("2. Qh5?! {[%auto] [%eval -0.60]} (2. Nf3 Nc6) 2... Nc6 {[%eval -0.40]}")
-            && pgnAnalyseFichier.Replace("\n", " ").Contains("3... Nf6! {Mat en 1 pour les Blancs [%autocom] [%eval #1]} 4. Qxf7#") && pgnAnalyseFichier.Contains("1. e4 {[%eval 0.30]} 1... e5"),
+            && pgnAnalyseFichier.Replace("\n", " ").Contains("3... Nf6! {Réfutation : 4. Dxf7#. Mat en 1 pour les Blancs [%autocom] [%eval #1]} 4. Qxf7#") && pgnAnalyseFichier.Contains("1. e4 {[%eval 0.30]} 1... e5"),
             pgnAnalyseFichier.Replace("\n", " "));
         Verifie("PGN affiché après analyse : ni %eval ni variante",
             !pgnAnalyseAffiche.Contains("%eval") && !pgnAnalyseAffiche.Contains('(') && pgnAnalyseAffiche.Contains("2. Qh5?! Nc6"),
