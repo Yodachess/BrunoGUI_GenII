@@ -1019,6 +1019,16 @@ public static class Scenario
             L.ListeCoups[2].EvaluationMeilleur == new Evaluation(35, null) && L.ListeCoups[2].PerteAnalyse > JugementCoups.SeuilImprecision
             && L.ListeCoups[0].PerteAnalyse == 0,
             $"{L.ListeCoups[2].EvaluationMeilleur?.Texte}, perte {L.ListeCoups[2].PerteAnalyse:F3}");
+        Coup coupAnalyse = new() { Fen = L.FenDepart, Annotation = "?!", AnnotationProposee = true, EvaluationApres = new Evaluation(35, null),
+                                   MeilleurCoup = "Cf3", CommentaireAuto = "Égal", Commentaire = "du joueur", VarianteLue = true };
+        Coup coupDuJoueur = new() { Fen = L.FenDepart, Annotation = "!", EvaluationApres = new Evaluation(35, null) };
+        coupAnalyse.EffaceAnalyse();
+        coupDuJoueur.EffaceAnalyse();
+        Verifie("Nouvelle analyse : l'ancienne est effacée (annotation proposée comprise), l'annotation et le commentaire du joueur restent",
+            coupAnalyse.Annotation == "" && !coupAnalyse.AnnotationProposee && coupAnalyse.EvaluationApres == null && coupAnalyse.MeilleurCoup == null
+            && coupAnalyse.CommentaireAuto == null && !coupAnalyse.VarianteLue && coupAnalyse.Commentaire == "du joueur"
+            && coupDuJoueur.Annotation == "!" && coupDuJoueur.EvaluationApres == null,
+            $"« {coupAnalyse.Annotation} » / « {coupDuJoueur.Annotation} »");
         string pgnAnalyseFichier = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "1-0" }, "Intl", pourFichier: true);
         string pgnAnalyseAffiche = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "1-0" }, "Intl");
         Verifie("PGN enregistré après analyse : %eval après chaque coup, meilleure variante (notation anglaise) après l'erreur, numéro repris",
