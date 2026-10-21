@@ -415,9 +415,101 @@ namespace BrunoGUI_GenII
             double precision = meilleurJoue ? 100 : JugementCoups.Precision(sens * avant, sens * apres);
             (string annotation, DetailSacrifice? sacrifice) = EstCoupDeBibliotheque(indexCoup) ? ("", null)
                               : meilleurJoue ? BonCoup(k, indexCoup, sens) : (JugementCoups.Annotation(perte), null);
+            // Commentaire : le sacrifice (et s'il détruit le rempart du roque), ou le mat manqué ; puis le thème tactique du coup
+            string? texteSacrifice = sacrifice == null ? null
+                : DetruitLeRempart(k, indexCoup) ? Langue.T("{0} : détruit le rempart du roque", sacrifice.Texte) : sacrifice.Texte;
+            string? theme = meilleurJoue && !EstCoupDeBibliotheque(indexCoup) ? AttaqueDouble(k, indexCoup) : null;
+            string?[] commentaires = [texteSacrifice ?? MatManque(k, indexCoup, sens, meilleurJoue), theme];
             return new JugementCoup(indexCoup, camp, perte, annotation, _positions[k + 1].Evaluation, meilleur, meilleurJoue,
                                     positionAvant.Evaluation, positionAvant.MeilleurCoupLong, positionAvant.VarianteMeilleure, precision,
-                                    sacrifice?.Texte ?? MatManque(k, indexCoup, sens, meilleurJoue));
+                                    commentaires.Any(c => c != null) ? string.Join(". ", commentaires.OfType<string>()) : null);
+        }
+
+        private bool DetruitLeRempart(int k, int indexCoup)
+        {   // Le coup (un sacrifice) prend un pion de l'abri du roi adverse roqué : roi sur sa première rangée, côté roi (f, g, h) ou
+            // côté dame (a, b, c), et pion sur l'une des trois colonnes autour du roi, une ou deux rangées devant lui (15. Cxg7!)
+            string joue = _coups[indexCoup].Uci.Trim();
+            if (joue.Length < 4)
+                return false;
+            Position avant = PositionDepuisFen(_positions[k].Fen);
+            ColorPiece camp = _positions[k].AuTrait;
+            TypePiece pionAdverse = camp == ColorPiece.Blanc ? TypePiece.PionNoir : TypePiece.PionBlanc;
+            TypePiece roiAdverse = camp == ColorPiece.Blanc ? TypePiece.RoiNoir : TypePiece.RoiBlanc;
+            if (avant.Pieces[RenvoieCaseIndex120(joue.Substring(2, 2))] != pionAdverse)
+                return false;
+            int roi = avant.Pieces.IndexOf(roiAdverse);
+            if (roi < 21)
+                return false;
+            int colonneRoi = roi % 10, rangeeRoi = roi / 10 - 1;       // colonne 1 (a) à 8 (h), rangée 1 à 8
+            int premiere = camp == ColorPiece.Blanc ? 8 : 1, sens = camp == ColorPiece.Blanc ? -1 : 1;
+            if (rangeeRoi != premiere || colonneRoi is 4 or 5)
+                return false;           // roi au centre (d, e) ou sorti de sa rangée : pas un roque à démolir
+            int colonnePion = joue[2] - 'a' + 1, rangeePion = joue[3] - '0';
+            return Math.Abs(colonnePion - colonneRoi) <= 1 && (rangeePion == premiere + sens || rangeePion == premiere + 2 * sens);
+        }
+
+        private string? AttaqueDouble(int k, int indexCoup)
+        {   // Fourchette / attaque double : le meilleur coup (joué) attaque au moins deux cibles (le roi par un échec, ou une pièce
+            // qu'il gagnerait à prendre : plus forte que lui ou mal défendue), la variante du moteur la fait prendre une cible au coup
+            // suivant de cette pièce, et le joueur y gagne au moins SacrificeMinimum points (pas un pion)
+            PositionAnalysee avant = _positions[k];
+            string[] variante = (avant.VarianteMeilleureUci ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (variante.Length < 3 || variante.Any(c => c.Length < 4) || variante[0] != _coups[indexCoup].Uci.Trim())
+                return null;
+            string arrivee = variante[0].Substring(2, 2);
+            ColorPiece camp = avant.AuTrait;
+            return CalculerSur(PositionDepuisFen(avant.Fen), () =>
+            {
+                int depart = Materiel(camp);
+                TypePiece piece = PiecesEchiquier[RenvoieCaseIndex120(variante[0][..2])];
+                int valeur = JugementCoups.Valeur(piece);
+                ChargementPartie.JoueSurLaCopie(variante[0]);
+                bool echec = CampAuTraitEnEchec();
+                // Cibles : les prises que la pièce pourrait faire si elle rejouait (le trait lui est rendu sur une copie)
+                List<string> cibles = CalculerSurCopie(() =>
+                {
+                    QuiJoue = camp;
+                    List<string> gagnantes = [];
+                    foreach ((string source, string destination) in CoupsLegaux().Where(c => c.Source == arrivee))
+                    {
+                        int cible = JugementCoups.Valeur(PiecesEchiquier[RenvoieCaseIndex120(destination)]);
+                        if (cible == 0)
+                            continue;
+                        bool defendue = CalculerSurCopie(() =>
+                        {
+                            ChargementPartie.JoueSurLaCopie(source + destination);
+                            return CoupsLegaux().Any(reprise => reprise.Destination == destination);
+                        });
+                        if (cible - (defendue ? valeur : 0) > 0)
+                            gagnantes.Add(destination);
+                    }
+                    return gagnantes;
+                });
+                if (cibles.Count + (echec ? 1 : 0) < 2)
+                    return null;
+                // La variante : réponse de l'adversaire, puis la pièce prend l'une des cibles ; on suit les reprises éventuelles
+                ChargementPartie.JoueSurLaCopie(variante[1]);
+                if (variante[2][..2] != arrivee || !cibles.Contains(variante[2].Substring(2, 2)))
+                    return null;
+                int i = 2;
+                ChargementPartie.JoueSurLaCopie(variante[i]);
+                while (i + 1 < variante.Length && i < JugementCoups.DemiCoupsSacrifice && EstUnePrise(variante[i + 1]))
+                    ChargementPartie.JoueSurLaCopie(variante[++i]);
+                int materiel = Materiel(camp);
+                if (i + 1 >= variante.Length)       // variante arrêtée après une prise : le camp au trait reprend ce qu'il peut
+                    materiel += QuiJoue == camp ? GainImmediat() : -GainImmediat();
+                if (materiel - depart < JugementCoups.SacrificeMinimum)
+                    return null;
+                return piece switch
+                {
+                    TypePiece.CavalierBlanc or TypePiece.CavalierNoir => Langue.T("Fourchette du cavalier"),
+                    TypePiece.PionBlanc or TypePiece.PionNoir => Langue.T("Fourchette du pion"),
+                    TypePiece.ReineBlanche or TypePiece.ReineNoire => Langue.T("Attaque double de la dame"),
+                    TypePiece.TourBlanche or TypePiece.TourNoire => Langue.T("Attaque double de la tour"),
+                    TypePiece.FouBlanc or TypePiece.FouNoir => Langue.T("Attaque double du fou"),
+                    _ => Langue.T("Attaque double du roi")
+                };
+            });
         }
 
         private string? MatManque(int k, int indexCoup, double sens, bool meilleurJoue)

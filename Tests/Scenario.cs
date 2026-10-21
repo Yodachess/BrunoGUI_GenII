@@ -1155,6 +1155,28 @@ public static class Scenario
             piegesDemandes.Count == 1 && piegesDemandes[0].PriseUci == "d2d5" && avecPiege.Positions[0].TextePiege == "La tour d5 est imprenable : 1. Dxd5+? (-5.00)"
             && sansPiege.Positions[0].TextePiege == null && avecPiege.PiegesAChercher().Count == 0,
             $"{piegesDemandes.Count} demande(s) / « {avecPiege.Positions[0].TextePiege} » / « {sansPiege.Positions[0].TextePiege} »");
+        // Thèmes tactiques : 1. Cc7+ (échec au roi e8, la tour a8 en prise) puis Cxa8 : fourchette ; 1. Fxh7+ Rxh7 2. Dh5+ :
+        // sacrifice du fou qui détruit le rempart du roque
+        const string fenFourchette = "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1";
+        Charger(fenFourchette);
+        L.AjoutePositionDeDepart(fenFourchette);
+        Joue("b5c7");
+        AnalyseDePartie analyseFourchette = new(L.ListeCoups);
+        analyseFourchette.Enregistre(1, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(500, null), VariantePgn = "1 ... Re7", VarianteUci = "e8e7" });
+        analyseFourchette.Enregistre(0, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(500, null), VariantePgn = "1. Cc7+", VarianteUci = "b5c7 e8e7 c7a8" });
+        string commentaireFourchette = analyseFourchette.Jugement(1)?.Commentaire;
+        const string fenRempart = "6k1/5ppp/8/8/8/3B4/8/3QK3 w - - 0 1";
+        Charger(fenRempart);
+        L.AjoutePositionDeDepart(fenRempart);
+        Joue("d3h7");
+        AnalyseDePartie analyseRempart = new(L.ListeCoups);
+        analyseRempart.Enregistre(1, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(100, null), VariantePgn = "1 ... Rxh7", VarianteUci = "g8h7" });
+        analyseRempart.Enregistre(0, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(100, null), VariantePgn = "1. Fxh7+", VarianteUci = "d3h7 g8h7 d1h5 h7g8" });
+        analyseRempart.EnregistreDifficulte(0, 12);
+        string commentaireRempart = analyseRempart.Jugement(1)?.Commentaire;
+        Verifie("Thèmes : « Fourchette du cavalier » (1. Cc7+ puis Cxa8), « Sacrifice du fou : détruit le rempart du roque » (1. Fxh7+)",
+            commentaireFourchette == "Fourchette du cavalier" && commentaireRempart == "Sacrifice du fou : détruit le rempart du roque",
+            $"« {commentaireFourchette} » / « {commentaireRempart} »");
         // Menace : 3. Dh5 menace 4. Dxf7# (coup nul), 3... De7 la pare ; réponses simulées du 2e moteur
         const string fenMenace = "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR w KQkq - 2 3";
         Charger(fenMenace);
