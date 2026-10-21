@@ -112,12 +112,12 @@ namespace BrunoGUI_GenII
         }
 
         public static string TexteAppreciation(int niveau, Evaluation evaluation) => niveau switch
-        {
-            2 => evaluation.MatEn is int mat ? Langue.T("Mat en {0} pour les Blancs", mat) : Langue.T("Les Blancs ont un avantage décisif"),
-            1 => Langue.T("Les Blancs sont mieux"),
-            -1 => Langue.T("Les Noirs sont mieux"),
-            -2 => evaluation.MatEn is int matNoir ? Langue.T("Mat en {0} pour les Noirs", -matNoir) : Langue.T("Les Noirs ont un avantage décisif"),
-            _ => Langue.T("La position est équilibrée")
+        {   // Les appréciations de base, courtes (choix de Bruno, 2026-10-21 : plutôt que "Les Blancs sont mieux")
+            2 => evaluation.MatEn is int mat ? Langue.T("Mat en {0} pour les Blancs", mat) : Langue.T("Avantage décisif Blanc"),
+            1 => Langue.T("Avantage Blanc"),
+            -1 => Langue.T("Avantage Noir"),
+            -2 => evaluation.MatEn is int matNoir ? Langue.T("Mat en {0} pour les Noirs", -matNoir) : Langue.T("Avantage décisif Noir"),
+            _ => Langue.T("Égal")
         };
 
         public static string? TypeDeFinale(Position position)
@@ -860,7 +860,7 @@ namespace BrunoGUI_GenII
 
         public Dictionary<int, string> CommentairesAppreciation()
         {   // Coups (place dans ListeCoups) après lesquels l'appréciation change de niveau (JugementCoups.NiveauAppreciation), avec son
-            // texte : "Les Blancs sont mieux", "La position est équilibrée"… La partie est parcourue dans l'ordre ; une position pas
+            // texte : "Avantage Blanc", "Égal"… La partie est parcourue dans l'ordre ; une position pas
             // (encore) analysée est sautée, le niveau de départ est celui de la 1re position connue (sans commentaire) ; jamais sur
             // un coup de la bibliothèque (la théorie n'est pas commentée)
             Dictionary<int, string> textes = [];
