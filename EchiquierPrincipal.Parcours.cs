@@ -455,9 +455,12 @@ namespace BrunoGUI_GenII
             : duree.TotalMinutes >= 1 ? $"{duree.Minutes} min {duree.Seconds:00} s"
             : $"{duree.Seconds} s";
         private static string TexteCoupJoue(int index, Position positionApres)
-        {   // Ex : "Coup blanc : 12. Cf3" ou "Coup noir : 12... Fe7" (coup n° index, qui a mené à positionApres)
-            string coup = LogiqueMouvements.ListeCoupsNal[index];
-            coup = coup.Contains('.') ? coup.Split('.').Last().Trim() : coup.Trim();
+        {   // Ex : "Coup blanc : 12. Cg1-f3" ou "Coup noir : 12... Ff8-e7" (coup n° index, qui a mené à positionApres) : notation
+            // longue française, comme la 2e ligne (la notation NAL de la liste est en lettres anglaises : "Ng1-f3" sur la 1re ligne
+            // et "Cg1-f3" sur la 2e, remarque de Bruno), puis en lettres anglaises si l'interface est en anglais (Notation)
+            Coup joue = LogiqueMouvements.ListeCoups[index];
+            string fenAvant = index > 0 ? LogiqueMouvements.ListeCoups[index - 1].Fen : FenDepart;
+            string coup = Notation(joue.CoupJoueLong ?? AnalyseDePartie.NotationLongue(fenAvant, joue.Uci.Trim(), joue.PgnFrSansNumero) ?? joue.PgnFrSansNumero);
             int numero = (int)Math.Floor(positionApres.NombreCoupsJoues - 0.5f);   // numéro du coup qui vient d'être joué
             return positionApres.QuiJoue == ColorPiece.Blanc ? T("Coup noir : {0}... {1}", numero, coup) : T("Coup blanc : {0}. {1}", numero, coup);
         }
