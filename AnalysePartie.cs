@@ -899,6 +899,19 @@ namespace BrunoGUI_GenII
                 : Langue.T("Menace : {0}", apres.TexteMenace);
         }
 
+        private string? CommentaireRefutation(int k, string? parade)
+        {   // Le coup joué depuis la position k est une erreur : le meilleur coup de l'adversaire juste après, qui la punit
+            // ("Réfutation : 27... Fxf3") ; rien s'il est déjà donné par "Ne pare pas la menace …", ou si la position d'après n'est
+            // pas analysée
+            if (k + 1 >= _positions.Count || _positions[k + 1].MeilleurCoupUci is not string uci)
+                return null;
+            if (_positions[k].MenaceUci is string menace && parade != null && uci.StartsWith(menace))
+                return null;
+            Position apres = PositionDepuisFen(_positions[k + 1].Fen);
+            string coup = Outils.VarianteUciVersPgn(uci, DemiCoupAvant(apres), false, apres).Trim().Replace(" ... ", "... ");
+            return coup == "" ? null : Langue.T("Réfutation : {0}", Langue.Notation(coup));
+        }
+
         private string? CommentaireParade(int k, JugementCoup jugement)
         {   // Le coup qui part de la position k face à une menace (créée par le coup d'avant) : "Pare la menace" seulement s'il était
             // le seul bon coup (la 2e variante du moteur perdait une erreur ; sinon presque chaque réponse "parait" une menace) ; s'il
@@ -1017,8 +1030,14 @@ namespace BrunoGUI_GenII
                 int k = _indexCoups.IndexOf(jugement.IndexCoup);
                 string? piege = k >= 2 && _positions[k].CasePiege != null && _positions[k - 2].CasePiege == _positions[k].CasePiege
                     ? null : _positions[k].TextePiege;
-                string?[] textes = [ouverture.GetValueOrDefault(jugement.IndexCoup), jugement.Commentaire,
-                                    CommentaireParade(k, jugement), k + 1 < _positions.Count ? CommentaireMenace(k + 1) : null, piege,
+                // (une erreur ? ou ?? : sa réfutation au lieu de la menace qu'elle crée, remarque de Bruno : « Menace : 28. Fxg7 » sur
+                // 27. Fd4?? semblait bon pour les Blancs, et rien ne disait pourquoi le coup perdait)
+                // (pas de réfutation après un mat manqué : le coup n'est pas puni, il laisse passer le mat, déjà dit)
+                bool erreur = jugement.Perte >= JugementCoups.SeuilErreur && !jugement.MeilleurJoue;
+                bool refutation = erreur && jugement.Commentaire == null;
+                string? parade = CommentaireParade(k, jugement);
+                string?[] textes = [ouverture.GetValueOrDefault(jugement.IndexCoup), jugement.Commentaire, parade,
+                                    refutation ? CommentaireRefutation(k, parade) : !erreur && k + 1 < _positions.Count ? CommentaireMenace(k + 1) : null, piege,
                                     finales.GetValueOrDefault(jugement.IndexCoup), matManque ? null : appreciations.GetValueOrDefault(jugement.IndexCoup)];
                 coup.CommentaireAuto = textes.Any(t => t != null) ? string.Join(". ", textes.OfType<string>()) : null;
                 // (la notation NAL du coup est en lettres anglaises : la notation longue française est calculée ici)
