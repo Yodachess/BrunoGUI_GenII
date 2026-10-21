@@ -985,6 +985,12 @@ namespace BrunoGUI_GenII
             //                avantage (appréciation en 7 niveaux), fenêtre de suivi de l'analyse de partie, durées d'analyse réglables
             //                (10 et 30 s par défaut), meilleure suite rejouée sur l'échiquier, saisie de partie sans pendule, parcours
             //                sans retour à la partie par un clic sur l'échiquier
+            // Version 1.25 = analyse de partie commentée (1.23 et 1.24 sautées, choix de Bruno) : « ! » et « !! » mieux jugés (coup
+            //                difficile à trouver, mesuré par un 2e Stockfish ; sacrifice offert), sacrifices, appréciation, type de
+            //                finale, mat manqué, pièges (« La tour g6 est imprenable »), menaces (« Menace : … », « Pare la menace »),
+            //                thèmes tactiques (fourchette, attaque double, rempart du roque), nom de l'ouverture avec son code ECO
+            //                (table de Lichess, traduite) et « Hors bibliothèque » ; fenêtre de suivi de l'analyse d'une position,
+            //                bouton « PGN commenté », symboles d'évaluation toujours affichés, ancienne analyse effacée au lancement
             // (le numéro de version vient du .csproj, <Version> : il n'est plus écrit ici)
             _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version " + VersionAffichee + "\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", T("A propos de"),
