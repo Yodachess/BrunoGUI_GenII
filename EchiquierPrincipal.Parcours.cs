@@ -416,8 +416,28 @@ namespace BrunoGUI_GenII
             ligne.SelectionAlignment = HorizontalAlignment.Center;
             ligne.SelectionFont = _policesLignes[ligne].Grasse;
             ligne.SelectionColor = couleur ?? ligne.ForeColor;
+            if (PoliceSymboles(ligne) is Font policeSymboles)
+                foreach (Match symbole in Regex.Matches(texte, @"(?<=^|\s)(\+-|-\+|=|±|∓|⩲|⩱|#\+|#-)(?=\s|$)"))
+                {   // les symboles d'évaluation en très gras : en Segoe UI gras, "-+", "+-" et "=" restent aussi fins qu'en normal
+                    // (remarque de Bruno) ; ∓ ⩲ ⩱ viennent d'une autre police, sans gras, sur laquelle on ne peut rien
+                    ligne.Select(symbole.Index, symbole.Length);
+                    ligne.SelectionFont = policeSymboles;
+                }
             ligne.DeselectAll();
             _ecritureCentree = false;
+        }
+        private readonly Dictionary<RichTextBox, Font?> _policesSymboles = [];
+        private Font? PoliceSymboles(RichTextBox ligne)
+        {   // Segoe UI Black à la taille de la ligne (null si elle n'est pas installée : les symboles restent en gras simple)
+            if (!_policesSymboles.TryGetValue(ligne, out Font? police))
+            {
+                Font essai = new("Segoe UI Black", ligne.Font.Size, FontStyle.Regular, ligne.Font.Unit);
+                police = essai.Name == "Segoe UI Black" ? essai : null;
+                if (police == null)
+                    essai.Dispose();
+                _policesSymboles[ligne] = police;
+            }
+            return police;
         }
         private void LigneVariante_TextChanged(object? sender, EventArgs e)
         {   // Un autre texte que le coup regardé ou son analyse : alignement à gauche et police normale
