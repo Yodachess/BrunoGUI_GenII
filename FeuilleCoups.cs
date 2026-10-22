@@ -204,7 +204,15 @@ namespace BrunoGUI_GenII
             string? texte = index == -2 ? null
                 : index < 0 || _coups[index].EvaluationApres is not Evaluation evaluation ? Langue.T("Courbe d'évaluation : analyser la partie pour la voir")
                 : $"{Langue.Notation(_coups[index].PgnFrNumerote)}{_coups[index].Annotation}   {evaluation.Texte}";
-            _infobulleBande.SetToolTip(this, texte);
+            if (texte == null)
+            {
+                _infobulleBande.Hide(this);
+                return;
+            }
+            // À gauche de la souris, à la hauteur du demi-coup : placée par défaut sous le curseur, l'infobulle en était souvent
+            // cachée (remarque de Bruno) ; la bande étant au bord droit de la feuille, il y a la place à gauche
+            int largeur = TextRenderer.MeasureText(texte, SystemFonts.StatusFont ?? Font).Width + 12;
+            _infobulleBande.Show(texte, this, Math.Max(0, point.X - largeur - 14), Math.Max(0, point.Y - 8));
         }
 
         private string? _resultat;               // résultat écrit sous le dernier coup ("1-0", "0-1", "½-½"), null : partie en cours
@@ -381,7 +389,7 @@ namespace BrunoGUI_GenII
         {
             base.OnMouseLeave(e);
             _demiCoupInfobulle = -2;
-            _infobulleBande.SetToolTip(this, null);
+            _infobulleBande.Hide(this);
             if (_indexSurvole >= 0)
             {
                 _indexSurvole = -1;

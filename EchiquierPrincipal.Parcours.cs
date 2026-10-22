@@ -370,7 +370,7 @@ namespace BrunoGUI_GenII
                 + Notation(coup.CoupJoueLong ?? coup.PgnFrSansNumero)
                 + (coup.Annotation != "" ? " " + coup.Annotation : "")
                 + (evaluation is Evaluation apres ? $"  ({apres.Texte})" : "")
-                + (coup.Annotation != "" && nomAnnotation ? $"  [{Annotations.Nom(coup.Annotation)}]" : "");
+                + (coup.Annotation != "" && nomAnnotation ? $"  [{Annotations.NomCourt(coup.Annotation)}]" : "");
             if (bibliotheque)
                 return texte + "  — " + T("coup de la bibliothèque");
             if (!string.IsNullOrEmpty(coup.CommentaireAuto))

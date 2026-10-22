@@ -99,7 +99,9 @@ namespace BrunoGUI_GenII
         };
 
         public static string NomCourt(string annotation) => annotation switch
-        {   // Pour les commentaires de la feuille de partie, sans le mot « coup » qui prenait de la place (choix de Bruno)
+        {   // Pour la feuille de partie et la 2e ligne sous l'échiquier, sans le mot « coup » qui prenait de la place (choix de
+            // Bruno) ; le menu des annotations garde les noms complets
+            "!!" => Langue.T("Brillant"), "!" => Langue.T("Bon"), "!?" => Langue.T("Intéressant"),
             "?!" => Langue.T("Douteux"), "?" => Langue.T("Mauvais"), "??" => Langue.T("Gaffe"), _ => Nom(annotation)
         };
 
