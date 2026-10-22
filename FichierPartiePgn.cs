@@ -161,6 +161,8 @@ namespace BrunoGUI_GenII
 
     public partial class FichierPartiePgn : Form
     {
+        private static readonly Font PoliceGrasTableau = new("Arial", 9, FontStyle.Bold);    // joueurs et résultat dans le tableau
+
         public FichierPartiePgn()
         {
             InitializeComponent();
@@ -497,9 +499,9 @@ namespace BrunoGUI_GenII
                     partie.ECO, partie.Tournoi, partie.Ronde, partie.Lieu, partie.Date);
                 TableauPartiesPgn.Rows[rowIndex].Tag = partie;      // Ajoute l'objet PartieEchecsPgn comme 'Tag' de la ligne
             }
-            TableauPartiesPgn.Columns[0].DefaultCellStyle.Font = new Font("Arial", 9, FontStyle.Bold);  // Mise en valeur des joueurs
-            TableauPartiesPgn.Columns[2].DefaultCellStyle.Font = new Font("Arial", 9, FontStyle.Bold);  // et du résultat dans le tableau
-            TableauPartiesPgn.Columns[4].DefaultCellStyle.Font = new Font("Arial", 9, FontStyle.Bold);  
+            // Mise en valeur des joueurs et du résultat (une seule police, créée une fois : avant, trois à chaque fichier chargé)
+            foreach (int colonne in new[] { 0, 2, 4 })
+                TableauPartiesPgn.Columns[colonne].DefaultCellStyle.Font = PoliceGrasTableau;
             TableauPartiesPgn.Refresh();        // Rafraîchir la DataGridView pour s'assurer que les données sont bien affichées
         }
         private void TableauPartiesPgn_CellDoubleClick(object? sender, DataGridViewCellEventArgs e)

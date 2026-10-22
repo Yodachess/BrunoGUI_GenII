@@ -259,6 +259,8 @@
   "Gain {0}": "{0} is winning",
   "Mat en {0} manqué": "Missed mate in {0}",
   "Hors bibliothèque": "Out of book",
+  "case en passant « {0} » impossible : aucun pion ne vient d'avancer de deux cases": "en passant square “{0}” impossible: no pawn has just moved two squares",
+  "droit de roque « {0} » impossible : le roi ou la tour n'est plus sur sa case": "castling right “{0}” impossible: the king or the rook is no longer on its square",
   "{0}. {1} était meilleur.": "{0}. {1} was best.",
   "Douteux": "Dubious",
   "Brillant": "Brilliant",
