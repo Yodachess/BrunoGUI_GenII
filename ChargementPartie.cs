@@ -143,6 +143,7 @@ namespace BrunoGUI_GenII
                     // nouvelle analyse) ; sans cette marque, l'annotation est celle d'un joueur ou d'un auteur : jamais remplacée
                     coup.AnnotationProposee = coup.Annotation != "" && Element(pgn.AnnotationsAuto, demiCoupsJoues);
                     coup.CommentaireAuto = Element(pgn.CommentairesAuto, demiCoupsJoues);     // ([%autocom] : écrit par une analyse de BrunoGUI)
+                    coup.CommentaireTactique = Element(pgn.CommentairesTactiques, demiCoupsJoues);   // ([%tac] : sa partie essentielle)
                     RangeAnalyseLue(coup, fenAvant, Element(pgn.Commentaires, demiCoupsJoues), Element(pgn.Evaluations, demiCoupsJoues),
                                     Element(pgn.Variantes, demiCoupsJoues), evaluationAvant);
                     evaluationAvant = coup.EvaluationApres;
