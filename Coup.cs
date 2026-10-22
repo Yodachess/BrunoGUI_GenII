@@ -47,6 +47,8 @@ namespace BrunoGUI_GenII
         // Commentaire écrit par l'analyse de partie (ex : "Sacrifice du cavalier"), remplacé à chaque analyse ; dans le PGN, un bloc
         // à part marqué [%autocom], relu comme tel (jamais confondu avec le commentaire d'un joueur ou d'un auteur)
         public string? CommentaireAuto { get; set; }
+        // La partie essentielle de ce commentaire, pour la feuille de partie (sacrifice, thème tactique, mat manqué) ; null : rien
+        public string? CommentaireTactique { get; set; }
         public bool VarianteLue { get; set; }                   // la variante (meilleur coup) vient du PGN chargé : réécrite à l'enregistrement
 
         public void EffaceAnalyse()
@@ -54,7 +56,7 @@ namespace BrunoGUI_GenII
             // chargé ; sinon une analyse interrompue laissait un mélange (fin analysée de nouveau, début de l'ancienne). Restent
             // l'annotation et le commentaire du joueur (ou de l'auteur du PGN)
             EvaluationApres = EvaluationMeilleur = null;
-            MeilleurCoup = MeilleurCoupLong = MeilleurCoupUci = VarianteMeilleure = VarianteMeilleureUci = CommentaireAuto = null;
+            MeilleurCoup = MeilleurCoupLong = MeilleurCoupUci = VarianteMeilleure = VarianteMeilleureUci = CommentaireAuto = CommentaireTactique = null;
             MeilleurJoue = VarianteLue = false;
             PerteAnalyse = null;
             if (AnnotationProposee)
@@ -107,12 +109,19 @@ namespace BrunoGUI_GenII
     }
 
     // Une ligne de la feuille de partie : numéro du coup, et place dans ListeCoups du coup blanc et du coup noir
-    // (null : case vide, ex : "3. | ... | Cf6" pour une partie commencée par un coup noir, ou le coup noir pas encore joué)
-    public record LigneFeuille(int Numero, int? Blanc, int? Noir);
+    // (null : case vide, ex : "3. | ... | Cf6" pour une partie commencée par un coup noir, ou le coup noir pas encore joué) ;
+    // ou une ligne de commentaire (Commentaire non null), placée sous le coup qu'elle commente (Commente : sa place)
+    public record LigneFeuille(int Numero, int? Blanc, int? Noir, string? Commentaire = null, int? Commente = null)
+    {
+        public bool EstCommentaire => Commentaire != null;
+    }
 
     public static class FeuilleDePartie
-    {   // Mise en page de la feuille de partie (composant FeuilleCoups, à droite de l'échiquier) : une ligne par coup complet
-        public static List<LigneFeuille> Lignes(IReadOnlyList<Coup> coups)
+    {   // Mise en page de la feuille de partie (composant FeuilleCoups, à droite de l'échiquier) : une ligne par coup complet ;
+        // avec "commentaire" (place dans la liste -> texte, ou null), une ligne de commentaire sous chaque coup commenté, à la façon
+        // de Lichess et d'Europe Échecs (choix de Bruno) : après un coup blanc commenté, le coup noir repart sur sa propre ligne
+        // ("13. | ... | Cxd5")
+        public static List<LigneFeuille> Lignes(IReadOnlyList<Coup> coups, Func<int, string?>? commentaire = null)
         {
             List<LigneFeuille> lignes = [];
             for (int i = 0; i < coups.Count; i++)
@@ -122,12 +131,25 @@ namespace BrunoGUI_GenII
                     continue;
                 if (coup.EstCoupBlanc)
                     lignes.Add(new(coup.NumeroDuCoup, i, null));
-                else if (lignes.Count > 0 && lignes[^1].Noir == null && lignes[^1].Numero == coup.NumeroDuCoup)
+                else if (lignes.Count > 0 && !lignes[^1].EstCommentaire && lignes[^1].Noir == null && lignes[^1].Numero == coup.NumeroDuCoup)
                     lignes[^1] = lignes[^1] with { Noir = i };
                 else
                     lignes.Add(new(coup.NumeroDuCoup, null, i));
+                if (commentaire?.Invoke(i) is { Length: > 0 } texte)
+                    lignes.Add(new(coup.NumeroDuCoup, null, null, texte, i));
             }
             return lignes;
+        }
+
+        public static string? CommentaireEssentiel(Coup coup)
+        {   // Le commentaire de la feuille de partie, seulement l'essentiel (choix de Bruno) : une erreur (?!, ?, ??) et le coup qu'il
+            // fallait jouer ("Gaffe. Dc6 était meilleur."), puis le sacrifice, le thème tactique ou le mat manqué ; null : rien
+            List<string> phrases = [];
+            if (coup.Annotation is "?!" or "?" or "??" && !coup.MeilleurJoue && !string.IsNullOrEmpty(coup.MeilleurCoup))
+                phrases.Add(Langue.T("{0}. {1} était meilleur.", Annotations.Nom(coup.Annotation), Langue.Notation(coup.MeilleurCoup)));
+            if (!string.IsNullOrEmpty(coup.CommentaireTactique))
+                phrases.Add(coup.CommentaireTactique + ".");
+            return phrases.Count > 0 ? string.Join(" ", phrases) : null;
         }
     }
 

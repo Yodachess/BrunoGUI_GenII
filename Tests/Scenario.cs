@@ -652,6 +652,20 @@ public static class Scenario
             feuilleNormale.Count == 7 && feuilleNormale[0] == new LigneFeuille(1, 0, 1) && feuilleNormale[6] == new LigneFeuille(7, 12, 13)
             && FeuilleDePartie.Lignes([.. L.ListeCoups.Take(13)])[^1] == new LigneFeuille(7, 12, null),
             string.Join(" / ", feuilleNormale.Take(2)));
+        // Commentaires dans la feuille : sous le coup blanc 2 (le coup noir repart sur sa ligne) et sous le coup noir 3
+        List<LigneFeuille> feuilleCommentee = FeuilleDePartie.Lignes(L.ListeCoups, i => i == 2 ? "Erreur." : i == 5 ? "Sacrifice." : null);
+        Verifie("Feuille de partie : commentaire sous le coup blanc (le coup noir repart sur sa ligne) et sous le coup noir",
+            feuilleCommentee[1] == new LigneFeuille(2, 2, null) && feuilleCommentee[2] == new LigneFeuille(2, null, null, "Erreur.", 2)
+            && feuilleCommentee[3] == new LigneFeuille(2, null, 3) && feuilleCommentee[4] == new LigneFeuille(3, 4, 5)
+            && feuilleCommentee[5] == new LigneFeuille(3, null, null, "Sacrifice.", 5) && feuilleCommentee.Count == feuilleNormale.Count + 3,
+            string.Join(" / ", feuilleCommentee.Take(6)));
+        Coup coupErreur = new() { Fen = L.FenDepart, Annotation = "?", MeilleurCoup = "Cc4", CommentaireTactique = null };
+        Coup coupSacrificeFeuille = new() { Fen = L.FenDepart, Annotation = "!!", MeilleurJoue = true, CommentaireTactique = "Sacrifice du cavalier" };
+        Verifie("Feuille de partie : commentaire essentiel (erreur et meilleur coup, sacrifice ; rien sur un coup sans remarque)",
+            FeuilleDePartie.CommentaireEssentiel(coupErreur) == "Mauvais coup. Cc4 était meilleur."
+            && FeuilleDePartie.CommentaireEssentiel(coupSacrificeFeuille) == "Sacrifice du cavalier."
+            && FeuilleDePartie.CommentaireEssentiel(L.ListeCoups[0]) == null,
+            $"« {FeuilleDePartie.CommentaireEssentiel(coupErreur)} » / « {FeuilleDePartie.CommentaireEssentiel(coupSacrificeFeuille)} »");
         Verifie("Coup numéroté en français (cadre « Coup joué ») : blanc et noir",
             L.ListeCoups[0].PgnFrNumerote == "1. e4" && L.ListeCoups[1].PgnFrNumerote == "1... e5" && L.ListeCoups[^1].PgnFrNumerote == "7... d6",
             $"{L.ListeCoups[0].PgnFrNumerote} / {L.ListeCoups[1].PgnFrNumerote} / {L.ListeCoups[^1].PgnFrNumerote}");

@@ -1058,6 +1058,7 @@ namespace BrunoGUI_GenII
                                     refutation ? CommentaireRefutation(k, parade) : !erreur && k + 1 < _positions.Count ? CommentaireMenace(k + 1) : null, piege,
                                     finales.GetValueOrDefault(jugement.IndexCoup), matManque ? null : appreciations.GetValueOrDefault(jugement.IndexCoup)];
                 coup.CommentaireAuto = textes.Any(t => t != null) ? string.Join(". ", textes.OfType<string>()) : null;
+                coup.CommentaireTactique = jugement.Commentaire;    // (sacrifice, thème, mat manqué : l'essentiel, pour la feuille)
                 // (la notation NAL du coup est en lettres anglaises : la notation longue française est calculée ici)
                 PositionAnalysee positionAvant = _positions[_indexCoups.IndexOf(jugement.IndexCoup)];
                 coup.MeilleurCoupUci = positionAvant.MeilleurCoupUci;
