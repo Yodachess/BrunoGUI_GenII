@@ -82,6 +82,10 @@ namespace BrunoGUI_GenII
         {
             InitializeComponent();
             TraductionFenetres.Traduit(this);          // textes du designer dans la langue choisie (voir Langue.cs)
+            // Case « Son » juste après la case de la bibliothèque, à la largeur de son texte : en anglais, « Sound » était coupé
+            // (« Sou… ») dans les 49 px prévus pour « Son », alors que « Book » laisse la place (remarque de Bruno)
+            ActiveSon.Left = ActiveBibliotheque.Left + Math.Min(ActiveBibliotheque.Width, ActiveBibliotheque.PreferredSize.Width) + 4;
+            ActiveSon.Width = Math.Max(ActiveSon.Width, ActiveSon.PreferredSize.Width);
             TraductionFenetres.TraduitDialogues(SauvegardeFen, SauvegardeFichier, OuvertureChoixBibliotheque, OuvertureChoixMoteur, ChargerPartiesPgn, ChargerPositionFen);
             CreeMenuLangue();
             OptionsMenu.DropDownItems.Add(new ToolStripMenuItem(T("Durées de l'analyse de partie…"), Properties.Resources.Pendule, (s, e) => ChoisitDureesAnalyse()));
