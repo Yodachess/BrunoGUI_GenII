@@ -161,7 +161,7 @@ namespace BrunoGUI_GenII
 
         public static string? CommentaireEssentiel(Coup coup)
         {   // Le commentaire de la feuille de partie, seulement l'essentiel (choix de Bruno) : une erreur (?!, ?, ??) et le coup qu'il
-            // fallait jouer ("Gaffe. Dc6 était meilleur."), puis le sacrifice, le thème tactique ou le mat manqué ; null : rien
+            // fallait jouer ("Gaffe. Dc6 s'imposait.", PhraseErreur), puis le sacrifice, le thème tactique ou le mat manqué ; null : rien
             List<string> phrases = [];
             // (une annotation de l'auteur du PGN sur un coup que le moteur juge bon, ou presque : il n'y a pas mieux à proposer, et
             // la feuille dit le désaccord, choix B de Bruno, 16... f5? de Smirin–Grischuk, meilleur coup pour Stockfish)
@@ -169,10 +169,31 @@ namespace BrunoGUI_GenII
             if (coup.Annotation is "?!" or "?" or "??" && !coup.AnnotationProposee && coupCorrect && (coup.MeilleurJoue || coup.PerteAnalyse != null))
                 phrases.Add(Langue.T("Le moteur juge ce coup correct."));
             else if (coup.Annotation is "?!" or "?" or "??" && !coup.MeilleurJoue && !string.IsNullOrEmpty(coup.MeilleurCoup) && !coupCorrect)
-                phrases.Add(Langue.T("{0}. {1} était meilleur.", Annotations.NomCourt(coup.Annotation), Langue.Notation(coup.MeilleurCoup)));
+                phrases.Add(PhraseErreur(coup.Annotation, coup.Fen, Langue.Notation(coup.MeilleurCoup)));
             if (!string.IsNullOrEmpty(coup.CommentaireTactique))
                 phrases.Add(coup.CommentaireTactique + ".");
             return phrases.Count > 0 ? string.Join(" ", phrases) : null;
+        }
+
+        private static string PhraseErreur(string annotation, string fen, string meilleur)
+        {   // Une tournure parmi trois selon le demi-coup (choix de Bruno : "Gaffe. … était meilleur." répété à chaque ligne était
+            // monotone) ; la même pour un coup donné, et trois (nombre impair) pour que les erreurs successives d'un même camp, deux
+            // demi-coups plus loin, changent aussi de tournure
+            string[] champs = fen.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            int numero = champs.Length > 5 && int.TryParse(champs[5], out int n) ? n : 1;
+            int rang = (2 * numero + (champs.Length > 1 && champs[1] == "b" ? 1 : 0)) % 3;
+            return (annotation, rang) switch
+            {
+                ("?!", 0) => Langue.T("Douteux. {0} était meilleur.", meilleur),
+                ("?!", 1) => Langue.T("{0} était plus précis.", meilleur),
+                ("?!", _) => Langue.T("Mieux valait {0}.", meilleur),
+                ("?", 0) => Langue.T("Mauvais. {0} était meilleur.", meilleur),
+                ("?", 1) => Langue.T("Erreur : il fallait jouer {0}.", meilleur),
+                ("?", _) => Langue.T("{0} était bien meilleur.", meilleur),
+                (_, 0) => Langue.T("Gaffe. {0} s'imposait.", meilleur),
+                (_, 1) => Langue.T("Grosse erreur : il fallait jouer {0}.", meilleur),
+                _ => Langue.T("Gaffe ! Le bon coup était {0}.", meilleur)
+            };
         }
     }
 

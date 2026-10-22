@@ -662,7 +662,10 @@ public static class Scenario
         Coup coupErreur = new() { Fen = L.FenDepart, Annotation = "?", MeilleurCoup = "Cc4", CommentaireTactique = null };
         Coup coupSacrificeFeuille = new() { Fen = L.FenDepart, Annotation = "!!", MeilleurJoue = true, CommentaireTactique = "Sacrifice du cavalier" };
         Verifie("Feuille de partie : commentaire essentiel (erreur et meilleur coup, sacrifice ; rien sur un coup sans remarque)",
-            FeuilleDePartie.CommentaireEssentiel(coupErreur) == "Mauvais. Cc4 était meilleur."
+            FeuilleDePartie.CommentaireEssentiel(coupErreur) == "Cc4 était bien meilleur."
+            // tournures variées selon le demi-coup (1... coup noir : FEN après le coup, Blancs au trait au coup 2)
+            && FeuilleDePartie.CommentaireEssentiel(new Coup { Fen = L.FenDepart.Replace(" w ", " b "), Annotation = "?", MeilleurCoup = "Cc4" }) == "Mauvais. Cc4 était meilleur."
+            && FeuilleDePartie.CommentaireEssentiel(new Coup { Fen = L.FenDepart.Replace(" 1", " 2"), Annotation = "??", MeilleurCoup = "Cc4" }) == "Grosse erreur : il fallait jouer Cc4."
             && FeuilleDePartie.CommentaireEssentiel(coupSacrificeFeuille) == "Sacrifice du cavalier."
             && FeuilleDePartie.CommentaireEssentiel(L.ListeCoups[0]) == null
             && FeuilleDePartie.CommentaireEssentiel(new Coup { Fen = L.FenDepart, Annotation = "?", MeilleurJoue = true, PerteAnalyse = 0 }) == "Le moteur juge ce coup correct."
@@ -670,7 +673,7 @@ public static class Scenario
                                                                EvaluationMeilleur = new Evaluation(30, null), EvaluationApres = new Evaluation(10, null) }) == "Le moteur juge ce coup correct."
             // 20. Fd2? de Smirin–Grischuk : -7.06 → -10.66, presque rien en chances mais 3,6 pions : pas « correct »
             && FeuilleDePartie.CommentaireEssentiel(new Coup { Fen = L.FenDepart, Annotation = "?", MeilleurCoup = "Dxf8+", PerteAnalyse = 0.02,
-                                                               EvaluationMeilleur = new Evaluation(-706, null), EvaluationApres = new Evaluation(-1066, null) }) == "Mauvais. Dxf8+ était meilleur.",
+                                                               EvaluationMeilleur = new Evaluation(-706, null), EvaluationApres = new Evaluation(-1066, null) }) == "Dxf8+ était bien meilleur.",
             $"« {FeuilleDePartie.CommentaireEssentiel(coupErreur)} » / « {FeuilleDePartie.CommentaireEssentiel(coupSacrificeFeuille)} »");
         Verifie("Coup numéroté en français (cadre « Coup joué ») : blanc et noir",
             L.ListeCoups[0].PgnFrNumerote == "1. e4" && L.ListeCoups[1].PgnFrNumerote == "1... e5" && L.ListeCoups[^1].PgnFrNumerote == "7... d6",
@@ -1145,6 +1148,13 @@ public static class Scenario
         Verifie("Commentaire du sacrifice : la pièce donnée, qu'il soit accepté ou seulement offert (refusé dans la variante)",
             analyseSacrifice.Jugement(6).Commentaire == "Sacrifice du fou" && analyseEchange.Jugement(6).Commentaire == "Sacrifice du fou",
             $"« {analyseSacrifice.Jugement(6).Commentaire} » / « {analyseEchange.Jugement(6).Commentaire} »");
+        // 3. Fc4 Cf6 4. Fxf7+ Rxf7 : le fou est sacrifié par 4. Fxf7+, pas par 3. Fc4 (comme 12. Fh6+ Rg8 13. Fxf7+ d'une partie de Bruno)
+        AnalyseDePartie analyseCoupAvant = new(L.ListeCoups);
+        analyseCoupAvant.Enregistre(5, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(50, null), VariantePgn = "3 ... Cf6", VarianteUci = "g8f6" });
+        analyseCoupAvant.Enregistre(4, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(50, null), VariantePgn = "3. Fc4 Cf6 4. Fxf7+ Rxf7 5. Cg5+", VarianteUci = "f1c4 g8f6 c4f7 e8f7 f3g5" },
+                                    new LigneAnalyse { Numero = 2, Evaluation = new Evaluation(-150, null) });
+        Verifie("Sacrifice : pas attribué au coup d'avant quand la pièce donnée est jouée par un coup suivant de la variante (3. Fc4 … 4. Fxf7+)",
+            string.IsNullOrEmpty(analyseCoupAvant.Jugement(4)?.Commentaire), $"« {analyseCoupAvant.Jugement(4)?.Commentaire} »");
         analyseSacrifice.AppliqueAuxCoups(L.ListeCoups);
         L.ListeCoups[6].Commentaire = "Le coup du joueur";
         string pgnSacrifice = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "*" }, "Intl", pourFichier: true);

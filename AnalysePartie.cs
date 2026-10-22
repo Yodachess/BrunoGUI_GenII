@@ -688,13 +688,20 @@ namespace BrunoGUI_GenII
                 // case défendue (elle sera reprise, même après un coup intermédiaire : 25... Cfe4 26. Fxc8 b3 … Fxc8)
                 (TypePiece Piece, string Case, bool Qualite)? perdue = null;
                 DetailSacrifice? offert = null;     // pièce laissée en prise ; accepté si la variante la fait prendre, sinon offert
+                HashSet<string> jouesEnsuite = [];  // cases d'arrivée des coups suivants du joueur dans la variante
                 for (int i = 0; i < Math.Min(variante.Length, JugementCoups.DemiCoupsSacrifice + 1); i++)
                 {
                     if (variante[i].Length < 4)
                         return null;
                     string arrivee = variante[i].Substring(2, 2);
+                    if (i % 2 == 0 && i >= 2)
+                        jouesEnsuite.Add(arrivee);
                     if (i % 2 == 1 && perdue == null && PiecesEchiquier[RenvoieCaseIndex120(arrivee)] is TypePiece prise && prise != TypePiece.Vide)
                     {
+                        // la pièce prise y a été amenée par un coup suivant du joueur : c'est le sacrifice de CE coup-là (12. Fh6+ Rg8
+                        // 13. Fxf7+ Rxf7 14. De6# : le fou c4 est sacrifié par 13. Fxf7+, pas par 12. Fh6+, qui n'est pas prenable)
+                        if (jouesEnsuite.Contains(arrivee))
+                            return offert;
                         string coupAdverse = variante[i];
                         bool legere = JugementCoups.Valeur(PiecesEchiquier[RenvoieCaseIndex120(coupAdverse[..2])]) == 3;
                         bool defendue = CalculerSurCopie(() =>
