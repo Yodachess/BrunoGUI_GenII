@@ -259,7 +259,7 @@ namespace BrunoGUI_GenII
                 {   // ligne 3 : la suite prévue ; "meilleure" seulement si l'écart avec le coup joué compte (sinon c'est juste une
                     // autre possibilité, remarque de Bruno)
                     string libelle = coup.MeilleurJoue ? T("Suite prévue : {0}")
-                        : coup.PerteAnalyse < JugementCoups.SeuilImprecision ? T("Suite du moteur : {0}") : T("Meilleure suite : {0}");
+                        : FeuilleDePartie.EcartNegligeable(coup) ? T("Suite du moteur : {0}") : T("Meilleure suite : {0}");
                     AfficheLigneCentree(VarianteMoteurUci3, string.Format(libelle, Notation(coup.VarianteMeilleure)), CouleurSuite);
                     if (!string.IsNullOrEmpty(coup.VarianteMeilleureUci))
                     {   // un clic sur la ligne rejoue la suite sur l'échiquier (RejoueSuite, choix de Bruno)
@@ -380,7 +380,7 @@ namespace BrunoGUI_GenII
             // (le meilleur coup a lui aussi le symbole de son évaluation devant lui : "meilleur : +- Dd1-e1 (2.00)", choix de Bruno)
             string meilleur = (coup.EvaluationMeilleur is Evaluation symboleMeilleur ? symboleMeilleur.Symbole + " " : "")
                 + Notation(coup.MeilleurCoupLong ?? coup.MeilleurCoup) + (coup.EvaluationMeilleur is Evaluation e ? $" ({e.Texte})" : "");
-            return texte + (coup.PerteAnalyse < JugementCoups.SeuilImprecision
+            return texte + (FeuilleDePartie.EcartNegligeable(coup)
                 ? "  — " + T("moteur : {0}", meilleur) : "  — " + T("meilleur : {0}", meilleur));
         }
 

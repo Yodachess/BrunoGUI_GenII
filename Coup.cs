@@ -141,7 +141,16 @@ namespace BrunoGUI_GenII
             return lignes;
         }
 
-        private const int EcartPionsNegligeable = 50;      // en centipions : en dessous, un coup annoté par l'auteur est « correct »
+        private const int EcartPionsNegligeable = 50;      // en centipions
+
+        public static bool EcartNegligeable(Coup coup)
+        {   // Le coup joué ne perd presque rien par rapport au meilleur : petit écart en chances de gain ET en pions. Dans une partie
+            // déjà décidée, les chances ne bougent presque plus : 20. Fd2? de Smirin–Grischuk, -7.06 → -10.66, passait pour négligeable
+            // (feuille « correct », 2e ligne « — moteur : », 3e « Suite du moteur »)
+            bool ecartEnPionsPetit = coup.EvaluationMeilleur is Evaluation meilleure && coup.EvaluationApres is Evaluation apres
+                && meilleure.MatEn == apres.MatEn && Math.Abs((meilleure.Centipions ?? 0) - (apres.Centipions ?? 0)) < EcartPionsNegligeable;
+            return coup.PerteAnalyse is double perte && perte < JugementCoups.SeuilImprecision && ecartEnPionsPetit;
+        }
 
         public static string? CommentaireEssentiel(Coup coup)
         {   // Le commentaire de la feuille de partie, seulement l'essentiel (choix de Bruno) : une erreur (?!, ?, ??) et le coup qu'il
@@ -149,12 +158,7 @@ namespace BrunoGUI_GenII
             List<string> phrases = [];
             // (une annotation de l'auteur du PGN sur un coup que le moteur juge bon, ou presque : il n'y a pas mieux à proposer, et
             // la feuille dit le désaccord, choix B de Bruno, 16... f5? de Smirin–Grischuk, meilleur coup pour Stockfish)
-            // (écart petit en chances ET en pions : dans une partie déjà décidée, les chances ne bougent presque plus, et 20. Fd2?
-            // de la même partie, -7.06 → -10.66, aurait été « correct »)
-            bool ecartEnPionsPetit = coup.EvaluationMeilleur is Evaluation meilleure && coup.EvaluationApres is Evaluation apres
-                && meilleure.MatEn == apres.MatEn && Math.Abs((meilleure.Centipions ?? 0) - (apres.Centipions ?? 0)) < EcartPionsNegligeable;
-            bool coupCorrect = coup.MeilleurJoue
-                || coup.PerteAnalyse is double perte && perte < JugementCoups.SeuilImprecision && ecartEnPionsPetit;
+            bool coupCorrect = coup.MeilleurJoue || EcartNegligeable(coup);
             if (coup.Annotation is "?!" or "?" or "??" && !coup.AnnotationProposee && coupCorrect && (coup.MeilleurJoue || coup.PerteAnalyse != null))
                 phrases.Add(Langue.T("Le moteur juge ce coup correct."));
             else if (coup.Annotation is "?!" or "?" or "??" && !coup.MeilleurJoue && !string.IsNullOrEmpty(coup.MeilleurCoup) && !coupCorrect)

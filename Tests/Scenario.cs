@@ -1141,9 +1141,10 @@ public static class Scenario
         L.ListeCoups[6].Commentaire = "Le coup du joueur";
         string pgnSacrifice = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "*" }, "Intl", pourFichier: true);
         ChargementPartie.ChargerPartiePgn(FichierPartiePgn.DecodePartiePGN(pgnSacrifice), new Partie());
-        Verifie("PGN : commentaire de l'analyse dans son propre bloc [%autocom], relu à part du commentaire du joueur",
-            pgnSacrifice.Replace("\r\n", " ").Replace("\n", " ").Contains("{Le coup du joueur} {Sacrifice du fou [%autocom]")
-            && L.ListeCoups[6].CommentaireAuto == "Sacrifice du fou" && L.ListeCoups[6].Commentaire == "Le coup du joueur",
+        Verifie("PGN : commentaire de l'analyse dans son propre bloc [%autocom], relu à part du commentaire du joueur, avec sa partie essentielle [%tac]",
+            pgnSacrifice.Replace("\r\n", " ").Replace("\n", " ").Contains("{Le coup du joueur} {Sacrifice du fou [%autocom] [%tac 0,16]")
+            && L.ListeCoups[6].CommentaireAuto == "Sacrifice du fou" && L.ListeCoups[6].Commentaire == "Le coup du joueur"
+            && L.ListeCoups[6].CommentaireTactique == "Sacrifice du fou",
             $"{pgnSacrifice.Replace("\r\n", " ")} / auto « {L.ListeCoups[6].CommentaireAuto} », joueur « {L.ListeCoups[6].Commentaire} »");
         Verifie("Difficulté : profondeur à partir de laquelle le coup reste le choix du moteur",
             JugementCoups.ProfondeurDecouverte([(1, "a2a3"), (2, "b1c3"), (3, "b1c3"), (4, "a2a3"), (5, "a2a3")], "a2a3") == 4

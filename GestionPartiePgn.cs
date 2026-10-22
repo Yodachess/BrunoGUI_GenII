@@ -55,6 +55,7 @@ namespace BrunoGUI_GenII
         public List<string?> Variantes { get; set; } = [];
         public List<bool> AnnotationsAuto { get; set; } = [];       // [%auto] : l'annotation du coup a été posée par l'analyse de partie
         public List<string?> CommentairesAuto { get; set; } = [];   // [%autocom] : texte écrit par l'analyse de partie (Coup.CommentaireAuto)
+        public List<string?> CommentairesTactiques { get; set; } = [];  // [%tac] : sa partie essentielle (Coup.CommentaireTactique)
     }
 
     public class GestionPartiePgn
@@ -87,7 +88,10 @@ namespace BrunoGUI_GenII
                     if (commentaireJoueur != null)
                         texteCoup += " {" + commentaireJoueur + "}";
                     commentaireJoueur = null;
-                    commentaires.Add(coup.CommentaireAuto.Replace("{", "(").Replace("}", ")") + (pourFichier ? " [%autocom]" : ""));
+                    // (et la place de sa partie essentielle, pour la feuille de partie à la relecture : "[%tac 0,21]")
+                    int placeTactique = coup.CommentaireTactique is string tactique ? coup.CommentaireAuto.IndexOf(tactique) : -1;
+                    commentaires.Add(coup.CommentaireAuto.Replace("{", "(").Replace("}", ")") + (pourFichier ? " [%autocom]" : "")
+                        + (pourFichier && placeTactique >= 0 ? $" [%tac {placeTactique},{coup.CommentaireTactique!.Length}]" : ""));
                 }
                 if (commentaireJoueur != null)      // commentaire du PGN chargé : gardé (fichier et affichage)
                     commentaires.Add(commentaireJoueur);
