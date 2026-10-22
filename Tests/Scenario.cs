@@ -666,7 +666,11 @@ public static class Scenario
             && FeuilleDePartie.CommentaireEssentiel(coupSacrificeFeuille) == "Sacrifice du cavalier."
             && FeuilleDePartie.CommentaireEssentiel(L.ListeCoups[0]) == null
             && FeuilleDePartie.CommentaireEssentiel(new Coup { Fen = L.FenDepart, Annotation = "?", MeilleurJoue = true, PerteAnalyse = 0 }) == "Le moteur juge ce coup correct."
-            && FeuilleDePartie.CommentaireEssentiel(new Coup { Fen = L.FenDepart, Annotation = "?", MeilleurCoup = "Cc4", PerteAnalyse = 0.05 }) == "Le moteur juge ce coup correct.",
+            && FeuilleDePartie.CommentaireEssentiel(new Coup { Fen = L.FenDepart, Annotation = "?", MeilleurCoup = "Cc4", PerteAnalyse = 0.05,
+                                                               EvaluationMeilleur = new Evaluation(30, null), EvaluationApres = new Evaluation(10, null) }) == "Le moteur juge ce coup correct."
+            // 20. Fd2? de Smirin–Grischuk : -7.06 → -10.66, presque rien en chances mais 3,6 pions : pas « correct »
+            && FeuilleDePartie.CommentaireEssentiel(new Coup { Fen = L.FenDepart, Annotation = "?", MeilleurCoup = "Dxf8+", PerteAnalyse = 0.02,
+                                                               EvaluationMeilleur = new Evaluation(-706, null), EvaluationApres = new Evaluation(-1066, null) }) == "Mauvais coup. Dxf8+ était meilleur.",
             $"« {FeuilleDePartie.CommentaireEssentiel(coupErreur)} » / « {FeuilleDePartie.CommentaireEssentiel(coupSacrificeFeuille)} »");
         Verifie("Coup numéroté en français (cadre « Coup joué ») : blanc et noir",
             L.ListeCoups[0].PgnFrNumerote == "1. e4" && L.ListeCoups[1].PgnFrNumerote == "1... e5" && L.ListeCoups[^1].PgnFrNumerote == "7... d6",
