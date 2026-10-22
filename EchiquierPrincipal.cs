@@ -995,6 +995,10 @@ namespace BrunoGUI_GenII
             //                thèmes tactiques (fourchette, attaque double, rempart du roque), nom de l'ouverture avec son code ECO
             //                (table de Lichess, traduite) et « Hors bibliothèque » ; fenêtre de suivi de l'analyse d'une position,
             //                bouton « PGN commenté », symboles d'évaluation toujours affichés, ancienne analyse effacée au lancement
+            // Version 1.26 = analyse plus rapide (profondeur visée, la durée réglée devient un plafond : 40 à 70 % de temps en
+            //                moins), commentaires essentiels dans la feuille de partie (« Mauvais. Cc4 était meilleur. », sacrifices,
+            //                thèmes, « Le moteur juge ce coup correct. »), réfutation des erreurs, noms courts des annotations,
+            //                infobulle de la courbe à côté de la souris, aide anglaise avec ses propres captures
             // (le numéro de version vient du .csproj, <Version> : il n'est plus écrit ici)
             _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version " + VersionAffichee + "\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", T("A propos de"),
