@@ -664,7 +664,9 @@ public static class Scenario
         Verifie("Feuille de partie : commentaire essentiel (erreur et meilleur coup, sacrifice ; rien sur un coup sans remarque)",
             FeuilleDePartie.CommentaireEssentiel(coupErreur) == "Mauvais coup. Cc4 était meilleur."
             && FeuilleDePartie.CommentaireEssentiel(coupSacrificeFeuille) == "Sacrifice du cavalier."
-            && FeuilleDePartie.CommentaireEssentiel(L.ListeCoups[0]) == null,
+            && FeuilleDePartie.CommentaireEssentiel(L.ListeCoups[0]) == null
+            && FeuilleDePartie.CommentaireEssentiel(new Coup { Fen = L.FenDepart, Annotation = "?", MeilleurJoue = true, PerteAnalyse = 0 }) == "Le moteur juge ce coup correct."
+            && FeuilleDePartie.CommentaireEssentiel(new Coup { Fen = L.FenDepart, Annotation = "?", MeilleurCoup = "Cc4", PerteAnalyse = 0.05 }) == "Le moteur juge ce coup correct.",
             $"« {FeuilleDePartie.CommentaireEssentiel(coupErreur)} » / « {FeuilleDePartie.CommentaireEssentiel(coupSacrificeFeuille)} »");
         Verifie("Coup numéroté en français (cadre « Coup joué ») : blanc et noir",
             L.ListeCoups[0].PgnFrNumerote == "1. e4" && L.ListeCoups[1].PgnFrNumerote == "1... e5" && L.ListeCoups[^1].PgnFrNumerote == "7... d6",

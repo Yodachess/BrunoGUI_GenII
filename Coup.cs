@@ -145,7 +145,12 @@ namespace BrunoGUI_GenII
         {   // Le commentaire de la feuille de partie, seulement l'essentiel (choix de Bruno) : une erreur (?!, ?, ??) et le coup qu'il
             // fallait jouer ("Gaffe. Dc6 était meilleur."), puis le sacrifice, le thème tactique ou le mat manqué ; null : rien
             List<string> phrases = [];
-            if (coup.Annotation is "?!" or "?" or "??" && !coup.MeilleurJoue && !string.IsNullOrEmpty(coup.MeilleurCoup))
+            // (une annotation de l'auteur du PGN sur un coup que le moteur juge bon, ou presque : il n'y a pas mieux à proposer, et
+            // la feuille dit le désaccord, choix B de Bruno, 16... f5? de Smirin–Grischuk, meilleur coup pour Stockfish)
+            bool coupCorrect = coup.MeilleurJoue || coup.PerteAnalyse is double perte && perte < JugementCoups.SeuilImprecision;
+            if (coup.Annotation is "?!" or "?" or "??" && !coup.AnnotationProposee && coupCorrect && (coup.MeilleurJoue || coup.PerteAnalyse != null))
+                phrases.Add(Langue.T("Le moteur juge ce coup correct."));
+            else if (coup.Annotation is "?!" or "?" or "??" && !coup.MeilleurJoue && !string.IsNullOrEmpty(coup.MeilleurCoup) && !coupCorrect)
                 phrases.Add(Langue.T("{0}. {1} était meilleur.", Annotations.Nom(coup.Annotation), Langue.Notation(coup.MeilleurCoup)));
             if (!string.IsNullOrEmpty(coup.CommentaireTactique))
                 phrases.Add(coup.CommentaireTactique + ".");
