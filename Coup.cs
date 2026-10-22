@@ -98,6 +98,11 @@ namespace BrunoGUI_GenII
             "?!" => Langue.T("Coup douteux"), "?" => Langue.T("Mauvais coup"), "??" => Langue.T("Gaffe"), _ => Langue.T("Aucune annotation")
         };
 
+        public static string NomCourt(string annotation) => annotation switch
+        {   // Pour les commentaires de la feuille de partie, sans le mot « coup » qui prenait de la place (choix de Bruno)
+            "?!" => Langue.T("Douteux"), "?" => Langue.T("Mauvais"), "??" => Langue.T("Gaffe"), _ => Nom(annotation)
+        };
+
         public static (string Coup, string Annotation) Separe(string coupPgn)
         {   // "Ng5?!" -> ("Ng5", "?!") ; une suite de ! et ? qui n'est pas une annotation connue (ex : "!!!") est retirée sans être gardée
             int fin = coupPgn.Length;
@@ -162,7 +167,7 @@ namespace BrunoGUI_GenII
             if (coup.Annotation is "?!" or "?" or "??" && !coup.AnnotationProposee && coupCorrect && (coup.MeilleurJoue || coup.PerteAnalyse != null))
                 phrases.Add(Langue.T("Le moteur juge ce coup correct."));
             else if (coup.Annotation is "?!" or "?" or "??" && !coup.MeilleurJoue && !string.IsNullOrEmpty(coup.MeilleurCoup) && !coupCorrect)
-                phrases.Add(Langue.T("{0}. {1} était meilleur.", Annotations.Nom(coup.Annotation), Langue.Notation(coup.MeilleurCoup)));
+                phrases.Add(Langue.T("{0}. {1} était meilleur.", Annotations.NomCourt(coup.Annotation), Langue.Notation(coup.MeilleurCoup)));
             if (!string.IsNullOrEmpty(coup.CommentaireTactique))
                 phrases.Add(coup.CommentaireTactique + ".");
             return phrases.Count > 0 ? string.Join(" ", phrases) : null;
