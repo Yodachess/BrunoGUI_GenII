@@ -71,7 +71,48 @@ namespace BrunoGUI_GenII
         private Rectangle ZoneBande => new(ClientSize.Width - LargeurBande - 1, 1, LargeurBande, ClientSize.Height - 2);
 
         private float YDuDemiCoup(int ligne, bool noir) =>
-            1 + ligne * HauteurLigne + AutoScrollPosition.Y + HauteurLigne * (noir ? 0.5f : 0f);
+            _hauts[ligne] + AutoScrollPosition.Y + HauteurLigne * (noir ? 0.5f : 0f);
+
+        // ═══ Géométrie : les lignes de commentaire ont leur propre hauteur (le texte va à la ligne), d'où la position de chaque
+        // ligne calculée une fois (_hauts : haut de la ligne, sans le défilement ; _hauts[^1] : bas de la dernière) ═══
+        private List<int> _hauts = [1];
+        private Font? _policeCommentaire;
+        private static readonly Color CouleurCommentaire = Color.FromArgb(85, 92, 105);
+        private static readonly Color CouleurFondCommentaire = Color.FromArgb(250, 250, 252);
+        private const TextFormatFlags FormatCommentaire = TextFormatFlags.WordBreak | TextFormatFlags.NoPrefix | TextFormatFlags.Left;
+        private Rectangle ZoneTexteCommentaire(int y, int hauteur) => new(8, y + 3, Math.Max(20, ZoneBande.X - 14), hauteur - 6);
+
+        private int HauteurDe(LigneFeuille ligne)
+        {
+            if (!ligne.EstCommentaire)
+                return HauteurLigne;
+            _policeCommentaire ??= new Font(Font.FontFamily, Font.Size * 0.92f, FontStyle.Italic);
+            Size taille = TextRenderer.MeasureText(ligne.Commentaire, _policeCommentaire, new Size(ZoneTexteCommentaire(0, 100).Width, int.MaxValue), FormatCommentaire);
+            return taille.Height + 6;
+        }
+
+        private void CalculeGeometrie()
+        {
+            _hauts = [1];
+            foreach (LigneFeuille ligne in _lignes)
+                _hauts.Add(_hauts[^1] + HauteurDe(ligne));
+            AutoScrollMinSize = new Size(0, _hauts[^1] + (_resultat != null ? HauteurLigne : 0) + 1);
+        }
+
+        private int LigneA(int ySansDefilement)
+        {   // La ligne qui contient cette hauteur (sans le défilement), -1 en dehors des lignes
+            for (int ligne = 0; ligne < _lignes.Count; ligne++)
+                if (ySansDefilement >= _hauts[ligne] && ySansDefilement < _hauts[ligne + 1])
+                    return ligne;
+            return -1;
+        }
+
+        protected override void OnClientSizeChanged(EventArgs e)
+        {   // la largeur change le retour à la ligne des commentaires
+            base.OnClientSizeChanged(e);
+            CalculeGeometrie();
+            Invalidate();
+        }
 
         private float DemiLargeurBande => LargeurBande / 2f - 2;
         private float LongueurPions(double pions) => (float)(Math.Clamp(pions, -PionsMaximum, PionsMaximum) / PionsMaximum) * DemiLargeurBande;
@@ -79,7 +120,7 @@ namespace BrunoGUI_GenII
         private IEnumerable<(int Index, int Ligne, bool Noir, Evaluation Evaluation)> DemiCoupsAnalyses()
         {   // Les demi-coups analysés, dans l'ordre de la partie, avec leur ligne
             for (int ligne = 0; ligne < _lignes.Count; ligne++)
-                foreach ((int? index, bool noir) in new[] { (_lignes[ligne].Blanc, false), (_lignes[ligne].Noir, true) })
+                foreach ((int? index, bool noir) in _lignes[ligne].EstCommentaire ? [] : new[] { (_lignes[ligne].Blanc, false), (_lignes[ligne].Noir, true) })
                     if (index is int i && _coups[i].EvaluationApres is Evaluation evaluation)
                         yield return (i, ligne, noir, evaluation);
         }
@@ -142,11 +183,11 @@ namespace BrunoGUI_GenII
         {   // Demi-coup à cette hauteur de la bande (moitié haute de la ligne : coup blanc, basse : coup noir), -1 s'il n'y en a pas
             if (!ZoneBande.Contains(point))
                 return -1;
-            int y = point.Y - AutoScrollPosition.Y - 1;
-            int ligne = y / HauteurLigne;
-            if (ligne < 0 || ligne >= _lignes.Count)
+            int y = point.Y - AutoScrollPosition.Y;
+            int ligne = LigneA(y);
+            if (ligne < 0 || _lignes[ligne].EstCommentaire)
                 return -1;
-            bool noir = y % HauteurLigne >= HauteurLigne / 2;
+            bool noir = y - _hauts[ligne] >= HauteurLigne / 2;
             return (noir ? _lignes[ligne].Noir : _lignes[ligne].Blanc) ?? -1;
         }
 
@@ -168,42 +209,48 @@ namespace BrunoGUI_GenII
 
         private string? _resultat;               // résultat écrit sous le dernier coup ("1-0", "0-1", "½-½"), null : partie en cours
 
-        public void MetAJour(IReadOnlyList<Coup> coups, int indexSelectionne, string? resultat = null)
+        public void MetAJour(IReadOnlyList<Coup> coups, int indexSelectionne, string? resultat = null, Func<int, string?>? commentaire = null)
         {   // Les coups de la partie, le coup surligné (celui de la position affichée ; -1 : aucun, ex : position de départ),
-            // et le résultat de la partie ("1-0", "0-1", "1/2-1/2" ; vide ou "*" : partie en cours, rien n'est écrit)
+            // le résultat de la partie ("1-0", "0-1", "1/2-1/2" ; vide ou "*" : partie en cours, rien n'est écrit), et le
+            // commentaire à écrire sous un coup (place dans la liste -> texte ou null ; voir FeuilleDePartie.CommentaireEssentiel)
             _coups = [.. coups];
-            _lignes = FeuilleDePartie.Lignes(_coups);
+            _lignes = FeuilleDePartie.Lignes(_coups, commentaire);
             _resultat = resultat is "1-0" or "0-1" ? resultat : resultat == "1/2-1/2" ? "½-½" : null;
             _indexSelectionne = indexSelectionne;
             _indexSurvole = -1;
-            AutoScrollMinSize = new Size(0, NombreLignes * HauteurLigne + 2);
+            CalculeGeometrie();
             RendVisible(indexSelectionne);
             Invalidate();
         }
 
-        private int NombreLignes => _lignes.Count + (_resultat != null ? 1 : 0);     // avec la ligne du résultat
-
-        private int LigneDuCoup(int index) => _lignes.FindIndex(l => l.Blanc == index || l.Noir == index);
+        private int LigneDuCoup(int index) => _lignes.FindIndex(l => !l.EstCommentaire && (l.Blanc == index || l.Noir == index));
 
         private void RendVisible(int index)
-        {   // Fait défiler la feuille pour que le coup soit visible (le dernier coup joué reste en vue, avec le résultat en dessous)
+        {   // Fait défiler la feuille pour que le coup soit visible, avec son commentaire (le dernier coup joué reste en vue, avec
+            // le résultat en dessous)
             int ligne = LigneDuCoup(index);
             if (ligne < 0)
                 return;
-            int lignesVisibles = ligne == _lignes.Count - 1 && _resultat != null ? 2 : 1;
-            int haut = ligne * HauteurLigne, decalage = -AutoScrollPosition.Y;
+            int fin = ligne + 1 < _lignes.Count && _lignes[ligne + 1].EstCommentaire && _lignes[ligne + 1].Commente == index ? ligne + 1 : ligne;
+            int haut = _hauts[ligne], bas = _hauts[fin + 1] + (fin == _lignes.Count - 1 && _resultat != null ? HauteurLigne : 0);
+            int decalage = -AutoScrollPosition.Y;
             if (haut < decalage)
                 AutoScrollPosition = new Point(0, haut);
-            else if (haut + lignesVisibles * HauteurLigne > decalage + ClientSize.Height)
-                AutoScrollPosition = new Point(0, haut + lignesVisibles * HauteurLigne - ClientSize.Height + 2);
+            else if (bas > decalage + ClientSize.Height)
+                AutoScrollPosition = new Point(0, Math.Min(haut, bas - ClientSize.Height + 2));
         }
 
         private int CoupSous(Point point)
-        {   // Place dans ListeCoups du coup sous ce point du composant, -1 s'il n'y en a pas (numéro, case vide, sous la dernière ligne)
+        {   // Place dans ListeCoups du coup sous ce point du composant, -1 s'il n'y en a pas (numéro, case vide, sous la dernière
+            // ligne) ; sur une ligne de commentaire : le coup commenté
             if (point.X >= ZoneBande.X)
                 return DemiCoupDansLaBande(point);      // courbe d'évaluation : le demi-coup à cette hauteur
-            int ligne = (point.Y - AutoScrollPosition.Y - 1) / HauteurLigne;
-            if (point.Y < 1 || ligne < 0 || ligne >= _lignes.Count || point.X < LargeurNumero)
+            int ligne = LigneA(point.Y - AutoScrollPosition.Y);
+            if (ligne < 0)
+                return -1;
+            if (_lignes[ligne].EstCommentaire)
+                return _lignes[ligne].Commente ?? -1;
+            if (point.X < LargeurNumero)
                 return -1;
             int? index = point.X < LargeurNumero + LargeurCoup ? _lignes[ligne].Blanc : _lignes[ligne].Noir;
             return index ?? -1;
@@ -213,16 +260,28 @@ namespace BrunoGUI_GenII
         {
             base.OnPaint(e);
             int hauteur = HauteurLigne, largeurNumero = LargeurNumero, largeurCoup = LargeurCoup;
-            int premiere = Math.Max(0, (-AutoScrollPosition.Y) / hauteur);
-            for (int ligne = premiere; ligne < _lignes.Count; ligne++)
+            int rangCoup = 0;       // (une ligne de coups sur deux grisée ; les lignes de commentaire ne comptent pas)
+            for (int ligne = 0; ligne < _lignes.Count; ligne++)
             {
-                int y = 1 + ligne * hauteur + AutoScrollPosition.Y;
+                LigneFeuille l = _lignes[ligne];
+                int y = _hauts[ligne] + AutoScrollPosition.Y, hauteurLigne = _hauts[ligne + 1] - _hauts[ligne];
+                if (!l.EstCommentaire)
+                    rangCoup++;
                 if (y > ClientSize.Height)
                     break;
-                if (ligne % 2 == 1)
+                if (y + hauteurLigne < 0)
+                    continue;
+                if (l.EstCommentaire)
+                {   // Commentaire sous le coup, en gris italique, sur plusieurs lignes si besoin (à la façon de Lichess)
+                    using (SolidBrush fond = new(CouleurFondCommentaire))
+                        e.Graphics.FillRectangle(fond, 1, y, ZoneBande.X - 1, hauteurLigne);
+                    TextRenderer.DrawText(e.Graphics, l.Commentaire, _policeCommentaire ?? Font, ZoneTexteCommentaire(y, hauteurLigne),
+                                          CouleurCommentaire, FormatCommentaire);
+                    continue;
+                }
+                if (rangCoup % 2 == 0)
                     using (SolidBrush fond = new(CouleurLignePaire))
                         e.Graphics.FillRectangle(fond, 1, y, ClientSize.Width - 2, hauteur);
-                LigneFeuille l = _lignes[ligne];
                 TextRenderer.DrawText(e.Graphics, l.Numero + ".", Font, new Rectangle(2, y, largeurNumero - 4, hauteur), CouleurNumero,
                     TextFormatFlags.Right | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
                 DessineCase(e.Graphics, l.Blanc, l.Noir != null, new Rectangle(largeurNumero, y, largeurCoup, hauteur));
@@ -230,7 +289,7 @@ namespace BrunoGUI_GenII
             }
             if (_resultat != null)
             {   // Le résultat, centré et en gras sous le dernier coup
-                int y = 1 + _lignes.Count * hauteur + AutoScrollPosition.Y;
+                int y = _hauts[^1] + AutoScrollPosition.Y;
                 _policeResultat ??= new Font(Font, FontStyle.Bold);
                 TextRenderer.DrawText(e.Graphics, _resultat, _policeResultat, new Rectangle(0, y, ClientSize.Width, hauteur), ForeColor,
                     TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);

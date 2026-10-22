@@ -1241,7 +1241,9 @@ namespace BrunoGUI_GenII
             // (pendant le parcours, le coup regardé ; sinon le dernier coup joué ; rien pour la position de départ)
             // Partie finie : son résultat sous le dernier coup, comme sur une feuille papier
             int indexAffiche = ParcoursEnCours ? _indexAffiche : LogiqueMouvements.ListeCoups.Count - 1;
-            FeuilleDesCoups.MetAJour(LogiqueMouvements.ListeCoups, indexAffiche, PartieEnCours.Result);
+            // (sous un coup, son commentaire essentiel, à la façon de Lichess : erreur et meilleur coup, sacrifice, thème ; choix de Bruno)
+            IReadOnlyList<Coup> coups = LogiqueMouvements.ListeCoups;
+            FeuilleDesCoups.MetAJour(coups, indexAffiche, PartieEnCours.Result, i => FeuilleDePartie.CommentaireEssentiel(coups[i]));
             AfficheTournoi();
         }
         private void AfficheTournoi()
