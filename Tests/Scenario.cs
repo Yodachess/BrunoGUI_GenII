@@ -762,6 +762,14 @@ public static class Scenario
         Verifie("Position impossible : le camp qui n'a pas le trait est en échec",
             ErreurFen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1").Contains("échec") && ChargementPartie.ErreurFen("4k3/8/8/8/8/8/8/4R1K1 b - - 0 1") == null,
             ErreurFen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1"));
+        Verifie("FEN : case en passant et roques cohérents avec la position (sinon une prise ou un roque impossibles devenaient jouables)",
+            ErreurFen("4k3/8/8/8/8/8/8/4K3 w - e6 0 1").Contains("passant")                                  // aucun pion en e5
+            && ErreurFen("rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR b KQkq d6 0 3").Contains("passant")   // 6e rangée, Noirs au trait
+            && ChargementPartie.ErreurFen("rnbqkbnr/pppp1ppp/8/8/4Pp2/8/PPPP2PP/RNBQKBNR b KQkq e3 0 3") == null
+            && ErreurFen("4k3/8/8/8/8/8/8/5K1R w K - 0 1").Contains("roque")                                  // roi en f1
+            && ErreurFen("4k3/8/8/8/8/8/8/4K3 w Q - 0 1").Contains("roque")                                   // pas de tour en a1
+            && ChargementPartie.ErreurFen("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1") == null,
+            $"{ErreurFen("4k3/8/8/8/8/8/8/4K3 w - e6 0 1")} / {ErreurFen("4k3/8/8/8/8/8/8/5K1R w K - 0 1")}");
 
         // Parties réelles annotées par Fritz / ChessBase (commentaires sur plusieurs lignes, variantes, $NAG, %eval, %emt)
         List<string> partiesAnnotees = FichierPartiePgn.DecodeFichierPGN(System.IO.Path.Combine(AppContext.BaseDirectory, "PartiesAnnotees.pgn"));

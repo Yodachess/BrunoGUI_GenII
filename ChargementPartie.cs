@@ -73,6 +73,43 @@ namespace BrunoGUI_GenII
                 return Langue.T("droits de roque « {0} » illisibles", champs[2]);
             if (champs[3] != "-" && !(champs[3].Length == 2 && champs[3][0] is >= 'a' and <= 'h' && champs[3][1] is '3' or '6'))
                 return Langue.T("case en passant « {0} » illisible", champs[3]);
+            // Cohérence avec la position (une FEN collée ou lue dans un fichier ; la saisie de position le garantit déjà) : sinon un
+            // roque ou une prise en passant impossibles devenaient jouables
+            char PieceEn(char colonne, int rangee)
+            {   // la pièce (lettre FEN) sur cette case, ' ' si elle est vide
+                int c = 0;
+                foreach (char x in rangees[8 - rangee])
+                {
+                    if (x is >= '1' and <= '8')
+                        c += x - '0';
+                    else if (c++ == colonne - 'a')
+                        return x;
+                    if (c > colonne - 'a')
+                        return ' ';
+                }
+                return ' ';
+            }
+            if (champs[3] != "-")
+            {   // la case est derrière un pion qui vient d'avancer de deux cases : 6e rangée et pion noir en 5e (Blancs au trait),
+                // ou 3e rangée et pion blanc en 4e (Noirs au trait), cases de passage vides
+                char colonne = champs[3][0];
+                bool blancsAuTrait = champs[1] == "w";
+                bool possible = blancsAuTrait
+                    ? champs[3][1] == '6' && PieceEn(colonne, 5) == 'p' && PieceEn(colonne, 6) == ' ' && PieceEn(colonne, 7) == ' '
+                    : champs[3][1] == '3' && PieceEn(colonne, 4) == 'P' && PieceEn(colonne, 3) == ' ' && PieceEn(colonne, 2) == ' ';
+                if (!possible)
+                    return Langue.T("case en passant « {0} » impossible : aucun pion ne vient d'avancer de deux cases", champs[3]);
+            }
+            if (champs[2] != "-")
+                foreach (char droit in champs[2])
+                {   // roi et tour sur leurs cases d'origine
+                    (char roi, char tour, int rangee, char colonneTour) = droit switch
+                    {
+                        'K' => ('K', 'R', 1, 'h'), 'Q' => ('K', 'R', 1, 'a'), 'k' => ('k', 'r', 8, 'h'), _ => ('k', 'r', 8, 'a')
+                    };
+                    if (PieceEn('e', rangee) != roi || PieceEn(colonneTour, rangee) != tour)
+                        return Langue.T("droit de roque « {0} » impossible : le roi ou la tour n'est plus sur sa case", droit);
+                }
             if (!int.TryParse(champs[4], out int demiCoups) || demiCoups < 0)
                 return Langue.T("compteur des 50 coups « {0} » illisible", champs[4]);
             if (!int.TryParse(champs[5], out int numero) || numero < 1)

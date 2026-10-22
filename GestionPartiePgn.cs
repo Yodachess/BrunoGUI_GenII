@@ -438,6 +438,7 @@ namespace BrunoGUI_GenII
                 this.Text = T("Saisie des en-têtes de parties");
                 this.Size = new Size(280, 450);
             }
+            private static readonly Font PoliceLibelle = new("Arial", 10), PoliceChamp = new("Arial", 10, FontStyle.Bold | FontStyle.Italic);
             private KryptonTextBox CreationBalisesTextBox(string labelText, int x, int y)
             {
                 KryptonLabel label = new()
@@ -445,7 +446,7 @@ namespace BrunoGUI_GenII
                     Text = labelText,
                     Location = new Point(x, y),
                 };
-                label.StateNormal.ShortText.Font = new Font("Arial", 10); // ✅ Police du label
+                label.StateNormal.ShortText.Font = PoliceLibelle;   // (polices créées une fois : avant, deux par champ à chaque ouverture)
                 this.Controls.Add(label);
 
                 KryptonTextBox textBox = new()
@@ -454,7 +455,7 @@ namespace BrunoGUI_GenII
                     Width = 120,
                 };
                 textBox.StateCommon.Border.DrawBorders = PaletteDrawBorders.All; // ✅ Bordure
-                textBox.StateCommon.Content.Font = new Font("Arial", 10, FontStyle.Bold | FontStyle.Italic); // ✅ Police du texte
+                textBox.StateCommon.Content.Font = PoliceChamp;
                 this.Controls.Add(textBox);
 
                 return textBox;
