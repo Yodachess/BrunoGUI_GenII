@@ -141,13 +141,20 @@ namespace BrunoGUI_GenII
             return lignes;
         }
 
+        private const int EcartPionsNegligeable = 50;      // en centipions : en dessous, un coup annoté par l'auteur est « correct »
+
         public static string? CommentaireEssentiel(Coup coup)
         {   // Le commentaire de la feuille de partie, seulement l'essentiel (choix de Bruno) : une erreur (?!, ?, ??) et le coup qu'il
             // fallait jouer ("Gaffe. Dc6 était meilleur."), puis le sacrifice, le thème tactique ou le mat manqué ; null : rien
             List<string> phrases = [];
             // (une annotation de l'auteur du PGN sur un coup que le moteur juge bon, ou presque : il n'y a pas mieux à proposer, et
             // la feuille dit le désaccord, choix B de Bruno, 16... f5? de Smirin–Grischuk, meilleur coup pour Stockfish)
-            bool coupCorrect = coup.MeilleurJoue || coup.PerteAnalyse is double perte && perte < JugementCoups.SeuilImprecision;
+            // (écart petit en chances ET en pions : dans une partie déjà décidée, les chances ne bougent presque plus, et 20. Fd2?
+            // de la même partie, -7.06 → -10.66, aurait été « correct »)
+            bool ecartEnPionsPetit = coup.EvaluationMeilleur is Evaluation meilleure && coup.EvaluationApres is Evaluation apres
+                && meilleure.MatEn == apres.MatEn && Math.Abs((meilleure.Centipions ?? 0) - (apres.Centipions ?? 0)) < EcartPionsNegligeable;
+            bool coupCorrect = coup.MeilleurJoue
+                || coup.PerteAnalyse is double perte && perte < JugementCoups.SeuilImprecision && ecartEnPionsPetit;
             if (coup.Annotation is "?!" or "?" or "??" && !coup.AnnotationProposee && coupCorrect && (coup.MeilleurJoue || coup.PerteAnalyse != null))
                 phrases.Add(Langue.T("Le moteur juge ce coup correct."));
             else if (coup.Annotation is "?!" or "?" or "??" && !coup.MeilleurJoue && !string.IsNullOrEmpty(coup.MeilleurCoup) && !coupCorrect)
