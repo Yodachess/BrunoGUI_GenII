@@ -213,6 +213,7 @@ namespace BrunoGUI_GenII
         public int NombreCoeursThread { get; set; } = 4;
         public int? TailleHachageMo { get; set; }       // null : taille par défaut du moteur
         public string Bibliotheque { get; set; } = "rodent.bin";
+        public string PersonnaliteRodent { get; set; } = "";    // personnalité de Rodent IV (option UCI Personality) ; vide : son style par défaut
         public string Langue { get; set; } = "";              // langue de l'interface ("fr", "en") ; vide : celle de Windows
         public string Palette { get; set; } = "";               // palette Krypton (ex : Microsoft365Silver) ; vide : palette par défaut
         public int DureeAnalyseRapide { get; set; } = 10;       // analyse de partie : secondes par position (1er passage)
@@ -287,6 +288,7 @@ namespace BrunoGUI_GenII
                     case "NombreCoeursThread": NombreCoeursThread = PremierEntier(valeur) ?? NombreCoeursThread; break;
                     case "TableHachage": TailleHachageMo = PremierEntier(valeur); break;     // en Mo, ex : "256" ou "256 min"
                     case "Bibliotheque": Bibliotheque = valeur; break;
+                    case "PersonnaliteRodent": PersonnaliteRodent = valeur; break;
                     case "Palette": Palette = valeur; break;
                     case "Langue": Langue = valeur; break;
                     case "DureeAnalyseRapide": DureeAnalyseRapide = PremierEntier(valeur) ?? DureeAnalyseRapide; break;
@@ -335,6 +337,7 @@ namespace BrunoGUI_GenII
                 ["NombrelignesPV"] = NombreLignesPV.ToString(),
                 ["NombreCoeursThread"] = NombreCoeursThread.ToString(),
                 ["Bibliotheque"] = Bibliotheque,
+                ["PersonnaliteRodent"] = PersonnaliteRodent,
                 ["DureeAnalyseRapide"] = DureeAnalyseRapide.ToString(),
                 ["DureeAnalyseComplete"] = DureeAnalyseComplete.ToString(),
             };

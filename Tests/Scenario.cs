@@ -324,6 +324,11 @@ public static class Scenario
 
         Verifie("option : nom simple", LigneUci.Analyser("option name UCI_LimitStrength type check default false").NomOption == "UCI_LimitStrength", "UCI_LimitStrength");
         Verifie("option : nom avec espace", LigneUci.Analyser("option name Skill Level type spin default 20 min 0 max 20").NomOption == "Skill Level", "Skill Level");
+        LigneUci eloRodent = LigneUci.Analyser("option name UCI_Elo type spin default 2800 min 800 max 2800");
+        Verifie("option spin : bornes min et max (plage d'Elo de Rodent IV), aucune pour une option check",
+            eloRodent.OptionMinimum == 800 && eloRodent.OptionMaximum == 2800
+            && LigneUci.Analyser("option name UCI_LimitStrength type check default true").OptionMinimum == null,
+            $"{eloRodent.OptionMinimum} à {eloRodent.OptionMaximum}");
         Verifie("ligne vide", LigneUci.Analyser("   ").Commande == "", "commande vide");
 
         // Numérotation des demandes au moteur ("go" / "bestmove")
@@ -929,6 +934,22 @@ public static class Scenario
             coupAuJoueur && analyseALAnalyste && joueur.Recherches == 2 && joueur.DerniereForceMaximale && reglages == 1,
             $"joueur {joueur.Recherches} recherche(s), analyste {analyste.Recherches}, réglages {reglages}");
         piloteDouble.Abandonner();
+        // Personnalités de Rodent IV : la 1re liste de basic.ini, seulement celles dont le fichier existe, sans les commentaires
+        string dossierPerso = Path.Combine(Path.GetTempPath(), "BrunoGUI_TestPersonnalites");
+        Directory.CreateDirectory(dossierPerso);
+        File.WriteAllLines(Path.Combine(dossierPerso, "basic.ini"), ["HIDE_OPTIONS", "# - Arena   => restart", "PERSONALITY_SET=all",
+            "Tal=tal.txt", "Classicist=classicist.txt", "Bosboom.txt=bosboom.txt", "PERSONALITY_SET=distinct", "Amanda=amanda.txt"]);
+        foreach (string fichier in new[] { "tal.txt", "bosboom.txt", "amanda.txt" })
+            File.WriteAllText(Path.Combine(dossierPerso, fichier), "; essai");
+        List<(string Valeur, string Nom)> personnalites = PersonnalitesRodent.Lire(dossierPerso);
+        Verifie("Personnalités de Rodent : 1re liste de basic.ini, fichiers présents seulement (« Bosboom.txt » affiché Bosboom)",
+            personnalites.Count == 2 && personnalites[0] == ("Tal", "Tal") && personnalites[1] == ("Bosboom.txt", "Bosboom")
+            && PersonnalitesRodent.Lire(Path.Combine(dossierPerso, "absent")).Count == 0,
+            string.Join(", ", personnalites));
+        var proposees = PersonnalitesRodent.Proposees(dossierPerso);
+        Verifie("Personnalités proposées : seulement la sélection (champions et styles traduits), et présentes (Tal, pas Amanda)",
+            proposees.Count == 1 && proposees[0] == ("Tal", "Tal", false), string.Join(", ", proposees));
+        Directory.Delete(dossierPerso, true);
 
         Charger("8/4P2k/8/8/8/8/8/4K3 w - - 0 1");
         Verifie("Coup UCI avec promotion : la pièce demandée est posée (cavalier)",

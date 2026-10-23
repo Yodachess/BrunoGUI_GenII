@@ -91,7 +91,10 @@ namespace BrunoGUI_GenII
             ActiveSon.Width = Math.Max(ActiveSon.Width, ActiveSon.PreferredSize.Width);
             TraductionFenetres.TraduitDialogues(SauvegardeFen, SauvegardeFichier, OuvertureChoixBibliotheque, OuvertureChoixMoteur, ChargerPartiesPgn, ChargerPositionFen);
             CreeMenuLangue();
-            OptionsMenu.DropDownItems.Add(new ToolStripMenuItem(T("Durées de l'analyse de partie…"), Properties.Resources.Pendule, (s, e) => ChoisitDureesAnalyse()));
+            AnalyseMenu.DropDownItems.Add(new ToolStripMenuItem(T("Durées de l'analyse de partie…"), Properties.Resources.Pendule, (s, e) => ChoisitDureesAnalyse()));
+            nouvellePartieToolStripMenuItem.DropDownOpening += (s, e) => MetAJourMenus();
+            AnalyseMenu.DropDownOpening += (s, e) => MetAJourMenus();
+            OptionsMenu.DropDownOpening += (s, e) => MetAJourMenus();
             // Icônes des options qui n'en avaient pas (choix de Bruno) : celles qui existaient déjà dans les ressources
             BtnMiseAJour.Image = Properties.Resources.Stockfish;
             if (Icon != null)
@@ -101,6 +104,9 @@ namespace BrunoGUI_GenII
             parametres =Parametres.Charger(Chemins.RepertoireRacine);   // BrunoGUI.ini puis préférences personnelles (à côté de l'exécutable)
             MoteurUci.NombreThreads = parametres.NombreCoeursThread;    // envoyés au moteur à son démarrage (voir MoteurUci)
             MoteurUci.TailleHachageMo = parametres.TailleHachageMo;
+            CreeMenuPersonnalites();
+            moteursBibliothequesToolStripMenuItem.DropDownOpening += MenuMoteurs_DropDownOpening;
+            StockfishMenu.DropDownOpening += MenuMoteurs_DropDownOpening;
             // Mise à jour des variables à partir des données du fichier
             _vue = new VueEchiquier(Plateau, this,      // vue côté Blancs au départ ; couleurs du .ini (style Lichess par défaut)
                 Parametres.ConvertitCouleur(parametres.CaseClaire, Parametres.LichessCaseClaire),
@@ -651,12 +657,82 @@ namespace BrunoGUI_GenII
                     _bibliotheque = precedente;     // fichier illisible : on garde la bibliothèque précédente (et son nom dans les préférences)
             }
         }
+        private string EloAffiche(int eloMaximal, string pleineForce) =>
+            // L'Elo affiché à côté du moteur : celui qui lui est réellement envoyé (gardé quand on change de moteur, borné à son
+            // maximum), ou sa pleine force (remarque de Bruno, 2026-10-23 : Rodent réglé à 1800 s'affichait « +- 3000 »)
+            MoteurUci.EloVoulu is int elo ? Math.Min(elo, eloMaximal).ToString() : pleineForce;
+        private void StockfishMoteur_Click(object? sender, EventArgs e)
+        {   // Menu Stockfish > Jouer contre Stockfish : Stockfish redevient le moteur qui joue (choix de Bruno, 2026-10-23 : avant,
+            // il fallait passer par « Nouvelle partie contre Stockfish »)
+            DemarreStockfish();
+        }
+        private void MenuMoteurs_DropDownOpening(object? sender, EventArgs e)
+        {   // Menus Stockfish et Moteur (un menu à part pour Stockfish, choix de Bruno du 2026-10-23) : le moteur en cours est
+            // coché ; « Paramètres avancés de Stockfish » n'a de sens qu'avec Stockfish
+            bool stockfish = string.Equals(Path.GetFullPath(_cheminMoteur), CheminStockfish, StringComparison.OrdinalIgnoreCase);
+            StockfishMoteur.Checked = stockfish;
+            RodentIV.Checked = _cheminMoteur.Contains("rodent", StringComparison.OrdinalIgnoreCase);
+            Sargon1_1978.Checked = _cheminMoteur.Contains("sargon", StringComparison.OrdinalIgnoreCase);
+            ParametresAvances.Enabled = stockfish;
+        }
         private void RodentIV_Click(object? sender, EventArgs e)
         {   //  https://echecs-et-informatique.franceserv.com/rodent-iv.html
-            _moteurElo = "+- 3000";
+            _moteurElo = EloAffiche(2800, "+- 3000");       // (Rodent IV : UCI_Elo de 800 à 2800)
             _cheminMoteur = Path.Combine(Chemins.MoteursUCI + @"\Rodent_IV", "rodent-iv-x64.exe");
             Debug.WriteLine("Chemin Rodent IV = " + _cheminMoteur);
             DemarrageMoteur();
+        }
+        private ToolStripMenuItem? _menuPersonnalites;
+        private static string DossierPersonnalitesRodent => Path.Combine(Chemins.MoteursUCI, "Rodent_IV", "personalities");
+        private void CreeMenuPersonnalites()
+        {   // Menu Moteur > Rodent IV ▸ : ses personnalités (style de jeu : Tal, Petrosian, Sacrifieur de pions…), la force restant
+            // l'Elo réglé ; choix de Bruno, 2026-10-23 : un sous-menu de Rodent IV. Choisir une personnalité choisit aussi Rodent ;
+            // elle lui est envoyée à son démarrage (préférence)
+            List<(string Valeur, string Nom, bool Style)> personnalites = PersonnalitesRodent.Proposees(DossierPersonnalitesRodent);
+            if (personnalites.Count == 0)
+            {   // dossier absent : Rodent IV se choisit directement, sans sous-menu
+                RodentIV.Click += RodentIV_Click;
+                return;
+            }
+            _menuPersonnalites = RodentIV;
+            RodentIV.DropDownItems.Add(new ToolStripMenuItem(T("Style par défaut"), null, (s, e) => ChoisitPersonnalite("", "")) { Tag = "" });
+            bool styles = true;
+            foreach ((string valeur, string nom, bool style) in personnalites)
+            {
+                if (style != styles || RodentIV.DropDownItems.Count == 1)
+                    RodentIV.DropDownItems.Add(new ToolStripSeparator());     // (champions, puis styles)
+                styles = style;
+                RodentIV.DropDownItems.Add(new ToolStripMenuItem(nom, null, (s, e) => ChoisitPersonnalite(valeur, nom)) { Tag = valeur });
+            }
+            string choisie = personnalites.Any(p => p.Valeur == parametres.PersonnaliteRodent) ? parametres.PersonnaliteRodent : "";
+            AppliquePersonnalite(choisie);
+        }
+        private void AppliquePersonnalite(string valeur)
+        {   // Mémorisée (préférences), envoyée à Rodent à son prochain démarrage (MoteurUci.OptionsAuDemarrage : aucun autre moteur
+            // ne déclare l'option Personality), et cochée dans le menu
+            parametres.PersonnaliteRodent = valeur;
+            if (valeur == "")
+                MoteurUci.OptionsAuDemarrage.Remove("Personality");
+            else
+                MoteurUci.OptionsAuDemarrage["Personality"] = valeur;
+            if (_menuPersonnalites == null)
+                return;
+            foreach (ToolStripItem element in _menuPersonnalites.DropDownItems)
+                if (element is ToolStripMenuItem item)
+                    item.Checked = (string?)item.Tag == valeur;
+        }
+        private void ChoisitPersonnalite(string valeur, string nom)
+        {   // Rodent devient le moteur qui joue, avec cette personnalité ; s'il l'était déjà, il est redémarré (il ne revient pas
+            // tout seul à son style par défaut), et il rejoue si c'était à lui de jouer
+            AppliquePersonnalite(valeur);
+            bool dejaRodent = _cheminMoteur.Contains("rodent", StringComparison.OrdinalIgnoreCase);
+            if (dejaRodent)
+                DemarrageMoteur();
+            else
+                RodentIV_Click(null, EventArgs.Empty);
+            InformationsPartie.Text = valeur == "" ? T("Rodent IV : style par défaut") : T("Rodent IV : personnalité {0}", nom);
+            if (_partie.MoteurAuTrait)
+                JeuMoteurAvecBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
         }
         private void Sargon1_1978_Click(object? sender, EventArgs e)
         {   // https://echecs-et-informatique.franceserv.com/sargon-1978.html
@@ -668,7 +744,7 @@ namespace BrunoGUI_GenII
         }
         public void DemarreStockfish()
         {   //  https://stockfishchess.org/
-            _moteurElo = "+- 3000";
+            _moteurElo = EloAffiche(3190, "3150");          // (Stockfish : UCI_Elo jusqu'à 3190 ; pleine force affichée 3150, comme ailleurs)
             _cheminMoteur = CheminStockfish;
             Debug.WriteLine("Chemin Stockfish = " + _cheminMoteur);
             DemarrageMoteur();
@@ -1279,6 +1355,28 @@ namespace BrunoGUI_GenII
             BoutonSaisiePosition.Enabled = _analyseDePartie == null;      // (pas pendant une analyse de partie)
             MetAJourPlateau();
             MetAJourFeuille();      // (appelée partout où la partie ou le parcours change : la feuille les suit d'ici)
+            MetAJourMenus();
+        }
+        private void MetAJourMenus()
+        {   // Les commandes de menu qui doublent un bouton (menus rangés, choix de Bruno du 2026-10-23) suivent son état : grisées
+            // comme lui (y compris pour leur raccourci clavier, Ctrl+Z, F5) ; le nom du moteur en cours dans « Jouer les Blancs contre … »
+            RetourArriereMenu.Enabled = RetourArriere.Enabled;
+            OrdinateurJoueMenu.Enabled = OrdinateurJoue.Enabled;
+            GainBlancMenu.Enabled = BoutonGainBlanc.Enabled;
+            GainNoirMenu.Enabled = BoutonGainNoir.Enabled;
+            NulleMenu.Enabled = BoutonNulle.Enabled;
+            ResultatMenu.Enabled = BoutonGainBlanc.Enabled || BoutonGainNoir.Enabled || BoutonNulle.Enabled;
+            SaisiePositionMenu.Enabled = BoutonSaisiePosition.Enabled;
+            HumainContreHumain.Enabled = SaisiePartieBouton.Enabled;
+            OptionBalises.Enabled = BoutonBalises.Enabled;
+            AnalysePositionMenu.Enabled = AnalysePosition.Enabled;
+            AnalyseRapideMenu.Text = _analyseDePartie != null ? T("Interrompre l'analyse de la partie") : T("Analyse rapide de la partie");
+            AnalyseRapideMenu.Enabled = BoutonAnalysePartie.Enabled;
+            AnalyseCompleteMenu.Enabled = BoutonAnalyseComplete.Enabled && _analyseDePartie == null;
+            HumainOrdinateur.Text = T("Jouer les Blancs contre {0}", _nomMoteur);
+            OrdinateurHumain.Text = T("Jouer les Noirs contre {0}", _nomMoteur);
+            VariantesMenu.Checked = _montre3VariantesUci;           // (vrai : les lignes de variantes sont masquées)
+            ProtocoleMenu.Checked = _montreDonneesBrutesUci;
         }
         private void MetAJourFeuille()
         {   // Feuille de partie à droite de l'échiquier : tous les coups, et le coup de la position affichée surligné

@@ -125,6 +125,9 @@
     <None Update="Moteurs_UCI\Rodent_IV\rodent-iv-x64.exe">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Moteurs_UCI\Rodent_IV\personalities\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Moteurs_UCI\sargon1978\sargon1978_1_01b.exe">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -31,8 +31,10 @@ namespace BrunoGUI_GenII
         public string? NomMoteur { get; private set; }
         public string? AuteurMoteur { get; private set; }
 
-        // option name <nom> type ...
+        // option name <nom> type ... (type spin : bornes min et max, ex : UCI_Elo de 800 à 2800 chez Rodent IV)
         public string? NomOption { get; private set; }
+        public int? OptionMinimum { get; private set; }
+        public int? OptionMaximum { get; private set; }
 
         // info ... multipv <n> score cp <x> | score mate <y> ... pv <coups>
         public bool DansBibliotheque { get; private set; }     // mot "book" (certains moteurs l'indiquent)
@@ -70,6 +72,12 @@ namespace BrunoGUI_GenII
                         int indexType = Array.IndexOf(mots, "type");
                         int fin = indexType > 2 ? indexType : mots.Length;
                         resultat.NomOption = string.Join(" ", mots, 2, fin - 2);
+                        if (indexType > 2 && MotApres(mots, indexType) == "spin")
+                        {
+                            int indexMin = Array.IndexOf(mots, "min", indexType), indexMax = Array.IndexOf(mots, "max", indexType);
+                            resultat.OptionMinimum = indexMin > 0 ? EntierApres(mots, indexMin) : null;
+                            resultat.OptionMaximum = indexMax > 0 ? EntierApres(mots, indexMax) : null;
+                        }
                     }
                     break;
                 case "info":
