@@ -462,6 +462,12 @@ namespace BrunoGUI_GenII
             int premiere = camp == ColorPiece.Blanc ? 8 : 1, sens = camp == ColorPiece.Blanc ? -1 : 1;
             if (rangeeRoi != premiere || colonneRoi is 4 or 5)
                 return false;           // roi au centre (d, e) ou sorti de sa rangée : pas un roque à démolir
+            // l'adversaire a vraiment roqué plus tôt (choix de Bruno, 2026-10-23 : un roi allé à pied en g8, 11... Rf8 12... Rg8,
+            // n'a pas de "rempart du roque") ; une partie commencée à une position ne dit pas comment le roi y est venu : il compte
+            bool roque = _coups.Take(indexCoup).Any(c => !c.EstPositionDeDepart && c.EstCoupBlanc != (camp == ColorPiece.Blanc)
+                                                         && c.PgnIntl.Contains("O-O"));
+            if (!roque && !(_coups.Count > 0 && _coups[0].EstPositionDeDepart))
+                return false;
             int colonnePion = joue[2] - 'a' + 1, rangeePion = joue[3] - '0';
             return Math.Abs(colonnePion - colonneRoi) <= 1 && (rangeePion == premiere + sens || rangeePion == premiere + 2 * sens);
         }
