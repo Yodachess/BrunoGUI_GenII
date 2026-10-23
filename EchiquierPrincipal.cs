@@ -1109,6 +1109,12 @@ namespace BrunoGUI_GenII
             //                moins), commentaires essentiels dans la feuille de partie (« Mauvais. Cc4 était meilleur. », sacrifices,
             //                thèmes, « Le moteur juge ce coup correct. »), réfutation des erreurs, noms courts des annotations,
             //                infobulle de la courbe à côté de la souris, aide anglaise avec ses propres captures
+            // Version 1.27 = adversaire plus humain : personnalités de Rodent IV (10 champions, 6 styles) ; Stockfish fait toujours
+            //                les analyses, quel que soit le moteur qui joue ; plage d'Elo prise au moteur ; menus rangés (Fichier,
+            //                Partie, Analyse, Stockfish, Moteur, Affichage, Aide) avec raccourcis clavier ; règles du jeu séparées
+            //                (Regles.cs, calculs sur une copie, deux fois plus rapides) ; FEN mieux vérifiée (en passant, roques) ;
+            //                tournures variées des erreurs dans la feuille, faux sacrifices et faux « rempart du roque » corrigés,
+            //                « Coup joué : … — échec ! »
             // (le numéro de version vient du .csproj, <Version> : il n'est plus écrit ici)
             _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version " + VersionAffichee + "\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", T("A propos de"),
