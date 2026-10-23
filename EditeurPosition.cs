@@ -153,7 +153,7 @@ namespace BrunoGUI_GenII
         }
 
         // ═══ Résultat ═══
-        public string Fen => CalculerSur(Position, RetourneChaineFenActuel);
+        public string Fen => Regles.Fen(Position);
         public string? Erreur => ChargementPartie.ErreurFen(Fen);   // null : la position peut être jouée
     }
 }

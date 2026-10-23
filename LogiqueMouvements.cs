@@ -95,7 +95,7 @@ namespace BrunoGUI_GenII
         // ═══ Position de la partie ═══
         // Tout l'état de la position est dans l'objet PositionActuelle. Les propriétés statiques ci-dessous
         // (PiecesEchiquier, QuiJoue, droits de roque, IndexCaseEnPassant, SansPrise, NombreCoupsJoues, Echec, EchecetMat)
-        // ne sont que des raccourcis vers cet objet. Pour un calcul "pour voir", utiliser CalculerSurCopie.
+        // ne sont que des raccourcis vers cet objet. Pour un calcul "pour voir", appeler Regles sur une copie (Position.Copier).
         public static Position PositionActuelle { get; private set; } = new();
         public static List<TypePiece> PiecesEchiquier => PositionActuelle.Pieces;
         public static bool PetitRoqueBlancPossible { get => PositionActuelle.PetitRoqueBlancPossible; set => PositionActuelle.PetitRoqueBlancPossible = value; }
@@ -105,13 +105,12 @@ namespace BrunoGUI_GenII
         public static bool Echec { get => PositionActuelle.Echec; set => PositionActuelle.Echec = value; }
         public static bool EchecetMat { get => PositionActuelle.EchecetMat; set => PositionActuelle.EchecetMat = value; }
 
-        public static T CalculerSurCopie<T>(Func<T> calcul) => CalculerSur(PositionActuelle, calcul);
-
-        public static T CalculerSur<T>(Position position, Func<T> calcul)
-        {   // Exécute un calcul sur une copie de la position donnée (la partie ou une autre, ex : position affichée pendant le parcours) :
-            // tout ce que le calcul modifie (pièces, trait, roques, en passant, échec...) est abandonné à la fin, même en cas d'exception
+        public static T CalculerSurCopie<T>(Func<T> calcul)
+        {   // Exécute un calcul sur une copie de la position de la partie : tout ce qu'il modifie (pièces, trait, roques, en passant,
+            // échec...) est abandonné à la fin, même en cas d'exception. Ne sert plus qu'aux tests (perft joués par ExecutionCoup) :
+            // l'application appelle Regles sur une copie, sans jamais remplacer la position de la partie
             Position original = PositionActuelle;
-            PositionActuelle = position.Copier();
+            PositionActuelle = original.Copier();
             try
             {
                 return calcul();
@@ -439,21 +438,6 @@ namespace BrunoGUI_GenII
             if (MaterielInsuffisant())
                 return Langue.T("Nulle (matériel insuffisant)");
             return null;
-        }
-
-        public static void CalculeEchecEtMat()
-        {   // Le roi du camp qui vient de jouer (adversaire du camp au trait) est-il en échec, et mat ?
-            Position adverse = PositionActuelle.Copier();
-            adverse.QuiJoue = Adversaire(adverse.QuiJoue);
-            Echec = Regles.CampAuTraitEnEchec(adverse);
-            EchecetMat = Echec && !Regles.ResteCoupsJouables(adverse);
-        }
-
-        public static string CoupNotationAlgebriquePGN(string caseSource, string CaseDestination)
-        {   // Le coup (ex : e2e4) en notation algébrique française, sans "+" ni "#" ; Echec dit si le roi adverse sera en échec
-            (string coup, bool echec) = Regles.Notation(PositionActuelle, caseSource, CaseDestination);
-            Echec = echec;
-            return coup;
         }
 
         public static string NotationInternationale(string coupFrancais)

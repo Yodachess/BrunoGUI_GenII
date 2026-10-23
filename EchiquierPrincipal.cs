@@ -780,9 +780,9 @@ namespace BrunoGUI_GenII
         {   // Analyse la position affichée : la position courante de la partie, ou le coup passé que l'on regarde (parcours)
             AbandonneReflexion();   // une nouvelle analyse remplace la réflexion en cours
             Position position = _positionAffichee ?? LogiqueMouvements.PositionActuelle;
-            if (LogiqueMouvements.CalculerSur(position, () => !LogiqueMouvements.ResteCoupsValidesJouables()))
+            if (!Regles.ResteCoupsJouables(position))
             {   // Plus aucun coup jouable : mat ou pat, rien à analyser
-                bool mat = LogiqueMouvements.CalculerSur(position, LogiqueMouvements.CampAuTraitEnEchec);
+                bool mat = Regles.CampAuTraitEnEchec(position);
                 MiseaZeroVariantes();
                 InformationPourJoueur.Text = T("Analyse inutile ...");
                 InformationsPartie.Text = T("La position est terminée ...");
