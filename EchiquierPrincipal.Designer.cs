@@ -46,7 +46,36 @@ namespace BrunoGUI_GenII
             EnregistrerPgn = new System.Windows.Forms.ToolStripMenuItem();
             EnregistrerFen = new System.Windows.Forms.ToolStripMenuItem();
             Quitter = new System.Windows.Forms.ToolStripMenuItem();
-            PartieMenu = new System.Windows.Forms.ToolStripMenuItem();
+            StockfishMoteur = new System.Windows.Forms.ToolStripMenuItem();
+            AnalyseMenu = new System.Windows.Forms.ToolStripMenuItem();
+            AideMenu = new System.Windows.Forms.ToolStripMenuItem();
+            ListePartiesMenu = new System.Windows.Forms.ToolStripMenuItem();
+            SeparateurFichier1 = new System.Windows.Forms.ToolStripSeparator();
+            SeparateurFichier2 = new System.Windows.Forms.ToolStripSeparator();
+            SeparateurFichier3 = new System.Windows.Forms.ToolStripSeparator();
+            SaisiePositionMenu = new System.Windows.Forms.ToolStripMenuItem();
+            RetourArriereMenu = new System.Windows.Forms.ToolStripMenuItem();
+            OrdinateurJoueMenu = new System.Windows.Forms.ToolStripMenuItem();
+            ResultatMenu = new System.Windows.Forms.ToolStripMenuItem();
+            GainBlancMenu = new System.Windows.Forms.ToolStripMenuItem();
+            GainNoirMenu = new System.Windows.Forms.ToolStripMenuItem();
+            NulleMenu = new System.Windows.Forms.ToolStripMenuItem();
+            StockfishMenu = new System.Windows.Forms.ToolStripMenuItem();
+            SeparateurStockfish = new System.Windows.Forms.ToolStripSeparator();
+            SeparateurPartie2 = new System.Windows.Forms.ToolStripSeparator();
+            SeparateurPartie3 = new System.Windows.Forms.ToolStripSeparator();
+            SeparateurPartie4 = new System.Windows.Forms.ToolStripSeparator();
+            AnalysePositionMenu = new System.Windows.Forms.ToolStripMenuItem();
+            AnalyseRapideMenu = new System.Windows.Forms.ToolStripMenuItem();
+            AnalyseCompleteMenu = new System.Windows.Forms.ToolStripMenuItem();
+            SeparateurAnalyse1 = new System.Windows.Forms.ToolStripSeparator();
+            SeparateurAnalyse2 = new System.Windows.Forms.ToolStripSeparator();
+            TournerEchiquierMenu = new System.Windows.Forms.ToolStripMenuItem();
+            VariantesMenu = new System.Windows.Forms.ToolStripMenuItem();
+            ProtocoleMenu = new System.Windows.Forms.ToolStripMenuItem();
+            SeparateurAffichage = new System.Windows.Forms.ToolStripSeparator();
+            SeparateurReglagesMoteur = new System.Windows.Forms.ToolStripSeparator();
+            SeparateurBibliotheque = new System.Windows.Forms.ToolStripSeparator();
             NouvellePartieStockfish = new System.Windows.Forms.ToolStripMenuItem();
             ParametresDeBase = new System.Windows.Forms.ToolStripMenuItem();
             ParametresAvances = new System.Windows.Forms.ToolStripMenuItem();
@@ -202,7 +231,7 @@ namespace BrunoGUI_GenII
             // MenuInterfaceGraphique
             // 
             MenuInterfaceGraphique.Font = new System.Drawing.Font("Segoe UI", 9F);
-            MenuInterfaceGraphique.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { FichierMenu, PartieMenu, nouvellePartieToolStripMenuItem, moteursBibliothequesToolStripMenuItem, OptionsMenu, Apropos, toolStripMenuItem2 });
+            MenuInterfaceGraphique.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { FichierMenu, nouvellePartieToolStripMenuItem, AnalyseMenu, StockfishMenu, moteursBibliothequesToolStripMenuItem, OptionsMenu, AideMenu, toolStripMenuItem2 });
             MenuInterfaceGraphique.Location = new System.Drawing.Point(0, 0);
             MenuInterfaceGraphique.Name = "MenuInterfaceGraphique";
             MenuInterfaceGraphique.Size = new System.Drawing.Size(944, 24);
@@ -211,7 +240,7 @@ namespace BrunoGUI_GenII
             // 
             // FichierMenu
             // 
-            FichierMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { ChargePartiesPgn, ChargePositionFen, EnregistrerPgn, EnregistrerFen, Quitter });
+            FichierMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { ChargePartiesPgn, ChargePositionFen, SeparateurFichier1, EnregistrerPgn, EnregistrerFen, SeparateurFichier2, OptionBalises, VisualiserPgn, ListePartiesMenu, SeparateurFichier3, Quitter });
             FichierMenu.Name = "FichierMenu";
             FichierMenu.Size = new System.Drawing.Size(54, 20);
             FichierMenu.Text = "Fichier";
@@ -222,7 +251,7 @@ namespace BrunoGUI_GenII
             ChargePartiesPgn.Name = "ChargePartiesPgn";
             ChargePartiesPgn.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O;
             ChargePartiesPgn.Size = new System.Drawing.Size(216, 22);
-            ChargePartiesPgn.Text = "Ouvrir fichier PGN";
+            ChargePartiesPgn.Text = "Ouvrir une partie PGN…";
             ChargePartiesPgn.Click += ChargePartiesPgn_Click;
             // 
             // ChargePositionFen
@@ -231,7 +260,7 @@ namespace BrunoGUI_GenII
             ChargePositionFen.Name = "ChargePositionFen";
             ChargePositionFen.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.I;
             ChargePositionFen.Size = new System.Drawing.Size(216, 22);
-            ChargePositionFen.Text = "Ouvrir fichier FEN";
+            ChargePositionFen.Text = "Ouvrir une position FEN…";
             ChargePositionFen.Click += ChargePositionFen_Click;
             // 
             // EnregistrerPgn
@@ -240,7 +269,7 @@ namespace BrunoGUI_GenII
             EnregistrerPgn.Name = "EnregistrerPgn";
             EnregistrerPgn.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S;
             EnregistrerPgn.Size = new System.Drawing.Size(216, 22);
-            EnregistrerPgn.Text = "Enregistrer Partie";
+            EnregistrerPgn.Text = "Enregistrer la partie";
             EnregistrerPgn.Click += EnregistrerPgn_Click;
             // 
             // EnregistrerFen
@@ -249,7 +278,7 @@ namespace BrunoGUI_GenII
             EnregistrerFen.Name = "EnregistrerFen";
             EnregistrerFen.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.F;
             EnregistrerFen.Size = new System.Drawing.Size(216, 22);
-            EnregistrerFen.Text = "Enregistrer Position";
+            EnregistrerFen.Text = "Enregistrer la position";
             EnregistrerFen.Click += EnregistrerFen_Click;
             // 
             // Quitter
@@ -261,19 +290,178 @@ namespace BrunoGUI_GenII
             Quitter.Text = "Quitter";
             Quitter.Click += KryptonQuitter_Click;
             // 
-            // PartieMenu
-            // 
-            PartieMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { NouvellePartieStockfish, ParametresDeBase, ParametresAvances, BtnMiseAJour });
-            PartieMenu.Name = "PartieMenu";
-            PartieMenu.Size = new System.Drawing.Size(67, 20);
-            PartieMenu.Text = "Stockfish";
-            // 
+            // SeparateurFichier1, 2, 3
+            //
+            SeparateurFichier1.Name = "SeparateurFichier1";
+            SeparateurFichier1.Size = new System.Drawing.Size(250, 6);
+            SeparateurFichier2.Name = "SeparateurFichier2";
+            SeparateurFichier2.Size = new System.Drawing.Size(250, 6);
+            SeparateurFichier3.Name = "SeparateurFichier3";
+            SeparateurFichier3.Size = new System.Drawing.Size(250, 6);
+            //
+            // ListePartiesMenu
+            //
+            ListePartiesMenu.Name = "ListePartiesMenu";
+            ListePartiesMenu.Size = new System.Drawing.Size(253, 22);
+            ListePartiesMenu.Text = "Liste des parties du fichier";
+            ListePartiesMenu.Click += MontrePartiesPGN_Click;
+            //
+            // SaisiePositionMenu
+            //
+            SaisiePositionMenu.Name = "SaisiePositionMenu";
+            SaisiePositionMenu.Size = new System.Drawing.Size(290, 22);
+            SaisiePositionMenu.Text = "Saisir une position…";
+            SaisiePositionMenu.Click += BoutonSaisiePosition_Click;
+            //
+            // RetourArriereMenu
+            //
+            RetourArriereMenu.Name = "RetourArriereMenu";
+            RetourArriereMenu.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Z;
+            RetourArriereMenu.Size = new System.Drawing.Size(290, 22);
+            RetourArriereMenu.Text = "Retour arrière";
+            RetourArriereMenu.Click += RetourArriere_Click;
+            //
+            // OrdinateurJoueMenu
+            //
+            OrdinateurJoueMenu.Name = "OrdinateurJoueMenu";
+            OrdinateurJoueMenu.Size = new System.Drawing.Size(290, 22);
+            OrdinateurJoueMenu.Text = "Ordinateur joue";
+            OrdinateurJoueMenu.Click += OrdinateurJoue_Click;
+            //
+            // ResultatMenu
+            //
+            ResultatMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { GainBlancMenu, GainNoirMenu, NulleMenu });
+            ResultatMenu.Name = "ResultatMenu";
+            ResultatMenu.Size = new System.Drawing.Size(290, 22);
+            ResultatMenu.Text = "Résultat";
+            //
+            // GainBlancMenu, GainNoirMenu, NulleMenu
+            //
+            GainBlancMenu.Name = "GainBlancMenu";
+            GainBlancMenu.Size = new System.Drawing.Size(140, 22);
+            GainBlancMenu.Text = "Gain blanc";
+            GainBlancMenu.Click += BoutonGainBlanc_Click;
+            GainNoirMenu.Name = "GainNoirMenu";
+            GainNoirMenu.Size = new System.Drawing.Size(140, 22);
+            GainNoirMenu.Text = "Gain noir";
+            GainNoirMenu.Click += BoutonGainNoir_Click;
+            NulleMenu.Name = "NulleMenu";
+            NulleMenu.Size = new System.Drawing.Size(140, 22);
+            NulleMenu.Text = "Nulle";
+            NulleMenu.Click += BoutonNulle_Click;
+            //
+            // SeparateurPartie2, 3, 4
+            //
+            SeparateurPartie2.Name = "SeparateurPartie2";
+            SeparateurPartie2.Size = new System.Drawing.Size(287, 6);
+            SeparateurPartie3.Name = "SeparateurPartie3";
+            SeparateurPartie3.Size = new System.Drawing.Size(287, 6);
+            SeparateurPartie4.Name = "SeparateurPartie4";
+            SeparateurPartie4.Size = new System.Drawing.Size(287, 6);
+            //
+            // StockfishMenu
+            //
+            StockfishMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { NouvellePartieStockfish, StockfishMoteur, SeparateurStockfish, ParametresAvances, BtnMiseAJour });
+            StockfishMenu.Name = "StockfishMenu";
+            StockfishMenu.Size = new System.Drawing.Size(69, 20);
+            StockfishMenu.Text = "Stockfish";
+            SeparateurStockfish.Name = "SeparateurStockfish";
+            SeparateurStockfish.Size = new System.Drawing.Size(287, 6);
+            //
+            // AnalyseMenu
+            //
+            AnalyseMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { AnalysePositionMenu, SeparateurAnalyse1, AnalyseRapideMenu, AnalyseCompleteMenu, SeparateurAnalyse2 });
+            AnalyseMenu.Name = "AnalyseMenu";
+            AnalyseMenu.Size = new System.Drawing.Size(61, 20);
+            AnalyseMenu.Text = "Analyse";
+            //
+            // AnalysePositionMenu
+            //
+            AnalysePositionMenu.Name = "AnalysePositionMenu";
+            AnalysePositionMenu.ShortcutKeys = System.Windows.Forms.Keys.F5;
+            AnalysePositionMenu.Size = new System.Drawing.Size(260, 22);
+            AnalysePositionMenu.Text = "Analyser la position";
+            AnalysePositionMenu.Click += AnalysePosition_Click;
+            //
+            // AnalyseRapideMenu
+            //
+            AnalyseRapideMenu.Name = "AnalyseRapideMenu";
+            AnalyseRapideMenu.Size = new System.Drawing.Size(260, 22);
+            AnalyseRapideMenu.Text = "Analyse rapide de la partie";
+            AnalyseRapideMenu.Click += BoutonAnalysePartie_Click;
+            //
+            // AnalyseCompleteMenu
+            //
+            AnalyseCompleteMenu.Name = "AnalyseCompleteMenu";
+            AnalyseCompleteMenu.Size = new System.Drawing.Size(260, 22);
+            AnalyseCompleteMenu.Text = "Analyse complète de la partie";
+            AnalyseCompleteMenu.Click += BoutonAnalyseComplete_Click;
+            //
+            // SeparateurAnalyse1, 2
+            //
+            SeparateurAnalyse1.Name = "SeparateurAnalyse1";
+            SeparateurAnalyse1.Size = new System.Drawing.Size(257, 6);
+            SeparateurAnalyse2.Name = "SeparateurAnalyse2";
+            SeparateurAnalyse2.Size = new System.Drawing.Size(257, 6);
+            //
+            // TournerEchiquierMenu
+            //
+            TournerEchiquierMenu.Name = "TournerEchiquierMenu";
+            TournerEchiquierMenu.Size = new System.Drawing.Size(200, 22);
+            TournerEchiquierMenu.Text = "Tourner l'échiquier";
+            TournerEchiquierMenu.Click += InverseEchiquier_Click;
+            //
+            // VariantesMenu
+            //
+            VariantesMenu.Name = "VariantesMenu";
+            VariantesMenu.Size = new System.Drawing.Size(200, 22);
+            VariantesMenu.Text = "Masquer les variantes";
+            VariantesMenu.Click += MontreVariantesUci_Click;
+            //
+            // ProtocoleMenu
+            //
+            ProtocoleMenu.Name = "ProtocoleMenu";
+            ProtocoleMenu.Size = new System.Drawing.Size(200, 22);
+            ProtocoleMenu.Text = "Protocole UCI";
+            ProtocoleMenu.Click += MontreDonneesUci_Click;
+            //
+            // SeparateurAffichage
+            //
+            SeparateurAffichage.Name = "SeparateurAffichage";
+            SeparateurAffichage.Size = new System.Drawing.Size(197, 6);
+            //
+            // AideMenu
+            //
+            AideMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { AideDocumentation, Apropos });
+            AideMenu.Name = "AideMenu";
+            AideMenu.Size = new System.Drawing.Size(43, 20);
+            AideMenu.Text = "Aide";
+            //
+            // StockfishMoteur
+            //
+            StockfishMoteur.Image = Properties.Resources.Stockfish;
+            StockfishMoteur.Name = "StockfishMoteur";
+            StockfishMoteur.Size = new System.Drawing.Size(250, 22);
+            StockfishMoteur.Text = "Jouer contre Stockfish";
+            StockfishMoteur.Click += StockfishMoteur_Click;
+            //
+            // SeparateurReglagesMoteur
+            //
+            SeparateurReglagesMoteur.Name = "SeparateurReglagesMoteur";
+            SeparateurReglagesMoteur.Size = new System.Drawing.Size(247, 6);
+            //
+            // SeparateurBibliotheque
+            //
+            SeparateurBibliotheque.Name = "SeparateurBibliotheque";
+            SeparateurBibliotheque.Size = new System.Drawing.Size(247, 6);
+            //
             // NouvellePartieStockfish
             // 
             NouvellePartieStockfish.Image = (System.Drawing.Image)resources.GetObject("NouvellePartieStockfish.Image");
             NouvellePartieStockfish.Name = "NouvellePartieStockfish";
-            NouvellePartieStockfish.Size = new System.Drawing.Size(242, 22);
-            NouvellePartieStockfish.Text = "Nouvelle partie contre Stockfish";
+            NouvellePartieStockfish.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N;
+            NouvellePartieStockfish.Size = new System.Drawing.Size(290, 22);
+            NouvellePartieStockfish.Text = "Nouvelle partie contre Stockfish…";
             NouvellePartieStockfish.Click += NouvellePartieStockfish_Click;
             // 
             // ParametresDeBase
@@ -281,7 +469,7 @@ namespace BrunoGUI_GenII
             ParametresDeBase.Image = (System.Drawing.Image)resources.GetObject("ParametresDeBase.Image");
             ParametresDeBase.Name = "ParametresDeBase";
             ParametresDeBase.Size = new System.Drawing.Size(242, 22);
-            ParametresDeBase.Text = "Paramètres de base";
+            ParametresDeBase.Text = "Paramètres du moteur…";
             ParametresDeBase.Click += ParametresDeBase_Click;
             // 
             // ParametresAvances
@@ -289,68 +477,68 @@ namespace BrunoGUI_GenII
             ParametresAvances.Image = (System.Drawing.Image)resources.GetObject("ParametresAvances.Image");
             ParametresAvances.Name = "ParametresAvances";
             ParametresAvances.Size = new System.Drawing.Size(242, 22);
-            ParametresAvances.Text = "Paramêtres Avancés";
+            ParametresAvances.Text = "Paramètres avancés de Stockfish…";
             ParametresAvances.Click += ParametresAvances_Click;
             // 
             // BtnMiseAJour
             // 
             BtnMiseAJour.Name = "BtnMiseAJour";
             BtnMiseAJour.Size = new System.Drawing.Size(242, 22);
-            BtnMiseAJour.Text = "Verifier mise à jour StockFish";
+            BtnMiseAJour.Text = "Mise à jour de Stockfish";
             BtnMiseAJour.Click += BtnMiseAJour_Click;
             // 
             // nouvellePartieToolStripMenuItem
             // 
-            nouvellePartieToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { HumainOrdinateur, OrdinateurHumain, HumainContreHumain, StopMoteur });
+            nouvellePartieToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { HumainOrdinateur, OrdinateurHumain, HumainContreHumain, SeparateurPartie2, SaisiePositionMenu, SeparateurPartie3, RetourArriereMenu, OrdinateurJoueMenu, StopMoteur, SeparateurPartie4, ResultatMenu });
             nouvellePartieToolStripMenuItem.Name = "nouvellePartieToolStripMenuItem";
-            nouvellePartieToolStripMenuItem.Size = new System.Drawing.Size(99, 20);
-            nouvellePartieToolStripMenuItem.Text = "Nouvelle Partie";
+            nouvellePartieToolStripMenuItem.Size = new System.Drawing.Size(50, 20);
+            nouvellePartieToolStripMenuItem.Text = "Partie";
             // 
             // HumainOrdinateur
             // 
             HumainOrdinateur.Image = Properties.Resources.OrdiHumain;
             HumainOrdinateur.Name = "HumainOrdinateur";
-            HumainOrdinateur.Size = new System.Drawing.Size(238, 22);
-            HumainOrdinateur.Text = "Humain contre ordinateur";
+            HumainOrdinateur.Size = new System.Drawing.Size(290, 22);
+            HumainOrdinateur.Text = "Jouer les Blancs contre le moteur";
             HumainOrdinateur.Click += HumainOrdinateur_Click;
             // 
             // OrdinateurHumain
             // 
             OrdinateurHumain.Image = Properties.Resources.HumainOrdi;
             OrdinateurHumain.Name = "OrdinateurHumain";
-            OrdinateurHumain.Size = new System.Drawing.Size(238, 22);
-            OrdinateurHumain.Text = "Ordinateur contre humain";
+            OrdinateurHumain.Size = new System.Drawing.Size(290, 22);
+            OrdinateurHumain.Text = "Jouer les Noirs contre le moteur";
             OrdinateurHumain.Click += OrdinateurHumain_Click;
             // 
             // HumainContreHumain
             // 
             HumainContreHumain.Image = (System.Drawing.Image)resources.GetObject("HumainContreHumain.Image");
             HumainContreHumain.Name = "HumainContreHumain";
-            HumainContreHumain.Size = new System.Drawing.Size(238, 22);
-            HumainContreHumain.Text = "Entre Humains (ou saise partie)";
+            HumainContreHumain.Size = new System.Drawing.Size(290, 22);
+            HumainContreHumain.Text = "Entre humains (ou saisie d'une partie)";
             HumainContreHumain.Click += SaisiePartieBouton_Click;
             // 
             // StopMoteur
             // 
             StopMoteur.Image = (System.Drawing.Image)resources.GetObject("StopMoteur.Image");
             StopMoteur.Name = "StopMoteur";
-            StopMoteur.Size = new System.Drawing.Size(238, 22);
-            StopMoteur.Text = "Stoppe le Moteur";
+            StopMoteur.Size = new System.Drawing.Size(290, 22);
+            StopMoteur.Text = "Arrêter le moteur";
             StopMoteur.Click += StopMoteur_Click;
             // 
             // moteursBibliothequesToolStripMenuItem
             // 
-            moteursBibliothequesToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { SelectionAutreMoteur, SelectionBibliotheque, RodentIV, Sargon1_1978 });
+            moteursBibliothequesToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { RodentIV, Sargon1_1978, SelectionAutreMoteur, SeparateurReglagesMoteur, ParametresDeBase, SeparateurBibliotheque, SelectionBibliotheque });
             moteursBibliothequesToolStripMenuItem.Name = "moteursBibliothequesToolStripMenuItem";
-            moteursBibliothequesToolStripMenuItem.Size = new System.Drawing.Size(140, 20);
-            moteursBibliothequesToolStripMenuItem.Text = "Moteurs/Bibliothèques";
+            moteursBibliothequesToolStripMenuItem.Size = new System.Drawing.Size(57, 20);
+            moteursBibliothequesToolStripMenuItem.Text = "Moteur";
             // 
             // SelectionAutreMoteur
             // 
             SelectionAutreMoteur.Image = Properties.Resources.Ordinateur;
             SelectionAutreMoteur.Name = "SelectionAutreMoteur";
             SelectionAutreMoteur.Size = new System.Drawing.Size(233, 22);
-            SelectionAutreMoteur.Text = "Sélectionnez un moteur";
+            SelectionAutreMoteur.Text = "Autre moteur…";
             SelectionAutreMoteur.Click += SelectionAutreMoteur_Click;
             // 
             // SelectionBibliotheque
@@ -358,7 +546,7 @@ namespace BrunoGUI_GenII
             SelectionBibliotheque.Image = (System.Drawing.Image)resources.GetObject("SelectionBibliotheque.Image");
             SelectionBibliotheque.Name = "SelectionBibliotheque";
             SelectionBibliotheque.Size = new System.Drawing.Size(233, 22);
-            SelectionBibliotheque.Text = "Sélectionnez une bibliothèque";
+            SelectionBibliotheque.Text = "Bibliothèque d'ouvertures…";
             SelectionBibliotheque.Click += SelectionBibliotheque_Click;
             // 
             // RodentIV
@@ -367,7 +555,6 @@ namespace BrunoGUI_GenII
             RodentIV.Name = "RodentIV";
             RodentIV.Size = new System.Drawing.Size(233, 22);
             RodentIV.Text = "Rodent IV";
-            RodentIV.Click += RodentIV_Click;
             // 
             // Sargon1_1978
             // 
@@ -379,10 +566,10 @@ namespace BrunoGUI_GenII
             // 
             // OptionsMenu
             // 
-            OptionsMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { Personnaliser, VisualiserPgn, OptionBalises, AideDocumentation });
+            OptionsMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { TournerEchiquierMenu, Personnaliser, VariantesMenu, ProtocoleMenu, SeparateurAffichage });
             OptionsMenu.Name = "OptionsMenu";
-            OptionsMenu.Size = new System.Drawing.Size(61, 20);
-            OptionsMenu.Text = "Options";
+            OptionsMenu.Size = new System.Drawing.Size(70, 20);
+            OptionsMenu.Text = "Affichage";
             // 
             // Personnaliser
             // 
@@ -390,7 +577,7 @@ namespace BrunoGUI_GenII
             Personnaliser.Image = (System.Drawing.Image)resources.GetObject("Personnaliser.Image");
             Personnaliser.Name = "Personnaliser";
             Personnaliser.Size = new System.Drawing.Size(192, 22);
-            Personnaliser.Text = "Personnaliser";
+            Personnaliser.Text = "Couleurs des cases";
             // 
             // CaseSombre
             // 
@@ -412,31 +599,32 @@ namespace BrunoGUI_GenII
             // 
             VisualiserPgn.Image = (System.Drawing.Image)resources.GetObject("VisualiserPgn.Image");
             VisualiserPgn.Name = "VisualiserPgn";
-            VisualiserPgn.Size = new System.Drawing.Size(192, 22);
-            VisualiserPgn.Text = "Partie PGN";
+            VisualiserPgn.Size = new System.Drawing.Size(253, 22);
+            VisualiserPgn.Text = "Voir la partie en PGN…";
             VisualiserPgn.Click += VisualiserPgn_Click;
             // 
             // OptionBalises
             // 
             OptionBalises.Image = (System.Drawing.Image)resources.GetObject("OptionBalises.Image");
             OptionBalises.Name = "OptionBalises";
-            OptionBalises.Size = new System.Drawing.Size(192, 22);
-            OptionBalises.Text = "Saisie En-têtes PGN";
+            OptionBalises.Size = new System.Drawing.Size(253, 22);
+            OptionBalises.Text = "En-tête PGN…";
             OptionBalises.Click += BoutonBalises_Click;
             // 
             // AideDocumentation
             // 
             AideDocumentation.Image = (System.Drawing.Image)resources.GetObject("AideDocumentation.Image");
             AideDocumentation.Name = "AideDocumentation";
-            AideDocumentation.Size = new System.Drawing.Size(192, 22);
-            AideDocumentation.Text = "Aide / Documentation";
+            AideDocumentation.ShortcutKeys = System.Windows.Forms.Keys.F1;
+            AideDocumentation.Size = new System.Drawing.Size(200, 22);
+            AideDocumentation.Text = "Documentation";
             AideDocumentation.Click += AideDocumentation_Click;
             // 
             // Apropos
             // 
             Apropos.Name = "Apropos";
-            Apropos.Size = new System.Drawing.Size(95, 20);
-            Apropos.Text = "A propos de ...";
+            Apropos.Size = new System.Drawing.Size(200, 22);
+            Apropos.Text = "À propos de BrunoGUI";
             Apropos.Click += Apropos_Click;
             // 
             // toolStripMenuItem2
@@ -1351,7 +1539,36 @@ namespace BrunoGUI_GenII
         private System.Windows.Forms.ToolStripMenuItem CaseSombre;
         private System.Windows.Forms.ToolStripMenuItem CaseClaire;
         private System.Windows.Forms.ColorDialog CouleurDialogue;
-        private System.Windows.Forms.ToolStripMenuItem PartieMenu;
+        private System.Windows.Forms.ToolStripMenuItem StockfishMoteur;
+        private System.Windows.Forms.ToolStripMenuItem AnalyseMenu;
+        private System.Windows.Forms.ToolStripMenuItem AideMenu;
+        private System.Windows.Forms.ToolStripMenuItem ListePartiesMenu;
+        private System.Windows.Forms.ToolStripSeparator SeparateurFichier1;
+        private System.Windows.Forms.ToolStripSeparator SeparateurFichier2;
+        private System.Windows.Forms.ToolStripSeparator SeparateurFichier3;
+        private System.Windows.Forms.ToolStripMenuItem SaisiePositionMenu;
+        private System.Windows.Forms.ToolStripMenuItem RetourArriereMenu;
+        private System.Windows.Forms.ToolStripMenuItem OrdinateurJoueMenu;
+        private System.Windows.Forms.ToolStripMenuItem ResultatMenu;
+        private System.Windows.Forms.ToolStripMenuItem GainBlancMenu;
+        private System.Windows.Forms.ToolStripMenuItem GainNoirMenu;
+        private System.Windows.Forms.ToolStripMenuItem NulleMenu;
+        private System.Windows.Forms.ToolStripMenuItem StockfishMenu;
+        private System.Windows.Forms.ToolStripSeparator SeparateurStockfish;
+        private System.Windows.Forms.ToolStripSeparator SeparateurPartie2;
+        private System.Windows.Forms.ToolStripSeparator SeparateurPartie3;
+        private System.Windows.Forms.ToolStripSeparator SeparateurPartie4;
+        private System.Windows.Forms.ToolStripMenuItem AnalysePositionMenu;
+        private System.Windows.Forms.ToolStripMenuItem AnalyseRapideMenu;
+        private System.Windows.Forms.ToolStripMenuItem AnalyseCompleteMenu;
+        private System.Windows.Forms.ToolStripSeparator SeparateurAnalyse1;
+        private System.Windows.Forms.ToolStripSeparator SeparateurAnalyse2;
+        private System.Windows.Forms.ToolStripMenuItem TournerEchiquierMenu;
+        private System.Windows.Forms.ToolStripMenuItem VariantesMenu;
+        private System.Windows.Forms.ToolStripMenuItem ProtocoleMenu;
+        private System.Windows.Forms.ToolStripSeparator SeparateurAffichage;
+        private System.Windows.Forms.ToolStripSeparator SeparateurReglagesMoteur;
+        private System.Windows.Forms.ToolStripSeparator SeparateurBibliotheque;
         private System.Windows.Forms.ToolStripMenuItem NouvellePartieStockfish;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem2;
         private System.Windows.Forms.GroupBox GroupPromo;

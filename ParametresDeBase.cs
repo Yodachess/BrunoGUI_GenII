@@ -38,16 +38,36 @@ namespace BrunoGUI_GenII
             if (MoteurUci.NombreThreads is int threads)
                 baseThreadsNumerique.Value = Math.Clamp(threads, (int)baseThreadsNumerique.Minimum, (int)baseThreadsNumerique.Maximum);
             baseReflexionNumerique.Value = Math.Clamp(interfaceGraphique.TempsReflexionSecondes.Value, baseReflexionNumerique.Minimum, baseReflexionNumerique.Maximum);
+            // Le moteur réglé est dans le titre, et l'Elo prend SA plage (choix de Bruno, 2026-10-23 : Rodent IV va de 800 à 2800,
+            // Stockfish de 1320 à 3190) ; un moteur qui ne règle pas sa force par l'Elo (Sargon) a le champ grisé
+            Text = Langue.T("Paramètres du moteur — {0}", MoteurUci.NomAnnonce ?? Langue.T("moteur en cours"));
+            if (MoteurUci.PlageElo is (int minimum, int maximum))
+            {
+                baseEloNumerique.Minimum = minimum;
+                baseEloNumerique.Maximum = maximum;
+                baseEloNumerique.Enabled = true;
+                LabelBaseELo.Values.Text = Langue.T("Force Elo ({0} à {1}) : ", minimum, maximum);
+            }
+            else
+            {
+                baseEloNumerique.Enabled = false;
+                LabelBaseELo.Values.Text = Langue.T("Force Elo : sans objet pour ce moteur");
+            }
             if (MoteurUci.EloVoulu is int elo)     // (pleine force : la dernière valeur reste affichée)
                 baseEloNumerique.Value = Math.Clamp(elo, (int)baseEloNumerique.Minimum, (int)baseEloNumerique.Maximum);
+            _eloAffiche = baseEloNumerique.Value;
         }
+        private decimal _eloAffiche;    // l'Elo montré à l'ouverture de la fenêtre
         private void BaseBoutonOk_Click(object? sender, EventArgs e)
         {
             MoteurUci.DefinitThreads((int)baseThreadsNumerique.Value);
             MoteurUci.DefinitMultiPV((int)baseMultipvNumerique.Value);
             var champ = interfaceGraphique.TempsReflexionSecondes;
             champ.Value = Math.Clamp(baseReflexionNumerique.Value, champ.Minimum, champ.Maximum);   // met aussi à jour le temps de réflexion
-            interfaceGraphique.DefinitEloMoteur((int)baseEloNumerique.Value);    // force du moteur, et Elo affiché au(x) camp(s) qu'il joue
+            // L'Elo n'est envoyé que s'il a été changé (ou s'il était déjà limité) : un moteur en pleine force y restait sinon limité,
+            // alors qu'on n'avait ouvert la fenêtre que pour les threads ou les variantes
+            if (baseEloNumerique.Enabled && (baseEloNumerique.Value != _eloAffiche || MoteurUci.EloVoulu != null))
+                interfaceGraphique.DefinitEloMoteur((int)baseEloNumerique.Value);    // force du moteur, et Elo affiché au(x) camp(s) qu'il joue
             this.DialogResult = DialogResult.OK;
             this.Hide();
         }

@@ -25,6 +25,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 namespace BrunoGUI_GenII
 {
@@ -51,6 +52,12 @@ namespace BrunoGUI_GenII
         public int? NombreThreads { get; set; }          // Threads et Hash (Mo) envoyés au démarrage du moteur (null : valeur du moteur)
         public int? TailleHachageMo { get; set; }
         private bool _optionsDemarrageEnvoyees;          // Threads/Hash ne sont envoyés qu'une fois par démarrage du moteur
+        // Options propres à un moteur, envoyées à "uciok" s'il les déclare (ex : la personnalité de Rodent IV) ; gardées quand on
+        // change de moteur (un moteur qui ne déclare pas l'option ne la reçoit pas)
+        public Dictionary<string, string> OptionsAuDemarrage { get; } = [];
+        // Plage d'Elo annoncée par le moteur (option UCI_Elo : Stockfish 1320 à 3190, Rodent IV 800 à 2800) ; null : il ne règle
+        // pas sa force par l'Elo (Sargon) ou n'a pas encore fini de se présenter
+        public (int Minimum, int Maximum)? PlageElo { get; private set; }
         public string? NomAnnonce { get; private set; }  // nom annoncé par le moteur ("id name ..."), ex : Stockfish 19
 
         // Force du moteur : limitée pour jouer (Elo, niveau), jamais pour analyser. Ce qui est voulu pour jouer est mémorisé, et ce
@@ -110,6 +117,7 @@ namespace BrunoGUI_GenII
             // première interrogation du processus: le moteur UCI est il pret ? 
             OptionsUci.Clear();
             NomAnnonce = null;
+            PlageElo = null;
             _optionsDemarrageEnvoyees = false;
             _limiteEloDansMoteur = false;       // un moteur qui démarre a ses réglages par défaut (l'Elo voulu est envoyé à "uciok")
             _limiteEloVoulue = EloVoulu != null;
@@ -169,6 +177,8 @@ namespace BrunoGUI_GenII
                     case "option":
                         if (DerniereLigne.NomOption != null && !OptionsUci.Contains(DerniereLigne.NomOption))
                             OptionsUci.Add(DerniereLigne.NomOption);
+                        if (DerniereLigne.NomOption == "UCI_Elo" && DerniereLigne.OptionMinimum is int min && DerniereLigne.OptionMaximum is int max)
+                            PlageElo = (min, max);
                         break;
                 }
             }
@@ -184,12 +194,17 @@ namespace BrunoGUI_GenII
             _optionsDemarrageEnvoyees = true;
             // Force pour jouer (tout moteur qui sait limiter sa force) : l'Elo choisi, dès le démarrage. Sinon une partie lancée
             // juste après le démarrage se jouait à l'Elo par défaut du moteur (1320 pour Stockfish), quel que soit l'Elo affiché
+            foreach ((string nom, string valeur) in OptionsAuDemarrage)    // (d'abord : une personnalité de Rodent recharge son style)
+                if (OptionsUci.Contains(nom))
+                    StandardInputDataToUci($"setoption name {nom} value {valeur}");
             if (EloVoulu is int elo && OptionsUci.Contains("UCI_LimitStrength"))
             {
-                StandardInputDataToUci("setoption name UCI_Elo value " + elo);
+                StandardInputDataToUci("setoption name UCI_Elo value " + DansLaPlage(elo));
                 StandardInputDataToUci("setoption name UCI_LimitStrength value true");
                 _limiteEloDansMoteur = true;
             }
+            else if (OptionsUci.Contains("UCI_LimitStrength"))
+                StandardInputDataToUci("setoption name UCI_LimitStrength value false");     // pleine force (Rodent IV démarre limité à 2800)
             if (NomAnnonce?.StartsWith("Stockfish", StringComparison.OrdinalIgnoreCase) != true)
                 return;
             if (NombreThreads is int threads && OptionsUci.Contains("Threads"))
@@ -249,10 +264,14 @@ namespace BrunoGUI_GenII
             EloVoulu = elo;
             _limiteEloVoulue = elo != null;
             if (elo is int valeur)
-                StandardInputDataToUci("setoption name UCI_Elo value " + valeur);
+                StandardInputDataToUci("setoption name UCI_Elo value " + DansLaPlage(valeur));
             StandardInputDataToUci("setoption name UCI_LimitStrength value " + (elo != null ? "true" : "false"));
             _limiteEloDansMoteur = elo != null;
         }
+        public int DansLaPlage(int elo) =>
+            // L'Elo ramené dans la plage du moteur (l'Elo voulu est gardé quand on change de moteur : 1100 réglé pour Rodent est
+            // envoyé 1320 à Stockfish : une valeur hors de sa plage pourrait être refusée ou ignorée)
+            PlageElo is (int minimum, int maximum) ? Math.Clamp(elo, minimum, maximum) : elo;
         public void DefinitNiveau(int niveau)
         {   // "Skill Level" (0 à 20 chez Stockfish) pour jouer ; une analyse se fait toujours au niveau maximal
             NiveauVoulu = _niveauDansMoteur = niveau;
@@ -310,6 +329,53 @@ namespace BrunoGUI_GenII
                 Debug.WriteLine($"[App] Arrêt du moteur : {ex.Message}");
             }
             enArret.Dispose();
+        }
+    }
+
+    public static class PersonnalitesRodent
+    {   // Les personnalités de Rodent IV (dossier personalities, à côté de son .exe) : la valeur de son option UCI "Personality",
+        // et le nom affiché. Lues dans la première liste de basic.ini ("PERSONALITY_SET=all", lignes "Nom=fichier.txt"), en ne
+        // gardant que celles dont le fichier existe (Classicist y est cité sans fichier). La liste que Rodent annonce lui-même dans
+        // son option "Personality" n'est pas utilisable : il y mêle les commentaires de basic.ini ("# - Arena"…)
+        public static List<(string Valeur, string Nom)> Lire(string dossier)
+        {
+            List<(string, string)> personnalites = [];
+            string basic = Path.Combine(dossier, "basic.ini");
+            if (!File.Exists(basic))
+                return personnalites;
+            int listes = 0;
+            foreach (string ligne in File.ReadAllLines(basic).Select(l => l.Trim()))
+            {
+                if (ligne.StartsWith("PERSONALITY_SET", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (++listes > 1)
+                        break;      // les listes suivantes ("distinct", "famous") reprennent les mêmes
+                    continue;
+                }
+                string[] parties = ligne.Split('=', 2);
+                if (listes == 0 || ligne.StartsWith('#') || ligne.StartsWith(';') || parties.Length != 2 || !parties[1].EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (File.Exists(Path.Combine(dossier, parties[1].Trim())))
+                    personnalites.Add((parties[0].Trim(), Path.GetFileNameWithoutExtension(parties[0].Trim())));   // ("Bosboom.txt" : Bosboom)
+            }
+            return personnalites;
+        }
+
+        public static List<(string Valeur, string Nom, bool Style)> Proposees(string dossier)
+        {   // Le choix proposé dans le menu (choix de Bruno, 2026-10-23 : les 36 personnalités, c'était trop) : dix champions (noms
+            // propres, non traduits) puis six styles, traduits ; seulement ceux dont le fichier est présent (Lire)
+            (string Valeur, string Nom, bool Style)[] selection =
+            [
+                ("Morphy", "Morphy", false), ("Lasker", "Lasker", false), ("Alekhine", "Alekhine", false),
+                ("Tal", "Tal", false), ("Petrosian", "Petrosian", false), ("Spassky", "Spassky", false),
+                ("Kortchnoi", Langue.T("Kortchnoï"), false), ("Fischer", "Fischer", false), ("Karpov", "Karpov", false),
+                ("Kasparov", "Kasparov", false),
+                ("Dynamic", Langue.T("Dynamique"), true), ("Spitfire", Langue.T("Fougueux"), true),
+                ("Defender", Langue.T("Défenseur"), true), ("Strangler", Langue.T("Étrangleur"), true),
+                ("Pawnsacker", Langue.T("Sacrifieur de pions"), true), ("Cloe", Langue.T("Positions fermées"), true),
+            ];
+            List<(string Valeur, string Nom)> presentes = Lire(dossier);
+            return [.. selection.Where(s => presentes.Any(p => p.Valeur == s.Valeur))];
         }
     }
 }
