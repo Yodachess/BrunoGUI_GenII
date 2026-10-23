@@ -1226,6 +1226,23 @@ public static class Scenario
         Verifie("Thèmes : « Fourchette du cavalier » (1. Cc7+ puis Cxa8), « Sacrifice du fou : détruit le rempart du roque » (1. Fxh7+)",
             commentaireFourchette == "Fourchette du cavalier" && commentaireRempart == "Sacrifice du fou : détruit le rempart du roque",
             $"« {commentaireFourchette} » / « {commentaireRempart} »");
+        // Rempart du roque seulement après un vrai roque : 4... O-O puis 5. Fxf7+ Txf7, ou le roi allé à pied (4... Rf8, 5... Rg8)
+        string CommentaireFxf7(string[] coups, string reprise)
+        {
+            Charger(L.FenDepart);
+            Joue(coups);
+            int k = coups.Length - 1;
+            AnalyseDePartie analyse = new(L.ListeCoups);
+            analyse.Enregistre(k + 1, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(100, null), VariantePgn = "x", VarianteUci = reprise + " f3g5" });
+            analyse.Enregistre(k, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(100, null), VariantePgn = "x", VarianteUci = "c4f7 " + reprise + " f3g5" });
+            analyse.EnregistreDifficulte(k, 12);
+            return analyse.Jugement(k)?.Commentaire;
+        }
+        string apresRoque = CommentaireFxf7(["e2e4", "e7e5", "g1f3", "g8f6", "f1c4", "f8e7", "d2d3", "e8g8", "c4f7"], "f8f7");
+        string roiAPied = CommentaireFxf7(["e2e4", "e7e5", "g1f3", "g8f6", "f1c4", "f8e7", "d2d3", "e8f8", "b1c3", "f8g8", "c4f7"], "g8f7");
+        Verifie("Rempart du roque : seulement si l'adversaire a vraiment roqué (pas pour un roi allé à pied en g8)",
+            apresRoque == "Sacrifice du fou : détruit le rempart du roque" && roiAPied == "Sacrifice du fou",
+            $"après O-O : « {apresRoque} » / roi à pied : « {roiAPied} »");
         // Menace : 3. Dh5 menace 4. Dxf7# (coup nul), 3... De7 la pare ; réponses simulées du 2e moteur
         const string fenMenace = "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR w KQkq - 2 3";
         Charger(fenMenace);

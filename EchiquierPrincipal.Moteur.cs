@@ -222,10 +222,14 @@ namespace BrunoGUI_GenII
         }
 
         private void AfficheCoupDuMoteur()
-        {   // Le moteur vient de jouer (réflexion ou bibliothèque) : son coup dans le cadre vert, ex : "Coup joué : 23. Ce6".
+        {   // Le moteur vient de jouer (réflexion ou bibliothèque) : son coup dans le cadre vert, ex : "Coup joué : 23. Ce6", et
+            // "— échec !" s'il met le roi du joueur en échec (ce message remplace "Le roi … est en échec", qui ne restait pas affiché).
             // Pas si la partie vient de finir (le cadre montre alors le résultat)
             if (_partie.EnCours && LogiqueMouvements.ListeCoups.Count > 0 && !LogiqueMouvements.ListeCoups[^1].EstPositionDeDepart)
-                InformationsPartie.Text = T("Coup joué : {0}", Notation(LogiqueMouvements.ListeCoups[^1].PgnFrNumerote));
+            {
+                string coup = Notation(LogiqueMouvements.ListeCoups[^1].PgnFrNumerote);
+                InformationsPartie.Text = LogiqueMouvements.Echec ? T("Coup joué : {0} — échec !", coup) : T("Coup joué : {0}", coup);
+            }
         }
         private void CoupJoue(string coup)
         {   // Un coup (blanc ou noir) vient d'être joué dans la partie (événements AfficheCoupBlanc et AfficheCoupNoir)
