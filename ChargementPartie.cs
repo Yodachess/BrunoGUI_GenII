@@ -116,7 +116,7 @@ namespace BrunoGUI_GenII
                 return Langue.T("numéro du coup « {0} » illisible", champs[5]);
             // Position impossible : le camp qui vient de jouer ne peut pas être resté en échec
             Position position = PositionDepuisFen(string.Join(' ', champs));
-            if (CalculerSur(position, () => { QuiJoue = Adversaire(QuiJoue); return CampAuTraitEnEchec(); }))
+            if (Regles.RoiAttaque(position, Adversaire(position.QuiJoue)))
                 return Langue.T("le camp qui n'a pas le trait est en échec");
             return null;
         }
@@ -238,36 +238,35 @@ namespace BrunoGUI_GenII
             }
         }
 
-        public static string VarianteSanVersUci(string variantePgn, Position position) =>
-            // Une variante PGN ("16... Bb7 17. Nf3", lettres anglaises) jouée sur une copie de la position : ses coups au format UCI
+        public static string VarianteSanVersUci(string variantePgn, Position position)
+        {   // Une variante PGN ("16... Bb7 17. Nf3", lettres anglaises) jouée sur une copie de la position : ses coups au format UCI
             // ("c8b7 g1f3"), jusqu'au premier coup illisible ou illégal ; rien n'est modifié ni redessiné
-            CalculerSur(position, () =>
+            Position copie = position.Copier();
+            List<string> coups = [];
+            // (les sous-variantes "( ... )" sont retirées : seule la ligne principale de la variante est lue)
+            foreach (string mot in ElementsDesCoups(FichierPartiePgn.SupprimeCommentaires(variantePgn, '(', ')')))
             {
-                List<string> coups = [];
-                // (les sous-variantes "( ... )" sont retirées : seule la ligne principale de la variante est lue)
-                foreach (string mot in ElementsDesCoups(FichierPartiePgn.SupprimeCommentaires(variantePgn, '(', ')')))
-                {
-                    if (GestionPartiePgn.EstNumeroOuResultat(mot) || mot.All(char.IsDigit) || mot.StartsWith('$'))
-                        continue;
-                    string san = Annotations.Separe(mot).Coup.TrimEnd('+', '#');
-                    if (san == "")
-                        continue;
-                    string? uci = CoupSanEnUci(san);
-                    if (uci == null)
-                        break;
-                    coups.Add(uci);
-                    JoueSurLaCopie(uci);
-                }
-                return string.Join(" ", coups);
-            });
+                if (GestionPartiePgn.EstNumeroOuResultat(mot) || mot.All(char.IsDigit) || mot.StartsWith('$'))
+                    continue;
+                string san = Annotations.Separe(mot).Coup.TrimEnd('+', '#');
+                if (san == "")
+                    continue;
+                string? uci = CoupSanEnUci(copie, san);
+                if (uci == null)
+                    break;
+                coups.Add(uci);
+                JoueCoupUci(copie, uci);
+            }
+            return string.Join(" ", coups);
+        }
 
-        private static string? CoupSanEnUci(string san)
-        {   // Un coup SAN ("Nbd7", "exd5", "e8=Q", "O-O") pour le camp au trait de la position actuelle (une copie) : son format UCI,
-            // ou null s'il n'est pas légal
-            ColorPiece camp = QuiJoue;
+        private static string? CoupSanEnUci(Position position, string san)
+        {   // Un coup SAN ("Nbd7", "exd5", "e8=Q", "O-O") pour le camp au trait de la position : son format UCI, ou null s'il n'est
+            // pas légal
+            ColorPiece camp = position.QuiJoue;
             if (san.StartsWith("0-0"))
                 san = san.Replace('0', 'O');
-            List<(string Source, string Destination)> legaux = CoupsLegaux();
+            List<(string Source, string Destination)> legaux = Regles.CoupsLegaux(position);
             if (san.StartsWith("O-O"))
             {
                 string rangee = camp == ColorPiece.Blanc ? "1" : "8";
@@ -301,7 +300,7 @@ namespace BrunoGUI_GenII
                 (_, true) => TypePiece.PionBlanc, _ => TypePiece.PionNoir
             };
             foreach ((string source, string arrivee) in legaux)
-                if (arrivee == destination && PiecesEchiquier[RenvoieCaseIndex120(source)] == attendue && leveeDeDoute.All(source.Contains))
+                if (arrivee == destination && position.Pieces[RenvoieCaseIndex120(source)] == attendue && leveeDeDoute.All(source.Contains))
                 {
                     bool derniereRangee = lettre == 'P' && (destination[1] == '8' || destination[1] == '1');
                     return source + destination + (derniereRangee ? char.ToLower(promotion == '\0' ? 'Q' : promotion).ToString() : "");
@@ -313,38 +312,22 @@ namespace BrunoGUI_GenII
         {   // Les positions successives d'une variante UCI ("e2e4 e7e5 ..."), jouée sur une copie de la position de départ (rien n'est
             // modifié ni redessiné) : au plus "maximum" demi-coups, arrêt au premier coup mal formé. Sert à rejouer la meilleure suite
             List<(Position, string)> positions = [];
-            CalculerSur(depart, () =>
+            Position copie = depart.Copier();
+            foreach (string uci in (varianteUci ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(maximum))
             {
-                foreach (string uci in (varianteUci ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(maximum))
-                {
-                    if (uci.Length < 4 || RenvoieCaseIndex120(uci[..2]) < 0 || RenvoieCaseIndex120(uci.Substring(2, 2)) < 0)
-                        break;
-                    JoueSurLaCopie(uci);
-                    positions.Add((PositionActuelle.Copier(), uci));
-                }
-                return 0;
-            });
+                if (uci.Length < 4 || RenvoieCaseIndex120(uci[..2]) < 0 || RenvoieCaseIndex120(uci.Substring(2, 2)) < 0)
+                    break;
+                JoueCoupUci(copie, uci);
+                positions.Add((copie.Copier(), uci));
+            }
             return positions;
         }
 
-        public static void JoueSurLaCopie(string uci)
-        {   // Joue un coup UCI sur la position actuelle (une copie) pour lire le coup suivant de la variante : pièces (roque, prise en
-            // passant et promotion compris), case en passant, droits de roque du roi et des tours, et trait
-            int source = RenvoieCaseIndex120(uci[..2]), destination = RenvoieCaseIndex120(uci.Substring(2, 2));
-            TypePiece piece = PiecesEchiquier[source];
-            ColorPiece camp = QuiJoue;
-            bool pion = piece is TypePiece.PionBlanc or TypePiece.PionNoir;
-            SimuleCoup(source, destination);
-            if (uci.Length >= 5)
-                PiecesEchiquier[destination] = PieceDePromotion(uci[4], camp);
-            IndexCaseEnPassant = pion && Math.Abs(destination - source) == 20 ? (source + destination) / 2 : 0;
-            if (piece == TypePiece.RoiBlanc) PetitRoqueBlancPossible = GrandRoqueBlancPossible = false;
-            if (piece == TypePiece.RoiNoir) PetitRoqueNoirPossible = GrandRoqueNoirPossible = false;
-            if (source == 21 || destination == 21) GrandRoqueBlancPossible = false;
-            if (source == 28 || destination == 28) PetitRoqueBlancPossible = false;
-            if (source == 91 || destination == 91) GrandRoqueNoirPossible = false;
-            if (source == 98 || destination == 98) PetitRoqueNoirPossible = false;
-            QuiJoue = Adversaire(camp);
+        public static void JoueCoupUci(Position position, string uci)
+        {   // Joue un coup UCI ("e7e8q") sur cette position (une copie, pour lire la suite d'une variante) : roque, prise en passant,
+            // promotion, roques, case en passant, compteurs et trait (Regles.Jouer ; la légalité n'est pas vérifiée)
+            TypePiece promotion = uci.Length >= 5 ? PieceDePromotion(uci[4], position.QuiJoue) : TypePiece.Vide;
+            Regles.Jouer(position, uci[..2], uci.Substring(2, 2), promotion);
         }
 
         public static string[] ElementsDesCoups(string coupsPgn) =>

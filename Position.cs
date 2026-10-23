@@ -8,7 +8,7 @@
 // État complet d'une position d'échecs (tout ce que contient un FEN, plus l'état d'échec)
 // └─ Classe "Position"
 //              ├─ "Position"   (Init : échiquier 120 cases, bordures et 64 cases vides)
-//              └─ "Copier"     Copie indépendante, pour les calculs "pour voir" (voir LogiqueMouvements.CalculerSurCopie)
+//              └─ "Copier"     Copie indépendante, pour les calculs "pour voir" (les fonctions de Regles sur la copie)
 
 using System.Collections.Generic;
 using static BrunoGUI_GenII.LogiqueMouvements;

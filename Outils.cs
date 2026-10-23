@@ -14,8 +14,7 @@
 // └─ Classe "Outils"  
 //              ├─ "VarianteUciVersPgn"  
 //              ├─ "EstCaseClaire"
-//              ├─ "ChangerDeCote"  
-//              └─ "MiseaZeroListes"
+//              └─ "MiseaZeroListes"  
 // └─ Classe "Parametres"  
 //              ├─ "ConvertitCouleur" / "FormatCouleur"
 //              ├─ "ChargerDepuisIni"
@@ -85,16 +84,12 @@ namespace BrunoGUI_GenII
         {   // Retourne les coups dans le format PGN (Cdxe4)
             // Si coupConseil = true, seul le dernier coup de la variante est retourné (avec son numéro)
             // Les coups sont joués sur une copie de la position analysée (par défaut la partie) : rien n'est modifié, ni redessiné
-            return LogiqueMouvements.CalculerSur(position ?? LogiqueMouvements.PositionActuelle,
-                                                 () => ConvertitVarianteUci(varianteBrute, numeroDemiCoup, coupConseil));
-        }
-        private static string ConvertitVarianteUci(string varianteBrute, int numeroDemiCoup, bool coupConseil)
-        {   // Joue la variante sur la position actuelle (qui doit être une copie, voir VarianteUciVersPgn)
+            Position copie = (position ?? LogiqueMouvements.PositionActuelle).Copier();
             varianteBrute = varianteBrute.TrimStart();
             string[] varianteUciDecoupe = varianteBrute.Split(' ');         // Découpage des coups de la variante
             varianteBrute = "";
 
-            if (LogiqueMouvements.QuiJoue == ColorPiece.Noir)                       // la PV commence par le coup Noir
+            if (copie.QuiJoue == ColorPiece.Noir)                           // la PV commence par le coup Noir
                 varianteBrute = ((numeroDemiCoup / 2) + 1).ToString() + " ...";     // On met le numéro du coup Noir
 
             for (int i = 0; i < varianteUciDecoupe.Length; i++)
@@ -113,32 +108,20 @@ namespace BrunoGUI_GenII
                             ? LogiqueMouvements.PieceDePromotion(varianteUciDecoupe[i][4], destination[1] == '8' ? ColorPiece.Blanc : ColorPiece.Noir)
                             : TypePiece.Vide;
                         // Génération du coup PGN AVANT déplacement
-                        string coupExaminePgn = LogiqueMouvements.CoupNotationAlgebriquePGN(source, destination);
+                        string coupExaminePgn = Regles.Notation(copie, source, destination).Coup;
                         if (promotion != TypePiece.Vide)
                         {   // Ajouter la pièce promue au PGN
                             coupExaminePgn += CaracterePieceLocale(char.ToLower(varianteUciDecoupe[i][4]));
                         }
-                        // On fait le mouvement (avec la tour du roque et le pion pris en passant)
-                        int indexSource = RenvoieCaseIndex120(source);
-                        int indexDestination = RenvoieCaseIndex120(destination);
-                        bool doublePasPion = System.Math.Abs(indexDestination - indexSource) == 20 &&
-                            (PiecesEchiquier[indexSource] == TypePiece.PionBlanc || PiecesEchiquier[indexSource] == TypePiece.PionNoir);
-                        LogiqueMouvements.SimuleCoup(indexSource, indexDestination);
-                        IndexCaseEnPassant = doublePasPion ? (indexSource + indexDestination) / 2 : 0;   // pour le coup suivant de la variante
-                        if (promotion != TypePiece.Vide)
-                        {   // IMPORTANT : remplacer le pion par la pièce promue
-                            LogiqueMouvements.PiecesEchiquier[RenvoieCaseIndex120(destination)] = promotion;
-                        }
-                        // *******Traitement promotion *********
-
-                        LogiqueMouvements.CalculeEchecEtMat();  
-                        if (EchecetMat)     // Affichage de "+" ou "#" après le coup, selon la situation
+                        // On joue le coup (tour du roque, pion pris en passant, pièce promue, case en passant, trait à l'adversaire)
+                        Regles.Jouer(copie, source, destination, promotion);
+                        if (Regles.EstMat(copie))     // Affichage de "+" ou "#" après le coup, selon la situation
                             coupExaminePgn += "#";
-                        else if (Echec)
+                        else if (Regles.CampAuTraitEnEchec(copie))
                         {
                             coupExaminePgn += "+";
                         }
-                        ColorPiece couleurCoup = LogiqueMouvements.CouleurCase(RenvoieCaseIndex120(destination));
+                        ColorPiece couleurCoup = Regles.CouleurCase(copie, RenvoieCaseIndex120(destination));
                         if (coupConseil)
                         {   // Un seul coup à afficher, c'est le conseil du moteur : la variante reçue est "meilleurCoup conseil",
                             // on ne garde que le dernier coup, joué sur la position obtenue après le meilleur coup
@@ -170,11 +153,6 @@ namespace BrunoGUI_GenII
                             }
                             numeroDemiCoup++;
                         }
-                        // Passer au joueur suivant pour le prochain coup de la variante    // DEUBG 14/05/2026
-                        LogiqueMouvements.QuiJoue =
-                            (LogiqueMouvements.QuiJoue == ColorPiece.Blanc)
-                            ? ColorPiece.Noir
-                            : ColorPiece.Blanc;
                     }
                 }
             }
@@ -203,10 +181,6 @@ namespace BrunoGUI_GenII
             // a1 = sombre → donc (rang + colonne) % 2 == 0 → sombre
             // On inverse pour avoir clair/sombre selon ton choix :
             return ((rang + colonne) % 2 != 0);
-        }
-        public static void ChangerDeCote()
-        {
-            QuiJoue = LogiqueMouvements.Adversaire(QuiJoue);
         }
         public static void MiseaZeroListes()
         {

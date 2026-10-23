@@ -74,7 +74,7 @@ namespace BrunoGUI_GenII
             int index = ParcoursEnCours ? _indexAffiche : LogiqueMouvements.ListeCoups.Count - 1;
             int aSupprimer = LogiqueMouvements.ListeCoups.Count - 1 - index;
             Position positionReprise = _positionAffichee ?? LogiqueMouvements.PositionActuelle;
-            if (LogiqueMouvements.CalculerSur(positionReprise, () => !LogiqueMouvements.ResteCoupsValidesJouables()))
+            if (!Regles.ResteCoupsJouables(positionReprise))
             {   // mat ou pat : il n'y a rien à jouer depuis cette position
                 KryptonMessageBox.Show(T("Cette position est terminée (mat ou pat) : choisissez une position antérieure avec Préc."),
                     T("Reprendre la partie d'ici"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);

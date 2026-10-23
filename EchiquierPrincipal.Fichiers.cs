@@ -101,7 +101,7 @@ namespace BrunoGUI_GenII
         private void BoutonSaisiePosition_Click(object? sender, EventArgs e)
         {   // Saisie d'une position à la main (fenêtre SaisiePosition), en partant de la position affichée ; OK : elle est jouée
             // comme une FEN chargée (nouvelle partie, l'humain au trait) ; Annuler ne change rien
-            string fenAffichee = LogiqueMouvements.CalculerSur(_positionAffichee ?? LogiqueMouvements.PositionActuelle, LogiqueMouvements.RetourneChaineFenActuel);
+            string fenAffichee = Regles.Fen(_positionAffichee ?? LogiqueMouvements.PositionActuelle);
             using SaisiePosition saisie = new(fenAffichee, _vue.ImagePiece, _vue.CaseClaire, _vue.CaseSombre, _vue.CoteNoir);
             if (saisie.ShowDialog(this) == DialogResult.OK)
                 ChargeFenDansLaPartie(saisie.FenSaisie, T("Position saisie : "), "...");

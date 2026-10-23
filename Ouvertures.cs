@@ -68,7 +68,7 @@ namespace BrunoGUI_GenII
             if (demiCoups == 0 || uci.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length != demiCoups)
                 return null;
             Position finale = ChargementPartie.PositionsDeLaVariante(initiale, uci, demiCoups)[^1].Position;
-            return Cle(CalculerSur(finale, RetourneChaineFenActuel));
+            return Cle(Regles.Fen(finale));
         }
 
         public static string AjouteCles(string texte)

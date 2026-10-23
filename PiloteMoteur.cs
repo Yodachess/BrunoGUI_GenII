@@ -123,7 +123,7 @@ namespace BrunoGUI_GenII
             Demande = TypeDemande.Analyse;
             Lignes.Reinitialiser();
             LimiteTemps limite = profondeur is int visee ? LimiteTemps.ProfondeurEtDuree(visee, dureeMilliSecondes) : LimiteTemps.Duree(dureeMilliSecondes);
-            _moteur.Chercher(CalculerSur(position, RetourneChaineFenActuel), limite, forceMaximale: true);
+            _moteur.Chercher(Regles.Fen(position), limite, forceMaximale: true);
         }
 
         public bool Abandonner()
