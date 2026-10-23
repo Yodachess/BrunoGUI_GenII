@@ -914,6 +914,21 @@ public static class Scenario
         Verifie("Coup de partie avec pendule : le moteur reçoit les temps restants à cet instant",
             pilote.Demande == TypeDemande.CoupDePartie && faux.DerniereLimite.CommandeGo == "go wtime 290000 btime 300000 winc 3000 binc 3000", faux.DerniereLimite.CommandeGo);
         pilote.Abandonner();
+        // Deux moteurs : celui qui joue (ex : Rodent) et l'analyste (Stockfish) ; sans analyste, celui qui joue fait tout
+        FauxMoteur joueur = new(), analyste = new();
+        int reglages = 0;
+        bool avecAnalyste = true;
+        PiloteMoteur piloteDouble = new(new JoueurEtAnalyste(joueur, () => avecAnalyste ? analyste : null, () => reglages++));
+        piloteDouble.DemanderCoup(L.FenDepart, LimiteTemps.Duree(1000));
+        bool coupAuJoueur = joueur.Recherches == 1 && analyste.Recherches == 0;
+        piloteDouble.DemanderAnalyse(L.PositionDepuisFen(L.FenDepart), 2000);      // (le coup en cours est abandonné)
+        bool analyseALAnalyste = analyste.Recherches == 1 && joueur.Recherches == 1 && joueur.Abandons == 1 && reglages == 1 && piloteDouble.Abandonner() && analyste.Abandons == 1;
+        avecAnalyste = false;
+        piloteDouble.DemanderAnalyse(L.PositionDepuisFen(L.FenDepart), 2000);
+        Verifie("Deux moteurs : le coup de la partie au moteur qui joue, l'analyse à l'analyste (Stockfish) ; sans analyste, le moteur qui joue analyse",
+            coupAuJoueur && analyseALAnalyste && joueur.Recherches == 2 && joueur.DerniereForceMaximale && reglages == 1,
+            $"joueur {joueur.Recherches} recherche(s), analyste {analyste.Recherches}, réglages {reglages}");
+        piloteDouble.Abandonner();
 
         Charger("8/4P2k/8/8/8/8/8/4K3 w - - 0 1");
         Verifie("Coup UCI avec promotion : la pièce demandée est posée (cavalier)",

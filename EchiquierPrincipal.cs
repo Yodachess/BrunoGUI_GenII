@@ -65,6 +65,9 @@ namespace BrunoGUI_GenII
         // les classes
         public LogiqueMouvements LogiqueMouvements = new();
         public readonly MoteurUci MoteurUci = new();    // le moteur UCI en cours (un seul objet, gardé quand on change de moteur)
+        // L'analyste : le stockfish.exe livré, qui fait toutes les analyses (partie et position) quel que soit le moteur choisi pour
+        // jouer (choix de Bruno, 2026-10-23) ; lancé au démarrage, relancé après une mise à jour de Stockfish
+        private readonly MoteurUci _moteurAnalyse = new();
         private readonly PiloteMoteur _pilote;      // ce qui est demandé au moteur (coup de partie ou analyse) : voir PiloteMoteur.cs
         public GestionPartiePgn GestionPartiePgn = new();
         public PartieForceModule maNouvellePartieForceModule = new();
@@ -159,7 +162,7 @@ namespace BrunoGUI_GenII
 
             DateTime Aujourdhui = DateTime.Today;
             _montreDonneesBrutesUci = _clavierActif = false;
-            _pilote = new PiloteMoteur(MoteurUci)
+            _pilote = new PiloteMoteur(new JoueurEtAnalyste(MoteurUci, () => _moteurAnalyse.Demarre ? _moteurAnalyse : null, ReglagesAnalyste))
             {   // Bibliothèque d'ouvertures (si elle est active) : le coup choisi est aussi affiché dans la liste de la bibliothèque
                 ChoixBibliotheque = fen => _bibliothequeActive ? ChoisirCoupBibliotheque(fen) : null
             };
@@ -188,9 +191,12 @@ namespace BrunoGUI_GenII
             LogiqueMouvements.ChoixPromotion = AffichePromotionPion;
             LogiqueMouvements.DessinePiece += DessinePieceDeLaPartie;     // ignoré pendant le parcours de la partie
             LogiqueMouvements.DessineSymbole += DessineSymbole;
-            MoteurUci.AfficheUci += AfficheUci;
-            MoteurUci.AfficheDonneesBrutes += AfficheDonneesBrutes;
-            MoteurUci.AfficheCoupMoteur += AfficheCoupMoteur;
+            MoteurUci.AfficheUci += () => AfficheUci(MoteurUci);
+            MoteurUci.AfficheDonneesBrutes += () => AfficheDonneesBrutes(MoteurUci);
+            MoteurUci.AfficheCoupMoteur += () => AfficheCoupMoteur(MoteurUci);
+            _moteurAnalyse.AfficheUci += () => AfficheUci(_moteurAnalyse);      // (ses réponses passent par les mêmes fonctions)
+            _moteurAnalyse.AfficheDonneesBrutes += () => AfficheDonneesBrutes(_moteurAnalyse);
+            _moteurAnalyse.AfficheCoupMoteur += () => AfficheCoupMoteur(_moteurAnalyse);
             this.KeyPreview = true; // <-- obligatoire pour capter toutes les touches
             // Les images des pièces et les couleurs des cases sont dans VueEchiquier (couleurs du .ini, voir le constructeur)
 
@@ -227,6 +233,7 @@ namespace BrunoGUI_GenII
                {   // B. MAINTENANT, on démarre le moteur (le fichier est libre, remplacé et prêt)
                    Debug.WriteLine("chemin Load = " + _cheminMoteur);
                    LanceMoteur(_cheminMoteur);
+                   LanceAnalyste();
                }
                finally
                {   // Menus réactivés même si le moteur n'a pas démarré (sinon ils restaient grisés, sans explication)
@@ -685,6 +692,32 @@ namespace BrunoGUI_GenII
                 return false;
             }
         }
+        private void LanceAnalyste()
+        {   // Démarre le Stockfish d'analyse ; absent ou qui ne se lance pas : noté dans le journal, et le moteur choisi analysera
+            // lui-même (JoueurEtAnalyste), comme avant
+            _moteurAnalyse.Quitte();
+            _moteurAnalyse.NombreThreads = MoteurUci.NombreThreads;         // (les réglages de l'utilisateur, envoyés à "uciok")
+            _moteurAnalyse.TailleHachageMo = MoteurUci.TailleHachageMo;
+            try
+            {
+                _moteurAnalyse.Start(CheminStockfish);
+            }
+            catch (Exception ex) when (ex is System.ComponentModel.Win32Exception || ex is InvalidOperationException
+                                       || ex is IOException || ex is UnauthorizedAccessException || ex is ArgumentException)
+            {
+                Journal.Erreur("Démarrage du Stockfish d'analyse " + CheminStockfish, ex);
+            }
+        }
+        private MoteurUci MoteurQuiAnalyse => _moteurAnalyse.Demarre ? _moteurAnalyse : MoteurUci;     // (voir JoueurEtAnalyste)
+        private void ReglagesAnalyste()
+        {   // Avant chaque analyse : l'analyste prend les réglages faits pour le moteur (variantes, threads, hachage), qui ont pu
+            // changer depuis son démarrage (paramètres, analyse de partie qui force 2 variantes)
+            _moteurAnalyse.NombreLignesPV = MoteurUci.NombreLignesPV;      // (envoyé avec chaque "go")
+            if (MoteurUci.NombreThreads is int threads && threads != _moteurAnalyse.NombreThreads)
+                _moteurAnalyse.DefinitThreads(threads);
+            if (MoteurUci.TailleHachageMo is int hachage && hachage != _moteurAnalyse.TailleHachageMo)
+                _moteurAnalyse.DefinitHachage(hachage);
+        }
         private void DemarrageMoteur()
         {   // Arrête le moteur UCI s'il est déjà en cours d'exécution, pour éviter les conflits
             AbandonneReflexion();   // changement de moteur
@@ -755,6 +788,7 @@ namespace BrunoGUI_GenII
         {   // Arrête le moteur UCI (utilise si réflexion infinie)
             timer.Stop();
             MoteurUci.StandardInputDataToUci("stop");
+            _moteurAnalyse.StandardInputDataToUci("stop");
             InformationPourJoueur.Text = T("Arrêt réflexion Moteur");
         }
 
@@ -796,7 +830,7 @@ namespace BrunoGUI_GenII
             LancerReflexion();  // Décompte le temps de réflexion
             // Fenêtre de suivi, comme pour l'analyse de partie (choix de Bruno) : position, score et meilleure suite en direct, temps
             // restant ; "Arrêter" demande au moteur de répondre tout de suite (le résultat est affiché comme à la fin du temps)
-            OuvreFenetreSuivi(T("Analyse de la position"), T("Arrêter"), () => MoteurUci.StandardInputDataToUci("stop"));
+            OuvreFenetreSuivi(T("Analyse de la position"), T("Arrêter"), () => MoteurQuiAnalyse.StandardInputDataToUci("stop"));
             _fenetreAnalyse?.MontreEtape(NomDeLaPosition(ParcoursEnCours ? _indexAffiche : LogiqueMouvements.ListeCoups.Count - 1), "",
                                          0, _dureeReflexionMilliSeconde, TexteTempsRestant(TimeSpan.FromMilliseconds(_dureeReflexionMilliSeconde)));
         }
@@ -1055,9 +1089,10 @@ namespace BrunoGUI_GenII
                 }
                 VarianteMoteurUci2.Text = T("Téléchargement et installation de Stockfish...");
                 bool stockfishEnCours = string.Equals(Path.GetFullPath(_cheminMoteur), CheminStockfish, StringComparison.OrdinalIgnoreCase);
-                if (stockfishEnCours)
-                    AbandonneReflexion();   // l'installation arrête Stockfish : sa réflexion en cours n'aurait jamais de réponse
+                if (stockfishEnCours || _pilote.AnalyseEnCours)
+                    AbandonneReflexion();   // l'installation arrête Stockfish (et l'analyste) : leur réflexion n'aurait jamais de réponse
                 await maj.Installer(version);       // arrête le Stockfish en cours
+                LanceAnalyste();                    // l'analyste aussi, arrêté par l'installation, repart avec la nouvelle version
                 if (stockfishEnCours)
                 {   // Le moteur arrêté par l'installation est redémarré avec la nouvelle version
                     MoteurUci.Quitte();
@@ -1097,6 +1132,7 @@ namespace BrunoGUI_GenII
             StopMoteur_Click(sender, e);
             SauvePreferences();
             MoteurUci.Quitte();     // arrête le processus du moteur (de force s'il ignore "quit", comme Sargon)
+            _moteurAnalyse.Quitte();        // le Stockfish d'analyse
             _moteurAuxiliaire?.Dispose();   // et celui de l'analyse de partie, si elle était en cours
         }
         private void SauvePreferences()

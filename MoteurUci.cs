@@ -74,6 +74,7 @@ namespace BrunoGUI_GenII
                 StandardInputDataToUci("stop");
         }
         private Process? Proc;
+        public bool Demarre => Proc != null;     // un processus moteur est lancé (et pas arrêté par Quitte)
 
         public void Start(string fichierMoteurUci)
         {   // Démarrage du moteur Uci dont le chemin est passé en paramêtre

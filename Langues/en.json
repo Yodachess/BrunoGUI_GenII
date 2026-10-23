@@ -113,6 +113,7 @@
   "Coup illisible ou illégal : « {0} » (demi-coup n° {1}).\nLa partie est chargée jusqu'au coup précédent.": "Unreadable or illegal move: “{0}” (half-move no. {1}).\nThe game is loaded up to the previous move.",
   "Coup joué : {0}": "Move played: {0}",
   "Coup joué : {0} — échec !": "Move played: {0} — check!",
+  "Stockfish (analyse)": "Stockfish (analysis)",
   "Coup joué : {0} (bibliothèque)": "Move played: {0} (book)",
   "Coup noir : {0}... {1}": "Black move: {0}... {1}",
   "Coup suggéré : {0}": "Suggested move: {0}",

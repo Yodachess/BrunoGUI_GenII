@@ -74,6 +74,28 @@ namespace BrunoGUI_GenII
         bool EnReflexion { get; }                           // le moteur réfléchit à une demande toujours valable
     }
 
+    public sealed class JoueurEtAnalyste(IMoteur joueur, Func<IMoteur?> analyste, Action? avantAnalyse = null) : IMoteur
+    {   // Deux moteurs vus comme un seul par le pilote (choix de Bruno, 2026-10-23 : Stockfish analyse toujours, même quand Rodent
+        // joue contre lui) : les coups de la partie vont au moteur choisi pour jouer, les analyses (pleine force) à l'analyste,
+        // un Stockfish à part ; sans analyste (stockfish.exe absent), le moteur choisi fait tout, comme avant.
+        // avantAnalyse : avant chaque analyse confiée à l'analyste (l'interface lui recopie les réglages : variantes, threads, hachage)
+        public void Chercher(string fen, LimiteTemps limite, bool forceMaximale)
+        {
+            IMoteur? moteurAnalyse = forceMaximale ? analyste() : null;
+            if (moteurAnalyse != null)
+                avantAnalyse?.Invoke();
+            (moteurAnalyse ?? joueur).Chercher(fen, limite, forceMaximale);
+        }
+        public void Abandonner()
+        {
+            if (joueur.EnReflexion)
+                joueur.Abandonner();
+            if (analyste() is IMoteur moteur && moteur.EnReflexion)
+                moteur.Abandonner();
+        }
+        public bool EnReflexion => joueur.EnReflexion || analyste()?.EnReflexion == true;
+    }
+
     public enum TypeDemande { Aucune, CoupDePartie, Analyse }
 
     public enum ResultatDemandeCoup

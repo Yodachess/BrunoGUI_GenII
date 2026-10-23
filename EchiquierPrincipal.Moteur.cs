@@ -34,12 +34,15 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         // Procédures d'affichage diverses
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-        private void AfficheUci()   // Affiche les informations du moteur UCI (la ligne est déjà décodée dans MoteurUci.DerniereLigne)
+        private void AfficheUci(MoteurUci moteur)   // Affiche les informations d'un moteur UCI (la ligne est déjà décodée dans moteur.DerniereLigne)
         {   // ATTENTION : MALGRE LA PRESENCE DU PROTOCOLE UCI, LES MOTEURS ONT DES REPONSES DIFFERENTES !!?? (voir case "info", par ex)
-            if (SurLeThreadInterface(AfficheUci))
+            // moteur : celui qui joue (MoteurUci) ou l'analyste (_moteurAnalyse), dont seules les réponses aux analyses comptent
+            if (SurLeThreadInterface(() => AfficheUci(moteur)))
                 return;     // (relancée sur le thread de l'interface, ou ignorée si la fenêtre est fermée)
-            LigneUci ligne = MoteurUci.DerniereLigne;
-            if ((ligne.Commande == "info" || ligne.Commande == "bestmove") && MoteurUci.LigneAbandonnee)
+            LigneUci ligne = moteur.DerniereLigne;
+            if (ligne.Commande == "id" && moteur != MoteurUci)
+                return;     // le nom de l'analyste n'est pas celui de l'adversaire
+            if ((ligne.Commande == "info" || ligne.Commande == "bestmove") && moteur.LigneAbandonnee)
                 return;     // réponse à une demande abandonnée (retour arrière, nouvelle partie...) : on n'affiche rien
             switch (ligne.Commande)     // identifier le premier mot
             {
@@ -118,19 +121,20 @@ namespace BrunoGUI_GenII
             }
         }
 
-        private void AfficheDonneesBrutes()
+        private void AfficheDonneesBrutes(MoteurUci moteur)
         {   // Affiche les données brutes du moteur UCI, pour les curieux qui veulent voir ce qui se passe "sous le capot" :-)
             // Le texte est pris tout de suite (la ligne suivante remplacera DataUci) ; l'affichage est envoyé à l'interface
             // sans l'attendre (BeginInvoke), pour ne pas ralentir la lecture des lignes du moteur
+            string nom = moteur == MoteurUci ? _nomMoteur : T("Stockfish (analyse)");
             string texte;
-            if (MoteurUci.UciVersGui)
+            if (moteur.UciVersGui)
             {
-                if (MoteurUci.DataUci.Contains("currmove"))     // Inutile d'afficher les currmove, il n'y rien d'intéressant ...
+                if (moteur.DataUci.Contains("currmove"))     // Inutile d'afficher les currmove, il n'y rien d'intéressant ...
                     return;
-                texte = "[" + _nomMoteur + "]    " + MoteurUci.DataUci;
+                texte = "[" + nom + "]    " + moteur.DataUci;
             }
             else
-                texte = " [BrunoGUI_GenII]    " + MoteurUci.DataVersUci;
+                texte = " [BrunoGUI_GenII → " + nom + "]    " + moteur.DataVersUci;
             if (!InvokeRequired)
                 donneesBrutesUci.AjouteLigne(texte);
             else if (IsHandleCreated && !IsDisposed)
@@ -146,13 +150,13 @@ namespace BrunoGUI_GenII
             }
         }
 
-        private void AfficheCoupMoteur()
-        {   // Le moteur UCI joue son meilleur coup
-            if (SurLeThreadInterface(AfficheCoupMoteur))
+        private void AfficheCoupMoteur(MoteurUci moteur)
+        {   // Un moteur UCI donne son meilleur coup : coup de la partie (moteur qui joue) ou fin d'une analyse (souvent l'analyste)
+            if (SurLeThreadInterface(() => AfficheCoupMoteur(moteur)))
                 return;     // (relancée sur le thread de l'interface, ou ignorée si la fenêtre est fermée)
             else
             {
-                if (MoteurUci.LigneAbandonnee)
+                if (moteur.LigneAbandonnee)
                     return;     // la demande a été abandonnée entre-temps (vérifié ici, sur le thread de l'interface) : coup ignoré
                 MiseaZeroTimer();
                 if (_emetUnSon && _analyseDePartie == null)     // (pas de son à chaque position d'une analyse de partie)
@@ -171,9 +175,9 @@ namespace BrunoGUI_GenII
                 if (demande == TypeDemande.CoupDePartie)
                 {   // Coup de la partie : on le joue (promotion comprise)
                     StatusProgramme.Text = InformationPourJoueur.Text = T("A vous de jouer");
-                    _caseSource = MoteurUci.CoupAuFormatUci[..2];    // CoupAuFormatUci contient le "best move" sous la forme e2e4
-                    _caseDestination = MoteurUci.CoupAuFormatUci.Substring(2, 2);
-                    PiloteMoteur.JouerCoupUci(MoteurUci.CoupAuFormatUci);      // (rien n'est joué si la position est déjà un mat)
+                    _caseSource = moteur.CoupAuFormatUci[..2];    // CoupAuFormatUci contient le "best move" sous la forme e2e4
+                    _caseDestination = moteur.CoupAuFormatUci.Substring(2, 2);
+                    PiloteMoteur.JouerCoupUci(moteur.CoupAuFormatUci);      // (rien n'est joué si la position est déjà un mat)
                     // Cases de départ et d'arrivée du coup colorées (pendant le parcours : seulement au retour à la partie)
                     _vue.MontreDernierCoup(RenvoieCaseIndex120(_caseSource), RenvoieCaseIndex120(_caseDestination));
                     LeMoteurARepondu();      // On réautorise si le moteur a fini de réfléchir
@@ -195,7 +199,7 @@ namespace BrunoGUI_GenII
                     FermeFenetreAnalyse();      // (la boîte de message donne le résultat)
                     MiseaZeroTimer();           // (réponse avant la fin du temps : bouton Arrêter de la fenêtre de suivi)
                     InformationPourJoueur.Text = StatusProgramme.Text = T("Analyse terminée ...");
-                    string titre = T("Analyse Moteur ({0} sec.) par {1}", _dureeReflexionMilliSeconde / 1000, _nomMoteur);
+                    string titre = T("Analyse Moteur ({0} sec.) par {1}", _dureeReflexionMilliSeconde / 1000, moteur.NomAnnonce ?? _nomMoteur);
                     if (meilleure?.VariantePgn == null)
                     {
                         InformationsPartie.Text = T("Le moteur n'a donné aucune variante.");
