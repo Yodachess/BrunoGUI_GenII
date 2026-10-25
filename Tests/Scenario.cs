@@ -1262,6 +1262,18 @@ public static class Scenario
         Verifie("Thèmes : « Fourchette du cavalier » (1. Cc7+ puis Cxa8), « Sacrifice du fou : détruit le rempart du roque » (1. Fxh7+)",
             commentaireFourchette == "Fourchette du cavalier" && commentaireRempart == "Sacrifice du fou : détruit le rempart du roque",
             $"« {commentaireFourchette} » / « {commentaireRempart} »");
+        // Pas d'attaque double quand le gain vient du coup lui-même : 1. Dxh8+ Re7 2. Dxh7 (une tour prise, puis un seul pion ;
+        // remarque de Bruno, 2026-10-25, 14. Dxh8+ de sa partie contre Rodent IV)
+        const string fenPriseEchec = "4k2r/6Qp/8/8/8/8/8/4K3 w - - 0 1";
+        Charger(fenPriseEchec);
+        L.AjoutePositionDeDepart(fenPriseEchec);
+        Joue("g7h8");
+        AnalyseDePartie analysePriseEchec = new(L.ListeCoups);
+        analysePriseEchec.Enregistre(1, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(900, null), VariantePgn = "1 ... Re7", VarianteUci = "e8e7" });
+        analysePriseEchec.Enregistre(0, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(900, null), VariantePgn = "1. Dxh8+", VarianteUci = "g7h8 e8e7 h8h7" });
+        string commentairePriseEchec = analysePriseEchec.Jugement(1)?.Commentaire;
+        Verifie("Thèmes : pas d'« attaque double » pour 1. Dxh8+ Re7 2. Dxh7 (le gain vient de la prise elle-même)",
+            string.IsNullOrEmpty(commentairePriseEchec) || !commentairePriseEchec.Contains("Attaque double"), $"« {commentairePriseEchec} »");
         // Rempart du roque seulement après un vrai roque : 4... O-O puis 5. Fxf7+ Txf7, ou le roi allé à pied (4... Rf8, 5... Rg8)
         string CommentaireFxf7(string[] coups, string reprise)
         {

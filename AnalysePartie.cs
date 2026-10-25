@@ -475,7 +475,9 @@ namespace BrunoGUI_GenII
         private string? AttaqueDouble(int k, int indexCoup)
         {   // Fourchette / attaque double : le meilleur coup (joué) attaque au moins deux cibles (le roi par un échec, ou une pièce
             // qu'il gagnerait à prendre : plus forte que lui ou mal défendue), la variante du moteur la fait prendre une cible au coup
-            // suivant de cette pièce, et le joueur y gagne au moins SacrificeMinimum points (pas un pion)
+            // suivant de cette pièce, et le joueur y gagne au moins SacrificeMinimum points (pas un pion) APRÈS le coup : ce que le
+            // coup prend lui-même ne vient pas de l'attaque double (remarque de Bruno, 2026-10-25 : 14. Dxh8+ Re7 15. Dxh7, une tour
+            // prise puis un pion, était une « attaque double de la dame »)
             PositionAnalysee avant = _positions[k];
             string[] variante = (avant.VarianteMeilleureUci ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (variante.Length < 3 || variante.Any(c => c.Length < 4) || variante[0] != _coups[indexCoup].Uci.Trim())
@@ -483,10 +485,10 @@ namespace BrunoGUI_GenII
             string arrivee = variante[0].Substring(2, 2);
             ColorPiece camp = avant.AuTrait;
             Position p = PositionDepuisFen(avant.Fen);      // (une position à part : la variante y est jouée)
-            int depart = Materiel(p, camp);
             TypePiece piece = p.Pieces[RenvoieCaseIndex120(variante[0][..2])];
             int valeur = JugementCoups.Valeur(piece);
             ChargementPartie.JoueCoupUci(p, variante[0]);
+            int depart = Materiel(p, camp);
             bool echec = Regles.CampAuTraitEnEchec(p);
             // Cibles : les prises que la pièce pourrait faire si elle rejouait (le trait lui est rendu sur une copie)
             Position rejoue = AvecLeTrait(p, camp);

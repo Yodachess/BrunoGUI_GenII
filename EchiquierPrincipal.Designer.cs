@@ -489,7 +489,7 @@ namespace BrunoGUI_GenII
             // 
             // nouvellePartieToolStripMenuItem
             // 
-            nouvellePartieToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { HumainOrdinateur, OrdinateurHumain, HumainContreHumain, SeparateurPartie2, SaisiePositionMenu, SeparateurPartie3, RetourArriereMenu, OrdinateurJoueMenu, StopMoteur, SeparateurPartie4, ResultatMenu });
+            nouvellePartieToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { HumainOrdinateur, OrdinateurHumain, HumainContreHumain, SeparateurPartie2, SaisiePositionMenu, SeparateurPartie3, RetourArriereMenu, OrdinateurJoueMenu, SeparateurPartie4, ResultatMenu, StopMoteur });
             nouvellePartieToolStripMenuItem.Name = "nouvellePartieToolStripMenuItem";
             nouvellePartieToolStripMenuItem.Size = new System.Drawing.Size(50, 20);
             nouvellePartieToolStripMenuItem.Text = "Partie";
