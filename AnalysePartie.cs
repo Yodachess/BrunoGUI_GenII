@@ -436,7 +436,8 @@ namespace BrunoGUI_GenII
             // Commentaire : le sacrifice (et s'il détruit le rempart du roque), ou le mat manqué ; puis le thème tactique du coup
             string? texteSacrifice = sacrifice == null ? null
                 : DetruitLeRempart(k, indexCoup) ? Langue.T("{0} : détruit le rempart du roque", sacrifice.Texte) : sacrifice.Texte;
-            string? theme = meilleurJoue && !EstCoupDeBibliotheque(indexCoup) ? AttaqueDouble(k, indexCoup) : null;
+            string? theme = meilleurJoue && !EstCoupDeBibliotheque(indexCoup)
+                ? AttaqueALaDecouverte(k, indexCoup) ?? AttaqueDouble(k, indexCoup) : null;
             string?[] commentaires = [texteSacrifice ?? MatManque(k, indexCoup, sens, meilleurJoue), theme];
             return new JugementCoup(indexCoup, camp, perte, annotation, _positions[k + 1].Evaluation, meilleur, meilleurJoue,
                                     positionAvant.Evaluation, positionAvant.MeilleurCoupLong, positionAvant.VarianteMeilleure, precision,
@@ -502,17 +503,8 @@ namespace BrunoGUI_GenII
             if (cibles.Count + (echec ? 1 : 0) < 2)
                 return null;
             // La variante : réponse de l'adversaire, puis la pièce prend l'une des cibles ; on suit les reprises éventuelles
-            ChargementPartie.JoueCoupUci(p, variante[1]);
-            if (variante[2][..2] != arrivee || !cibles.Contains(variante[2].Substring(2, 2)))
-                return null;
-            int i = 2;
-            ChargementPartie.JoueCoupUci(p, variante[i]);
-            while (i + 1 < variante.Length && i < JugementCoups.DemiCoupsSacrifice && EstUnePrise(p, variante[i + 1]))
-                ChargementPartie.JoueCoupUci(p, variante[++i]);
-            int materiel = Materiel(p, camp);
-            if (i + 1 >= variante.Length)       // variante arrêtée après une prise : le camp au trait reprend ce qu'il peut
-                materiel += p.QuiJoue == camp ? GainImmediat(p) : -GainImmediat(p);
-            if (materiel - depart < JugementCoups.SacrificeMinimum)
+            if (variante[2][..2] != arrivee || !cibles.Contains(variante[2].Substring(2, 2))
+                || GainDeLaSuite(p, variante, camp) - depart < JugementCoups.SacrificeMinimum)
                 return null;
             return piece switch
             {
@@ -524,6 +516,108 @@ namespace BrunoGUI_GenII
                 _ => Langue.T("Attaque double du roi")
             };
         }
+
+        private static int GainDeLaSuite(Position apresLeCoup, string[] variante, ColorPiece camp)
+        {   // Matériel du joueur (moins celui de l'adversaire) au bout de la suite de la variante : la réponse de l'adversaire
+            // (variante[1]), le coup suivant du joueur (variante[2]), puis les reprises éventuelles. La position est modifiée
+            ChargementPartie.JoueCoupUci(apresLeCoup, variante[1]);
+            int i = 2;
+            ChargementPartie.JoueCoupUci(apresLeCoup, variante[i]);
+            while (i + 1 < variante.Length && i < JugementCoups.DemiCoupsSacrifice && EstUnePrise(apresLeCoup, variante[i + 1]))
+                ChargementPartie.JoueCoupUci(apresLeCoup, variante[++i]);
+            int materiel = Materiel(apresLeCoup, camp);
+            if (i + 1 >= variante.Length)       // variante arrêtée après une prise : le camp au trait reprend ce qu'il peut
+                materiel += apresLeCoup.QuiJoue == camp ? GainImmediat(apresLeCoup) : -GainImmediat(apresLeCoup);
+            return materiel;
+        }
+
+        private string? AttaqueALaDecouverte(int k, int indexCoup)
+        {   // Échec double, échec à la découverte, attaque à la découverte (choix de Bruno, 2026-10-26). La pièce jouée démasque
+            // une pièce à longue portée du joueur (fou, tour, dame) : celle-ci attaque maintenant, à travers la case quittée, une
+            // cible qu'elle n'atteignait pas.
+            // - le roi adverse attaqué par deux pièces : « Échec double » ;
+            // - le roi attaqué par la pièce démasquée seulement : « Échec à la découverte » ;
+            // - une pièce que la pièce démasquée gagnerait à prendre : « Attaque à la découverte », seulement si la variante du moteur
+            //   prend au coup suivant (la pièce démasquée sa cible, ou la pièce jouée l'une des siennes) et gagne au moins
+            //   SacrificeMinimum après le coup (comme l'attaque double : ce que le coup prend lui-même ne compte pas)
+            string joue = _coups[indexCoup].Uci.Trim();
+            if (joue.Length < 4)
+                return null;
+            ColorPiece camp = _positions[k].AuTrait;
+            Position p = PositionDepuisFen(_positions[k].Fen);
+            int source = RenvoieCaseIndex120(joue[..2]), arrivee = RenvoieCaseIndex120(joue.Substring(2, 2));
+            TypePiece roiAdverse = camp == ColorPiece.Blanc ? TypePiece.RoiNoir : TypePiece.RoiBlanc;
+            // Les pièces à longue portée du joueur, autres que celle qui bouge, et les cases qu'elles attaquaient avant le coup
+            List<(string Case, HashSet<string> Cibles)> longues = [];
+            for (int i = 21; i <= 98; i++)
+                if (i != source && Regles.CouleurCase(p, i) == camp && p.Pieces[i] is TypePiece.FouBlanc or TypePiece.FouNoir
+                        or TypePiece.TourBlanche or TypePiece.TourNoire or TypePiece.ReineBlanche or TypePiece.ReineNoire)
+                    longues.Add((NomCaseAlgebrique(i), CasesPrises(p, NomCaseAlgebrique(i))));
+            ChargementPartie.JoueCoupUci(p, joue);
+            int depart = Materiel(p, camp);
+            int roi = p.Pieces.IndexOf(roiAdverse);
+            if (roi < 21)
+                return null;
+            // Les cibles démasquées : atteintes maintenant à travers la case quittée, et pas avant
+            List<(int Piece, int Cible)> demasquees = [];
+            foreach ((string caseLongue, HashSet<string> avant) in longues)
+            {
+                int indexLongue = RenvoieCaseIndex120(caseLongue);
+                foreach (string cible in CasesPrises(p, caseLongue).Except(avant))
+                    if (EntreLesDeux(indexLongue, source, RenvoieCaseIndex120(cible)))
+                        demasquees.Add((indexLongue, RenvoieCaseIndex120(cible)));
+            }
+            if (demasquees.Count == 0)
+                return null;
+            int attaquantsDuRoi = Regles.CasesPiecesMenacantes(p, NomCaseAlgebrique(roi)).Count;
+            if (demasquees.Any(d => d.Cible == roi))
+                return attaquantsDuRoi >= 2 ? Langue.T("Échec double") : Langue.T("Échec à la découverte");
+            // Attaque à la découverte : une cible que la pièce démasquée gagnerait à prendre, prise par la variante au coup suivant
+            string[] variante = (_positions[k].VarianteMeilleureUci ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (variante.Length < 3 || variante.Any(c => c.Length < 4) || variante[0] != joue)
+                return null;
+            Position rejoue = AvecLeTrait(p, camp);
+            bool gagnante = demasquees.Any(d =>
+                JugementCoups.Valeur(p.Pieces[d.Cible]) - (EstDefendue(rejoue, NomCaseAlgebrique(d.Piece) + NomCaseAlgebrique(d.Cible))
+                    ? JugementCoups.Valeur(p.Pieces[d.Piece]) : 0) > 0);
+            if (!gagnante)
+                return null;
+            string suivant = variante[2];
+            bool priseDemasquee = demasquees.Any(d => suivant == NomCaseAlgebrique(d.Piece) + NomCaseAlgebrique(d.Cible));
+            bool priseDeLaPieceJouee = suivant[..2] == NomCaseAlgebrique(arrivee) && CasesPrises(p, NomCaseAlgebrique(arrivee)).Contains(suivant.Substring(2, 2));
+            if (!priseDemasquee && !priseDeLaPieceJouee)
+                return null;
+            return GainDeLaSuite(p, variante, camp) - depart >= JugementCoups.SacrificeMinimum ? Langue.T("Attaque à la découverte") : null;
+        }
+
+        private static HashSet<string> CasesPrises(Position p, string nomCase) =>
+            // Les cases des pièces adverses que la pièce de cette case pourrait prendre (sans tenir compte du trait ni des clouages)
+            [.. Regles.Mouvements(p, nomCase).Where(m => m.StartsWith('x')).Select(m => m.Substring(1, 2))];
+
+        private static bool EntreLesDeux(int piece, int milieu, int cible)
+        {   // La case du milieu est-elle sur la ligne droite qui va de la pièce à la cible, entre les deux (indices du tableau de 120 cases) ?
+            foreach (int pas in new[] { 1, 10, 9, 11 })
+                foreach (int sens in new[] { pas, -pas })
+                {
+                    int d = piece + sens;
+                    for (int n = 0; n < 7 && SurLePlateau(d); n++, d += sens)
+                    {
+                        if (d == cible)
+                            break;
+                        if (d == milieu)
+                        {   // le milieu est sur cette direction : la cible doit être plus loin, sur la même direction
+                            for (int e = d + sens, m = n + 1; m < 7 && SurLePlateau(e); m++, e += sens)
+                                if (e == cible)
+                                    return true;
+                            break;
+                        }
+                    }
+                }
+            return false;
+        }
+
+        // (les colonnes 0 et 9 du tableau de 120 cases sont la bordure : sans ce test, une ligne passerait d'une rangée à l'autre)
+        private static bool SurLePlateau(int index) => index >= 21 && index <= 98 && index % 10 is not (0 or 9);
 
         private string? MatManque(int k, int indexCoup, double sens, bool meilleurJoue)
         {   // "Mat en 8 manqué" (étape B, choix de Bruno) : le joueur avait un mat forcé avant son coup, et ne l'a plus après (s'il le

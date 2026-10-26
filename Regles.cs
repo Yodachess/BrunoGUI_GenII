@@ -1,16 +1,16 @@
-﻿// â”Œâ–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â–„â”
-// â–ˆ BrunoGUI_GenII - Interface graphique d'Ã©checs en C# WinForms           â–ˆ
-// â–ˆ Copyright (C) 2026 Bruno COURTOIS                                      â–ˆ
-// â–ˆ SPDX-License-Identifier: GPL-3.0-or-later                              â–ˆ
-// â–ˆ See the LICENSE file in the project root for full license information. â–ˆ
-// â””â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â–€â”˜
+﻿// ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
+// █ BrunoGUI_GenII - Interface graphique d'échecs en C# WinForms           █
+// █ Copyright (C) 2026 Bruno COURTOIS                                      █
+// █ SPDX-License-Identifier: GPL-3.0-or-later                              █
+// █ See the LICENSE file in the project root for full license information. █
+// └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 
-// Les rÃ¨gles du jeu sur une position donnÃ©e : dÃ©placements, lÃ©galitÃ©, Ã©chec, mat et pat, notation, lecture et Ã©criture FEN.
-// Chaque fonction travaille sur la Position qu'on lui passe : aucun Ã©tat statique, aucun affichage, rien sur la partie
+// Les règles du jeu sur une position donnée : déplacements, légalité, échec, mat et pat, notation, lecture et écriture FEN.
+// Chaque fonction travaille sur la Position qu'on lui passe : aucun état statique, aucun affichage, rien sur la partie
 // (LogiqueMouvements.PositionActuelle n'est jamais lue ici). On peut donc s'en servir sur n'importe quelle position, y compris
-// sur un autre thread. LogiqueMouvements garde la position de la partie, la liste des coups et les Ã©vÃ©nements d'affichage,
+// sur un autre thread. LogiqueMouvements garde la position de la partie, la liste des coups et les événements d'affichage,
 // et appelle ces fonctions.
-// Les dÃ©placements d'une case sont rendus comme des noms de cases : "e4" (case vide) ou "xe5" (prise).
+// Les déplacements d'une case sont rendus comme des noms de cases : "e4" (case vide) ou "xe5" (prise).
 
 using System;
 using System.Collections.Generic;
@@ -19,8 +19,8 @@ using static BrunoGUI_GenII.LogiqueMouvements;
 
 namespace BrunoGUI_GenII
 {
-    // Ce que Jouer a fait du coup : piÃ¨ce promue (Vide : pas de promotion), prise en passant, et si un second pion pouvait
-    // faire la mÃªme prise en passant (la notation prÃ©cise alors la colonne de dÃ©part)
+    // Ce que Jouer a fait du coup : pièce promue (Vide : pas de promotion), prise en passant, et si un second pion pouvait
+    // faire la même prise en passant (la notation précise alors la colonne de départ)
     public readonly record struct ResultatCoup(TypePiece PiecePromue, bool EnPassant, bool SecondPion);
 
     public static class Regles
@@ -37,20 +37,20 @@ namespace BrunoGUI_GenII
         private static readonly int[] DeplacementsFou = [+9, -9, +11, -11];
         private static readonly int[] DeplacementsTour = [+1, -1, +10, -10];
 
-        // â•â•â• FEN â•â•â•
+        // ═══ FEN ═══
 
         public static Position LireFen(string fen)
-        {   // Une nouvelle position lue dans la FEN (dÃ©jÃ  contrÃ´lÃ©e : voir ChargementPartie.ErreurFen)
+        {   // Une nouvelle position lue dans la FEN (déjà contrôlée : voir ChargementPartie.ErreurFen)
             Position position = new();
             LireFenDans(position, fen);
             return position;
         }
 
         public static void LireFenDans(Position p, string fen)
-        {   // Lit la FEN dans la position (Echec et EchecetMat, absents de la FEN, ne sont pas touchÃ©s)
+        {   // Lit la FEN dans la position (Echec et EchecetMat, absents de la FEN, ne sont pas touchés)
             string[] champs = fen.Split(' ');
             p.QuiJoue = champs[1] == "w" ? ColorPiece.Blanc : ColorPiece.Noir;
-            // numÃ©ro du coup : x si c'est aux Blancs de jouer, x + 0.5 si c'est aux Noirs
+            // numéro du coup : x si c'est aux Blancs de jouer, x + 0.5 si c'est aux Noirs
             p.NombreCoupsJoues = p.QuiJoue == ColorPiece.Blanc ? int.Parse(champs[5]) : int.Parse(champs[5]) + 0.5f;
             p.IndexCaseEnPassant = champs[3] == "-" ? 0 : RenvoieCaseIndex120(champs[3]);
             p.PetitRoqueBlancPossible = champs[2].Contains('K');
@@ -110,27 +110,27 @@ namespace BrunoGUI_GenII
                  + " " + Math.Truncate(p.NombreCoupsJoues).ToString();
         }
 
-        // â•â•â• Couleurs des cases â•â•â•
+        // ═══ Couleurs des cases ═══
 
         public static ColorPiece CouleurCase(Position p, int index)
-        {   // Couleur de la piÃ¨ce sur la case (Vide, Blanc, Noir, ou BordPlateau hors de l'Ã©chiquier)
+        {   // Couleur de la pièce sur la case (Vide, Blanc, Noir, ou BordPlateau hors de l'échiquier)
             if (index < 0 || index >= p.Pieces.Count || p.Pieces[index] == TypePiece.Bordure)
                 return ColorPiece.BordPlateau;
             if (p.Pieces[index] == TypePiece.Vide)
                 return ColorPiece.Vide;
-            return (int)p.Pieces[index] % 2 == 0 ? ColorPiece.Noir : ColorPiece.Blanc;    // piÃ¨ces noires paires, blanches impaires
+            return (int)p.Pieces[index] % 2 == 0 ? ColorPiece.Noir : ColorPiece.Blanc;    // pièces noires paires, blanches impaires
         }
 
         public static ColorPiece CouleurAdversaireCase(Position p, int index)
-        {   // Couleur adverse de la piÃ¨ce sur la case (une case vide ou hors de l'Ã©chiquier rend sa propre couleur)
+        {   // Couleur adverse de la pièce sur la case (une case vide ou hors de l'échiquier rend sa propre couleur)
             ColorPiece couleur = CouleurCase(p, index);
             return couleur is ColorPiece.Blanc or ColorPiece.Noir ? Adversaire(couleur) : couleur;
         }
 
-        // â•â•â• DÃ©placements (sans vÃ©rifier les Ã©checs) â•â•â•
+        // ═══ Déplacements (sans vérifier les échecs) ═══
 
         public static List<string> Mouvements(Position p, string nomCase)
-        {   // Tous les dÃ©placements de la piÃ¨ce de la case, sans vÃ©rifier l'Ã©chec ("e4" ou "xe5") ; aucun pour une case vide
+        {   // Tous les déplacements de la pièce de la case, sans vérifier l'échec ("e4" ou "xe5") ; aucun pour une case vide
             int index = RenvoieCaseIndex120(nomCase);
             if (index < 0)
                 return [];
@@ -178,7 +178,7 @@ namespace BrunoGUI_GenII
         }
 
         private static void AjouteDirection(Position p, int source, int direction, List<string> mouvements)
-        {   // Cases libres dans la direction, puis la prise Ã©ventuelle (le roi s'arrÃªte aprÃ¨s une case)
+        {   // Cases libres dans la direction, puis la prise éventuelle (le roi s'arrête après une case)
             int suivante = source + direction;
             while (p.Pieces[suivante] == TypePiece.Vide)
             {
@@ -192,7 +192,7 @@ namespace BrunoGUI_GenII
         }
 
         private static void AjouteCase(Position p, int source, int destination, List<string> mouvements, bool avecPrise)
-        {   // Une case d'arrivÃ©e du cavalier ou du pion
+        {   // Une case d'arrivée du cavalier ou du pion
             if (p.Pieces[destination] == TypePiece.Bordure)
                 return;
             if (p.Pieces[destination] == TypePiece.Vide)
@@ -202,7 +202,7 @@ namespace BrunoGUI_GenII
         }
 
         private static List<string> MouvementsRoi(Position p, int index)
-        {   // Les 8 cases autour, plus les roques (droit au roque, tour dans son coin, cases libres ; l'Ã©chec est vu par EstLegal)
+        {   // Les 8 cases autour, plus les roques (droit au roque, tour dans son coin, cases libres ; l'échec est vu par EstLegal)
             List<string> mouvements = MouvementsReine(p, index);
             bool roiBlancDepart = index == 25 && p.Pieces[index] == TypePiece.RoiBlanc;
             bool roiNoirDepart = index == 95 && p.Pieces[index] == TypePiece.RoiNoir;
@@ -219,7 +219,7 @@ namespace BrunoGUI_GenII
         }
 
         private static List<string> MouvementsPion(Position p, int index)
-        {   // Avance d'une case, de deux depuis la rangÃ©e de dÃ©part, prises (et prise en passant)
+        {   // Avance d'une case, de deux depuis la rangée de départ, prises (et prise en passant)
             List<string> mouvements = [];
             int sens = p.Pieces[index] == TypePiece.PionBlanc ? 10 : -10;
             int rangeeDepart = p.Pieces[index] == TypePiece.PionBlanc ? 3 : 8;
@@ -240,8 +240,8 @@ namespace BrunoGUI_GenII
         }
 
         public static List<string> CasesPiecesMenacantes(Position p, string nomCase)
-        {   // Les cases des piÃ¨ces qui peuvent prendre sur cette case : piÃ¨ces adverses Ã  celle qui l'occupe, ou, si elle est vide,
-            // piÃ¨ces adverses au camp au trait (cases traversÃ©es par le roi qui roque)
+        {   // Les cases des pièces qui peuvent prendre sur cette case : pièces adverses à celle qui l'occupe, ou, si elle est vide,
+            // pièces adverses au camp au trait (cases traversées par le roi qui roque)
             List<string> menaces = [];
             int index = RenvoieCaseIndex120(nomCase);
             if (index < 0)
@@ -258,10 +258,10 @@ namespace BrunoGUI_GenII
             return menaces;
         }
 
-        // â•â•â• Ã‰chec, coups lÃ©gaux, mat et pat â•â•â•
+        // ═══ Échec, coups légaux, mat et pat ═══
 
         public static bool RoiAttaque(Position p, ColorPiece couleurDuRoi)
-        {   // Le roi de cette couleur est-il attaquÃ© ? (faux s'il n'y en a pas)
+        {   // Le roi de cette couleur est-il attaqué ? (faux s'il n'y en a pas)
             int index = p.Pieces.IndexOf(couleurDuRoi == ColorPiece.Blanc ? TypePiece.RoiBlanc : TypePiece.RoiNoir);
             return index >= 0 && CasesPiecesMenacantes(p, NomCaseAlgebrique(index)).Count > 0;
         }
@@ -269,8 +269,8 @@ namespace BrunoGUI_GenII
         public static bool CampAuTraitEnEchec(Position p) => RoiAttaque(p, p.QuiJoue);
 
         public static bool EstLegal(Position p, string source, string destination)
-        {   // Le coup (de la piÃ¨ce du camp au trait) est-il lÃ©gal : dÃ©placement possible, roque sans Ã©chec ni case traversÃ©e
-            // contrÃ´lÃ©e, et le roi du joueur pas en Ã©chec aprÃ¨s le coup
+        {   // Le coup (de la pièce du camp au trait) est-il légal : déplacement possible, roque sans échec ni case traversée
+            // contrôlée, et le roi du joueur pas en échec après le coup
             int indexSource = RenvoieCaseIndex120(source);
             int indexDestination = RenvoieCaseIndex120(destination);
             if (indexSource < 0 || indexDestination < 0 || CouleurCase(p, indexSource) != p.QuiJoue)
@@ -289,7 +289,7 @@ namespace BrunoGUI_GenII
             => [.. Mouvements(p, nomCase).Where(m => EstLegal(p, nomCase, m[^2..]))];
 
         public static List<(string Source, string Destination)> CoupsLegaux(Position p)
-        {   // Tous les coups lÃ©gaux du camp au trait (une promotion n'apparaÃ®t qu'une fois, quelle que soit la piÃ¨ce choisie)
+        {   // Tous les coups légaux du camp au trait (une promotion n'apparaît qu'une fois, quelle que soit la pièce choisie)
             List<(string Source, string Destination)> coups = [];
             for (int i = 21; i <= 98; i++)
             {
@@ -304,7 +304,7 @@ namespace BrunoGUI_GenII
         }
 
         public static bool ResteCoupsJouables(Position p)
-        {   // Le camp au trait a-t-il au moins un coup lÃ©gal ? (sinon : mat s'il est en Ã©chec, pat sinon)
+        {   // Le camp au trait a-t-il au moins un coup légal ? (sinon : mat s'il est en échec, pat sinon)
             for (int i = 21; i <= 98; i++)
                 if (CouleurCase(p, i) == p.QuiJoue && MouvementsValides(p, NomCaseAlgebrique(i)).Count > 0)
                     return true;
@@ -313,10 +313,10 @@ namespace BrunoGUI_GenII
 
         public static bool EstMat(Position p) => CampAuTraitEnEchec(p) && !ResteCoupsJouables(p);
 
-        // â•â•â• Jouer un coup â•â•â•
+        // ═══ Jouer un coup ═══
 
         public static FlagMouvementRoque TestSiRoque(Position p, int source, int destination)
-        {   // Le dÃ©placement est-il un roque (roi sur sa case de dÃ©part qui va deux cases Ã  cÃ´tÃ©) ?
+        {   // Le déplacement est-il un roque (roi sur sa case de départ qui va deux cases à côté) ?
             if (source == 25 && p.Pieces[source] == TypePiece.RoiBlanc)
             {
                 if (destination == 27) return FlagMouvementRoque.PetitRoqueBlanc;
@@ -344,7 +344,7 @@ namespace BrunoGUI_GenII
         }
 
         public static void SimuleCoup(Position p, int source, int destination)
-        {   // DÃ©place les piÃ¨ces seulement (avec la tour du roque et le pion pris en passant), sans changer le trait, les roques,
+        {   // Déplace les pièces seulement (avec la tour du roque et le pion pris en passant), sans changer le trait, les roques,
             // la case en passant ni les compteurs, et sans promotion
             FlagMouvementRoque roque = TestSiRoque(p, source, destination);
             if (EstPriseEnPassant(p, source, destination))
@@ -360,9 +360,9 @@ namespace BrunoGUI_GenII
         }
 
         public static ResultatCoup Jouer(Position p, string source, string destination, TypePiece promotion = TypePiece.Vide)
-        {   // Joue le coup (dÃ©jÃ  vÃ©rifiÃ© par EstLegal) : piÃ¨ces, roques, case en passant, compteur des 50 coups, trait et numÃ©ro du
-            // coup. promotion : la piÃ¨ce choisie pour un pion qui arrive au bout (prise dans la couleur du pion ; Vide : une dame).
-            // Echec et EchecetMat ne sont pas calculÃ©s ici
+        {   // Joue le coup (déjà vérifié par EstLegal) : pièces, roques, case en passant, compteur des 50 coups, trait et numéro du
+            // coup. promotion : la pièce choisie pour un pion qui arrive au bout (prise dans la couleur du pion ; Vide : une dame).
+            // Echec et EchecetMat ne sont pas calculés ici
             int indexSource = RenvoieCaseIndex120(source);
             int indexDestination = RenvoieCaseIndex120(destination);
             TypePiece piecePromue = TypePiece.Vide;
@@ -381,7 +381,7 @@ namespace BrunoGUI_GenII
                 }
                 p.IndexCaseEnPassant = pion && Math.Abs(indexSource - indexDestination) == 20 ? (indexSource + indexDestination) / 2 : 0;
                 p.SansPrise = pion || p.Pieces[indexDestination] != TypePiece.Vide ? 0 : p.SansPrise + 1;
-                // un roi qui bouge perd ses deux roques ; une tour qui quitte son coin, ou y est prise, celui de son cÃ´tÃ©
+                // un roi qui bouge perd ses deux roques ; une tour qui quitte son coin, ou y est prise, celui de son côté
                 if (piece == TypePiece.RoiBlanc)
                     p.PetitRoqueBlancPossible = p.GrandRoqueBlancPossible = false;
                 if (piece == TypePiece.RoiNoir)
@@ -404,7 +404,7 @@ namespace BrunoGUI_GenII
         }
 
         private static void Roque(Position p, FlagMouvementRoque roque)
-        {   // DÃ©place le roi et la tour ; le camp perd ses deux roques
+        {   // Déplace le roi et la tour ; le camp perd ses deux roques
             p.IndexCaseEnPassant = 0;
             p.SansPrise++;
             switch (roque)
@@ -429,7 +429,7 @@ namespace BrunoGUI_GenII
         }
 
         private static bool PrendEnPassant(Position p, int source)
-        {   // Retire le pion pris en passant ; renvoie vrai si un second pion pouvait faire la mÃªme prise
+        {   // Retire le pion pris en passant ; renvoie vrai si un second pion pouvait faire la même prise
             int colonne = source % 10;
             int rangee = (source / 10) - 1;
             bool secondPion = false;
@@ -450,11 +450,11 @@ namespace BrunoGUI_GenII
             return secondPion;
         }
 
-        // â•â•â• Notation â•â•â•
+        // ═══ Notation ═══
 
         public static (string Coup, bool Echec) Notation(Position p, string source, string destination)
-        {   // Le coup en notation algÃ©brique franÃ§aise, sans "+" ni "#" ("Cgxe2", "exd5", "e8=" pour une promotion, "O-O"), et si
-            // le roi adverse est en Ã©chec aprÃ¨s le coup (la promotion n'est pas comptÃ©e : la piÃ¨ce promue n'est pas connue ici)
+        {   // Le coup en notation algébrique française, sans "+" ni "#" ("Cgxe2", "exd5", "e8=" pour une promotion, "O-O"), et si
+            // le roi adverse est en échec après le coup (la promotion n'est pas comptée : la pièce promue n'est pas connue ici)
             int indexSource = RenvoieCaseIndex120(source);
             int indexDestination = RenvoieCaseIndex120(destination);
             TypePiece piece = p.Pieces[indexSource];
@@ -504,8 +504,8 @@ namespace BrunoGUI_GenII
         };
 
         private static string LeveeAmbiguite(Position p, int indexSource, int indexDestination)
-        {   // RÃ¨gle PGN : si d'autres piÃ¨ces identiques peuvent jouer LÃ‰GALEMENT sur la mÃªme case (une piÃ¨ce clouÃ©e ne compte pas),
-            // la colonne de dÃ©part ; si l'une d'elles est sur la mÃªme colonne, la rangÃ©e ; si les deux, la case entiÃ¨re ; "" sinon
+        {   // Règle PGN : si d'autres pièces identiques peuvent jouer LÉGALEMENT sur la même case (une pièce clouée ne compte pas),
+            // la colonne de départ ; si l'une d'elles est sur la même colonne, la rangée ; si les deux, la case entière ; "" sinon
             string source = NomCaseAlgebrique(indexSource);
             string destination = NomCaseAlgebrique(indexDestination);
             bool ambiguite = false, memeColonne = false, memeRangee = false;
@@ -529,11 +529,11 @@ namespace BrunoGUI_GenII
             return source;
         }
 
-        // â•â•â• MatÃ©riel â•â•â•
+        // ═══ Matériel ═══
 
         public static bool MaterielInsuffisant(Position p)
         {   // Aucun mat possible : il ne reste que les rois, plus au plus un fou ou un cavalier, ou seulement des fous tous sur des
-            // cases de mÃªme couleur
+            // cases de même couleur
             int pieces = 0, cavaliers = 0, fousCasesClaires = 0, fousCasesSombres = 0;
             for (int i = 21; i <= 98; i++)
             {
@@ -561,7 +561,7 @@ namespace BrunoGUI_GenII
         }
 
         public static bool PeutMater(Position p, ColorPiece camp)
-        {   // RÃ¨gle simplifiÃ©e des serveurs en ligne : roi seul, ou roi et un seul fou ou cavalier = pas de mat (pendule)
+        {   // Règle simplifiée des serveurs en ligne : roi seul, ou roi et un seul fou ou cavalier = pas de mat (pendule)
             int piecesLegeres = 0;
             for (int i = 21; i <= 98; i++)
             {
