@@ -1274,6 +1274,25 @@ public static class Scenario
         string commentairePriseEchec = analysePriseEchec.Jugement(1)?.Commentaire;
         Verifie("Thèmes : pas d'« attaque double » pour 1. Dxh8+ Re7 2. Dxh7 (le gain vient de la prise elle-même)",
             string.IsNullOrEmpty(commentairePriseEchec) || !commentairePriseEchec.Contains("Attaque double"), $"« {commentairePriseEchec} »");
+        // Échec double (1. Cf6+ : le cavalier et la tour e1 démasquée), échec à la découverte (1. Cc5+ : la tour seule) et
+        // attaque à la découverte (1. Cc6+ Re6 2. Fxg7 : le fou b2 démasqué gagne la dame)
+        string ThemeDuCoup(string fen, string coup, string variante)
+        {
+            Charger(fen);
+            L.AjoutePositionDeDepart(fen);
+            Joue(coup);
+            AnalyseDePartie analyse = new(L.ListeCoups);
+            analyse.Enregistre(1, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(900, null), VariantePgn = "", VarianteUci = variante.Split(' ')[1] });
+            analyse.Enregistre(0, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(900, null), VariantePgn = "", VarianteUci = variante });
+            return analyse.Jugement(1)?.Commentaire ?? "";
+        }
+        string echecDouble = ThemeDuCoup("4k3/8/8/8/4N3/8/8/4RK2 w - - 0 1", "e4f6", "e4f6 e8f7 e1e7");
+        string echecDecouverte = ThemeDuCoup("4k3/8/8/8/4N3/8/8/4RK2 w - - 0 1", "e4c5", "e4c5 e8d8 c5b7");
+        string attaqueDecouverte = ThemeDuCoup("8/4k1q1/8/8/3N4/8/1B6/7K w - - 0 1", "d4c6", "d4c6 e7e6 b2g7");
+        string sansTheme = ThemeDuCoup("4k3/8/8/8/4N3/8/8/5K2 w - - 0 1", "e4c5", "e4c5 e8d8 c5b7");
+        Verifie("Thèmes : « Échec double » (1. Cf6+), « Échec à la découverte » (1. Cc5+), « Attaque à la découverte » (1. Cc6+ puis Fxg7), rien sans pièce démasquée",
+            echecDouble == "Échec double" && echecDecouverte == "Échec à la découverte" && attaqueDecouverte == "Attaque à la découverte" && sansTheme == "",
+            $"« {echecDouble} » / « {echecDecouverte} » / « {attaqueDecouverte} » / « {sansTheme} »");
         // Rempart du roque seulement après un vrai roque : 4... O-O puis 5. Fxf7+ Txf7, ou le roi allé à pied (4... Rf8, 5... Rg8)
         string CommentaireFxf7(string[] coups, string reprise)
         {

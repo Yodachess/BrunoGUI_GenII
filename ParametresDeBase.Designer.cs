@@ -79,7 +79,7 @@ namespace BrunoGUI_GenII
             baseReflexionNumerique.Location = new System.Drawing.Point(233, 127);
             baseReflexionNumerique.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             baseReflexionNumerique.Maximum = new decimal(new int[] { 600, 0, 0, 0 });
-            baseReflexionNumerique.Minimum = new decimal(new int[] { 0, 0, 0, 0 });
+            baseReflexionNumerique.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             baseReflexionNumerique.Name = "baseReflexionNumerique";
             baseReflexionNumerique.Size = new System.Drawing.Size(140, 22);
             baseReflexionNumerique.StateCommon.Border.Color1 = System.Drawing.Color.Black;
@@ -137,7 +137,7 @@ namespace BrunoGUI_GenII
             LabelBaseReflexion.Name = "LabelBaseReflexion";
             LabelBaseReflexion.Size = new System.Drawing.Size(198, 23);
             LabelBaseReflexion.TabIndex = 3;
-            LabelBaseReflexion.Values.Text = "Réflexion (0 à 600 secondes) : ";
+            LabelBaseReflexion.Values.Text = "Réflexion (1 à 600 secondes) : ";
             // 
             // LabelBaseMultiPv
             // 
