@@ -1148,6 +1148,10 @@ namespace BrunoGUI_GenII
             //                (Regles.cs, calculs sur une copie, deux fois plus rapides) ; FEN mieux vérifiée (en passant, roques) ;
             //                tournures variées des erreurs dans la feuille, faux sacrifices et faux « rempart du roque » corrigés,
             //                « Coup joué : … — échec ! »
+            // Version 1.28 = passage à .NET 10 (le runtime .NET 10 Desktop remplace le 8, plus maintenu après le 10/11/2026) ;
+            //                un moteur qui s'arrête tout seul est signalé et relancé (l'analyste d'office) ; analyse : échec
+            //                double, échec et attaque à la découverte, fausse « attaque double » corrigée ; menu Partie rangé
+            //                (Résultat avant Arrêter le moteur) ; aide avec les captures des nouveaux menus ; réflexion de 1 à 600 s
             // (le numéro de version vient du .csproj, <Version> : il n'est plus écrit ici)
             _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version " + VersionAffichee + "\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", T("A propos de"),
