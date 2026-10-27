@@ -42,6 +42,9 @@ namespace BrunoGUI_GenII
         public event AfficheMoteurUci? AfficheUci;
         public event AfficheDonneesBrutesUci? AfficheDonneesBrutes;
         public event AfficheCoupMoteurUci? AfficheCoupMoteur;
+        // Le processus du moteur s'est arrêté sans qu'on le lui demande (plantage, moteur qui se ferme tout seul), avec son code de
+        // sortie ; lancé sur un thread qui n'est pas celui de l'interface. Jamais après Quitte (Proc est déjà oublié)
+        public event Action<MoteurUci, int>? MoteurArrete;
         public List<string> OptionsUci = [];  // Noms des options déclarées par le moteur (lignes "option name ...")
         public string DataUci { get; set; } = "";            // dernière ligne reçue du moteur, telle quelle
         public LigneUci DerniereLigne { get; private set; } = new();   // la même ligne, décodée
@@ -100,6 +103,9 @@ namespace BrunoGUI_GenII
             Proc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             // gestionnaire d'événement de sortie de données
             Proc.OutputDataReceived += ProcOutputDataReceived;
+            // fin du processus surveillée (choix de Bruno, 2026-10-27 : un moteur qui plantait laissait la partie figée sans rien dire)
+            Proc.EnableRaisingEvents = true;
+            Proc.Exited += ProcExited;
             // démarrer le processus (fichier absent ou illisible : exception pour l'appelant,
             // et pas de moteur plutôt qu'un processus jamais démarré)
             try
@@ -124,6 +130,24 @@ namespace BrunoGUI_GenII
             NiveauVoulu = _niveauDansMoteur = null;
             Demandes.Reinitialiser();
             StandardInputDataToUci("uci");  // On demande les infos au moteur (il répond par ses options puis "uciok")
+        }
+
+        private void ProcExited(object? sender, EventArgs e)
+        {   // Le processus s'est terminé : si c'est le moteur en cours (pas un ancien, ni un moteur arrêté par Quitte), il est oublié
+            // (Demarre devient faux, ses demandes en attente n'auront jamais de réponse) et l'interface est prévenue
+            if (sender is not Process arrete || System.Threading.Interlocked.CompareExchange(ref Proc, null, arrete) != arrete)
+                return;
+            int code;
+            try
+            {
+                code = arrete.ExitCode;
+            }
+            catch (InvalidOperationException)
+            {   // code de sortie illisible : inconnu
+                code = -1;
+            }
+            Demandes.Reinitialiser();
+            MoteurArrete?.Invoke(this, code);
         }
 
         private void ProcOutputDataReceived(object? sender, DataReceivedEventArgs e)
@@ -317,8 +341,9 @@ namespace BrunoGUI_GenII
             StandardInputDataToUci("quit");
             // Dès maintenant, les dernières lignes du moteur (ex : son bestmove après un "stop") sont ignorées (sender != Proc) :
             // à la fermeture de l'application, elles arrivaient sur une fenêtre détruite (ObjectDisposedException dans le journal)
-            Process enArret = Proc;
-            Proc = null;
+            // (d'un seul coup : un arrêt du processus à cet instant ne doit pas être pris pour un plantage, voir ProcExited)
+            if (System.Threading.Interlocked.Exchange(ref Proc, null) is not Process enArret)
+                return;
             try
             {
                 if (!enArret.WaitForExit(1000))
