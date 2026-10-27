@@ -15,6 +15,7 @@
 //                      └─ "ForceMoteurAnnuler_Click"
 
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Diagnostics;
@@ -23,12 +24,19 @@ namespace BrunoGUI_GenII
 {
     public partial class PartieForceModule : Form
     {
-        // Choix proposés à l'ouverture de la fenêtre (préférences du .ini, puis derniers choix), et choix validés
+        // Choix proposés à l'ouverture de la fenêtre (préférences du .ini, puis derniers choix), et choix validés.
+        // (Hidden : propriétés lues et écrites par le code, jamais par le designer ; sans cela, .NET 10 refuse de compiler, WFO1000)
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public LogiqueMouvements.ColorPiece ChoixCouleur { get; set; } = LogiqueMouvements.ColorPiece.Noir;    // camp joué par le moteur
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string NomAdversaire { get; set; } = "Bruno";    // nom du joueur humain
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int ForceModule { get; set; } = 1850;            // Elo du moteur si pas force maximale
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int DureeReflexionSeconde { get; set; } = 5;
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool ForceMaximale { get; set; } = true;
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Cadence ChoixCadence { get; set; } = Cadence.SansPendule;    // pendule de la partie (sans : temps fixe par coup)
 
         public PartieForceModule()

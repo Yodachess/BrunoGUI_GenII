@@ -152,7 +152,7 @@ namespace BrunoGUI_GenII
                 long milieu = bas + (haut - bas) / 2;
                 fs.Seek(milieu * 16, SeekOrigin.Begin);
 
-                fs.Read(buffer, 0, 16);
+                fs.ReadExactly(buffer, 0, 16);      // (16 octets ou exception : Read pouvait en lire moins)
 
                 ulong clefcourante = BinaryPrimitives.ReadUInt64BigEndian(buffer);
 
@@ -181,7 +181,7 @@ namespace BrunoGUI_GenII
             {   // On recule pour trouver le début des entrées avec la même clé
                 // (il peut y en avoir plusieurs)
                 fs.Seek((pos - 1) * 16, SeekOrigin.Begin);
-                fs.Read(buffer, 0, 16);
+                fs.ReadExactly(buffer, 0, 16);      // (16 octets ou exception : Read pouvait en lire moins)
 
                 ulong clefPrecedente = BinaryPrimitives.ReadUInt64BigEndian(buffer);
                 if (clefPrecedente != clefPolyglot)

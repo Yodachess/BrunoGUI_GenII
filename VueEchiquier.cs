@@ -73,7 +73,7 @@ namespace BrunoGUI_GenII
         }
 
         public Image? ImagePiece(TypePiece piece) => _images[piece];
-        public Image ImageCase(int index) => _cases[index].Image;
+        public Image? ImageCase(int index) => _cases[index].Image;     // null : case vide
 
         public void CreerCases(MouseEventHandler clicSurCase)
         {   // Les 120 cases (bordures comprises, seules 64 sont visibles), nommées "Pictjeux" + index : a1 = Pictjeux21, h8 = Pictjeux98
@@ -135,11 +135,11 @@ namespace BrunoGUI_GenII
         }
         public void DessineSymbole(int index, TypeSymbole symbole)
         {   // Dessine un des 4 symboles : seul sur une case vide, par-dessus la pièce sinon
-            if (_cases[index].Image == null)
+            if (_cases[index].Image is not Image piece)
                 RemplaceImage(index, _symboles[symbole]);
             else
             {   // Image composée (pièce + symbole), libérée quand elle est remplacée
-                Bitmap composee = new(_cases[index].Image);
+                Bitmap composee = new(piece);
                 using (Graphics g = Graphics.FromImage(composee))
                     g.DrawImage(_symboles[symbole], 0, 0, 100, 100);
                 _imagesComposees.Add(composee);
@@ -151,7 +151,7 @@ namespace BrunoGUI_GenII
         private readonly HashSet<Image> _imagesComposees = [];
         private void RemplaceImage(int index, Image? nouvelle)
         {
-            Image ancienne = _cases[index].Image;
+            Image? ancienne = _cases[index].Image;
             _cases[index].Image = nouvelle;
             if (ancienne != null && ancienne != nouvelle && _imagesComposees.Remove(ancienne))
                 ancienne.Dispose();
@@ -267,7 +267,7 @@ namespace BrunoGUI_GenII
             if (_dernierCoupMontre)
                 CouleursNormales();
             _cases.Reverse();
-            _plateau.Image.RotateFlip(RotateFlipType.Rotate180FlipNone);
+            _plateau.Image?.RotateFlip(RotateFlipType.Rotate180FlipNone);
             _plateau.Refresh();
             CoteNoir = !CoteNoir;
             DessinePosition(aDessiner);

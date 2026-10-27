@@ -47,7 +47,7 @@ namespace BrunoGUI_GenII
         {   // Chemin du répertoire racine du projet (BrunoGUI_Echecs)
             /*
             get
-            {   // Remonte de 3 niveaux : bin\Debug\net8.0-windows\ → bin\Debug\ → bin\ → BrunoGUI_Echecs\
+            {   // Remonte de 3 niveaux : bin\Debug\net10.0-windows\ → bin\Debug\ → bin\ → BrunoGUI_Echecs\
                 string repertoireExecutable = RepertoireExecutable;
                 return Directory.GetParent(Directory.GetParent(Directory.GetParent(repertoireExecutable).FullName).FullName).FullName;
             }

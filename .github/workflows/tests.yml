@@ -17,7 +17,7 @@ jobs:
       - name: Installation de .NET 8
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
 
       - name: Compilation
         run: dotnet build BrunoGUI_GenII.sln -c Release
