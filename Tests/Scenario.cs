@@ -951,6 +951,25 @@ public static class Scenario
             proposees.Count == 1 && proposees[0] == ("Tal", "Tal", false), string.Join(", ", proposees));
         Directory.Delete(dossierPerso, true);
 
+        // Moteur arrêté sans qu'on le lui demande : signalé (un programme qui se termine aussitôt, whoami.exe), jamais après Quitte
+        // (cmd.exe, qui ignore "quit" et est arrêté de force)
+        string systeme = Environment.GetFolderPath(Environment.SpecialFolder.System);
+        MoteurUci moteurQuiSArrete = new();
+        using System.Threading.ManualResetEventSlim arretSignale = new();
+        int codeArret = int.MinValue;
+        moteurQuiSArrete.MoteurArrete += (m, code) => { codeArret = code; arretSignale.Set(); };
+        moteurQuiSArrete.Start(Path.Combine(systeme, "whoami.exe"));
+        bool arretVu = arretSignale.Wait(5000);
+        MoteurUci moteurQuitte = new();
+        bool arretApresQuitte = false;
+        moteurQuitte.MoteurArrete += (m, code) => arretApresQuitte = true;
+        moteurQuitte.Start(Path.Combine(systeme, "cmd.exe"));
+        moteurQuitte.Quitte();
+        System.Threading.Thread.Sleep(500);
+        Verifie("Moteur arrêté tout seul : signalé avec son code de sortie, et plus « démarré » ; jamais après Quitte",
+            arretVu && codeArret == 0 && !moteurQuiSArrete.Demarre && !arretApresQuitte && !moteurQuitte.Demarre,
+            $"signalé : {arretVu}, code {codeArret}, après Quitte : {arretApresQuitte}");
+
         Charger("8/4P2k/8/8/8/8/8/4K3 w - - 0 1");
         Verifie("Coup UCI avec promotion : la pièce demandée est posée (cavalier)",
             PiloteMoteur.JouerCoupUci("e7e8n") && L.PiecesEchiquier[L.RenvoieCaseIndex120("e8")] == L.TypePiece.CavalierBlanc,

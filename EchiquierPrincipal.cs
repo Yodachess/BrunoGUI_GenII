@@ -203,6 +203,8 @@ namespace BrunoGUI_GenII
             _moteurAnalyse.AfficheUci += () => AfficheUci(_moteurAnalyse);      // (ses réponses passent par les mêmes fonctions)
             _moteurAnalyse.AfficheDonneesBrutes += () => AfficheDonneesBrutes(_moteurAnalyse);
             _moteurAnalyse.AfficheCoupMoteur += () => AfficheCoupMoteur(_moteurAnalyse);
+            MoteurUci.MoteurArrete += (moteur, code) => SurLeThreadInterface(() => MoteurArreteSansDemande(moteur, code));
+            _moteurAnalyse.MoteurArrete += (moteur, code) => SurLeThreadInterface(() => MoteurArreteSansDemande(moteur, code));
             this.KeyPreview = true; // <-- obligatoire pour capter toutes les touches
             // Les images des pièces et les couleurs des cases sont dans VueEchiquier (couleurs du .ini, voir le constructeur)
 
@@ -784,6 +786,37 @@ namespace BrunoGUI_GenII
                 Journal.Erreur("Démarrage du Stockfish d'analyse " + CheminStockfish, ex);
             }
         }
+        private bool _miseAJourStockfish;      // l'installation d'une mise à jour arrête Stockfish exprès : pas un plantage
+        private void MoteurArreteSansDemande(MoteurUci moteur, int code)
+        {   // Un moteur s'est arrêté tout seul (plantage, moteur qui se ferme) : avant, la partie restait figée sans explication
+            // (choix de Bruno, 2026-10-27). Noté dans le journal ; l'analyste (Stockfish) est relancé d'office, et pour le moteur qui
+            // joue, on propose de le relancer (il rejoue si c'était à lui)
+            if (_miseAJourStockfish || IsDisposed)
+                return;
+            bool analyste = moteur == _moteurAnalyse;
+            string nom = analyste ? T("Stockfish (analyse)") : _nomMoteur;
+            Journal.Info($"Moteur arrêté sans qu'on le lui demande : {(analyste ? CheminStockfish : _cheminMoteur)} (code de sortie {code})");
+            if (analyste)
+            {
+                bool analysait = _pilote.AnalyseEnCours;
+                if (analysait)
+                    AbandonneReflexion();   // l'analyse en cours n'aurait jamais de réponse (ce qui est déjà analysé est gardé)
+                LanceAnalyste();
+                VarianteMoteurUci2.Text = T("Le Stockfish d'analyse s'est arrêté (code {0}) : il a été relancé.", code);
+                if (analysait)
+                    KryptonMessageBox.Show(T("Le Stockfish d'analyse s'est arrêté pendant l'analyse (code {0}).\n\nIl a été relancé : vous pouvez relancer l'analyse.", code),
+                        T("Moteur UCI"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+                return;
+            }
+            AbandonneReflexion();           // sa réflexion n'aurait jamais de réponse
+            VarianteMoteurUci2.Text = T("Le moteur {0} s'est arrêté (code {1}).", nom, code);
+            if (KryptonMessageBox.Show(T("Le moteur {0} s'est arrêté de façon inattendue (code {1}).\n\nLe relancer ?", nom, code),
+                    T("Moteur UCI"), KryptonMessageBoxButtons.YesNo, KryptonMessageBoxIcon.Warning) != DialogResult.Yes)
+                return;
+            if (LanceMoteur(_cheminMoteur) && _partie.MoteurAuTrait && !ParcoursEnCours)
+                JeuMoteurAvecBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());     // il devait jouer : on lui redemande son coup
+            MetAJourCommandes();
+        }
         private MoteurUci MoteurQuiAnalyse => _moteurAnalyse.Demarre ? _moteurAnalyse : MoteurUci;     // (voir JoueurEtAnalyste)
         private void ReglagesAnalyste()
         {   // Avant chaque analyse : l'analyste prend les réglages faits pour le moteur (variantes, threads, hachage), qui ont pu
@@ -1173,14 +1206,22 @@ namespace BrunoGUI_GenII
                 bool stockfishEnCours = string.Equals(Path.GetFullPath(_cheminMoteur), CheminStockfish, StringComparison.OrdinalIgnoreCase);
                 if (stockfishEnCours || _pilote.AnalyseEnCours)
                     AbandonneReflexion();   // l'installation arrête Stockfish (et l'analyste) : leur réflexion n'aurait jamais de réponse
-                await maj.Installer(version);       // arrête le Stockfish en cours
-                LanceAnalyste();                    // l'analyste aussi, arrêté par l'installation, repart avec la nouvelle version
-                if (stockfishEnCours)
-                {   // Le moteur arrêté par l'installation est redémarré avec la nouvelle version
-                    MoteurUci.Quitte();
-                    MoteurUci.Start(CheminStockfish);
-                    if (_partie.MoteurAuTrait)      // il devait jouer : on lui redemande son coup
-                        JeuMoteurAvecBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
+                _miseAJourStockfish = true;         // (arrêts voulus : pas de message « moteur arrêté »)
+                try
+                {
+                    await maj.Installer(version);       // arrête le Stockfish en cours
+                    LanceAnalyste();                    // l'analyste aussi, arrêté par l'installation, repart avec la nouvelle version
+                    if (stockfishEnCours)
+                    {   // Le moteur arrêté par l'installation est redémarré avec la nouvelle version
+                        MoteurUci.Quitte();
+                        MoteurUci.Start(CheminStockfish);
+                        if (_partie.MoteurAuTrait)      // il devait jouer : on lui redemande son coup
+                            JeuMoteurAvecBibliotheque(LogiqueMouvements.RetourneChaineFenActuel());
+                    }
+                }
+                finally
+                {
+                    _miseAJourStockfish = false;
                 }
                 VarianteMoteurUci2.Text = T("Stockfish est à jour !");
                 KryptonMessageBox.Show(T("{0} est installé.", version.Tag.Replace("sf_", "Stockfish ")) +
