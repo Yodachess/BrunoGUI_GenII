@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Projet
 
-BrunoGUI_GenII : interface graphique d'échecs Windows (C# WinForms, .NET 8, `net8.0-windows`) qui pilote des moteurs UCI (Stockfish par défaut, plus Rodent IV, Sargon 1978, etc.). Licence GPL-3.0-or-later. Tout le code, les identifiants et les commentaires sont en français — garder cette convention. Les **identifiants n'ont pas d'accents** (`RecupereBibliotheque`, `PolyglotBibliotheque` ; renommés le 2026-10-09), les commentaires et les textes affichés en ont ; seules exceptions : les noms de ressources générés (`Bouton_arrêt_48pixel`…) et le dossier `BibliothèquesPolyglot` sur le disque (propriété `Chemins.BibliothequesPolyglot`).
+BrunoGUI_GenII : interface graphique d'échecs Windows (C# WinForms, .NET 10, `net10.0-windows` depuis le 2026-10-27 : fin du support de .NET 8 le 2026-11-10 ; il faut Visual Studio 2026, VS 2022 ne prend pas .NET 10 en charge) qui pilote des moteurs UCI (Stockfish par défaut, plus Rodent IV, Sargon 1978, etc.). Licence GPL-3.0-or-later. Tout le code, les identifiants et les commentaires sont en français — garder cette convention. Les **identifiants n'ont pas d'accents** (`RecupereBibliotheque`, `PolyglotBibliotheque` ; renommés le 2026-10-09), les commentaires et les textes affichés en ont ; seules exceptions : les noms de ressources générés (`Bouton_arrêt_48pixel`…) et le dossier `BibliothèquesPolyglot` sur le disque (propriété `Chemins.BibliothequesPolyglot`).
 
 ## Commandes
 

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <OutputType>WinExe</OutputType>
     <!-- Numéro de version de l'application (A propos, propriétés de l'exe) : à changer à chaque version publiée ;
          la publication (tag vX.YY) vérifie qu'il correspond au tag -->

@@ -22,7 +22,7 @@ jobs:
       - name: Installation de .NET 8
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
 
       # Le numéro de version de l'application est la balise <Version> du .csproj : le tag doit lui correspondre (v1.16 <-> 1.16),
       # sinon l'archive publiée afficherait un autre numéro que celui de la Release
@@ -51,11 +51,11 @@ jobs:
           Invoke-WebRequest $fichier.browser_download_url -OutFile stockfish.zip
           Expand-Archive stockfish.zip -DestinationPath stockfish_extrait
           $exe = Get-ChildItem stockfish_extrait -Recurse -Filter *.exe | Select-Object -First 1
-          Copy-Item $exe.FullName bin/Release/net8.0-windows/stockfish/stockfish.exe -Force
+          Copy-Item $exe.FullName bin/Release/net10.0-windows/stockfish/stockfish.exe -Force
 
       - name: Archive portable
         run: |
-          $sortie = "bin/Release/net8.0-windows"
+          $sortie = "bin/Release/net10.0-windows"
           # Fichiers de publication ClickOnce et de débogage : inutiles dans une archive portable
           Remove-Item "$sortie/publish" -Recurse -Force -ErrorAction SilentlyContinue
           Remove-Item "$sortie/*.application", "$sortie/*.manifest", "$sortie/*.pdb" -Force -ErrorAction SilentlyContinue

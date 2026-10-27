@@ -66,7 +66,7 @@ namespace BrunoGUI_GenII
         public LogiqueMouvements LogiqueMouvements = new();
         public readonly MoteurUci MoteurUci = new();    // le moteur UCI en cours (un seul objet, gardé quand on change de moteur)
         // L'analyste : le stockfish.exe livré, qui fait toutes les analyses (partie et position) quel que soit le moteur choisi pour
-        // jouer (choix de Bruno, 2026-10-23) ; lancé au démarrage, relancé après une mise à jour de Stockfish
+        // jouer  ; lancé au démarrage, relancé après une mise à jour de Stockfish
         private readonly MoteurUci _moteurAnalyse = new();
         private readonly PiloteMoteur _pilote;      // ce qui est demandé au moteur (coup de partie ou analyse) : voir PiloteMoteur.cs
         public GestionPartiePgn GestionPartiePgn = new();
@@ -86,7 +86,7 @@ namespace BrunoGUI_GenII
             InitializeComponent();
             TraductionFenetres.Traduit(this);          // textes du designer dans la langue choisie (voir Langue.cs)
             // Case « Son » juste après la case de la bibliothèque, à la largeur de son texte : en anglais, « Sound » était coupé
-            // (« Sou… ») dans les 49 px prévus pour « Son », alors que « Book » laisse la place (remarque de Bruno)
+            // (« Sou… ») dans les 49 px prévus pour « Son », alors que « Book » laisse la place 
             ActiveSon.Left = ActiveBibliotheque.Left + Math.Min(ActiveBibliotheque.Width, ActiveBibliotheque.PreferredSize.Width) + 4;
             ActiveSon.Width = Math.Max(ActiveSon.Width, ActiveSon.PreferredSize.Width);
             TraductionFenetres.TraduitDialogues(SauvegardeFen, SauvegardeFichier, OuvertureChoixBibliotheque, OuvertureChoixMoteur, ChargerPartiesPgn, ChargerPositionFen);
@@ -95,7 +95,7 @@ namespace BrunoGUI_GenII
             nouvellePartieToolStripMenuItem.DropDownOpening += (s, e) => MetAJourMenus();
             AnalyseMenu.DropDownOpening += (s, e) => MetAJourMenus();
             OptionsMenu.DropDownOpening += (s, e) => MetAJourMenus();
-            // Icônes des options qui n'en avaient pas (choix de Bruno) : celles qui existaient déjà dans les ressources
+            // Icônes des options qui n'en avaient pas  : celles qui existaient déjà dans les ressources
             BtnMiseAJour.Image = Properties.Resources.Stockfish;
             if (Icon != null)
                 Apropos.Image = new Icon(Icon, 16, 16).ToBitmap();     // l'icône de BrunoGUI
@@ -350,9 +350,9 @@ namespace BrunoGUI_GenII
                             _indexSource120 = IndexCase120;
                             _caseSource = LogiqueMouvements.NomCaseAlgebrique(_indexSource120);
                             _pieceSource = LogiqueMouvements.PiecesEchiquier[_indexSource120];
-                            if (_vue.ImageCase(IndexCase120) != null)
+                            if (_vue.ImageCase(IndexCase120) is Image imagePiece)
                             {   // Si la case cliquée contient bien une pièce ou un pion, on va utiliser le thumbnail de la pièce comme curseur :-)
-                                _vue.MetCurseurPiece(_vue.ImageCase(IndexCase120));     // la pièce suit la souris
+                                _vue.MetCurseurPiece(imagePiece);     // la pièce suit la souris
                                 _vue.DessinePiece(IndexCase120, LogiqueMouvements.TypePiece.Vide);   // On vide la case d'origine car le joueur bouge la pièce ...
                                 LogiqueMouvements.DessineMouvements(_caseSource, true);
                                 _clickCaseSource = false;
