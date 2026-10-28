@@ -68,7 +68,7 @@ namespace BrunoGUI_GenII
     {   // Spécification détaillée du format PGN = https://fr.wikipedia.org/wiki/Portable_Game_Notation
         public static string RetourneContenuPgn(PartieEchecsPGN partieEnCours, string localisation, bool pourFichier = false)
         {   // Met au format Pgn la partieEnCours pour visualisation et sauvegarde ...
-            // pourFichier : seulement dans le fichier enregistré, pas dans l'affichage (choix de Bruno), en commentaire après chaque coup,
+            // pourFichier : seulement dans le fichier enregistré, pas dans l'affichage, en commentaire après chaque coup,
             // l'évaluation de l'analyse de partie "[%eval 0.35]" et le temps restant de la pendule "[%clk 0:02:51]" (format de Lichess
             // et ChessBase) ; après un coup annoté ?!, ? ou ?? par l'analyse, la meilleure variante entre parenthèses (comme ChessBase)
             List<string> mots = [];
@@ -92,7 +92,7 @@ namespace BrunoGUI_GenII
                 if (pourFichier && coup.NiveauAppreciation is int niveau && texteAuto != null
                     && SansAppreciation(texteAuto, JugementCoups.TexteAppreciation(niveau, coup.EvaluationApres ?? new Evaluation(0, null))) is (true, var reste))
                 {   // Changement d'appréciation : son symbole après le coup ("18... fxg6?? $18", comme ChessBase), à la place de son texte
-                    // ("Gain Blanc"), refait à la relecture (choix de Bruno, 2026-10-28)
+                    // ("Gain Blanc"), refait à la relecture (2026-10-28)
                     texteCoup += " " + NagAppreciation(niveau);
                     texteAuto = reste;
                 }
@@ -130,7 +130,7 @@ namespace BrunoGUI_GenII
                 if (pourFichier && !coup.MeilleurJoue && !string.IsNullOrEmpty(coup.VarianteMeilleure)
                     && (coup.VarianteLue || coup.Annotation is "?!" or "?" or "??" || AlternativeAMontrer(coup)))
                 {   // Erreur, ou coup nettement moins bon que le meilleur : ce qu'il fallait jouer, en variante courte avec le symbole de
-                    // son évaluation, comme ChessBase ("(17. Qg3 $14 Kh8 18. Rd3)", choix de Bruno, 2026-10-28 ; elle partait sur 10
+                    // son évaluation, comme ChessBase ("(17. Qg3 $14 Kh8 18. Rd3)", 2026-10-28 ; elle partait sur 10
                     // demi-coups) ; ou variante du PGN chargé, gardée telle quelle (seule la 1re variante d'un coup est relue)
                     texteCoup += " (" + (coup.VarianteLue ? VarianteInternationale(coup.VarianteMeilleure)
                                                           : VarianteCourte(coup.VarianteMeilleure, coup.EvaluationMeilleur)) + ")";

@@ -37,7 +37,7 @@ namespace BrunoGUI_GenII
         // change la partie l'interrompt (AbandonneReflexion) en gardant ce qui est analysé. On peut parcourir la partie pendant ce temps.
         // Puis 2e passage : les positions avant et après chaque coup douteux sont revues DureeApprofondissement ms (30 s par défaut ; un ?? trouvé vite
         // peut n'être qu'une illusion d'une recherche trop courte). Le bilan donne ensuite le coup critique (clic : il est affiché)
-        // Durées par position, en secondes (choix de Bruno : réglables par Options > Durées de l'analyse de partie, préférences
+        // Durées par position, en secondes (réglables par Options > Durées de l'analyse de partie, préférences
         // DureeAnalyseRapide et DureeAnalyseComplete ; 10 et 30 s par défaut, d'abord 3 et 10 s)
         private int _dureeAnalyseRapide = 10, _dureeAnalyseComplete = 30;
         private int DureeAnalyseParPosition => _dureeAnalyseRapide * 1000;      // en ms : 1er passage
@@ -118,7 +118,7 @@ namespace BrunoGUI_GenII
             AbandonneReflexion();       // une analyse de position en cours est remplacée
             _pendule?.Pause();          // le temps ne compte pas pendant l'analyse (reprise dans MinuteriePendule_Tick à la fin)
             foreach (Coup coup in LogiqueMouvements.ListeCoups)
-                coup.EffaceAnalyse();   // une analyse interrompue ne mélange plus l'ancienne et la nouvelle (choix de Bruno)
+                coup.EffaceAnalyse();   // une analyse interrompue ne mélange plus l'ancienne et la nouvelle
             _analyseDePartie = new AnalyseDePartie(LogiqueMouvements.ListeCoups, approfondir: complete,
                                                  coupDeBibliotheque: PolyglotBibliotheque.ContientCoup,   // jamais annotés
                                                  ouvertures: CatalogueDesOuvertures());
@@ -184,7 +184,7 @@ namespace BrunoGUI_GenII
             await MesureDifficultes(analyse);
             if (_analyseDePartie != analyse)
                 return;         // interrompue pendant la mesure (TermineAnalyseDePartie a déjà tout rangé)
-            // Annotations au fur et à mesure (choix de Bruno) : l'analyse allant de la fin vers le début, la position d'après est déjà
+            // Annotations au fur et à mesure : l'analyse allant de la fin vers le début, la position d'après est déjà
             // analysée et le coup joué dans celle-ci peut être jugé tout de suite ; la feuille est redessinée avec la position suivante
             analyse.AppliqueAuxCoups(LogiqueMouvements.ListeCoups);
             AnalysePositionSuivante();
@@ -202,7 +202,7 @@ namespace BrunoGUI_GenII
                 analyse.EnregistreDifficulte(index, JugementCoups.ProfondeurDecouverte(meilleurs, coup));
             }
             if (!_analyseComplete)
-                return;     // les pièges ne sont cherchés que par l'analyse complète (choix de Bruno, pour commencer)
+                return;     // les pièges ne sont cherchés que par l'analyse complète (pour commencer)
             foreach ((int index, string fen, string prise) in analyse.PiegesAChercher())
             {   // la prise tentante que le joueur n'a pas jouée : que donnait-elle ? (une ou deux secondes chacune)
                 var resultat = await Task.Run(() => moteur.Cherche(fen, prise, JugementCoups.ProfondeurPiege));
@@ -233,7 +233,7 @@ namespace BrunoGUI_GenII
                               () => TermineAnalyseDePartie(interrompue: true));
         }
         private void OuvreFenetreSuivi(string titre, string texteBouton, Action arret)
-        {   // Fenêtre de suivi, non bloquante (choix de Bruno : la barre sous la feuille était trop discrète) : à droite de la
+        {   // Fenêtre de suivi, non bloquante (la barre sous la feuille était trop discrète) : à droite de la
             // fenêtre principale s'il y a la place à l'écran, sinon par-dessus sa colonne de boutons ; une seule à la fois
             FermeFenetreAnalyse();
             FenetreAnalyse fenetre = new(titre, texteBouton);
@@ -271,7 +271,7 @@ namespace BrunoGUI_GenII
             BilanAnalyse.Cursor = Cursors.Default;
         }
         private void AfficheBilan(string bilan, int? coupCritique = null)
-        {   // Le bilan sous la feuille, gardé dans la partie pour le fichier PGN ({… [%bilan]}, choix de Bruno, 2026-10-28) ; en tête,
+        {   // Le bilan sous la feuille, gardé dans la partie pour le fichier PGN ({… [%bilan]}, 2026-10-28) ; en tête,
             // le coup critique, cliquable : celui de l'analyse, ou, pour une partie relue, le coup qui a perdu le plus (au moins une erreur)
             PartieEnCours.Bilan = bilan;
             coupCritique ??= LogiqueMouvements.ListeCoups.Select((coup, index) => (coup, index))

@@ -33,7 +33,7 @@ namespace BrunoGUI_GenII
         public event Action<int, Point>? CoupCliqueDroit;    // place du coup, position de la souris (dans le composant)
 
         // Couleurs de la feuille : fond blanc, une ligne sur deux gris-bleu très pâle, coup affiché en bleu (comme ChessBase ou
-        // Lichess ; le jaune pâle "papier" d'avant n'a pas plu à Bruno)
+        // Lichess ; le jaune pâle "papier" d'avant n'a pas plu)
         private static readonly Color CouleurPapier = Color.White;
         private static readonly Color CouleurLignePaire = Color.FromArgb(243, 246, 250);
         private static readonly Color CouleurSelection = Color.FromArgb(190, 212, 248);
@@ -56,11 +56,11 @@ namespace BrunoGUI_GenII
         private int LargeurCoup => Math.Max(10, (ClientSize.Width - LargeurNumero - 2 - LargeurBande) / 2);
 
         // ═══ Courbe d'évaluation : bande verticale à droite des coups, alignée sur les lignes (elle défile avec la feuille) ═══
-        // À la façon de ChessBase (choix de Bruno) : une barre par demi-coup analysé, à la hauteur de son coup (coup blanc : moitié
+        // À la façon de ChessBase : une barre par demi-coup analysé, à la hauteur de son coup (coup blanc : moitié
         // haute de la ligne, coup noir : moitié basse), partant de la ligne centrale (0.00) ; VERTE vers la droite quand les Blancs
         // sont mieux, ROUGE vers la gauche quand ce sont les Noirs, longueur en pions jusqu'à ±4 (au-delà : barre entière),
         // JAUNE entière pour un mat. Repères discrets à ±1 et ±2 pions ; petit carré de couleur au bout d'une barre annotée
-        public const int LargeurBande = 54;      // élargie en empiétant sur les colonnes de coups (choix de Bruno)
+        public const int LargeurBande = 54;      // élargie en empiétant sur les colonnes de coups
         private const double PionsMaximum = 4;
         private static readonly Color CouleurFondBande = Color.FromArgb(246, 247, 249);
         private static readonly Color CouleurBlancsMieux = Color.FromArgb(46, 160, 67);
@@ -210,7 +210,7 @@ namespace BrunoGUI_GenII
                 return;
             }
             // À gauche de la souris, à la hauteur du demi-coup : placée par défaut sous le curseur, l'infobulle en était souvent
-            // cachée (remarque de Bruno) ; la bande étant au bord droit de la feuille, il y a la place à gauche
+            // cachée ; la bande étant au bord droit de la feuille, il y a la place à gauche
             int largeur = TextRenderer.MeasureText(texte, SystemFonts.StatusFont ?? Font).Width + 12;
             _infobulleBande.Show(texte, this, Math.Max(0, point.X - largeur - 14), Math.Max(0, point.Y - 8));
         }

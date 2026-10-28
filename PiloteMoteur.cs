@@ -75,7 +75,7 @@ namespace BrunoGUI_GenII
     }
 
     public sealed class JoueurEtAnalyste(IMoteur joueur, Func<IMoteur?> analyste, Action? avantAnalyse = null) : IMoteur
-    {   // Deux moteurs vus comme un seul par le pilote (choix de Bruno, 2026-10-23 : Stockfish analyse toujours, même quand Rodent
+    {   // Deux moteurs vus comme un seul par le pilote (2026-10-23 : Stockfish analyse toujours, même quand Rodent
         // joue contre lui) : les coups de la partie vont au moteur choisi pour jouer, les analyses (pleine force) à l'analyste,
         // un Stockfish à part ; sans analyste (stockfish.exe absent), le moteur choisi fait tout, comme avant.
         // avantAnalyse : avant chaque analyse confiée à l'analyste (l'interface lui recopie les réglages : variantes, threads, hachage)

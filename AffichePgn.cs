@@ -52,7 +52,7 @@ namespace BrunoGUI_GenII
             afficheZone.ZoneAffichage.Text = partieFormatPgnIntl;
         }
         private void AffichePgnCommente_Click(object? sender, EventArgs e)
-        {   // Affiche la partie telle qu'elle serait enregistrée (choix de Bruno) : PGN international avec les annotations, les
+        {   // Affiche la partie telle qu'elle serait enregistrée : PGN international avec les annotations, les
             // commentaires et variantes de l'analyse, les [%eval] et les temps de pendule [%clk]
             afficheZone.Show();
             afficheZone.ZoneAffichage.Text = partieFormatPgnCommente;

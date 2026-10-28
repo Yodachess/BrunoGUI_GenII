@@ -5,14 +5,14 @@
 // █ See the LICENSE file in the project root for full license information. █
 // └▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀┘
 
-// Fenêtre de suivi de l'analyse de partie (choix de Bruno : la barre sous la feuille était trop discrète), et de l'analyse de
-// position (choix de Bruno, 2026-10-17 : on ne savait pas ce qui se passait pendant la réflexion) ...
+// Fenêtre de suivi de l'analyse de partie (la barre sous la feuille était trop discrète), et de l'analyse de
+// position (2026-10-17 : on ne savait pas ce qui se passait pendant la réflexion) ...
 //      └─ Classe "FenetreAnalyse" (KryptonForm construite en code, non bloquante, ouverte et fermée par EchiquierPrincipal)
 //                      ├─ "MontreEtape"    Nouvelle position demandée au moteur : position et progression, temps restant
 //                      ├─ "MontreProgression"  Barre et temps restant
 //                      ├─ "MontreScore"    Score et meilleure suite du moteur, au fil de sa réflexion
 //                      └─ événement "Interrompre"
-// Disposition compacte (choix de Bruno) : « Position après 25... c5 (12/54)   Score : 0.35 — Léger avantage Blanc (⩲) » sur une ligne, la meilleure suite,
+// Disposition compacte : « Position après 25... c5 (12/54)   Score : 0.35 — Léger avantage Blanc (⩲) » sur une ligne, la meilleure suite,
 // la barre, puis le temps restant à gauche du bouton Interrompre. La croix ne fait que fermer la fenêtre : l'analyse continue
 // (le bouton « Interrompre » sous la feuille reste disponible).
 

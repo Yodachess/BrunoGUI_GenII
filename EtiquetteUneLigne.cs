@@ -7,7 +7,7 @@
 
 // Etiquette sur une seule ligne (joueurs et pendules, en haut de l'échiquier)
 //  └─ Classe "EtiquetteUneLigne" : un Label qui ne va jamais à la ligne
-// Un Label haut de deux lignes coupe son texte entre les mots ("[1720] Courtois," / "Bruno") : illisible.
+// Un Label haut de deux lignes coupe son texte entre les mots ("[1720] Dupont," / "Jean") : illisible.
 // Ici le texte reste sur une ligne, centré en hauteur, aligné à gauche, au centre ou à droite selon TextAlign,
 // et se termine par "…" s'il est trop long (ou, avec ReduitPourTenir, s'écrit en police plus petite : pendules).
 

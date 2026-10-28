@@ -8,7 +8,7 @@
 // Fenêtre « Durées de l'analyse de partie » (menu Options) ...
 //      └─ Classe "FenetreDureesAnalyse" (KryptonForm construite en code, boîte de dialogue)
 // Secondes par position pour l'analyse rapide (1er passage) et pour la vérification des coups douteux (2e passage de l'analyse
-// complète) ; choix de Bruno : réglables, 10 et 30 s par défaut, mémorisées dans les préférences
+// complète) ; réglables, 10 et 30 s par défaut, mémorisées dans les préférences
 
 using System;
 using System.Drawing;

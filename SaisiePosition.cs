@@ -11,7 +11,7 @@
 //                              (testé). OK n'est accepté que si la position est correcte (ChargementPartie.ErreurFen) : le formulaire
 //                              principal lit alors FenSaisie et la charge comme une FEN
 // Clic gauche sur une case : y pose la pièce choisie (ou la retire si c'est déjà elle) ; clic droit : vide la case (pas de gomme :
-// elle faisait double emploi, remarque de Bruno ; sa place sert aux messages).
+// elle faisait double emploi ; sa place sert aux messages).
 
 using System;
 using System.Collections.Generic;
@@ -54,7 +54,7 @@ namespace BrunoGUI_GenII
         private readonly KryptonComboBox _enPassant = new() { Location = new Point(512, 270), Width = 60, DropDownStyle = ComboBoxStyle.DropDownList };
         private readonly KryptonNumericUpDown _numero = new() { Location = new Point(640, 270), Width = 70, Minimum = 1, Maximum = 999 };
         private readonly KryptonTextBox _fen = new() { Location = new Point(48, 440), Width = 456, ReadOnly = true };
-        // Messages (position correcte ou non, FEN collée...) : à droite, sous la palette, sur deux lignes au plus (choix de Bruno)
+        // Messages (position correcte ou non, FEN collée...) : à droite, sous la palette, sur deux lignes au plus
         private readonly Label _etat = new()
         {
             Location = new Point(440, 132), AutoSize = true, MaximumSize = new Size(270, 34), Font = new Font("Segoe UI", 9F, FontStyle.Bold),
