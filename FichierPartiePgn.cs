@@ -48,6 +48,7 @@ namespace BrunoGUI_GenII
         public const string MarqueAuto = "%auto=";         // "{[%auto]}" : annotation du coup posée par l'analyse de partie de BrunoGUI
         // "[%tac 0,21]" dans ce bloc : la partie essentielle de ce texte (Coup.CommentaireTactique : sacrifice, thème…), début et longueur
         public const string MarqueTactique = "%tac=";
+        public const string MarqueBilan = "%bilan=";           // "{Blancs — précision 87 % : … [%bilan]}" : bilan de l'analyse, en base 64
         public const string MarqueFleches = "%cal=";           // "[%cal Re7h7,Oe5g6]" : flèches de l'auteur (lettre de couleur puis coup)
         public const string MarqueFlechesMenace = "%calauto=";  // la même dans un bloc [%autocom] : la flèche de la menace (analyse)
         public const string MarqueCommentaireAuto = "%cauto=";  // "{Sacrifice du cavalier [%autocom]}" : texte écrit par l'analyse de partie, en base 64
@@ -138,8 +139,10 @@ namespace BrunoGUI_GenII
             if (evaluation.Success)
                 sb.Append(' ').Append(MarqueEvaluation).Append(evaluation.Groups[1].Value).Append(' ');
             string libre = Regex.Replace(Regex.Replace(texte, @"\[%[^\]]*\]", " "), @"\s+", " ").Trim();
-            if (libre != "")    // (bloc marqué [%autocom] : son texte a été écrit par l'analyse de partie, pas par un joueur)
-                sb.Append(' ').Append(Regex.IsMatch(texte, @"\[%autocom\]") ? MarqueCommentaireAuto : MarqueCommentaire).Append(EnBase64(libre)).Append(' ');
+            if (libre != "")    // (bloc marqué [%autocom] : son texte a été écrit par l'analyse de partie, pas par un joueur ;
+                                // [%bilan] : le bilan de l'analyse, après le dernier coup)
+                sb.Append(' ').Append(Regex.IsMatch(texte, @"\[%bilan\]") ? MarqueBilan
+                                      : Regex.IsMatch(texte, @"\[%autocom\]") ? MarqueCommentaireAuto : MarqueCommentaire).Append(EnBase64(libre)).Append(' ');
             Match fleches = Regex.Match(texte, @"\[%cal\s+([^\]]*)\]");
             if (fleches.Success)    // flèches (ChessBase, Lichess) : celle de la menace dans le bloc de l'analyse, sinon celles de l'auteur
                 sb.Append(' ').Append(Regex.IsMatch(texte, @"\[%autocom\]") ? MarqueFlechesMenace : MarqueFleches)
@@ -346,13 +349,15 @@ namespace BrunoGUI_GenII
                 string c = t;
                 if (c.StartsWith(ParseurPgn.MarqueEvaluation) || c.StartsWith(ParseurPgn.MarqueCommentaire) || c.StartsWith(ParseurPgn.MarqueVariante)
                     || c.StartsWith(ParseurPgn.MarqueAuto) || c.StartsWith(ParseurPgn.MarqueCommentaireAuto) || c.StartsWith(ParseurPgn.MarqueTactique)
-                    || c.StartsWith(ParseurPgn.MarqueFleches) || c.StartsWith(ParseurPgn.MarqueFlechesMenace))
+                    || c.StartsWith(ParseurPgn.MarqueFleches) || c.StartsWith(ParseurPgn.MarqueFlechesMenace) || c.StartsWith(ParseurPgn.MarqueBilan))
                 {   // Évaluation, commentaire, variante ou marque [%auto] du coup qui précède (avant le 1er coup : commentaire de la
                     // partie, ignoré) ; plusieurs commentaires se suivent, seule la 1re variante compte (c'est l'alternative au coup joué)
                     if (coupsPropres.Count == 0)
                         continue;
                     if (c.StartsWith(ParseurPgn.MarqueAuto))
                         PartiePGN.AnnotationsAuto[^1] = true;
+                    else if (c.StartsWith(ParseurPgn.MarqueBilan))
+                        PartiePGN.Bilan = GestionPartiePgn.BilanDepuisLigne(ParseurPgn.DepuisBase64(c[ParseurPgn.MarqueBilan.Length..]));
                     else if (c.StartsWith(ParseurPgn.MarqueFleches))
                         PartiePGN.FlechesAuteur[^1] = c[ParseurPgn.MarqueFleches.Length..];
                     else if (c.StartsWith(ParseurPgn.MarqueFlechesMenace))

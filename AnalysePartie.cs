@@ -102,14 +102,19 @@ namespace BrunoGUI_GenII
         public const int MargeAppreciation = 15;    // en centipions : entrer dans un niveau au seuil + 15, en sortir au seuil - 15
 
         public static int NiveauAppreciation(Evaluation evaluation, int actuel)
-        {   // Niveau après le coup, de -2 (avantage décisif noir) à +2, compte tenu du niveau actuel (marge, voir MargeAppreciation)
+        {   // Niveau après le coup, de -3 (mat forcé pour les Noirs) à +3, compte tenu du niveau actuel (marge, voir MargeAppreciation).
+            // Le mat forcé est un niveau à part (choix de Bruno, 2026-10-28, ChessBase écrit « Les Blancs font mat ») : annoncé quand il
+            // apparaît, puis gardé tant que l'avantage reste décisif (le moteur perd parfois le mat de vue, « #29 » puis « 15.62 » :
+            // sans cela, « Gain Blanc » et « Mat en … » alterneraient)
             if (evaluation.MatEn is int mat)
-                return mat > 0 ? 2 : -2;
+                return mat > 0 ? 3 : -3;
             int cp = evaluation.Centipions ?? 0, signe = Math.Sign(cp), valeur = Math.Abs(cp);
             int Niveau(int marge) => valeur >= Evaluation.SeuilGain + marge ? 2 : valeur >= Evaluation.SeuilAvantage + marge ? 1 : 0;
             int pourMonter = Niveau(MargeAppreciation), pourRester = Niveau(-MargeAppreciation);
             if (actuel != 0 && Math.Sign(actuel) != signe)
                 return signe * pourMonter;          // l'avantage change de camp
+            if (Math.Abs(actuel) == 3 && pourRester == 2)
+                return actuel;                      // mat annoncé, avantage toujours décisif
             int niveau = Math.Abs(actuel);
             return signe * (pourMonter > niveau ? pourMonter : pourRester < niveau ? pourRester : niveau);
         }
@@ -117,10 +122,10 @@ namespace BrunoGUI_GenII
         public static string TexteAppreciation(int niveau, Evaluation evaluation) => niveau switch
         {   // Les appréciations de base, courtes (choix de Bruno, 2026-10-21 : plutôt que "Les Blancs sont mieux")
             // ("Gain {0}" et non "Gain Blanc", déjà traduit "White wins" pour le bouton de résultat : ici, la partie n'est pas finie)
-            2 => evaluation.MatEn is int mat ? Langue.T("Mat en {0} pour les Blancs", mat) : Langue.T("Gain {0}", NomCouleur(ColorPiece.Blanc)),
+            >= 2 => evaluation.MatEn is int mat ? Langue.T("Mat en {0} pour les Blancs", mat) : Langue.T("Gain {0}", NomCouleur(ColorPiece.Blanc)),
             1 => Langue.T("Avantage {0}", NomCouleur(ColorPiece.Blanc)),
             -1 => Langue.T("Avantage {0}", NomCouleur(ColorPiece.Noir)),
-            -2 => evaluation.MatEn is int matNoir ? Langue.T("Mat en {0} pour les Noirs", -matNoir) : Langue.T("Gain {0}", NomCouleur(ColorPiece.Noir)),
+            <= -2 => evaluation.MatEn is int matNoir ? Langue.T("Mat en {0} pour les Noirs", -matNoir) : Langue.T("Gain {0}", NomCouleur(ColorPiece.Noir)),
             _ => Langue.T("Égal")
         };
 

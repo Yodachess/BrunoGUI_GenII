@@ -259,15 +259,31 @@ namespace BrunoGUI_GenII
             // Pluriel au-delà de 1 en français ("0 erreur"), dès que le nombre n'est pas 1 en anglais ("0 mistakes")
             $"{nombre} {(nombre > 1 || (nombre == 0 && !EstFrancais) ? pluriel : singulier)}";
         private readonly ToolTip _infobulleBilan = new() { AutoPopDelay = 20000 };
-        private static string TexteCoupCritique(Coup coup, JugementCoup critique) =>
+        private static string TexteCoupCritique(Coup coup) =>
             // Ex : "Coup critique (clic) :" puis "   25... c5??   score -0.23 → 2.73" (évaluation avant, avec le meilleur coup, et après)
             T("Coup critique (clic) :") + "\n   " + Notation(coup.PgnFrNumerote) + coup.Annotation
-            + (critique.EvaluationMeilleur is Evaluation avant && critique.EvaluationApres is Evaluation apres ? "   " + T("score {0} → {1}", avant.Texte, apres.Texte) : "");
+            + (coup.EvaluationMeilleur is Evaluation avant && coup.EvaluationApres is Evaluation apres ? "   " + T("score {0} → {1}", avant.Texte, apres.Texte) : "");
         private void EffaceBilan()
         {
             BilanAnalyse.Text = "";
+            PartieEnCours.Bilan = "";       // (il n'est plus écrit dans le fichier PGN)
             _coupCritique = null;
             BilanAnalyse.Cursor = Cursors.Default;
+        }
+        private void AfficheBilan(string bilan, int? coupCritique = null)
+        {   // Le bilan sous la feuille, gardé dans la partie pour le fichier PGN ({… [%bilan]}, choix de Bruno, 2026-10-28) ; en tête,
+            // le coup critique, cliquable : celui de l'analyse, ou, pour une partie relue, le coup qui a perdu le plus (au moins une erreur)
+            PartieEnCours.Bilan = bilan;
+            coupCritique ??= LogiqueMouvements.ListeCoups.Select((coup, index) => (coup, index))
+                .Where(c => !c.coup.EstPositionDeDepart && c.coup.PerteAnalyse >= JugementCoups.SeuilErreur)
+                .OrderByDescending(c => c.coup.PerteAnalyse).Select(c => (int?)c.index).FirstOrDefault();
+            if (coupCritique < 0)
+                coupCritique = null;        // (-1 : l'analyse n'a pas trouvé de coup critique)
+            BilanAnalyse.Text = bilan;
+            _coupCritique = coupCritique;
+            BilanAnalyse.Cursor = coupCritique != null ? Cursors.Hand : Cursors.Default;
+            if (coupCritique is int index)
+                BilanAnalyse.Text = TexteCoupCritique(LogiqueMouvements.ListeCoups[index]) + "\n" + bilan;
         }
         private void BilanAnalyse_Click(object? sender, EventArgs e)
         {   // Clic sur le bilan : l'échiquier montre le coup critique (avec son analyse et ses flèches)
@@ -291,13 +307,8 @@ namespace BrunoGUI_GenII
             _multiPvAvantAnalyse = null;
             analyse.AppliqueAuxCoups(LogiqueMouvements.ListeCoups);
             BilanCamp blancs = analyse.Bilan(ColorPiece.Blanc), noirs = analyse.Bilan(ColorPiece.Noir);
-            BilanAnalyse.Text = TexteBilan(T("Blancs"), blancs) + "\n" + TexteBilan(T("Noirs"), noirs);
-            if (analyse.CoupCritique() is JugementCoup critique)
-            {   // en tête du bilan : le moment où la partie a basculé
-                _coupCritique = critique.IndexCoup;
-                BilanAnalyse.Text = TexteCoupCritique(LogiqueMouvements.ListeCoups[critique.IndexCoup], critique) + "\n" + BilanAnalyse.Text;
-                BilanAnalyse.Cursor = Cursors.Hand;
-            }
+            // (en tête du bilan : le coup critique, le moment où la partie a basculé ; -1 : aucun)
+            AfficheBilan(TexteBilan(T("Blancs"), blancs) + "\n" + TexteBilan(T("Noirs"), noirs), analyse.CoupCritique()?.IndexCoup ?? -1);
             BarreAnalysePartie.Visible = false;
             BoutonAnalysePartie.Values.Text = T("Analyse rapide");
             BoutonAnalysePartie.Width = BoutonAnalyseComplete.Left - 4 - BoutonAnalysePartie.Left;
