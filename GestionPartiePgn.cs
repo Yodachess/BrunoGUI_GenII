@@ -55,6 +55,7 @@ namespace BrunoGUI_GenII
         public List<string?> Variantes { get; set; } = [];
         public List<bool> AnnotationsAuto { get; set; } = [];       // [%auto] : l'annotation du coup a été posée par l'analyse de partie
         public List<string?> CommentairesAuto { get; set; } = [];   // [%autocom] : texte écrit par l'analyse de partie (Coup.CommentaireAuto)
+        public List<int?> Appreciations { get; set; } = [];         // appréciation lue en code NAG ($18 = +-…) : Coup.NiveauAppreciation
         public List<string?> CommentairesTactiques { get; set; } = [];  // [%tac] : sa partie essentielle (Coup.CommentaireTactique)
     }
 
@@ -82,15 +83,23 @@ namespace BrunoGUI_GenII
                 apresCommentaire = false;
                 List<string> commentaires = [];
                 string? commentaireJoueur = string.IsNullOrWhiteSpace(coup.Commentaire) ? null : coup.Commentaire.Replace("{", "(").Replace("}", ")");
-                if (!string.IsNullOrWhiteSpace(coup.CommentaireAuto))
+                string? texteAuto = coup.CommentaireAuto;
+                if (pourFichier && coup.NiveauAppreciation is int niveau && texteAuto != null
+                    && SansAppreciation(texteAuto, JugementCoups.TexteAppreciation(niveau, coup.EvaluationApres ?? new Evaluation(0, null))) is (true, var reste))
+                {   // Changement d'appréciation : son symbole après le coup ("18... fxg6?? $18", comme ChessBase), à la place de son texte
+                    // ("Gain Blanc"), refait à la relecture (choix de Bruno, 2026-10-28)
+                    texteCoup += " " + NagAppreciation(niveau);
+                    texteAuto = reste;
+                }
+                if (!string.IsNullOrWhiteSpace(texteAuto))
                 {   // Commentaire de l'analyse ("Sacrifice du cavalier") : lisible par les autres logiciels ; dans le fichier, marqué
                     // [%autocom] pour être relu comme tel, et celui du joueur va alors dans un bloc à part (chaque bloc est relu seul)
                     if (commentaireJoueur != null)
                         texteCoup += " {" + commentaireJoueur + "}";
                     commentaireJoueur = null;
                     // (et la place de sa partie essentielle, pour la feuille de partie à la relecture : "[%tac 0,21]")
-                    int placeTactique = coup.CommentaireTactique is string tactique ? coup.CommentaireAuto.IndexOf(tactique) : -1;
-                    commentaires.Add(coup.CommentaireAuto.Replace("{", "(").Replace("}", ")") + (pourFichier ? " [%autocom]" : "")
+                    int placeTactique = coup.CommentaireTactique is string tactique ? texteAuto.IndexOf(tactique) : -1;
+                    commentaires.Add(texteAuto.Replace("{", "(").Replace("}", ")") + (pourFichier ? " [%autocom]" : "")
                         + (pourFichier && placeTactique >= 0 ? $" [%tac {placeTactique},{coup.CommentaireTactique!.Length}]" : ""));
                 }
                 if (commentaireJoueur != null)      // commentaire du PGN chargé : gardé (fichier et affichage)
@@ -108,16 +117,73 @@ namespace BrunoGUI_GenII
                     apresCommentaire = true;
                 }
                 if (pourFichier && !coup.MeilleurJoue && !string.IsNullOrEmpty(coup.VarianteMeilleure)
-                    && (coup.VarianteLue || coup.Annotation is "?!" or "?" or "??"))
-                {   // Erreur : ce qu'il fallait jouer (variante, qui part de la même position que le coup joué) ; ou variante du PGN
-                    // chargé, gardée telle quelle (seule la 1re variante d'un coup est relue)
-                    texteCoup += " (" + VarianteInternationale(coup.VarianteMeilleure) + ")";
+                    && (coup.VarianteLue || coup.Annotation is "?!" or "?" or "??" || AlternativeAMontrer(coup)))
+                {   // Erreur, ou coup nettement moins bon que le meilleur : ce qu'il fallait jouer, en variante courte avec le symbole de
+                    // son évaluation, comme ChessBase ("(17. Qg3 $14 Kh8 18. Rd3)", choix de Bruno, 2026-10-28 ; elle partait sur 10
+                    // demi-coups) ; ou variante du PGN chargé, gardée telle quelle (seule la 1re variante d'un coup est relue)
+                    texteCoup += " (" + (coup.VarianteLue ? VarianteInternationale(coup.VarianteMeilleure)
+                                                          : VarianteCourte(coup.VarianteMeilleure, coup.EvaluationMeilleur)) + ")";
                     apresCommentaire = true;
                 }
                 mots.Add(texteCoup);
             }
             mots.Add(ResultatPgn(partieEnCours));   // Rajout du résultat à la fin de la partie
             return RetourneEntetePgn(partieEnCours) + LignesDe80(string.Join(" ", mots));
+        }
+
+        public const int DemiCoupsVarianteCourte = 4;       // longueur des variantes du moteur dans le fichier PGN (ChessBase : 2 à 6)
+
+        public static string VarianteCourte(string varianteFr, Evaluation? evaluation)
+        {   // La variante du moteur limitée à DemiCoupsVarianteCourte demi-coups, en lettres anglaises, avec le symbole NAG de son
+            // évaluation après son premier coup : "17... Qb6 $10 18. Qd3 c5 19. Qg3"
+            List<string> mots = [];
+            int demiCoups = 0;
+            foreach (string mot in VarianteInternationale(varianteFr).Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            {
+                bool estCoup = mot.Any(char.IsLetter);
+                if (estCoup && demiCoups == DemiCoupsVarianteCourte)
+                    break;
+                mots.Add(mot);
+                if (estCoup && ++demiCoups == 1 && evaluation is Evaluation symbole)
+                    mots.Add(symbole.Nag);
+            }
+            while (mots.Count > 0 && !mots[^1].Any(char.IsLetter) && !mots[^1].StartsWith('$'))
+                mots.RemoveAt(mots.Count - 1);      // (pas de numéro de coup seul à la fin)
+            return string.Join(" ", mots);
+        }
+
+        public static bool AlternativeAMontrer(Coup coup)
+        {   // Coup sans annotation mais nettement moins bon que le meilleur : ChessBase en donne l'alternative ("17. Qe2 (17. Qg3 ⩲)").
+            // Au moins 0,07 de chances de gain ou un pion de perdu, dans une partie pas encore décidée de plus de 6 pions, et sans mat
+            // (dans un mat ou une partie jouée d'avance, l'alternative n'apprend rien : 25. Td3 à +10 de Carlsen–Ernst)
+            if (coup.MeilleurJoue || coup.Annotation != "" || coup.EvaluationMeilleur is not Evaluation meilleur
+                || coup.EvaluationApres is not Evaluation apres || meilleur.MatEn != null || apres.MatEn != null
+                || Math.Abs(meilleur.Centipions ?? 0) >= JugementCoups.PiegeJoueurPerdu)
+                return false;
+            int sens = coup.EstCoupBlanc ? 1 : -1;
+            int pertePions = sens * ((meilleur.Centipions ?? 0) - (apres.Centipions ?? 0));
+            return (coup.PerteAnalyse ?? 0) >= AlternativeChancesMinimum || pertePions >= AlternativePionsMinimum;
+        }
+        public const double AlternativeChancesMinimum = 0.07;
+        public const int AlternativePionsMinimum = 100;     // en centipions
+
+        public static string NagAppreciation(int niveau) => niveau switch
+        {   // Les 5 niveaux de l'appréciation commentée (JugementCoups.NiveauAppreciation) en codes NAG : = (équilibré, léger avantage
+            // compris), ± / ∓ (avantage), +- / -+ (avantage décisif ou mat)
+            2 => "$18", 1 => "$16", -1 => "$17", -2 => "$19", _ => "$10"
+        };
+        public static int? NiveauDepuisNag(int nag) => nag switch
+        {   // L'inverse, à la relecture ($14 / $15, « léger avantage », comptent pour l'équilibre, comme dans nos 5 niveaux ; les
+            // autres codes ne sont pas des appréciations)
+            18 => 2, 16 => 1, 10 or 11 or 14 or 15 => 0, 17 => -1, 19 => -2, _ => null
+        };
+
+        private static (bool Trouve, string? Reste) SansAppreciation(string texteAuto, string texteAppreciation)
+        {   // Le commentaire de l'analyse sans le texte de l'appréciation, qui le termine ("Menace : … . Avantage Blanc") ; pas trouvé :
+            // (false, …), le texte reste et le symbole n'est pas écrit
+            if (texteAuto == texteAppreciation)
+                return (true, null);
+            return texteAuto.EndsWith(". " + texteAppreciation) ? (true, texteAuto[..^(texteAppreciation.Length + 2)]) : (false, null);
         }
 
         public static string LignesDe80(string texte)

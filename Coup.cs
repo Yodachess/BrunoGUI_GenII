@@ -50,6 +50,10 @@ namespace BrunoGUI_GenII
         // La partie essentielle de ce commentaire, pour la feuille de partie (sacrifice, thème tactique, mat manqué) ; null : rien
         public string? CommentaireTactique { get; set; }
         public bool VarianteLue { get; set; }                   // la variante (meilleur coup) vient du PGN chargé : réécrite à l'enregistrement
+        // Appréciation qui change après ce coup (-2 à +2, JugementCoups.NiveauAppreciation ; null : pas de changement), dont le texte
+        // ("Avantage Blanc") termine CommentaireAuto ; dans le fichier PGN, elle s'écrit en symbole après le coup ($18 = +-, comme
+        // ChessBase) et son texte est retiré du commentaire, puis refait à la relecture (choix de Bruno, 2026-10-28)
+        public int? NiveauAppreciation { get; set; }
 
         public void EffaceAnalyse()
         {   // Au lancement d'une analyse de partie (choix de Bruno, 2026-10-21) : plus rien de l'analyse précédente, ou de celle du PGN
@@ -59,6 +63,7 @@ namespace BrunoGUI_GenII
             MeilleurCoup = MeilleurCoupLong = MeilleurCoupUci = VarianteMeilleure = VarianteMeilleureUci = CommentaireAuto = CommentaireTactique = null;
             MeilleurJoue = VarianteLue = false;
             PerteAnalyse = null;
+            NiveauAppreciation = null;
             if (AnnotationProposee)
                 Annotation = "";
             AnnotationProposee = false;

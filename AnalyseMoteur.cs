@@ -50,6 +50,10 @@ namespace BrunoGUI_GenII
         public string Symbole => MatEn is int mat
             ? (mat < 0 ? "#-" : "#+")
             : Niveau switch { 3 => "+-", 2 => "±", 1 => "⩲", -1 => "⩱", -2 => "∓", -3 => "-+", _ => "=" };
+        // Le même symbole en code NAG du PGN, lu par ChessBase et Lichess ($10 =, $14 ⩲, $15 ⩱, $16 ±, $17 ∓, $18 +-, $19 -+)
+        public string Nag => MatEn is int mat
+            ? (mat < 0 ? "$19" : "$18")
+            : Niveau switch { 3 => "$18", 2 => "$16", 1 => "$14", -1 => "$15", -2 => "$17", -3 => "$19", _ => "$10" };
         public string Appreciation => MatEn is int mat
             ? (mat < 0 ? Langue.T("Gain Noir (mat)") : Langue.T("Gain Blanc (mat)"))
             : Niveau switch

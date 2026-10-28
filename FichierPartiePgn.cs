@@ -332,6 +332,7 @@ namespace BrunoGUI_GenII
             PartiePGN.AnnotationsAuto = [];
             PartiePGN.CommentairesAuto = [];
             PartiePGN.CommentairesTactiques = [];
+            PartiePGN.Appreciations = [];
             foreach (var t in tokens)
             {
                 string c = t;
@@ -385,6 +386,10 @@ namespace BrunoGUI_GenII
                                                           : Annotations.Separe("x" + c).Annotation;
                     if (annotation != "" && PartiePGN.Annotations.Count > 0 && PartiePGN.Annotations[^1] == "")
                         PartiePGN.Annotations[^1] = annotation;
+                    // (code d'appréciation, $18 = +-… : écrit par BrunoGUI ou ChessBase, voir GestionPartiePgn.NagAppreciation)
+                    if (c.StartsWith('$') && int.TryParse(c[1..], out int code) && GestionPartiePgn.NiveauDepuisNag(code) is int niveau
+                        && PartiePGN.Appreciations.Count > 0)
+                        PartiePGN.Appreciations[^1] = niveau;
                     continue;
                 }
                 if (c.Contains('$'))
@@ -402,6 +407,7 @@ namespace BrunoGUI_GenII
                 PartiePGN.AnnotationsAuto.Add(false);
                 PartiePGN.CommentairesAuto.Add(null);
                 PartiePGN.CommentairesTactiques.Add(null);
+                PartiePGN.Appreciations.Add(null);
             }
 
             string final = string.Join(" ", coupsPropres);

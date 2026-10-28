@@ -183,6 +183,12 @@ namespace BrunoGUI_GenII
                     coup.CommentaireTactique = Element(pgn.CommentairesTactiques, demiCoupsJoues);   // ([%tac] : sa partie essentielle)
                     RangeAnalyseLue(coup, fenAvant, Element(pgn.Commentaires, demiCoupsJoues), Element(pgn.Evaluations, demiCoupsJoues),
                                     Element(pgn.Variantes, demiCoupsJoues), evaluationAvant);
+                    if (Element(pgn.Appreciations, demiCoupsJoues) is int niveau)
+                    {   // appréciation écrite en symbole ($18) : son texte ("Gain Blanc") revient à la fin du commentaire de l'analyse
+                        string appreciation = JugementCoups.TexteAppreciation(niveau, coup.EvaluationApres ?? new Evaluation(0, null));
+                        coup.NiveauAppreciation = niveau;
+                        coup.CommentaireAuto = coup.CommentaireAuto == null ? appreciation : coup.CommentaireAuto + ". " + appreciation;
+                    }
                     evaluationAvant = coup.EvaluationApres;
                     demiCoupsJoues++;
                     if (temps != null && coup.EstCoupBlanc)

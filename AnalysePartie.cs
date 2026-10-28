@@ -1097,12 +1097,16 @@ namespace BrunoGUI_GenII
 
         public IEnumerable<JugementCoup> Jugements() => _indexCoups.Select(Jugement).OfType<JugementCoup>();
 
-        public Dictionary<int, string> CommentairesAppreciation()
-        {   // Coups (place dans ListeCoups) après lesquels l'appréciation change de niveau (JugementCoups.NiveauAppreciation), avec son
-            // texte : "Avantage Blanc", "Égal"… La partie est parcourue dans l'ordre ; une position pas
-            // (encore) analysée est sautée, le niveau de départ est celui de la 1re position connue (sans commentaire) ; jamais sur
-            // un coup de la bibliothèque (la théorie n'est pas commentée)
-            Dictionary<int, string> textes = [];
+        public Dictionary<int, string> CommentairesAppreciation() =>
+            // Le texte de chaque changement d'appréciation : "Avantage Blanc", "Égal"… (voir NiveauxAppreciation)
+            NiveauxAppreciation().ToDictionary(n => n.Key, n => n.Value.Texte);
+
+        public Dictionary<int, (int Niveau, string Texte)> NiveauxAppreciation()
+        {   // Coups (place dans ListeCoups) après lesquels l'appréciation change de niveau (JugementCoups.NiveauAppreciation), avec ce
+            // niveau et son texte. La partie est parcourue dans l'ordre ; une position pas (encore) analysée est sautée, le niveau de
+            // départ est celui de la 1re position connue (sans commentaire) ; jamais sur un coup de la bibliothèque (la théorie n'est
+            // pas commentée)
+            Dictionary<int, (int, string)> niveaux = [];
             int? actuel = null;
             for (int k = 0; k < _positions.Count; k++)
             {
@@ -1110,10 +1114,10 @@ namespace BrunoGUI_GenII
                     continue;               // (pas analysée, ou mat/pat final, jugé sans le moteur)
                 int niveau = JugementCoups.NiveauAppreciation(evaluation, actuel ?? 0);
                 if (actuel != null && niveau != actuel && k > 0 && !EstCoupDeBibliotheque(_indexCoups[k - 1]))
-                    textes[_indexCoups[k - 1]] = JugementCoups.TexteAppreciation(niveau, evaluation);
+                    niveaux[_indexCoups[k - 1]] = (niveau, JugementCoups.TexteAppreciation(niveau, evaluation));
                 actuel = niveau;
             }
-            return textes;
+            return niveaux;
         }
 
         public Dictionary<int, string> CommentairesFinale()
@@ -1138,7 +1142,8 @@ namespace BrunoGUI_GenII
 
         public void AppliqueAuxCoups(IReadOnlyList<Coup> coups)
         {
-            Dictionary<int, string> appreciations = CommentairesAppreciation(), finales = CommentairesFinale(),
+            Dictionary<int, (int Niveau, string Texte)> niveaux = NiveauxAppreciation();
+            Dictionary<int, string> appreciations = niveaux.ToDictionary(n => n.Key, n => n.Value.Texte), finales = CommentairesFinale(),
                                     ouverture = CommentairesOuverture();
             // Range les résultats dans les coups jugés (même liste qu'à la construction) : évaluation, meilleur coup, et annotation
             // proposée, sauf si le joueur en a mis une lui-même (une annotation proposée par une analyse précédente est remplacée)
@@ -1173,6 +1178,8 @@ namespace BrunoGUI_GenII
                                     refutation ? CommentaireRefutation(k, parade) : !erreur && k + 1 < _positions.Count ? CommentaireMenace(k + 1) : null, piege,
                                     finales.GetValueOrDefault(jugement.IndexCoup), matManque ? null : appreciations.GetValueOrDefault(jugement.IndexCoup)];
                 coup.CommentaireAuto = textes.Any(t => t != null) ? string.Join(". ", textes.OfType<string>()) : null;
+                // (le niveau du changement d'appréciation : son symbole dans le fichier PGN, voir Coup.NiveauAppreciation)
+                coup.NiveauAppreciation = !matManque && niveaux.TryGetValue(jugement.IndexCoup, out var appreciation) ? appreciation.Niveau : null;
                 coup.CommentaireTactique = jugement.Commentaire;    // (sacrifice, thème, mat manqué : l'essentiel, pour la feuille)
                 // (la notation NAL du coup est en lettres anglaises : la notation longue française est calculée ici)
                 PositionAnalysee positionAvant = _positions[_indexCoups.IndexOf(jugement.IndexCoup)];
