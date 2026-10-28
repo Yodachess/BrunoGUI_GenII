@@ -433,6 +433,12 @@ namespace BrunoGUI_GenII
             double precision = meilleurJoue ? 100 : JugementCoups.Precision(sens * avant, sens * apres);
             (string annotation, DetailSacrifice? sacrifice) = EstCoupDeBibliotheque(indexCoup) ? ("", null)
                               : meilleurJoue ? BonCoup(k, indexCoup, sens) : (JugementCoups.Annotation(perte), null);
+            // Partie déjà décidée, et toujours décidée dans le même sens après le coup : pas de ?!, ? ni ?? (comme ChessBase, choix de
+            // Bruno du 2026-10-28 : 20... Cg8?! de Carlsen–Ernst, -5.81 → -9.79, n'apprenait rien). La perte compte toujours dans la
+            // précision et pour le coup critique
+            bool decideAvant = Math.Abs(avant) >= JugementCoups.LimitePartieDecidee, decideApres = Math.Abs(apres) >= JugementCoups.LimitePartieDecidee;
+            if (!meilleurJoue && decideAvant && decideApres && Math.Sign(avant) == Math.Sign(apres))
+                annotation = "";
             // Commentaire : le sacrifice (et s'il détruit le rempart du roque), ou le mat manqué ; puis le thème tactique du coup
             string? texteSacrifice = sacrifice == null ? null
                 : DetruitLeRempart(k, indexCoup) ? Langue.T("{0} : détruit le rempart du roque", sacrifice.Texte) : sacrifice.Texte;
@@ -655,10 +661,16 @@ namespace BrunoGUI_GenII
 
         private DetailSacrifice? SacrificeCorrect(int k, int indexCoup, double sens)
         {   // Le meilleur coup (déjà vérifié) sacrifie, et le joueur n'est pas perdu après lui. Dans une position déjà gagnée, donner du
-            // matériel pour conclure n'est remarquable que si c'est le seul coup qui gagne (25... Cfe4!! après la gaffe 25. Ff5??)
-            if (_positions[k + 1].Chances is not double apres || sens * apres < -JugementCoups.LimitePartieDecidee)
+            // matériel pour conclure n'est remarquable que si c'est le seul coup qui gagne (25... Cfe4!! après la gaffe 25. Ff5??), si le
+            // sacrifice ouvre le roque adverse ou si la suite mate (la combinaison qui conclut, choix de Bruno du 2026-10-28 :
+            // 21. Fxh6! de Carlsen–Ernst, que ChessBase annote et que nous taisions ; rendre du matériel pour simplifier reste muet)
+            // (ni quand l'adversaire garde un avantage décisif, -2.00 ou pire : la pièce lâchée par un camp déjà perdant n'a rien de
+            // brillant, 15... Cd5 de Beliavsky–Larsen à -3.32 laissait une tour déjà perdue, faux « !! » du 2026-10-28)
+            if (_positions[k + 1].Chances is not double apres
+                || sens * apres < -JugementCoups.ChancesDeGain(new Evaluation(Evaluation.SeuilGain, null)))
                 return null;
-            if (sens * apres > JugementCoups.LimitePartieDecidee && !SeulBonCoup(k, indexCoup, sens))
+            bool conclut = DetruitLeRempart(k, indexCoup) || (_positions[k + 1].Evaluation?.MatEn is int mat && sens * mat > 0);
+            if (sens * apres > JugementCoups.LimitePartieDecidee && !conclut && !SeulBonCoup(k, indexCoup, sens))
                 return null;
             return Sacrifice(k);
         }
@@ -698,7 +710,8 @@ namespace BrunoGUI_GenII
                 return false;
             if (_positions[k + 1].Chances is not double apres || sens * apres < -JugementCoups.LimitePartieDecidee)
                 return false;
-            if (k > 0 && EstReprise(k, indexCoup))
+            // (une prise sur la case de l'adversaire qui SACRIFIE n'est pas une reprise : 21... gxh6 22. Txh6+!!, la tour se donne)
+            if (k > 0 && EstReprise(k, indexCoup) && Sacrifice(k) == null)
                 return false;
             if (EstFuite(k, indexCoup))
                 return false;
@@ -869,9 +882,10 @@ namespace BrunoGUI_GenII
                 if (avant.PiegeCherche || avant.Evaluation is not Evaluation meilleure || avant.MeilleurCoupUci == null)
                     continue;
                 double sens = avant.AuTrait == ColorPiece.Blanc ? 1 : -1;
-                if (meilleure.MatEn != null || sens * (meilleure.Centipions ?? 0) <= -JugementCoups.PiegeJoueurPerdu)
-                {   // un mat est déjà là (pour l'un ou l'autre), ou le joueur est perdu de beaucoup : ne pas commenter ce qu'il ne prend
-                    // pas (perdu de moins, le piège reste instructif : 28. Fxg7 de la partie de Bruno, à -4.5, « le fou f3 est imprenable »)
+                if (meilleure.MatEn != null || Math.Abs(meilleure.Centipions ?? 0) >= JugementCoups.PiegeJoueurPerdu)
+                {   // un mat est déjà là (pour l'un ou l'autre), ou la partie est décidée de beaucoup : ne pas commenter ce que le joueur ne
+                    // prend pas (perdu de moins, le piège reste instructif : 28. Fxg7 de la partie de Bruno, à -4.5, « le fou f3 est
+                    // imprenable » ; gagnant de plus de 6 pions, il n'apprenait rien, 26. Tg3+ à +19 de Carlsen–Ernst, choix du 2026-10-28)
                     avant.PiegeCherche = true;
                     continue;
                 }
@@ -988,6 +1002,12 @@ namespace BrunoGUI_GenII
             // emploie souvent à un coup calme ("Menace : 11... Tb8", une poussée de pion) : ce n'est pas une menace
             bool concrete = mate || EstUnePrise(positionNulle, coupUci) || DonneEchec(positionNulle, coupUci);
             if (!concrete)
+                return;
+            // Pas une menace créée par le coup : une pièce que le joueur pouvait déjà gagner avant de jouer (15... Cd5 de
+            // Beliavsky–Larsen, « Menace : 16... fxg6 » : le cavalier g6 était déjà en prise, choix de Bruno du 2026-10-28)
+            if (indexPosition > 0 && coupUci.Length >= 4 && !mate
+                && PiecesEnPrise(PositionDepuisFen(_positions[indexPosition - 1].Fen)).TryGetValue(coupUci.Substring(2, 2), out int dejaGagne)
+                && dejaGagne >= JugementCoups.SacrificeMinimum)
                 return;
             string texte = Outils.VarianteUciVersPgn(coupUci, DemiCoupAvant(positionNulle), false, positionNulle).Trim().Replace(" ... ", "... ");
             apres.MenaceUci = coupUci;
