@@ -56,6 +56,9 @@ namespace BrunoGUI_GenII
         public List<bool> AnnotationsAuto { get; set; } = [];       // [%auto] : l'annotation du coup a été posée par l'analyse de partie
         public List<string?> CommentairesAuto { get; set; } = [];   // [%autocom] : texte écrit par l'analyse de partie (Coup.CommentaireAuto)
         public List<int?> Appreciations { get; set; } = [];         // appréciation lue en code NAG ($18 = +-…) : Coup.NiveauAppreciation
+        // Bilan de l'analyse de partie, tel qu'affiché sous la feuille ("Blancs — précision 87 %\n   1 imprécision, …\nNoirs — …") ;
+        // "" : pas d'analyse. Écrit après le dernier coup du fichier ({… [%bilan]}, comme la « valeur d'erreur » de ChessBase) et relu
+        public string Bilan { get; set; } = "";
         public List<string?> FlechesAuteur { get; set; } = [];      // [%cal …] hors bloc de l'analyse : Coup.FlechesAuteur ("Re7h7,Oe5g6")
         public List<string?> FlechesMenace { get; set; } = [];      // [%cal …] du bloc [%autocom] : la flèche de la menace (Coup.MenaceUci)
         public List<string?> CommentairesTactiques { get; set; } = [];  // [%tac] : sa partie essentielle (Coup.CommentaireTactique)
@@ -135,9 +138,18 @@ namespace BrunoGUI_GenII
                 }
                 mots.Add(texteCoup);
             }
+            if (pourFichier && !string.IsNullOrWhiteSpace(partieEnCours.Bilan) && mots.Count > 0)
+                mots.Add("{" + BilanSurUneLigne(partieEnCours.Bilan) + " [%bilan]}");    // (après le dernier coup : relu comme bilan)
             mots.Add(ResultatPgn(partieEnCours));   // Rajout du résultat à la fin de la partie
             return RetourneEntetePgn(partieEnCours) + LignesDe80(string.Join(" ", mots));
         }
+
+        public static string BilanSurUneLigne(string bilan) =>
+            // Le bilan affiché (sur 4 lignes) en une phrase pour le PGN : "Blancs — précision 87 % : 1 imprécision, 0 erreur, 2 gaffes ;
+            // Noirs — précision 62 % : …" (BilanDepuisLigne fait l'inverse à la relecture)
+            bilan.Replace("{", "(").Replace("}", ")").Replace("\r", "").Replace("\n   ", " : ").Replace("\n", " ; ");
+        public static string BilanDepuisLigne(string ligne) =>
+            ligne.Replace(" ; ", "\n").Replace(" : ", "\n   ");
 
         public const int DemiCoupsVarianteCourte = 4;       // longueur des variantes du moteur dans le fichier PGN (ChessBase : 2 à 6)
 
@@ -178,7 +190,7 @@ namespace BrunoGUI_GenII
         public static string NagAppreciation(int niveau) => niveau switch
         {   // Les 5 niveaux de l'appréciation commentée (JugementCoups.NiveauAppreciation) en codes NAG : = (équilibré, léger avantage
             // compris), ± / ∓ (avantage), +- / -+ (avantage décisif ou mat)
-            2 => "$18", 1 => "$16", -1 => "$17", -2 => "$19", _ => "$10"
+            >= 2 => "$18", 1 => "$16", -1 => "$17", <= -2 => "$19", _ => "$10"     // (±3, mat forcé : aussi +- / -+)
         };
         public static int? NiveauDepuisNag(int nag) => nag switch
         {   // L'inverse, à la relecture ($14 / $15, « léger avantage », comptent pour l'équilibre, comme dans nos 5 niveaux ; les

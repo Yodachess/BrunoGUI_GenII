@@ -224,6 +224,8 @@ namespace BrunoGUI_GenII
             if (chargement.CoupIllisible != null)
                 KryptonMessageBox.Show(T("Coup illisible ou illégal : « {0} » (demi-coup n° {1}).\nLa partie est chargée jusqu'au coup précédent.", chargement.CoupIllisible, chargement.DemiCoupsJoues + 1),
                     T("Partie PGN"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+            if (!string.IsNullOrWhiteSpace(partie.Bilan) && chargement.CoupIllisible == null)
+                AfficheBilan(partie.Bilan);     // partie analysée puis enregistrée : son bilan revient sous la feuille
             AfficheResultatPartiePgn();
         }
         private void AfficheResultatPartiePgn()

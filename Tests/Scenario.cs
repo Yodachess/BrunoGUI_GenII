@@ -1071,10 +1071,12 @@ public static class Scenario
             && bilanBlancs.Precision is > 50 and < 100,
             $"Blancs {bilanBlancs}, Noirs {bilanNoirs}");
         static int NiveauApres(int? cp, int? mat, int actuel) => JugementCoups.NiveauAppreciation(new Evaluation(cp, mat), actuel);
-        Verifie("Appréciation : niveaux avec marge (0.75 reste équilibré, 0.60 reste « mieux », l'avantage peut changer de camp)",
+        Verifie("Appréciation : niveaux avec marge (0.75 reste équilibré, 0.60 reste « mieux », l'avantage peut changer de camp) ; mat forcé à part (±3), gardé tant que l'avantage reste décisif",
             NiveauApres(75, null, 0) == 0 && NiveauApres(90, null, 0) == 1 && NiveauApres(60, null, 1) == 1 && NiveauApres(50, null, 1) == 0
             && NiveauApres(-60, null, 1) == 0 && NiveauApres(-90, null, 1) == -1 && NiveauApres(230, null, 1) == 2 && NiveauApres(190, null, 2) == 2
-            && NiveauApres(170, null, 2) == 1 && NiveauApres(null, -3, 2) == -2 && NiveauApres(0, null, 1) == 0, "");
+            && NiveauApres(170, null, 2) == 1 && NiveauApres(null, -3, 2) == -3 && NiveauApres(0, null, 1) == 0
+            && NiveauApres(null, 5, 2) == 3 && NiveauApres(1500, null, 3) == 3 && NiveauApres(150, null, 3) == 1
+            && JugementCoups.TexteAppreciation(3, new Evaluation(null, 5)) == "Mat en 5 pour les Blancs", "");
         static string Finale(string fen) => JugementCoups.TypeDeFinale(L.PositionDepuisFen(fen)) ?? "-";
         Verifie("Type de finale : pions, tours, fous de couleurs opposées, tour contre fou, dames ; pas de finale avec dame et tour",
             Finale("4k3/4p3/8/8/8/8/4P3/4K3 w - - 0 1") == "Finale de pions" && Finale("r3k3/4p3/8/8/8/8/4P3/R3K3 w - - 0 1") == "Finale de tours"
@@ -1142,6 +1144,12 @@ public static class Scenario
         Verifie("PGN : variante du moteur courte (4 demi-coups) avec le symbole de son évaluation ; alternative d'un coup nettement moins bon, pas dans une partie décidée ni pour un écart minime",
             varianteCourte == "17... Qb6 $10 18. Qd3 c5 19. Qg3" && GestionPartiePgn.AlternativeAMontrer(moinsBon)
             && !GestionPartiePgn.AlternativeAMontrer(moinsBonDecide) && !GestionPartiePgn.AlternativeAMontrer(presqueAussiBon), varianteCourte);
+        const string bilanTexte = "Blancs — précision 87 %\n   1 imprécision, 0 erreur, 2 gaffes\nNoirs — précision 62 %\n   0 imprécision, 1 erreur, 0 gaffe";
+        string pgnBilan = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "1-0", Bilan = bilanTexte }, "Intl", pourFichier: true);
+        bool bilanEcrit = pgnBilan.Replace("\n", " ").Contains("{Blancs — précision 87 % : 1 imprécision, 0 erreur, 2 gaffes ; Noirs — précision 62 % : 0 imprécision, 1 erreur, 0 gaffe [%bilan]} 1-0");
+        string bilanRelu = FichierPartiePgn.DecodePartiePGN(pgnBilan).Bilan;
+        Verifie("PGN : bilan de l'analyse écrit après le dernier coup ({… [%bilan]}) et relu tel qu'affiché",
+            bilanEcrit && bilanRelu == bilanTexte, pgnBilan.Replace("\n", " ") + " / « " + bilanRelu + " »");
         Partie partieAnalysee = new();
         Verifie("PGN enregistré après analyse : relu sans erreur, lignes de 80 caractères au plus",
             ChargementPartie.ChargerPartiePgn(FichierPartiePgn.DecodePartiePGN(pgnAnalyseFichier), partieAnalysee) is { CoupIllisible: null, DemiCoupsJoues: 7 }

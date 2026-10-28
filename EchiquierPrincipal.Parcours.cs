@@ -388,7 +388,7 @@ namespace BrunoGUI_GenII
             // théorie n'est pas jugée (ni annotée par l'analyse ; le meilleur coup du moteur reste sur la 3e ligne)
             string texte = coup.Annotation != "" && nomAnnotation ? $"[{Annotations.NomCourt(coup.Annotation)}]" : "";
             if (bibliotheque)
-                return (texte + "  — " + T("coup de la bibliothèque")).Trim();
+                return (texte + "  — " + T("coup de la bibliothèque") + " —").Trim();   // (tirets des deux côtés, choix de Bruno)
             if (!string.IsNullOrEmpty(coup.CommentaireAuto))
                 texte += " " + coup.CommentaireAuto;     // commentaire de l'analyse, ex : "Sacrifice du cavalier"
             if (!coup.MeilleurJoue && coup.MeilleurCoup != null)
