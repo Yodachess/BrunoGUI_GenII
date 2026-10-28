@@ -215,16 +215,16 @@ namespace BrunoGUI_GenII
             bool positionInitiale = index < 0 || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart;
             _coupARejouer = null;           // (ligne 3 cliquable seulement si elle montre une suite à rejouer, voir plus bas)
             VarianteMoteurUci3.Cursor = Cursors.Default;
-            // (coup annoté : la ligne prend la couleur de son annotation, comme sa flèche ; choix de Bruno, ex : orange pour « ? »)
+            // (coup annoté : la ligne prend la couleur de son annotation, comme sa flèche ; ex : orange pour « ? »)
             string texteCoup = positionInitiale
                 ? "[ " + T("Position initiale") + " ]" : $"[ {TexteCoupJoue(index, positionApres)} ]"
-                  // (son évaluation après le coup, avec son symbole : "+- (3.71)", ici plutôt que sur la 2e ligne, choix de Bruno, 2026-10-28)
+                  // (son évaluation après le coup, avec son symbole : "+- (3.71)", ici plutôt que sur la 2e ligne, 2026-10-28)
                   + (LogiqueMouvements.ListeCoups[index].EvaluationApres is Evaluation evaluationCoup ? $"   {evaluationCoup.Symbole} ({evaluationCoup.Texte})" : "")
                   + (LogiqueMouvements.ListeCoups[index].TempsReflexion is TimeSpan reflexion ? "   " + T("(réflexion : {0})", TexteDuree(reflexion)) : "");
             if (!positionInitiale && OuvertureAffichee(index) is Ouverture ouverture)
-            {   // Pendant l'ouverture, son nom à la suite du coup (choix de Bruno) : en entier s'il tient, sinon sans ses dernières
+            {   // Pendant l'ouverture, son nom à la suite du coup : en entier s'il tient, sinon sans ses dernières
                 // précisions, une à une ("Partie espagnole : attaque Marshall, variante moderne" → "… : attaque Marshall" ; la
-                // famille seule perdait l'attaque Marshall, remarque de Bruno)
+                // famille seule perdait l'attaque Marshall)
                 int largeur = VarianteMoteurUci1.ClientSize.Width - 14;
                 string coupSeul = texteCoup;
                 texteCoup = NomsRaccourcis(ouverture.Nom).Select(nom => $"{coupSeul}   {nom} ({ouverture.Eco})")
@@ -237,7 +237,7 @@ namespace BrunoGUI_GenII
             if (!positionInitiale)
             {   // Coup analysé (analyse de partie, ou [%eval] et variante du PGN chargé) : son évaluation et le meilleur coup sur la
                 // 2e ligne, la meilleure suite sur la 3e. Commentaire du PGN : sur une ligne restée libre (2e, puis 3e), jamais à la
-                // suite du coup regardé (choix de Bruno) ; il est aussi, en entier, dans l'infobulle des trois lignes
+                // suite du coup regardé ; il est aussi, en entier, dans l'infobulle des trois lignes
                 Coup coup = LogiqueMouvements.ListeCoups[index];
                 string? commentaire = string.IsNullOrWhiteSpace(coup.Commentaire) ? null : $"« {coup.Commentaire} »";
                 foreach (RichTextBox ligne in new[] { VarianteMoteurUci1, VarianteMoteurUci2, VarianteMoteurUci3 })
@@ -246,7 +246,7 @@ namespace BrunoGUI_GenII
                 {   // Le texte complet s'il tient sur la ligne, sinon sans le nom de l'annotation
                     int largeur = VarianteMoteurUci2.ClientSize.Width - 14;
                     bool bibliotheque = PolyglotBibliotheque.ContientCoup(index == 0 ? FenDepart : LogiqueMouvements.ListeCoups[index - 1].Fen, coup.Uci);
-                    // (le symbole de l'évaluation reste toujours, choix de Bruno, 2026-10-21 : seul le nom de l'annotation peut tomber)
+                    // (le symbole de l'évaluation reste toujours, 2026-10-21 : seul le nom de l'annotation peut tomber)
                     string texte = TexteAnalyseDuCoup(coup, true, bibliotheque) is string complet
                         && TextRenderer.MeasureText(complet, _policesLignes[VarianteMoteurUci2].Grasse).Width <= largeur
                         ? complet : TexteAnalyseDuCoup(coup, false, bibliotheque);
@@ -265,12 +265,12 @@ namespace BrunoGUI_GenII
                 }
                 if (!string.IsNullOrEmpty(coup.VarianteMeilleure))
                 {   // ligne 3 : la suite prévue ; "meilleure" seulement si l'écart avec le coup joué compte (sinon c'est juste une
-                    // autre possibilité, remarque de Bruno)
+                    // autre possibilité)
                     string libelle = coup.MeilleurJoue ? T("Suite prévue : {0}")
                         : FeuilleDePartie.EcartNegligeable(coup) ? T("Suite du moteur : {0}") : T("Meilleure suite : {0}");
                     AfficheLigneCentree(VarianteMoteurUci3, string.Format(libelle, Notation(coup.VarianteMeilleure)), CouleurSuite);
                     if (!string.IsNullOrEmpty(coup.VarianteMeilleureUci))
-                    {   // un clic sur la ligne rejoue la suite sur l'échiquier (RejoueSuite, choix de Bruno)
+                    {   // un clic sur la ligne rejoue la suite sur l'échiquier (RejoueSuite)
                         _coupARejouer = index;
                         VarianteMoteurUci3.Cursor = Cursors.Hand;
                         _infobulleBilan.SetToolTip(VarianteMoteurUci3, (string.IsNullOrWhiteSpace(coup.Commentaire) ? "" : T("Commentaire : {0}", $"« {coup.Commentaire} »") + "\n")
@@ -307,7 +307,7 @@ namespace BrunoGUI_GenII
             if (CatalogueDesOuvertures() is not CatalogueOuvertures catalogue || index < 0 || index >= coups.Count)
                 return null;
             if (!coups.Take(index).Any(c => !c.EstPositionDeDepart))
-                return null;        // 1er coup de la partie : rien ("Partie du pion roi" n'apprend rien, choix de Bruno)
+                return null;        // 1er coup de la partie : rien ("Partie du pion roi" n'apprend rien)
             int finOuverture = catalogue.DerniereConnue(coups) is (int derniere, _) ? derniere : -1;
             bool dansLaBibliotheque = false;
             for (int i = 0; i < coups.Count; i++)
@@ -342,8 +342,8 @@ namespace BrunoGUI_GenII
         private static readonly Color CouleurFlecheMeilleurCoup = Color.FromArgb(21, 120, 27);
         private void MontreFlechesDuCoup(int index)
         {   // Flèche du coup joué, sur tout coup regardé (elle montre ce qui a été joué) : de la couleur de son annotation s'il en a une,
-            // verte sinon (choix de Bruno : une seule couleur hors annotations). Coup annoté (analysé) : aussi la flèche verte du meilleur coup du
-            // moteur s'il en est un autre (choix de Bruno : pas sur un coup sans annotation, où l'écart est négligeable).
+            // verte sinon (une seule couleur hors annotations). Coup annoté (analysé) : aussi la flèche verte du meilleur coup du
+            // moteur s'il en est un autre (pas sur un coup sans annotation, où l'écart est négligeable).
             // Les deux partent de la position d'avant le coup (l'échiquier montre celle d'après) ; rien pendant l'analyse elle-même
             _vue.EffaceFleches();
             if (_analyseDePartie != null || index < 0 || index >= LogiqueMouvements.ListeCoups.Count)
@@ -359,7 +359,7 @@ namespace BrunoGUI_GenII
             if (coup.Annotation != "" && !coup.MeilleurJoue && coup.MeilleurCoupUci is { Length: >= 4 } meilleur)
                 fleches.Add((RenvoieCaseIndex120(meilleur[..2]), RenvoieCaseIndex120(meilleur[2..4]), CouleurFlecheMeilleurCoup));
             // La menace créée par le coup, en rouge, et les flèches de l'auteur du PGN (ChessBase, Lichess) dans leur couleur : elles
-            // partent de la position affichée, celle d'après le coup (choix de Bruno, 2026-10-28)
+            // partent de la position affichée, celle d'après le coup (2026-10-28)
             if (coup.MenaceUci is { Length: >= 4 } menace)
                 fleches.Add((RenvoieCaseIndex120(menace[..2]), RenvoieCaseIndex120(menace[2..4]), CouleurFleche('R')));
             foreach (string fleche in (coup.FlechesAuteur ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries))
@@ -380,19 +380,19 @@ namespace BrunoGUI_GenII
         private static string TexteAnalyseDuCoup(Coup coup, bool nomAnnotation, bool bibliotheque)
         {   // 2e ligne : "[Bon] Sacrifice du cavalier. Menace : 16. Cxh8", ou "— meilleur : ⩲ Dd3-g3 (0.55)" : le nom de l'annotation, le
             // commentaire de l'analyse, puis le meilleur coup avec SON évaluation s'il en est un autre. Le coup joué, son annotation et
-            // son évaluation sont sur la 1re ligne (choix de Bruno, 2026-10-28 : « +- joué Ce5-g6 ! (3.71) » y répétait le coup).
+            // son évaluation sont sur la 1re ligne (2026-10-28 : « +- joué Ce5-g6 ! (3.71) » y répétait le coup).
             // Si le coup joué ne perd presque rien (ex : mat en 3 au lieu de 2), le meilleur n'est qu'une préférence : "— moteur : Rd3
-            // (0.00)" (Bruno trouvait "meilleur" inadapté, puis ", écart négligeable" inutile). Coups en notation longue, avec la case
+            // (0.00)" ("meilleur" serait inadapté, ", écart négligeable" inutile). Coups en notation longue, avec la case
             // de départ : "Dd8-d7". nomAnnotation à false raccourcit (le texte doit tenir sur la ligne en police 10).
-            // Coup connu de la bibliothèque d'ouvertures (choix de Bruno) : "— coup de la bibliothèque" au lieu du meilleur coup : la
+            // Coup connu de la bibliothèque d'ouvertures : "— coup de la bibliothèque" au lieu du meilleur coup : la
             // théorie n'est pas jugée (ni annotée par l'analyse ; le meilleur coup du moteur reste sur la 3e ligne)
             string texte = coup.Annotation != "" && nomAnnotation ? $"[{Annotations.NomCourt(coup.Annotation)}]" : "";
             if (bibliotheque)
-                return (texte + "  — " + T("coup de la bibliothèque") + " —").Trim();   // (tirets des deux côtés, choix de Bruno)
+                return (texte + "  — " + T("coup de la bibliothèque") + " —").Trim();   // (tirets des deux côtés)
             if (!string.IsNullOrEmpty(coup.CommentaireAuto))
                 texte += " " + coup.CommentaireAuto;     // commentaire de l'analyse, ex : "Sacrifice du cavalier"
             if (!coup.MeilleurJoue && coup.MeilleurCoup != null)
-            {   // (le meilleur coup a lui aussi le symbole de son évaluation devant lui : "meilleur : +- Dd1-e1 (2.00)", choix de Bruno)
+            {   // (le meilleur coup a lui aussi le symbole de son évaluation devant lui : "meilleur : +- Dd1-e1 (2.00)")
                 string meilleur = (coup.EvaluationMeilleur is Evaluation symboleMeilleur ? symboleMeilleur.Symbole + " " : "")
                     + Notation(coup.MeilleurCoupLong ?? coup.MeilleurCoup) + (coup.EvaluationMeilleur is Evaluation e ? $" ({e.Texte})" : "");
                 texte += FeuilleDePartie.EcartNegligeable(coup) ? "  — " + T("moteur : {0}", meilleur) : "  — " + T("meilleur : {0}", meilleur);
@@ -421,10 +421,10 @@ namespace BrunoGUI_GenII
             };
             SendMessage(ligne.Handle, EM_SETRECT, IntPtr.Zero, ref zone);
         }
-        // Meilleure suite (3e ligne) : bleu foncé, pour la distinguer de l'analyse du coup sur la 2e ligne (choix de Bruno)
+        // Meilleure suite (3e ligne) : bleu foncé, pour la distinguer de l'analyse du coup sur la 2e ligne
         private static readonly Color CouleurSuite = Color.FromArgb(0, 70, 150);
         private void AfficheLigneCentree(RichTextBox ligne, string texte, Color? couleur = null)
-        {   // Texte centré en gras, toujours dans la police de la ligne (Bruno ne veut pas de police réduite) ; couleur : celle de
+        {   // Texte centré en gras, toujours dans la police de la ligne (pas de police réduite) ; couleur : celle de
             // l'annotation du coup regardé (1re ligne), sinon la couleur normale de la ligne
             _ecritureCentree = true;
             ligne.Text = texte;
@@ -435,7 +435,7 @@ namespace BrunoGUI_GenII
             if (PoliceSymboles(ligne) is Font policeSymboles)
                 foreach (Match symbole in Regex.Matches(texte, @"(?<=^|\s)(\+-|-\+|=|±|∓|⩲|⩱|#\+|#-)(?=\s|$)"))
                 {   // les symboles d'évaluation en très gras : en Segoe UI gras, "-+", "+-" et "=" restent aussi fins qu'en normal
-                    // (remarque de Bruno) ; ∓ ⩲ ⩱ viennent d'une autre police, sans gras, sur laquelle on ne peut rien
+                    // ; ∓ ⩲ ⩱ viennent d'une autre police, sans gras, sur laquelle on ne peut rien
                     ligne.Select(symbole.Index, symbole.Length);
                     ligne.SelectionFont = policeSymboles;
                 }
@@ -473,7 +473,7 @@ namespace BrunoGUI_GenII
         private static string TexteCoupJoue(int index, Position positionApres)
         {   // Ex : "Coup blanc : 12. Cg1-f3" ou "Coup noir : 12... Ff8-e7" (coup n° index, qui a mené à positionApres) : notation
             // longue française, comme la 2e ligne (la notation NAL de la liste est en lettres anglaises : "Ng1-f3" sur la 1re ligne
-            // et "Cg1-f3" sur la 2e, remarque de Bruno), puis en lettres anglaises si l'interface est en anglais (Notation)
+            // et "Cg1-f3" sur la 2e), puis en lettres anglaises si l'interface est en anglais (Notation)
             Coup joue = LogiqueMouvements.ListeCoups[index];
             string fenAvant = index > 0 ? LogiqueMouvements.ListeCoups[index - 1].Fen : FenDepart;
             string coup = Notation(joue.CoupJoueLong ?? AnalyseDePartie.NotationLongue(fenAvant, joue.Uci.Trim(), joue.PgnFrSansNumero) ?? joue.PgnFrSansNumero);
@@ -505,7 +505,7 @@ namespace BrunoGUI_GenII
             EffaceBilan();              // le bilan de l'analyse portait sur l'ancienne partie
             MetAJourCommandes();
         }
-        // ═══ Meilleure suite rejouée sur l'échiquier (choix de Bruno) ═══
+        // ═══ Meilleure suite rejouée sur l'échiquier ═══
         // Clic sur la 3e ligne de variante d'un coup analysé : la suite du moteur (Coup.VarianteMeilleureUci, depuis la position
         // d'avant le coup) est rejouée coup par coup, une seconde par coup, avec sa flèche ; puis l'échiquier revient au coup regardé.
         // Un nouveau clic l'arrête, et toute autre action aussi (parcours, AbandonneReflexion). La partie n'est jamais modifiée

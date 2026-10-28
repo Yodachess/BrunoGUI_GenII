@@ -52,17 +52,17 @@ namespace BrunoGUI_GenII
         public bool VarianteLue { get; set; }                   // la variante (meilleur coup) vient du PGN chargé : réécrite à l'enregistrement
         // Appréciation qui change après ce coup (-2 à +2, JugementCoups.NiveauAppreciation ; null : pas de changement), dont le texte
         // ("Avantage Blanc") termine CommentaireAuto ; dans le fichier PGN, elle s'écrit en symbole après le coup ($18 = +-, comme
-        // ChessBase) et son texte est retiré du commentaire, puis refait à la relecture (choix de Bruno, 2026-10-28)
+        // ChessBase) et son texte est retiré du commentaire, puis refait à la relecture (2026-10-28)
         public int? NiveauAppreciation { get; set; }
         // La menace créée par ce coup ("e5g6", celle de « Menace : 15. Cg6 ») : flèche rouge pendant le parcours, et [%cal Re5g6] dans
-        // le bloc [%autocom] du fichier PGN (choix de Bruno, 2026-10-28, comme les flèches de ChessBase)
+        // le bloc [%autocom] du fichier PGN (2026-10-28, comme les flèches de ChessBase)
         public string? MenaceUci { get; set; }
         // Flèches lues dans le PGN (commandes [%cal] de ChessBase ou de Lichess, hors bloc de l'analyse) : "Re7h7,Oe5g6", une lettre
         // de couleur puis le coup ; montrées pendant le parcours et réécrites à l'enregistrement, comme le commentaire du joueur
         public string? FlechesAuteur { get; set; }
 
         public void EffaceAnalyse()
-        {   // Au lancement d'une analyse de partie (choix de Bruno, 2026-10-21) : plus rien de l'analyse précédente, ou de celle du PGN
+        {   // Au lancement d'une analyse de partie (2026-10-21) : plus rien de l'analyse précédente, ou de celle du PGN
             // chargé ; sinon une analyse interrompue laissait un mélange (fin analysée de nouveau, début de l'ancienne). Restent
             // l'annotation et le commentaire du joueur (ou de l'auteur du PGN)
             EvaluationApres = EvaluationMeilleur = null;
@@ -111,8 +111,8 @@ namespace BrunoGUI_GenII
         };
 
         public static string NomCourt(string annotation) => annotation switch
-        {   // Pour la feuille de partie et la 2e ligne sous l'échiquier, sans le mot « coup » qui prenait de la place (choix de
-            // Bruno) ; le menu des annotations garde les noms complets
+        {   // Pour la feuille de partie et la 2e ligne sous l'échiquier, sans le mot « coup » qui prenait de la place ;
+            // le menu des annotations garde les noms complets
             "!!" => Langue.T("Brillant"), "!" => Langue.T("Bon"), "!?" => Langue.T("Intéressant"),
             "?!" => Langue.T("Douteux"), "?" => Langue.T("Mauvais"), "??" => Langue.T("Gaffe"), _ => Nom(annotation)
         };
@@ -138,7 +138,7 @@ namespace BrunoGUI_GenII
     public static class FeuilleDePartie
     {   // Mise en page de la feuille de partie (composant FeuilleCoups, à droite de l'échiquier) : une ligne par coup complet ;
         // avec "commentaire" (place dans la liste -> texte, ou null), une ligne de commentaire sous chaque coup commenté, à la façon
-        // de Lichess et d'Europe Échecs (choix de Bruno) : après un coup blanc commenté, le coup noir repart sur sa propre ligne
+        // de Lichess et d'Europe Échecs : après un coup blanc commenté, le coup noir repart sur sa propre ligne
         // ("13. | ... | Cxd5")
         public static List<LigneFeuille> Lignes(IReadOnlyList<Coup> coups, Func<int, string?>? commentaire = null)
         {
@@ -172,11 +172,11 @@ namespace BrunoGUI_GenII
         }
 
         public static string? CommentaireEssentiel(Coup coup)
-        {   // Le commentaire de la feuille de partie, seulement l'essentiel (choix de Bruno) : une erreur (?!, ?, ??) et le coup qu'il
+        {   // Le commentaire de la feuille de partie, seulement l'essentiel : une erreur (?!, ?, ??) et le coup qu'il
             // fallait jouer ("Gaffe. Dc6 s'imposait.", PhraseErreur), puis le sacrifice, le thème tactique ou le mat manqué ; null : rien
             List<string> phrases = [];
             // (une annotation de l'auteur du PGN sur un coup que le moteur juge bon, ou presque : il n'y a pas mieux à proposer, et
-            // la feuille dit le désaccord, choix B de Bruno, 16... f5? de Smirin–Grischuk, meilleur coup pour Stockfish)
+            // la feuille dit le désaccord, choix B, 16... f5? de Smirin–Grischuk, meilleur coup pour Stockfish)
             bool coupCorrect = coup.MeilleurJoue || EcartNegligeable(coup);
             if (coup.Annotation is "?!" or "?" or "??" && !coup.AnnotationProposee && coupCorrect && (coup.MeilleurJoue || coup.PerteAnalyse != null))
                 phrases.Add(Langue.T("Le moteur juge ce coup correct."));
@@ -188,7 +188,7 @@ namespace BrunoGUI_GenII
         }
 
         private static string PhraseErreur(string annotation, string fen, string meilleur)
-        {   // Une tournure parmi trois selon le demi-coup (choix de Bruno : "Gaffe. … était meilleur." répété à chaque ligne était
+        {   // Une tournure parmi trois selon le demi-coup ("Gaffe. … était meilleur." répété à chaque ligne était
             // monotone) ; la même pour un coup donné, et trois (nombre impair) pour que les erreurs successives d'un même camp, deux
             // demi-coups plus loin, changent aussi de tournure
             string[] champs = fen.Split(' ', StringSplitOptions.RemoveEmptyEntries);

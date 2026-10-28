@@ -38,7 +38,7 @@ namespace BrunoGUI_GenII
             if (MoteurUci.NombreThreads is int threads)
                 baseThreadsNumerique.Value = Math.Clamp(threads, (int)baseThreadsNumerique.Minimum, (int)baseThreadsNumerique.Maximum);
             baseReflexionNumerique.Value = Math.Clamp(interfaceGraphique.TempsReflexionSecondes.Value, baseReflexionNumerique.Minimum, baseReflexionNumerique.Maximum);
-            // Le moteur réglé est dans le titre, et l'Elo prend SA plage (choix de Bruno, 2026-10-23 : Rodent IV va de 800 à 2800,
+            // Le moteur réglé est dans le titre, et l'Elo prend SA plage (2026-10-23 : Rodent IV va de 800 à 2800,
             // Stockfish de 1320 à 3190) ; un moteur qui ne règle pas sa force par l'Elo (Sargon) a le champ grisé
             Text = Langue.T("Paramètres du moteur — {0}", MoteurUci.NomAnnonce ?? Langue.T("moteur en cours"));
             if (MoteurUci.PlageElo is (int minimum, int maximum))

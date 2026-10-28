@@ -31,7 +31,7 @@ namespace BrunoGUI_GenII
         // Perte de chances de gain (de -1 à +1) à partir de laquelle un coup est annoté (seuils de Lichess)
         public const double SeuilImprecision = 0.1, SeuilErreur = 0.2, SeuilGaffe = 0.3;
         // "!" : le meilleur coup était le seul bon, la meilleure alternative (2e variante du moteur) aurait été au moins une erreur ;
-        // et le joueur n'est pas perdu après le coup (ses chances au-dessus de -0,6, environ -3,8 pions : choix B de Bruno, limité au
+        // et le joueur n'est pas perdu après le coup (ses chances au-dessus de -0,6, environ -3,8 pions : choix B, limité au
         // camp perdu en octobre 2026).
         // Quand on sait si le coup était difficile à trouver (ProfondeurDecouverte), "!" va au seul bon coup difficile et au sacrifice
         // correct, jamais au coup naturel (reprise, roque...) : voir AnalyseDePartie.BonCoup
@@ -43,7 +43,7 @@ namespace BrunoGUI_GenII
         public const int SacrificeMinimum = 2, DemiCoupsSacrifice = 6;
         // Coup difficile à trouver : un 2e moteur (table de hachage vide, 1 thread) cherche jusqu'à ProfondeurMesureDifficulte ;
         // le coup est "difficile" s'il ne devient durablement son choix qu'à partir de ProfondeurCoupDifficile (mesures sur les
-        // parties de Bruno : 13. Cd5 du sacrifice à 12, 31. a4 à 10 ; reprises, roques et coups évidents de 1 à 7)
+        // parties de référence : 13. Cd5 du sacrifice à 12, 31. a4 à 10 ; reprises, roques et coups évidents de 1 à 7)
         public const int ProfondeurCoupDifficile = 9, ProfondeurMesureDifficulte = 14;
         // Piège : la prise tentante non jouée est cherchée par le même 2e moteur, jusqu'à cette profondeur
         public const int ProfondeurPiege = 16;
@@ -96,14 +96,14 @@ namespace BrunoGUI_GenII
             _ => ""
         };
 
-        // Appréciation commentée par l'analyse (étape B, choix de Bruno) : seulement quand elle change de niveau, sur 5 niveaux de
+        // Appréciation commentée par l'analyse (étape B) : seulement quand elle change de niveau, sur 5 niveaux de
         // -2 à +2 : équilibré (moins de ±0.70, léger avantage compris), mieux (± / ∓), avantage décisif (+- / -+ ou mat). Marge
         // autour des seuils (MargeAppreciation) : une évaluation qui hésite entre 0.65 et 0.75 n'est pas commentée à chaque coup
         public const int MargeAppreciation = 15;    // en centipions : entrer dans un niveau au seuil + 15, en sortir au seuil - 15
 
         public static int NiveauAppreciation(Evaluation evaluation, int actuel)
         {   // Niveau après le coup, de -3 (mat forcé pour les Noirs) à +3, compte tenu du niveau actuel (marge, voir MargeAppreciation).
-            // Le mat forcé est un niveau à part (choix de Bruno, 2026-10-28, ChessBase écrit « Les Blancs font mat ») : annoncé quand il
+            // Le mat forcé est un niveau à part (2026-10-28, ChessBase écrit « Les Blancs font mat ») : annoncé quand il
             // apparaît, puis gardé tant que l'avantage reste décisif (le moteur perd parfois le mat de vue, « #29 » puis « 15.62 » :
             // sans cela, « Gain Blanc » et « Mat en … » alterneraient)
             if (evaluation.MatEn is int mat)
@@ -120,7 +120,7 @@ namespace BrunoGUI_GenII
         }
 
         public static string TexteAppreciation(int niveau, Evaluation evaluation) => niveau switch
-        {   // Les appréciations de base, courtes (choix de Bruno, 2026-10-21 : plutôt que "Les Blancs sont mieux")
+        {   // Les appréciations de base, courtes (2026-10-21 : plutôt que "Les Blancs sont mieux")
             // ("Gain {0}" et non "Gain Blanc", déjà traduit "White wins" pour le bouton de résultat : ici, la partie n'est pas finie)
             >= 2 => evaluation.MatEn is int mat ? Langue.T("Mat en {0} pour les Blancs", mat) : Langue.T("Gain {0}", NomCouleur(ColorPiece.Blanc)),
             1 => Langue.T("Avantage {0}", NomCouleur(ColorPiece.Blanc)),
@@ -219,7 +219,7 @@ namespace BrunoGUI_GenII
     // accepté, et s'il ne s'agit que de la qualité (une tour contre une pièce légère)
     public sealed record DetailSacrifice(TypePiece Piece, string Case, bool Offert, bool Qualite)
     {
-        // "Sacrifice du cavalier" : sans la case ni "offert" (choix de Bruno, « (offert en c8) » ne servait à rien)
+        // "Sacrifice du cavalier" : sans la case ni "offert" (« (offert en c8) » ne servait à rien)
         public string Texte => Qualite ? Langue.T("Sacrifice de la qualité") : Piece switch
         {
             TypePiece.CavalierBlanc or TypePiece.CavalierNoir => Langue.T("Sacrifice du cavalier"),
@@ -253,7 +253,7 @@ namespace BrunoGUI_GenII
             // approfondir : après le 1er passage, les positions avant et après chaque coup douteux (?!, ?, ??) sont revues plus
             // longtemps (voir EnApprofondissement) : un jugement sévère mérite d'être confirmé, et le temps n'est pas perdu sur les autres
             // coupDeBibliotheque(fen d'avant, coup UCI) : le coup est-il dans la bibliothèque d'ouvertures ? Un tel coup n'est jamais
-            // annoté, ni compté dans le bilan ni retenu comme coup critique (choix de Bruno, comme Lichess : la théorie n'est pas jugée)
+            // annoté, ni compté dans le bilan ni retenu comme coup critique (comme Lichess : la théorie n'est pas jugée)
             _coups = [.. coups];
             _approfondir = approfondir;
             string fenDepart = _coups.Count > 0 && _coups[0].EstPositionDeDepart ? _coups[0].Fen : FenDepart;
@@ -320,12 +320,12 @@ namespace BrunoGUI_GenII
         }
         public int ProfondeurVisee(int indexPosition)
         {   // Profondeur demandée au moteur pour cette position (la durée réglée reste un plafond, "go depth … movetime …") : plus
-            // rapide qu'un temps fixe, qui était trop long pour les positions faciles (mesuré sur les deux parties de Bruno, octobre
+            // rapide qu'un temps fixe, qui était trop long pour les positions faciles (mesuré sur les deux parties de référence, octobre
             // 2026 : 40 à 73 % de temps en moins à la profondeur 20, mêmes « ! », « !! », « ?? » et coup critique qu'à 10 s fixes).
             // Moins profond pour la théorie (position entre deux coups de la bibliothèque : ces coups ne sont pas jugés) ; plus
             // profond pour le 2e passage de l'analyse complète (profondeur 24, plafond 30 s : 13 à 28 % de temps en moins, mêmes
             // annotations importantes). Essayé puis retiré : moins profond quand la position suivante est déjà décidée ; c'est
-            // justement la position d'avant une gaffe, où la perte doit être bien mesurée (le coup critique de la partie de Bruno
+            // justement la position d'avant une gaffe, où la perte doit être bien mesurée (le coup critique de la partie de référence
             // passait de 27. Fd4?? à 28... Rxg7)
             if (EnApprofondissement)
                 return JugementCoups.ProfondeurApprofondissement;
@@ -439,8 +439,8 @@ namespace BrunoGUI_GenII
             double precision = meilleurJoue ? 100 : JugementCoups.Precision(sens * avant, sens * apres);
             (string annotation, DetailSacrifice? sacrifice) = EstCoupDeBibliotheque(indexCoup) ? ("", null)
                               : meilleurJoue ? BonCoup(k, indexCoup, sens) : (JugementCoups.Annotation(perte), null);
-            // Partie déjà décidée, et toujours décidée dans le même sens après le coup : pas de ?!, ? ni ?? (comme ChessBase, choix de
-            // Bruno du 2026-10-28 : 20... Cg8?! de Carlsen–Ernst, -5.81 → -9.79, n'apprenait rien). La perte compte toujours dans la
+            // Partie déjà décidée, et toujours décidée dans le même sens après le coup : pas de ?!, ? ni ?? (comme ChessBase,
+            // 2026-10-28 : 20... Cg8?! de Carlsen–Ernst, -5.81 → -9.79, n'apprenait rien). La perte compte toujours dans la
             // précision et pour le coup critique
             bool decideAvant = Math.Abs(avant) >= JugementCoups.LimitePartieDecidee, decideApres = Math.Abs(apres) >= JugementCoups.LimitePartieDecidee;
             if (!meilleurJoue && decideAvant && decideApres && Math.Sign(avant) == Math.Sign(apres))
@@ -475,7 +475,7 @@ namespace BrunoGUI_GenII
             int premiere = camp == ColorPiece.Blanc ? 8 : 1, sens = camp == ColorPiece.Blanc ? -1 : 1;
             if (rangeeRoi != premiere || colonneRoi is 4 or 5)
                 return false;           // roi au centre (d, e) ou sorti de sa rangée : pas un roque à démolir
-            // l'adversaire a vraiment roqué plus tôt (choix de Bruno, 2026-10-23 : un roi allé à pied en g8, 11... Rf8 12... Rg8,
+            // l'adversaire a vraiment roqué plus tôt (2026-10-23 : un roi allé à pied en g8, 11... Rf8 12... Rg8,
             // n'a pas de "rempart du roque") ; une partie commencée à une position ne dit pas comment le roi y est venu : il compte
             bool roque = _coups.Take(indexCoup).Any(c => !c.EstPositionDeDepart && c.EstCoupBlanc != (camp == ColorPiece.Blanc)
                                                          && c.PgnIntl.Contains("O-O"));
@@ -489,7 +489,7 @@ namespace BrunoGUI_GenII
         {   // Fourchette / attaque double : le meilleur coup (joué) attaque au moins deux cibles (le roi par un échec, ou une pièce
             // qu'il gagnerait à prendre : plus forte que lui ou mal défendue), la variante du moteur la fait prendre une cible au coup
             // suivant de cette pièce, et le joueur y gagne au moins SacrificeMinimum points (pas un pion) APRÈS le coup : ce que le
-            // coup prend lui-même ne vient pas de l'attaque double (remarque de Bruno, 2026-10-25 : 14. Dxh8+ Re7 15. Dxh7, une tour
+            // coup prend lui-même ne vient pas de l'attaque double (2026-10-25 : 14. Dxh8+ Re7 15. Dxh7, une tour
             // prise puis un pion, était une « attaque double de la dame »)
             PositionAnalysee avant = _positions[k];
             string[] variante = (avant.VarianteMeilleureUci ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -544,7 +544,7 @@ namespace BrunoGUI_GenII
         }
 
         private string? AttaqueALaDecouverte(int k, int indexCoup)
-        {   // Échec double, échec à la découverte, attaque à la découverte (choix de Bruno, 2026-10-26). La pièce jouée démasque
+        {   // Échec double, échec à la découverte, attaque à la découverte (2026-10-26). La pièce jouée démasque
             // une pièce à longue portée du joueur (fou, tour, dame) : celle-ci attaque maintenant, à travers la case quittée, une
             // cible qu'elle n'atteignait pas.
             // - le roi adverse attaqué par deux pièces : « Échec double » ;
@@ -632,7 +632,7 @@ namespace BrunoGUI_GenII
         private static bool SurLePlateau(int index) => index >= 21 && index <= 98 && index % 10 is not (0 or 9);
 
         private string? MatManque(int k, int indexCoup, double sens, bool meilleurJoue)
-        {   // "Mat en 8 manqué" (étape B, choix de Bruno) : le joueur avait un mat forcé avant son coup, et ne l'a plus après (s'il le
+        {   // "Mat en 8 manqué" (étape B) : le joueur avait un mat forcé avant son coup, et ne l'a plus après (s'il le
             // garde, même plus long, rien). Le coup à jouer est déjà dans la 2e ligne ("— meilleur : Dh4xg5 (M8)") et dans la variante
             // du PGN ; laisser un mat à l'adversaire est dit par l'appréciation ("Mat en 8 pour les Blancs")
             if (meilleurJoue || EstCoupDeBibliotheque(indexCoup) || _positions[k].Evaluation?.MatEn is not int mat || sens * mat <= 0)
@@ -645,7 +645,7 @@ namespace BrunoGUI_GenII
         private (string Annotation, DetailSacrifice? Sacrifice) BonCoup(int k, int indexCoup, double sens)
         {   // Le meilleur coup a été joué : "!", "!!" ou rien, et le sacrifice qui lui vaut son annotation (commentaire de l'analyse).
             // Difficulté inconnue (pas de 2e moteur) : "!" au seul bon coup (l'alternative est une erreur), "!!" s'il sacrifie.
-            // Difficulté mesurée (choix de Bruno, octobre 2026) : un sacrifice correct a "!", et "!!" s'il était difficile à trouver
+            // Difficulté mesurée (octobre 2026) : un sacrifice correct a "!", et "!!" s'il était difficile à trouver
             // (13. Cd5!! : une pièce, trouvé à la profondeur 12 ; il n'est pas "le seul bon coup", une alternative restait à +0.11) ;
             // sans sacrifice, "!" seulement au seul bon coup difficile à trouver (21. Th3!) ; un seul bon coup naturel n'a rien
             // (29. gxf3, 15... O-O, 47. Rd4)
@@ -668,7 +668,7 @@ namespace BrunoGUI_GenII
         private DetailSacrifice? SacrificeCorrect(int k, int indexCoup, double sens)
         {   // Le meilleur coup (déjà vérifié) sacrifie, et le joueur n'est pas perdu après lui. Dans une position déjà gagnée, donner du
             // matériel pour conclure n'est remarquable que si c'est le seul coup qui gagne (25... Cfe4!! après la gaffe 25. Ff5??), si le
-            // sacrifice ouvre le roque adverse ou si la suite mate (la combinaison qui conclut, choix de Bruno du 2026-10-28 :
+            // sacrifice ouvre le roque adverse ou si la suite mate (la combinaison qui conclut, 2026-10-28 :
             // 21. Fxh6! de Carlsen–Ernst, que ChessBase annote et que nous taisions ; rendre du matériel pour simplifier reste muet)
             // (ni quand l'adversaire garde un avantage décisif, -2.00 ou pire : la pièce lâchée par un camp déjà perdant n'a rien de
             // brillant, 15... Cd5 de Beliavsky–Larsen à -3.32 laissait une tour déjà perdue, faux « !! » du 2026-10-28)
@@ -705,7 +705,7 @@ namespace BrunoGUI_GenII
         }
 
         private bool SeulBonCoup(int k, int indexCoup, double sens)
-        {   // "!" (bon coup, choix de Bruno) : le meilleur coup a été joué ET c'était le seul bon : la 2e variante du moteur aurait fait
+        {   // "!" (bon coup) : le meilleur coup a été joué ET c'était le seul bon : la 2e variante du moteur aurait fait
             // perdre au moins JugementCoups.SeuilSeulBonCoup de chances de gain (une erreur). Exclus : un coup
             // forcé (un seul coup légal) et une reprise immédiate (on reprend sur la case où l'adversaire vient de prendre : rien de remarquable)
             // Pas non plus quand le joueur reste perdu après le coup (la seule défense qui perd moins dans une position perdue) : ses
@@ -726,8 +726,8 @@ namespace BrunoGUI_GenII
 
         private bool EstFuite(int k, int indexCoup)
         {   // Retraite évidente, pas un "!" : la pièce jouée (plus qu'un pion) était attaquée par une pièce adverse de moindre valeur,
-            // elle n'avait qu'UNE case sûre, et c'est là qu'elle va (ex : Caro-Kann, 8. h5 Fh7 : le fou attaqué par le pion n'a que h7,
-            // remarque de Bruno). Avec plusieurs cases sûres, trouver la seule bonne est un vrai choix, qui garde son "!" (ex : Cg6) ;
+            // elle n'avait qu'UNE case sûre, et c'est là qu'elle va (ex : Caro-Kann, 8. h5 Fh7 : le fou attaqué par le pion n'a que h7).
+            // Avec plusieurs cases sûres, trouver la seule bonne est un vrai choix, qui garde son "!" (ex : Cg6) ;
             // aller sur une case attaquée n'est pas une fuite (c'est un sacrifice)
             string joue = _coups[indexCoup].Uci.Trim();
             if (joue.Length < 4)
@@ -791,7 +791,7 @@ namespace BrunoGUI_GenII
             // (12. The1 b4 13. Cd5 exd5 : c'est 13. Cd5 qui sacrifie).
             // Sacrifice OFFERT (refusé dans la variante, parce que l'accepter perd) : juste après le coup, l'adversaire peut gagner au
             // moins SacrificeMinimum points en prenant (GainImmediat) ; ex : 25... Cfe4!! laisse la tour c8 au fou f5, et la variante
-            // du moteur continue par 26. c3 (choix de Bruno). Seulement pour une pièce NOUVELLEMENT en prise (case qui ne l'était pas
+            // du moteur continue par 26. c3. Seulement pour une pièce NOUVELLEMENT en prise (case qui ne l'était pas
             // après le coup précédent du joueur, ou qui l'est davantage) : sinon 16. Dh4, qui laisse le cavalier g7 offert par
             // 15. Cxg7, serait un nouveau sacrifice ; avant 25... Cfe4, c'était la tour g6 qui était en prise (au fou d3), pas c8
             PositionAnalysee avant = _positions[k];
@@ -890,7 +890,7 @@ namespace BrunoGUI_GenII
                 double sens = avant.AuTrait == ColorPiece.Blanc ? 1 : -1;
                 if (meilleure.MatEn != null || Math.Abs(meilleure.Centipions ?? 0) >= JugementCoups.PiegeJoueurPerdu)
                 {   // un mat est déjà là (pour l'un ou l'autre), ou la partie est décidée de beaucoup : ne pas commenter ce que le joueur ne
-                    // prend pas (perdu de moins, le piège reste instructif : 28. Fxg7 de la partie de Bruno, à -4.5, « le fou f3 est
+                    // prend pas (perdu de moins, le piège reste instructif : 28. Fxg7 de la partie de référence, à -4.5, « le fou f3 est
                     // imprenable » ; gagnant de plus de 6 pions, il n'apprenait rien, 26. Tg3+ à +19 de Carlsen–Ernst, choix du 2026-10-28)
                     avant.PiegeCherche = true;
                     continue;
@@ -913,7 +913,7 @@ namespace BrunoGUI_GenII
         public void EnregistrePiege(int indexPosition, string priseUci, int? centipions, int? matEn, string? varianteUci)
         {   // Réponse du 2e moteur pour la prise tentante (score du point de vue du camp au trait ; rien : null). C'est un piège si elle
             // fait perdre au moins une erreur (SeuilErreur) par rapport au meilleur coup : "La tour g6 est imprenable : 22. Fxg6? fxg6
-            // 23. g4 Tc8 (-5.57)" (choix de Bruno, partie Parkhov–Bruzon : pourquoi 22. g4 et pas 22. Fxg6 ?)
+            // 23. g4 Tc8 (-5.57)" (partie Parkhov–Bruzon : pourquoi 22. g4 et pas 22. Fxg6 ?)
             PositionAnalysee avant = _positions[indexPosition];
             avant.PiegeCherche = true;
             if ((centipions == null && matEn == null) || avant.Evaluation is not Evaluation meilleure)
@@ -1009,13 +1009,13 @@ namespace BrunoGUI_GenII
             bool concrete = mate || EstUnePrise(positionNulle, coupUci) || DonneEchec(positionNulle, coupUci);
             // ... sauf une menace calme très forte : une gaffe en chances ET au moins MenaceCalmeMinimum (3 pions) ; ChessBase écrit
             // « Menace fortement Cg6! » sur 14. Te1 de Beliavsky–Larsen, le sacrifice 15. Cg6 n'étant ni une prise ni un échec
-            // (choix de Bruno, 2026-10-28)
+            // (2026-10-28)
             bool calmeTresForte = gainEnChances && actuelle.Centipions is int cpAvant && menace.Centipions is int cpApres
                                   && sens * (cpApres - cpAvant) >= JugementCoups.MenaceCalmeMinimum;
             if (!concrete && !calmeTresForte)
                 return;
             // Pas une menace créée par le coup : une pièce que le joueur pouvait déjà gagner avant de jouer (15... Cd5 de
-            // Beliavsky–Larsen, « Menace : 16... fxg6 » : le cavalier g6 était déjà en prise, choix de Bruno du 2026-10-28)
+            // Beliavsky–Larsen, « Menace : 16... fxg6 » : le cavalier g6 était déjà en prise, 2026-10-28)
             if (indexPosition > 0 && coupUci.Length >= 4 && !mate
                 && PiecesEnPrise(PositionDepuisFen(_positions[indexPosition - 1].Fen)).TryGetValue(coupUci.Substring(2, 2), out int dejaGagne)
                 && dejaGagne >= JugementCoups.SacrificeMinimum)
@@ -1173,15 +1173,15 @@ namespace BrunoGUI_GenII
                 coup.VarianteLue = false;       // la variante est maintenant celle du moteur (plus celle du PGN chargé)
                 // (celui d'une analyse précédente est remplacé, ou effacé) : l'ouverture, le sacrifice, la menace parée (ou non), la
                 // menace créée par le coup, le piège, la finale, puis le changement d'appréciation
-                // (pas l'appréciation après "Mat en 8 manqué" : elle ferait double emploi, choix de Bruno ; le commentaire d'un coup
+                // (pas l'appréciation après "Mat en 8 manqué" : elle ferait double emploi ; le commentaire d'un coup
                 // qui n'est pas le meilleur ne peut être que celui du mat manqué, le sacrifice étant celui du meilleur coup)
                 bool matManque = jugement.Commentaire != null && !jugement.MeilleurJoue;
                 // (piège : seulement la 1re fois qu'une pièce est imprenable, pas au coup suivant du même camp s'il l'est encore :
-                // la tour g6 de la partie de Bruno l'était cinq coups de suite)
+                // la tour g6 de la partie de référence l'était cinq coups de suite)
                 int k = _indexCoups.IndexOf(jugement.IndexCoup);
                 string? piege = k >= 2 && _positions[k].CasePiege != null && _positions[k - 2].CasePiege == _positions[k].CasePiege
                     ? null : _positions[k].TextePiege;
-                // (une erreur ? ou ?? : sa réfutation au lieu de la menace qu'elle crée, remarque de Bruno : « Menace : 28. Fxg7 » sur
+                // (une erreur ? ou ?? : sa réfutation au lieu de la menace qu'elle crée : « Menace : 28. Fxg7 » sur
                 // 27. Fd4?? semblait bon pour les Blancs, et rien ne disait pourquoi le coup perdait)
                 // (pas de réfutation après un mat manqué : le coup n'est pas puni, il laisse passer le mat, déjà dit)
                 bool erreur = jugement.Perte >= JugementCoups.SeuilErreur && !jugement.MeilleurJoue;
@@ -1189,7 +1189,7 @@ namespace BrunoGUI_GenII
                 string? parade = CommentaireParade(k, jugement);
                 string? menace = !refutation && !erreur && k + 1 < _positions.Count ? CommentaireMenace(k + 1) : null;
                 string? refutationOuMenace = refutation ? CommentaireRefutation(k, parade) : menace;
-                // Deux événements au plus par coup (choix de Bruno, 2026-10-28 : « Sacrifice du cavalier. Pare la menace 15... Cd5.
+                // Deux événements au plus par coup (2026-10-28 : « Sacrifice du cavalier. Pare la menace 15... Cd5.
                 // Menace : 16. Cxh8 », c'était trop), dans l'ordre d'importance : sacrifice, thème ou mat manqué, puis réfutation ou
                 // menace, puis parade, puis piège ; l'ouverture, la finale et l'appréciation, courtes, restent
                 HashSet<string> gardes = [.. new[] { jugement.Commentaire, refutationOuMenace, parade, piege }.OfType<string>().Take(EvenementsParCoup)];

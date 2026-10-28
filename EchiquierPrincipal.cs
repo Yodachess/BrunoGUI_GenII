@@ -150,7 +150,7 @@ namespace BrunoGUI_GenII
             {   // lignes de variante 1 à 3 : centrées et en gras pour le coup regardé, son analyse et la suite prévue (voir AfficheLigneCentree)
                 _policesLignes[ligne] = (ligne.Font, new Font(ligne.Font, FontStyle.Bold));
                 ligne.TextChanged += LigneVariante_TextChanged;
-                // Texte centré en hauteur et décalé du bord gauche (choix de Bruno) : zone de texte réglée par EM_SETRECT, qui ne vaut
+                // Texte centré en hauteur et décalé du bord gauche : zone de texte réglée par EM_SETRECT, qui ne vaut
                 // que pour une zone multiligne (sans retour à la ligne automatique, elle reste sur une ligne)
                 ligne.Multiline = true;
                 ligne.WordWrap = false;
@@ -661,15 +661,15 @@ namespace BrunoGUI_GenII
         }
         private string EloAffiche(int eloMaximal, string pleineForce) =>
             // L'Elo affiché à côté du moteur : celui qui lui est réellement envoyé (gardé quand on change de moteur, borné à son
-            // maximum), ou sa pleine force (remarque de Bruno, 2026-10-23 : Rodent réglé à 1800 s'affichait « +- 3000 »)
+            // maximum), ou sa pleine force (2026-10-23 : Rodent réglé à 1800 s'affichait « +- 3000 »)
             MoteurUci.EloVoulu is int elo ? Math.Min(elo, eloMaximal).ToString() : pleineForce;
         private void StockfishMoteur_Click(object? sender, EventArgs e)
-        {   // Menu Stockfish > Jouer contre Stockfish : Stockfish redevient le moteur qui joue (choix de Bruno, 2026-10-23 : avant,
+        {   // Menu Stockfish > Jouer contre Stockfish : Stockfish redevient le moteur qui joue (2026-10-23 : avant,
             // il fallait passer par « Nouvelle partie contre Stockfish »)
             DemarreStockfish();
         }
         private void MenuMoteurs_DropDownOpening(object? sender, EventArgs e)
-        {   // Menus Stockfish et Moteur (un menu à part pour Stockfish, choix de Bruno du 2026-10-23) : le moteur en cours est
+        {   // Menus Stockfish et Moteur (un menu à part pour Stockfish, 2026-10-23) : le moteur en cours est
             // coché ; « Paramètres avancés de Stockfish » n'a de sens qu'avec Stockfish
             bool stockfish = string.Equals(Path.GetFullPath(_cheminMoteur), CheminStockfish, StringComparison.OrdinalIgnoreCase);
             StockfishMoteur.Checked = stockfish;
@@ -688,7 +688,7 @@ namespace BrunoGUI_GenII
         private static string DossierPersonnalitesRodent => Path.Combine(Chemins.MoteursUCI, "Rodent_IV", "personalities");
         private void CreeMenuPersonnalites()
         {   // Menu Moteur > Rodent IV ▸ : ses personnalités (style de jeu : Tal, Petrosian, Sacrifieur de pions…), la force restant
-            // l'Elo réglé ; choix de Bruno, 2026-10-23 : un sous-menu de Rodent IV. Choisir une personnalité choisit aussi Rodent ;
+            // l'Elo réglé ; 2026-10-23 : un sous-menu de Rodent IV. Choisir une personnalité choisit aussi Rodent ;
             // elle lui est envoyée à son démarrage (préférence)
             List<(string Valeur, string Nom, bool Style)> personnalites = PersonnalitesRodent.Proposees(DossierPersonnalitesRodent);
             if (personnalites.Count == 0)
@@ -789,7 +789,7 @@ namespace BrunoGUI_GenII
         private bool _miseAJourStockfish;      // l'installation d'une mise à jour arrête Stockfish exprès : pas un plantage
         private void MoteurArreteSansDemande(MoteurUci moteur, int code)
         {   // Un moteur s'est arrêté tout seul (plantage, moteur qui se ferme) : avant, la partie restait figée sans explication
-            // (choix de Bruno, 2026-10-27). Noté dans le journal ; l'analyste (Stockfish) est relancé d'office, et pour le moteur qui
+            // (2026-10-27). Noté dans le journal ; l'analyste (Stockfish) est relancé d'office, et pour le moteur qui
             // joue, on propose de le relancer (il rejoue si c'était à lui)
             if (_miseAJourStockfish || IsDisposed)
                 return;
@@ -855,7 +855,7 @@ namespace BrunoGUI_GenII
             _nomsHumainMoteur = false;
         }
         private static string TexteJoueur(string nom, string elo) =>
-            // Une seule étiquette par camp : "[1767] Bruno", "[?] Bruno" si l'Elo est inconnu ; rien sans nom (position FEN chargée)
+            // Une seule étiquette par camp : "[1767] Dupont", "[?] Dupont" si l'Elo est inconnu ; rien sans nom (position FEN chargée)
             string.IsNullOrWhiteSpace(nom) ? "" : $"[{(string.IsNullOrWhiteSpace(elo) ? "?" : elo.Trim())}] {nom}";
         private (string Nom, string Elo) IdentiteDe(Joueur joueur) =>
             joueur == Joueur.Moteur ? (_nomMoteur, _moteurElo) : (_nomHumain, _joueurElo);
@@ -937,7 +937,7 @@ namespace BrunoGUI_GenII
             _pendule?.Pause();  // l'analyse est une aide : la pendule s'arrête pendant ce temps (voir MinuteriePendule_Tick)
             AffichePendules();
             LancerReflexion();  // Décompte le temps de réflexion
-            // Fenêtre de suivi, comme pour l'analyse de partie (choix de Bruno) : position, score et meilleure suite en direct, temps
+            // Fenêtre de suivi, comme pour l'analyse de partie : position, score et meilleure suite en direct, temps
             // restant ; "Arrêter" demande au moteur de répondre tout de suite (le résultat est affiché comme à la fin du temps)
             OuvreFenetreSuivi(T("Analyse de la position"), T("Arrêter"), () => MoteurQuiAnalyse.StandardInputDataToUci("stop"));
             _fenetreAnalyse?.MontreEtape(NomDeLaPosition(ParcoursEnCours ? _indexAffiche : LogiqueMouvements.ListeCoups.Count - 1), "",
@@ -989,7 +989,7 @@ namespace BrunoGUI_GenII
                 InformationsPartie.Text = _partie.Blancs == Joueur.Moteur ? T("L'ordinateur joue les Blancs") :
                           _partie.Noirs == Joueur.Moteur ? T("L'ordinateur joue les Noirs") :
                           T("L'ordinateur ne joue pas cette partie");
-                // Un demi-coup par clic (choix de Bruno) : au joueur de jouer, sauf si c'est au tour du moteur (il faut alors
+                // Un demi-coup par clic : au joueur de jouer, sauf si c'est au tour du moteur (il faut alors
                 // un 2e retour arrière, ou "Ordinateur joue") ; le message le dit, l'échiquier bloqué ne doit pas surprendre
                 PlateauEnable(!_partie.MoteurAuTrait);
                 VarianteMoteurUci2.Text = _partie.MoteurAuTrait
@@ -1132,7 +1132,7 @@ namespace BrunoGUI_GenII
             //                avantage (appréciation en 7 niveaux), fenêtre de suivi de l'analyse de partie, durées d'analyse réglables
             //                (10 et 30 s par défaut), meilleure suite rejouée sur l'échiquier, saisie de partie sans pendule, parcours
             //                sans retour à la partie par un clic sur l'échiquier
-            // Version 1.25 = analyse de partie commentée (1.23 et 1.24 sautées, choix de Bruno) : « ! » et « !! » mieux jugés (coup
+            // Version 1.25 = analyse de partie commentée (1.23 et 1.24 sautées) : « ! » et « !! » mieux jugés (coup
             //                difficile à trouver, mesuré par un 2e Stockfish ; sacrifice offert), sacrifices, appréciation, type de
             //                finale, mat manqué, pièges (« La tour g6 est imprenable »), menaces (« Menace : … », « Pare la menace »),
             //                thèmes tactiques (fourchette, attaque double, rempart du roque), nom de l'ouverture avec son code ECO
@@ -1373,7 +1373,7 @@ namespace BrunoGUI_GenII
         }
         private void MetAJourPlateau()
         {   // Pendant le parcours, l'échiquier est inactif : on revient à la partie par Fin (bouton, touche) ou par le dernier coup de la
-            // feuille (choix de Bruno : un clic sur l'échiquier y ramenait, souvent sans le vouloir).
+            // feuille (un clic sur l'échiquier y ramenait, souvent sans le vouloir).
             // Avant toute partie, le clic affiche "Veuillez choisir votre couleur"
             if (!_vue.CasesCreees)
                 return;     // cases pas encore créées
@@ -1409,7 +1409,7 @@ namespace BrunoGUI_GenII
             MetAJourMenus();
         }
         private void MetAJourMenus()
-        {   // Les commandes de menu qui doublent un bouton (menus rangés, choix de Bruno du 2026-10-23) suivent son état : grisées
+        {   // Les commandes de menu qui doublent un bouton (menus rangés, 2026-10-23) suivent son état : grisées
             // comme lui (y compris pour leur raccourci clavier, Ctrl+Z, F5) ; le nom du moteur en cours dans « Jouer les Blancs contre … »
             RetourArriereMenu.Enabled = RetourArriere.Enabled;
             OrdinateurJoueMenu.Enabled = OrdinateurJoue.Enabled;
@@ -1434,14 +1434,14 @@ namespace BrunoGUI_GenII
             // (pendant le parcours, le coup regardé ; sinon le dernier coup joué ; rien pour la position de départ)
             // Partie finie : son résultat sous le dernier coup, comme sur une feuille papier
             int indexAffiche = ParcoursEnCours ? _indexAffiche : LogiqueMouvements.ListeCoups.Count - 1;
-            // (sous un coup, son commentaire essentiel, à la façon de Lichess : erreur et meilleur coup, sacrifice, thème ; choix de Bruno)
+            // (sous un coup, son commentaire essentiel, à la façon de Lichess : erreur et meilleur coup, sacrifice, thème)
             IReadOnlyList<Coup> coups = LogiqueMouvements.ListeCoups;
             FeuilleDesCoups.MetAJour(coups, indexAffiche, PartieEnCours.Result, i => FeuilleDePartie.CommentaireEssentiel(coups[i]));
             AfficheTournoi();
         }
         private void AfficheTournoi()
         {   // Au-dessus de la feuille, à droite des joueurs : le tournoi (balise Event, sur deux lignes), puis la ronde et la date
-            // (choix de Bruno : le lieu ne tient pas ; infobulle : le tout, lieu compris)
+            // (le lieu ne tient pas ; infobulle : le tout, lieu compris)
             static string Valeur(string balise) => string.IsNullOrWhiteSpace(balise) || balise.Trim() is "?" or "-" ? "" : balise.Trim();
             string date = Valeur(PartieEnCours.Date);
             string[] morceaux = date.Split('.');            // "2026.04.19" -> "19/04/2026" (les parties inconnues "??" sont omises)

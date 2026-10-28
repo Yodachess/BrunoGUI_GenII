@@ -103,7 +103,7 @@ namespace BrunoGUI_GenII
             Proc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             // gestionnaire d'événement de sortie de données
             Proc.OutputDataReceived += ProcOutputDataReceived;
-            // fin du processus surveillée (choix de Bruno, 2026-10-27 : un moteur qui plantait laissait la partie figée sans rien dire)
+            // fin du processus surveillée (2026-10-27 : un moteur qui plantait laissait la partie figée sans rien dire)
             Proc.EnableRaisingEvents = true;
             Proc.Exited += ProcExited;
             // démarrer le processus (fichier absent ou illisible : exception pour l'appelant,
@@ -387,7 +387,7 @@ namespace BrunoGUI_GenII
         }
 
         public static List<(string Valeur, string Nom, bool Style)> Proposees(string dossier)
-        {   // Le choix proposé dans le menu (choix de Bruno, 2026-10-23 : les 36 personnalités, c'était trop) : dix champions (noms
+        {   // Le choix proposé dans le menu (2026-10-23 : les 36 personnalités, c'était trop) : dix champions (noms
             // propres, non traduits) puis six styles, traduits ; seulement ceux dont le fichier est présent (Lire)
             (string Valeur, string Nom, bool Style)[] selection =
             [

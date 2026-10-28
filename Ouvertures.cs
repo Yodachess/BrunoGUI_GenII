@@ -98,7 +98,7 @@ namespace BrunoGUI_GenII
         public Ouverture? OuvertureAuCoup(IReadOnlyList<Coup> coups, int index)
         {   // L'ouverture de la partie après le coup "index" : la dernière position de la table rencontrée, sauf si son nom est moins
             // précis que celui déjà trouvé (la table de Lichess donne "French Defense: Normal Variation" après 2. d4, puis "French
-            // Defense" après 2... d5 : le nom revenait en arrière, remarque de Bruno) ; null si aucune position n'est connue
+            // Defense" après 2... d5 : le nom revenait en arrière) ; null si aucune position n'est connue
             Ouverture? courante = null;
             for (int i = 0; i <= index && i < coups.Count; i++)
                 if (Trouver(coups[i].Fen) is Ouverture ouverture && (courante == null || !EstMoinsPrecis(ouverture, courante)))
@@ -113,8 +113,8 @@ namespace BrunoGUI_GenII
             && courante.NomAnglais[nouvelle.NomAnglais.Length] is ':' or ',';
 
         public static string Simplifie(string nomAnglais)
-        {   // Sans les variantes "normales" ("French Defense: Normal Variation" → "French Defense") : ce mot ne dit rien (remarque
-            // de Bruno) ; la famille reste toujours
+        {   // Sans les variantes "normales" ("French Defense: Normal Variation" → "French Defense") : ce mot ne dit rien ;
+            // la famille reste toujours
             int deuxPoints = nomAnglais.IndexOf(':');
             if (deuxPoints < 0)
                 return nomAnglais;
@@ -127,7 +127,7 @@ namespace BrunoGUI_GenII
     public static class TraductionOuvertures
     {   // Nom anglais de Lichess → français : la famille ("Sicilian Defense" → "Défense sicilienne"), puis chaque variante
         // ("Najdorf Variation" → "variante Najdorf", "Exchange Variation" → "variante d'échange") ; les noms propres et les mots
-        // inconnus restent tels quels (choix de Bruno), la notation des coups passe en français ("4. Bg5" → "4. Fg5")
+        // inconnus restent tels quels, la notation des coups passe en français ("4. Bg5" → "4. Fg5")
 
         private static readonly Dictionary<string, string> Familles = new()
         {

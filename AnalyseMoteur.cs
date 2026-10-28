@@ -38,7 +38,7 @@ namespace BrunoGUI_GenII
         public string Texte => MatEn is int mat
             ? (mat < 0 ? "-M" : "M") + Math.Abs(mat)
             : ((Centipions ?? 0) / 100m).ToString("N2", CultureInfo.InvariantCulture);
-        // Appréciation en 7 niveaux, symboles classiques des livres d'échecs (choix de Bruno, 2026-10-12) :
+        // Appréciation en 7 niveaux, symboles classiques des livres d'échecs (2026-10-12) :
         // = égal (moins de 0.30), ⩲ / ⩱ léger avantage (0.30 à 0.70), ± / ∓ avantage (0.70 à 2.00), +- / -+ gain (2.00 et plus)
         public const int SeuilLegerAvantage = 30, SeuilAvantage = 70, SeuilGain = 200;     // en centipions
         private int Niveau => (Centipions ?? 0) switch

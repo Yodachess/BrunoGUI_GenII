@@ -756,7 +756,7 @@ public static class Scenario
             ChargementPartie.ErreurFen(L.FenDepart) == null && ChargementPartie.ErreurFen("  " + L.FenDepart.Replace(" ", "   ") + " \t") == null
             && ChargementPartie.ErreurFen("rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3") == null,
             ErreurFen(L.FenDepart));
-        Verifie("Fichier de plusieurs positions lu d'un bloc : refusé (le plantage signalé par Bruno)",
+        Verifie("Fichier de plusieurs positions lu d'un bloc : refusé (le plantage signalé)",
             ChargementPartie.ErreurFen("6k1/8/8/8/8/8/8/6K1 b - - 0 1\r\n8/7p/3Q2pk/4P3/8/6PP/pq3PK1/8 w - - 0 1") != null,
             ErreurFen("6k1/8/8/8/8/8/8/6K1 b - - 0 1\r\n8/7p/3Q2pk/4P3/8/6PP/pq3PK1/8 w - - 0 1"));
         Verifie("FEN mal formées : refusées avec leur raison",
@@ -1220,7 +1220,7 @@ public static class Scenario
         Verifie("Commentaire du sacrifice : la pièce donnée, qu'il soit accepté ou seulement offert (refusé dans la variante)",
             analyseSacrifice.Jugement(6).Commentaire == "Sacrifice du fou" && analyseEchange.Jugement(6).Commentaire == "Sacrifice du fou",
             $"« {analyseSacrifice.Jugement(6).Commentaire} » / « {analyseEchange.Jugement(6).Commentaire} »");
-        // 3. Fc4 Cf6 4. Fxf7+ Rxf7 : le fou est sacrifié par 4. Fxf7+, pas par 3. Fc4 (comme 12. Fh6+ Rg8 13. Fxf7+ d'une partie de Bruno)
+        // 3. Fc4 Cf6 4. Fxf7+ Rxf7 : le fou est sacrifié par 4. Fxf7+, pas par 3. Fc4 (comme 12. Fh6+ Rg8 13. Fxf7+ d'une partie de référence)
         AnalyseDePartie analyseCoupAvant = new(L.ListeCoups);
         analyseCoupAvant.Enregistre(5, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(50, null), VariantePgn = "3 ... Cf6", VarianteUci = "g8f6" });
         analyseCoupAvant.Enregistre(4, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(50, null), VariantePgn = "3. Fc4 Cf6 4. Fxf7+ Rxf7 5. Cg5+", VarianteUci = "f1c4 g8f6 c4f7 e8f7 f3g5" },
@@ -1299,7 +1299,7 @@ public static class Scenario
             commentaireFourchette == "Fourchette du cavalier" && commentaireRempart == "Sacrifice du fou : détruit le rempart du roque",
             $"« {commentaireFourchette} » / « {commentaireRempart} »");
         // Pas d'attaque double quand le gain vient du coup lui-même : 1. Dxh8+ Re7 2. Dxh7 (une tour prise, puis un seul pion ;
-        // remarque de Bruno, 2026-10-25, 14. Dxh8+ de sa partie contre Rodent IV)
+        // 2026-10-25, 14. Dxh8+ d'une partie contre Rodent IV)
         const string fenPriseEchec = "4k2r/6Qp/8/8/8/8/8/4K3 w - - 0 1";
         Charger(fenPriseEchec);
         L.AjoutePositionDeDepart(fenPriseEchec);
@@ -1450,7 +1450,7 @@ public static class Scenario
         bool aMesurer = sacrificeParmiDautres.DifficultesAMesurer().Any(d => d.IndexPosition == 6);
         string sansMesure = sacrificeParmiDautres.Jugement(6).Annotation;
         sacrificeParmiDautres.EnregistreDifficulte(6, 3);
-        Verifie("Sacrifice correct sans être le seul bon coup (13. Cd5 de la partie de Bruno) : mesuré, « ! » (rien sans mesure)",
+        Verifie("Sacrifice correct sans être le seul bon coup (13. Cd5 de la partie de référence) : mesuré, « ! » (rien sans mesure)",
             aMesurer && sansMesure == "" && sacrificeParmiDautres.Jugement(6).Annotation == "!",
             $"à mesurer : {aMesurer}, sans mesure « {sansMesure} », mesuré « {sacrificeParmiDautres.Jugement(6).Annotation} »");
         Verifie("Variante PGN vers UCI : roque, prise, promotion, coup illégal (arrêt)",
