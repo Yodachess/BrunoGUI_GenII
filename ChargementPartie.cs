@@ -181,6 +181,9 @@ namespace BrunoGUI_GenII
                     coup.AnnotationProposee = coup.Annotation != "" && Element(pgn.AnnotationsAuto, demiCoupsJoues);
                     coup.CommentaireAuto = Element(pgn.CommentairesAuto, demiCoupsJoues);     // ([%autocom] : écrit par une analyse de BrunoGUI)
                     coup.CommentaireTactique = Element(pgn.CommentairesTactiques, demiCoupsJoues);   // ([%tac] : sa partie essentielle)
+                    coup.FlechesAuteur = Element(pgn.FlechesAuteur, demiCoupsJoues);     // ([%cal] de l'auteur, ChessBase…)
+                    // ([%cal R…] du bloc de l'analyse : la menace ; "Re5g6" → "e5g6")
+                    coup.MenaceUci = Element(pgn.FlechesMenace, demiCoupsJoues)?.Split(',')[0] is { Length: 5 } fleche ? fleche[1..] : null;
                     RangeAnalyseLue(coup, fenAvant, Element(pgn.Commentaires, demiCoupsJoues), Element(pgn.Evaluations, demiCoupsJoues),
                                     Element(pgn.Variantes, demiCoupsJoues), evaluationAvant);
                     if (Element(pgn.Appreciations, demiCoupsJoues) is int niveau)

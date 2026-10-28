@@ -56,6 +56,8 @@ namespace BrunoGUI_GenII
         public List<bool> AnnotationsAuto { get; set; } = [];       // [%auto] : l'annotation du coup a été posée par l'analyse de partie
         public List<string?> CommentairesAuto { get; set; } = [];   // [%autocom] : texte écrit par l'analyse de partie (Coup.CommentaireAuto)
         public List<int?> Appreciations { get; set; } = [];         // appréciation lue en code NAG ($18 = +-…) : Coup.NiveauAppreciation
+        public List<string?> FlechesAuteur { get; set; } = [];      // [%cal …] hors bloc de l'analyse : Coup.FlechesAuteur ("Re7h7,Oe5g6")
+        public List<string?> FlechesMenace { get; set; } = [];      // [%cal …] du bloc [%autocom] : la flèche de la menace (Coup.MenaceUci)
         public List<string?> CommentairesTactiques { get; set; } = [];  // [%tac] : sa partie essentielle (Coup.CommentaireTactique)
     }
 
@@ -91,19 +93,25 @@ namespace BrunoGUI_GenII
                     texteCoup += " " + NagAppreciation(niveau);
                     texteAuto = reste;
                 }
+                // (flèches de l'auteur, lues dans le PGN : réécrites avec son commentaire, jamais dans le bloc de l'analyse)
+                string? flechesAuteur = pourFichier && !string.IsNullOrWhiteSpace(coup.FlechesAuteur) ? $"[%cal {coup.FlechesAuteur}]" : null;
                 if (!string.IsNullOrWhiteSpace(texteAuto))
                 {   // Commentaire de l'analyse ("Sacrifice du cavalier") : lisible par les autres logiciels ; dans le fichier, marqué
                     // [%autocom] pour être relu comme tel, et celui du joueur va alors dans un bloc à part (chaque bloc est relu seul)
-                    if (commentaireJoueur != null)
-                        texteCoup += " {" + commentaireJoueur + "}";
-                    commentaireJoueur = null;
-                    // (et la place de sa partie essentielle, pour la feuille de partie à la relecture : "[%tac 0,21]")
+                    if (commentaireJoueur != null || flechesAuteur != null)
+                        texteCoup += " {" + string.Join(" ", new[] { commentaireJoueur, flechesAuteur }.OfType<string>()) + "}";
+                    commentaireJoueur = flechesAuteur = null;
+                    // (et la place de sa partie essentielle, pour la feuille de partie à la relecture : "[%tac 0,21]" ; la flèche rouge
+                    // de la menace, "[%cal Re5g6]", comme ChessBase)
                     int placeTactique = coup.CommentaireTactique is string tactique ? texteAuto.IndexOf(tactique) : -1;
                     commentaires.Add(texteAuto.Replace("{", "(").Replace("}", ")") + (pourFichier ? " [%autocom]" : "")
-                        + (pourFichier && placeTactique >= 0 ? $" [%tac {placeTactique},{coup.CommentaireTactique!.Length}]" : ""));
+                        + (pourFichier && placeTactique >= 0 ? $" [%tac {placeTactique},{coup.CommentaireTactique!.Length}]" : "")
+                        + (pourFichier && coup.MenaceUci is { Length: >= 4 } menace ? $" [%cal R{menace[..4]}]" : ""));
                 }
                 if (commentaireJoueur != null)      // commentaire du PGN chargé : gardé (fichier et affichage)
                     commentaires.Add(commentaireJoueur);
+                if (flechesAuteur != null)
+                    commentaires.Add(flechesAuteur);
                 if (pourFichier && coup.AnnotationProposee && coup.Annotation != "")
                     commentaires.Add("[%auto]");    // annotation posée par l'analyse : elle redeviendra "proposée" à la relecture (remplaçable)
                 TimeSpan? temps = coup.EstCoupBlanc ? coup.TempsBlancs : coup.TempsNoirs;     // pendule du camp qui vient de jouer

@@ -1372,6 +1372,34 @@ public static class Scenario
             menacesDemandees.Count == 2 && menacesDemandees[0].FenCoupNul.Contains(" w KQkq - 3 4")
             && L.ListeCoups[1].CommentaireAuto == "Menace de mat : 4. Dxf7#" && L.ListeCoups[2].CommentaireAuto == "Pare la menace 4. Dxf7#",
             $"{menacesDemandees.Count} demande(s) ({menacesDemandees.FirstOrDefault().FenCoupNul}) / « {L.ListeCoups[1].CommentaireAuto} » / « {L.ListeCoups[2].CommentaireAuto} »");
+        // Flèche de la menace : rangée dans le coup, écrite [%cal Rh5f7] dans le bloc de l'analyse, relue ; flèches d'un auteur gardées à part
+        string pgnMenace = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "*", Fen = fenMenace }, "Intl", pourFichier: true);
+        bool flecheEcrite = L.ListeCoups[1].MenaceUci == "h5f7" && pgnMenace.Replace("\n", " ").Contains("[%autocom] [%cal Rh5f7]");
+        ChargementPartie.ChargerPartiePgn(FichierPartiePgn.DecodePartiePGN(pgnMenace), new Partie());
+        bool flecheRelue = L.ListeCoups.Count(c => !c.EstPositionDeDepart) == 2 && L.ListeCoups[1].MenaceUci == "h5f7"
+            && L.ListeCoups[1].CommentaireAuto == "Menace de mat : 4. Dxf7#" && L.ListeCoups[1].FlechesAuteur == null;
+        ChargementPartie.ChargerPartiePgn(FichierPartiePgn.DecodePartiePGN("[Event \"Test\"]\n[Result \"*\"]\n\n1. e4 {Idée [%cal Gd2d4, Re4e5]} e5 *"), new Partie());
+        string pgnFleches = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "*" }, "Intl", pourFichier: true).Replace("\n", " ");
+        bool flechesAuteur = L.ListeCoups[0].FlechesAuteur == "Gd2d4,Re4e5" && L.ListeCoups[0].MenaceUci == null && pgnFleches.Contains("1. e4 {Idée [%cal Gd2d4,Re4e5]}");
+        Verifie("Flèches : menace écrite [%cal Rh5f7] dans le bloc de l'analyse et relue ; flèches de l'auteur (ChessBase) relues et réécrites à part",
+            flecheEcrite && flecheRelue && flechesAuteur, pgnMenace.Replace("\n", " ") + " / " + pgnFleches);
+        // Menace calme très forte (ni prise ni échec) : notée à partir de 3 pions avec une gaffe en chances ; à 2,3 pions, rien
+        string MenaceCalme(int centipions)
+        {
+            Charger(fenMenace);
+            L.AjoutePositionDeDepart(fenMenace);
+            Joue("d1h5", "d8e7");
+            AnalyseDePartie analyse = new(L.ListeCoups);
+            analyse.Enregistre(2, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(20, null), VariantePgn = "4. Cf3", VarianteUci = "g1f3" });
+            analyse.Enregistre(1, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(20, null), VariantePgn = "3 ... De7", VarianteUci = "d8e7" });
+            analyse.Enregistre(0, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(20, null), VariantePgn = "3. Dh5", VarianteUci = "d1h5" });
+            analyse.EnregistreMenace(1, centipions, null, "g1f3");       // (un coup calme)
+            analyse.AppliqueAuxCoups(L.ListeCoups);
+            return L.ListeCoups[1].CommentaireAuto ?? "";
+        }
+        string menaceForte = MenaceCalme(400), menaceFaible = MenaceCalme(250);
+        Verifie("Menace calme : « Menace : 4. Cf3 » si elle gagne au moins 3 pions (et une gaffe en chances), rien en dessous",
+            menaceForte == "Menace : 4. Cf3" && menaceFaible == "", $"« {menaceForte} » / « {menaceFaible} »");
         Charger("6k1/8/4p3/3p4/8/1BN5/8/6K1 w - - 0 1");      // 1. Cxd5 exd5 2. Fxd5 : un échange (un cavalier pour deux pions), pas un sacrifice
         L.AjoutePositionDeDepart("6k1/8/4p3/3p4/8/1BN5/8/6K1 w - - 0 1");
         L.ExecutionCoup("c3", "d5");

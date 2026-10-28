@@ -218,6 +218,8 @@ namespace BrunoGUI_GenII
             // (coup annoté : la ligne prend la couleur de son annotation, comme sa flèche ; choix de Bruno, ex : orange pour « ? »)
             string texteCoup = positionInitiale
                 ? "[ " + T("Position initiale") + " ]" : $"[ {TexteCoupJoue(index, positionApres)} ]"
+                  // (son évaluation après le coup, avec son symbole : "+- (3.71)", ici plutôt que sur la 2e ligne, choix de Bruno, 2026-10-28)
+                  + (LogiqueMouvements.ListeCoups[index].EvaluationApres is Evaluation evaluationCoup ? $"   {evaluationCoup.Symbole} ({evaluationCoup.Texte})" : "")
                   + (LogiqueMouvements.ListeCoups[index].TempsReflexion is TimeSpan reflexion ? "   " + T("(réflexion : {0})", TexteDuree(reflexion)) : "");
             if (!positionInitiale && OuvertureAffichee(index) is Ouverture ouverture)
             {   // Pendant l'ouverture, son nom à la suite du coup (choix de Bruno) : en entier s'il tient, sinon sans ses dernières
@@ -245,10 +247,16 @@ namespace BrunoGUI_GenII
                     int largeur = VarianteMoteurUci2.ClientSize.Width - 14;
                     bool bibliotheque = PolyglotBibliotheque.ContientCoup(index == 0 ? FenDepart : LogiqueMouvements.ListeCoups[index - 1].Fen, coup.Uci);
                     // (le symbole de l'évaluation reste toujours, choix de Bruno, 2026-10-21 : seul le nom de l'annotation peut tomber)
-                    string texte = TexteAnalyseDuCoup(coup, true, true, bibliotheque) is string complet
+                    string texte = TexteAnalyseDuCoup(coup, true, bibliotheque) is string complet
                         && TextRenderer.MeasureText(complet, _policesLignes[VarianteMoteurUci2].Grasse).Width <= largeur
-                        ? complet : TexteAnalyseDuCoup(coup, false, true, bibliotheque);
-                    AfficheLigneCentree(VarianteMoteurUci2, texte);
+                        ? complet : TexteAnalyseDuCoup(coup, false, bibliotheque);
+                    if (texte != "")
+                        AfficheLigneCentree(VarianteMoteurUci2, texte);
+                    else if (commentaire != null)
+                    {   // (meilleur coup joué, sans annotation ni commentaire de l'analyse : la ligne reste au commentaire du PGN)
+                        AfficheLigneCentree(VarianteMoteurUci2, commentaire);
+                        commentaire = null;
+                    }
                 }
                 else if (commentaire != null)
                 {
@@ -350,38 +358,46 @@ namespace BrunoGUI_GenII
             // (meilleur coup : de l'analyse de partie, ou 1re variante du PGN chargé)
             if (coup.Annotation != "" && !coup.MeilleurJoue && coup.MeilleurCoupUci is { Length: >= 4 } meilleur)
                 fleches.Add((RenvoieCaseIndex120(meilleur[..2]), RenvoieCaseIndex120(meilleur[2..4]), CouleurFlecheMeilleurCoup));
-            if (fleches.TrueForAll(f => f.Item1 > 0 && f.Item2 > 0))
+            // La menace créée par le coup, en rouge, et les flèches de l'auteur du PGN (ChessBase, Lichess) dans leur couleur : elles
+            // partent de la position affichée, celle d'après le coup (choix de Bruno, 2026-10-28)
+            if (coup.MenaceUci is { Length: >= 4 } menace)
+                fleches.Add((RenvoieCaseIndex120(menace[..2]), RenvoieCaseIndex120(menace[2..4]), CouleurFleche('R')));
+            foreach (string fleche in (coup.FlechesAuteur ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries))
+                if (fleche.Length == 5)
+                    fleches.Add((RenvoieCaseIndex120(fleche[1..3]), RenvoieCaseIndex120(fleche[3..5]), CouleurFleche(fleche[0])));
+            fleches.RemoveAll(f => f.Item1 <= 0 || f.Item2 <= 0);      // (case illisible : flèche ignorée)
+            if (fleches.Count > 0)
                 _vue.MontreFleches([.. fleches]);
         }
-        private static string TexteAnalyseDuCoup(Coup coup, bool nomAnnotation, bool symbole, bool bibliotheque)
-        {   // Ex : "-+  joué Dd1-h2 ??  (-9.05)  [Gaffe]  — meilleur : Rd3 (0.00)" : le symbole de l'évaluation après le coup, le coup
-            // joué et son annotation, cette évaluation, puis le nom de l'annotation (choix de Bruno, 2026-10-18), puis le meilleur coup
-            // avec SON évaluation. Si le coup joué ne perd presque rien (ex : mat
-            // en 3 au lieu de 2), le meilleur n'est qu'une préférence : "— moteur : Rd3 (0.00)" (Bruno trouvait
-            // "meilleur" inadapté, puis ", écart négligeable" inutile). Coups en notation longue, avec la case de départ : "Dd8-d7", "Ta8-c8". Court pour tenir sur la
-            // ligne en police 10 (sans "Analyse :", deux espaces) ; nomAnnotation et symbole à false raccourcissent encore.
-            // Sans évaluation (PGN chargé sans [%eval]) : "Joué Fc8-e6 ?? [Gaffe]  — meilleur : Fc8-b7".
-            // Coup connu de la bibliothèque d'ouvertures (choix de Bruno) : "— coup de la bibliothèque" au lieu de "— moteur : …, écart
-            // négligeable" ou "— meilleur : …" : la théorie n'est pas jugée (ni annotée par l'analyse ; le meilleur coup du moteur reste
-            // sur la 3e ligne). Le meilleur coup joué n'a rien de plus (choix de Bruno : "— meilleur coup du moteur" n'apportait rien ;
-            // "! [Bon coup]" ou "!! [Coup brillant]" disent ce qui compte)
-            Evaluation? evaluation = coup.EvaluationApres;
-            string texte = (evaluation is Evaluation symbolique && symbole ? symbolique.Symbole + "  " + T("joué") : T("Joué")) + " "
-                + Notation(coup.CoupJoueLong ?? coup.PgnFrSansNumero)
-                + (coup.Annotation != "" ? " " + coup.Annotation : "")
-                + (evaluation is Evaluation apres ? $"  ({apres.Texte})" : "")
-                + (coup.Annotation != "" && nomAnnotation ? $"  [{Annotations.NomCourt(coup.Annotation)}]" : "");
+        private static Color CouleurFleche(char lettre) => char.ToUpperInvariant(lettre) switch
+        {   // Lettres de couleur des flèches [%cal] de ChessBase et Lichess : R rouge, G vert, Y jaune, B bleu, O orange
+            'G' => CouleurFlecheMeilleurCoup,
+            'Y' => Color.FromArgb(220, 170, 0),
+            'B' => Color.FromArgb(30, 90, 200),
+            'O' => Color.FromArgb(230, 120, 0),
+            _ => Color.FromArgb(200, 30, 30)
+        };
+        private static string TexteAnalyseDuCoup(Coup coup, bool nomAnnotation, bool bibliotheque)
+        {   // 2e ligne : "[Bon] Sacrifice du cavalier. Menace : 16. Cxh8", ou "— meilleur : ⩲ Dd3-g3 (0.55)" : le nom de l'annotation, le
+            // commentaire de l'analyse, puis le meilleur coup avec SON évaluation s'il en est un autre. Le coup joué, son annotation et
+            // son évaluation sont sur la 1re ligne (choix de Bruno, 2026-10-28 : « +- joué Ce5-g6 ! (3.71) » y répétait le coup).
+            // Si le coup joué ne perd presque rien (ex : mat en 3 au lieu de 2), le meilleur n'est qu'une préférence : "— moteur : Rd3
+            // (0.00)" (Bruno trouvait "meilleur" inadapté, puis ", écart négligeable" inutile). Coups en notation longue, avec la case
+            // de départ : "Dd8-d7". nomAnnotation à false raccourcit (le texte doit tenir sur la ligne en police 10).
+            // Coup connu de la bibliothèque d'ouvertures (choix de Bruno) : "— coup de la bibliothèque" au lieu du meilleur coup : la
+            // théorie n'est pas jugée (ni annotée par l'analyse ; le meilleur coup du moteur reste sur la 3e ligne)
+            string texte = coup.Annotation != "" && nomAnnotation ? $"[{Annotations.NomCourt(coup.Annotation)}]" : "";
             if (bibliotheque)
-                return texte + "  — " + T("coup de la bibliothèque");
+                return (texte + "  — " + T("coup de la bibliothèque")).Trim();
             if (!string.IsNullOrEmpty(coup.CommentaireAuto))
-                texte += "  — " + coup.CommentaireAuto;     // commentaire de l'analyse, ex : "Sacrifice du cavalier"
-            if (coup.MeilleurJoue || coup.MeilleurCoup == null)
-                return texte;
-            // (le meilleur coup a lui aussi le symbole de son évaluation devant lui : "meilleur : +- Dd1-e1 (2.00)", choix de Bruno)
-            string meilleur = (coup.EvaluationMeilleur is Evaluation symboleMeilleur ? symboleMeilleur.Symbole + " " : "")
-                + Notation(coup.MeilleurCoupLong ?? coup.MeilleurCoup) + (coup.EvaluationMeilleur is Evaluation e ? $" ({e.Texte})" : "");
-            return texte + (FeuilleDePartie.EcartNegligeable(coup)
-                ? "  — " + T("moteur : {0}", meilleur) : "  — " + T("meilleur : {0}", meilleur));
+                texte += " " + coup.CommentaireAuto;     // commentaire de l'analyse, ex : "Sacrifice du cavalier"
+            if (!coup.MeilleurJoue && coup.MeilleurCoup != null)
+            {   // (le meilleur coup a lui aussi le symbole de son évaluation devant lui : "meilleur : +- Dd1-e1 (2.00)", choix de Bruno)
+                string meilleur = (coup.EvaluationMeilleur is Evaluation symboleMeilleur ? symboleMeilleur.Symbole + " " : "")
+                    + Notation(coup.MeilleurCoupLong ?? coup.MeilleurCoup) + (coup.EvaluationMeilleur is Evaluation e ? $" ({e.Texte})" : "");
+                texte += FeuilleDePartie.EcartNegligeable(coup) ? "  — " + T("moteur : {0}", meilleur) : "  — " + T("meilleur : {0}", meilleur);
+            }
+            return texte.Trim();
         }
 
         // Les lignes de variante 1 et 2 servent aussi aux variantes du moteur (à gauche, police normale) : pendant le parcours, le coup
@@ -461,6 +477,7 @@ namespace BrunoGUI_GenII
             Coup joue = LogiqueMouvements.ListeCoups[index];
             string fenAvant = index > 0 ? LogiqueMouvements.ListeCoups[index - 1].Fen : FenDepart;
             string coup = Notation(joue.CoupJoueLong ?? AnalyseDePartie.NotationLongue(fenAvant, joue.Uci.Trim(), joue.PgnFrSansNumero) ?? joue.PgnFrSansNumero);
+            coup += joue.Annotation != "" ? " " + joue.Annotation : "";      // (son annotation : "Ce5-g6 !")
             int numero = (int)Math.Floor(positionApres.NombreCoupsJoues - 0.5f);   // numéro du coup qui vient d'être joué
             return positionApres.QuiJoue == ColorPiece.Blanc ? T("Coup noir : {0}... {1}", numero, coup) : T("Coup blanc : {0}. {1}", numero, coup);
         }

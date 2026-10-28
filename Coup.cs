@@ -54,6 +54,12 @@ namespace BrunoGUI_GenII
         // ("Avantage Blanc") termine CommentaireAuto ; dans le fichier PGN, elle s'écrit en symbole après le coup ($18 = +-, comme
         // ChessBase) et son texte est retiré du commentaire, puis refait à la relecture (choix de Bruno, 2026-10-28)
         public int? NiveauAppreciation { get; set; }
+        // La menace créée par ce coup ("e5g6", celle de « Menace : 15. Cg6 ») : flèche rouge pendant le parcours, et [%cal Re5g6] dans
+        // le bloc [%autocom] du fichier PGN (choix de Bruno, 2026-10-28, comme les flèches de ChessBase)
+        public string? MenaceUci { get; set; }
+        // Flèches lues dans le PGN (commandes [%cal] de ChessBase ou de Lichess, hors bloc de l'analyse) : "Re7h7,Oe5g6", une lettre
+        // de couleur puis le coup ; montrées pendant le parcours et réécrites à l'enregistrement, comme le commentaire du joueur
+        public string? FlechesAuteur { get; set; }
 
         public void EffaceAnalyse()
         {   // Au lancement d'une analyse de partie (choix de Bruno, 2026-10-21) : plus rien de l'analyse précédente, ou de celle du PGN
@@ -64,6 +70,7 @@ namespace BrunoGUI_GenII
             MeilleurJoue = VarianteLue = false;
             PerteAnalyse = null;
             NiveauAppreciation = null;
+            MenaceUci = null;
             if (AnnotationProposee)
                 Annotation = "";
             AnnotationProposee = false;
