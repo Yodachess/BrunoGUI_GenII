@@ -57,6 +57,7 @@ namespace BrunoGUI_GenII
         // Profondeurs demandées au moteur principal (AnalyseDePartie.ProfondeurVisee), la durée réglée servant de plafond
         public const int ProfondeurAnalyse = 20, ProfondeurTheorie = 12, ProfondeurApprofondissement = 24;
         public const int MenaceGainMinimum = 200;      // en centipions : environ une pièce (un pion menacé n'est pas commenté)
+        public const int MenaceCalmeMinimum = 300;     // en centipions : menace qui n'est ni une prise ni un échec (avec une gaffe en chances)
 
         public static int? ProfondeurDecouverte(IReadOnlyList<(int Profondeur, string Coup)> meilleursCoups, string coup)
         {   // Profondeur à partir de laquelle le coup est le choix du moteur à TOUTES les profondeurs suivantes (meilleur coup à
@@ -1001,7 +1002,12 @@ namespace BrunoGUI_GenII
             // Seulement une menace concrète : une prise ou un échec (ou un mat). Le coup nul donne un temps gratuit, que le moteur
             // emploie souvent à un coup calme ("Menace : 11... Tb8", une poussée de pion) : ce n'est pas une menace
             bool concrete = mate || EstUnePrise(positionNulle, coupUci) || DonneEchec(positionNulle, coupUci);
-            if (!concrete)
+            // ... sauf une menace calme très forte : une gaffe en chances ET au moins MenaceCalmeMinimum (3 pions) ; ChessBase écrit
+            // « Menace fortement Cg6! » sur 14. Te1 de Beliavsky–Larsen, le sacrifice 15. Cg6 n'étant ni une prise ni un échec
+            // (choix de Bruno, 2026-10-28)
+            bool calmeTresForte = gainEnChances && actuelle.Centipions is int cpAvant && menace.Centipions is int cpApres
+                                  && sens * (cpApres - cpAvant) >= JugementCoups.MenaceCalmeMinimum;
+            if (!concrete && !calmeTresForte)
                 return;
             // Pas une menace créée par le coup : une pièce que le joueur pouvait déjà gagner avant de jouer (15... Cd5 de
             // Beliavsky–Larsen, « Menace : 16... fxg6 » : le cavalier g6 était déjà en prise, choix de Bruno du 2026-10-28)
@@ -1140,6 +1146,8 @@ namespace BrunoGUI_GenII
             return textes;
         }
 
+        public const int EvenementsParCoup = 2;     // sacrifice, thème, menace, parade, piège : au plus deux dans le commentaire d'un coup
+
         public void AppliqueAuxCoups(IReadOnlyList<Coup> coups)
         {
             Dictionary<int, (int Niveau, string Texte)> niveaux = NiveauxAppreciation();
@@ -1174,8 +1182,16 @@ namespace BrunoGUI_GenII
                 bool erreur = jugement.Perte >= JugementCoups.SeuilErreur && !jugement.MeilleurJoue;
                 bool refutation = erreur && jugement.Commentaire == null;
                 string? parade = CommentaireParade(k, jugement);
-                string?[] textes = [ouverture.GetValueOrDefault(jugement.IndexCoup), jugement.Commentaire, parade,
-                                    refutation ? CommentaireRefutation(k, parade) : !erreur && k + 1 < _positions.Count ? CommentaireMenace(k + 1) : null, piege,
+                string? menace = !refutation && !erreur && k + 1 < _positions.Count ? CommentaireMenace(k + 1) : null;
+                string? refutationOuMenace = refutation ? CommentaireRefutation(k, parade) : menace;
+                // Deux événements au plus par coup (choix de Bruno, 2026-10-28 : « Sacrifice du cavalier. Pare la menace 15... Cd5.
+                // Menace : 16. Cxh8 », c'était trop), dans l'ordre d'importance : sacrifice, thème ou mat manqué, puis réfutation ou
+                // menace, puis parade, puis piège ; l'ouverture, la finale et l'appréciation, courtes, restent
+                HashSet<string> gardes = [.. new[] { jugement.Commentaire, refutationOuMenace, parade, piege }.OfType<string>().Take(EvenementsParCoup)];
+                string? Garde(string? evenement) => evenement != null && gardes.Contains(evenement) ? evenement : null;
+                coup.MenaceUci = Garde(menace) != null ? _positions[k + 1].MenaceUci : null;       // (sa flèche rouge)
+                string?[] textes = [ouverture.GetValueOrDefault(jugement.IndexCoup), Garde(jugement.Commentaire), Garde(parade),
+                                    Garde(refutationOuMenace), Garde(piege),
                                     finales.GetValueOrDefault(jugement.IndexCoup), matManque ? null : appreciations.GetValueOrDefault(jugement.IndexCoup)];
                 coup.CommentaireAuto = textes.Any(t => t != null) ? string.Join(". ", textes.OfType<string>()) : null;
                 // (le niveau du changement d'appréciation : son symbole dans le fichier PGN, voir Coup.NiveauAppreciation)
