@@ -1305,6 +1305,22 @@ public static class Scenario
             analyse.Enregistre(0, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(900, null), VariantePgn = "", VarianteUci = variante });
             return analyse.Jugement(1)?.Commentaire ?? "";
         }
+        // Partie décidée avant et après le coup, dans le même sens : pas de ?! (-6.00 → -10.00 pour les Noirs) ; pas encore
+        // décidée avant : la gaffe garde son ?? (-1.00 → -5.00)
+        string AnnotationEntre(int cpAvant, int cpApres)
+        {
+            const string fen = "4k3/8/8/8/8/8/3QK3/8 b - - 0 1";
+            Charger(fen);
+            L.AjoutePositionDeDepart(fen);
+            Joue("e8f8");
+            AnalyseDePartie analyse = new(L.ListeCoups);
+            analyse.Enregistre(1, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(cpApres, null), VariantePgn = "", VarianteUci = "d2d7" });
+            analyse.Enregistre(0, new LigneAnalyse { Numero = 1, Evaluation = new Evaluation(cpAvant, null), VariantePgn = "", VarianteUci = "e8e7" });
+            return analyse.Jugement(1)?.Annotation ?? "(rien)";
+        }
+        string dejaPerdu = AnnotationEntre(600, 1000), pasEncorePerdu = AnnotationEntre(100, 500);
+        Verifie("Partie déjà décidée et qui le reste : pas de ?!, ? ni ?? ; encore jouable avant : la gaffe garde son ??",
+            dejaPerdu == "" && pasEncorePerdu == "??", $"« {dejaPerdu} » / « {pasEncorePerdu} »");
         string echecDouble = ThemeDuCoup("4k3/8/8/8/4N3/8/8/4RK2 w - - 0 1", "e4f6", "e4f6 e8f7 e1e7");
         string echecDecouverte = ThemeDuCoup("4k3/8/8/8/4N3/8/8/4RK2 w - - 0 1", "e4c5", "e4c5 e8d8 c5b7");
         string attaqueDecouverte = ThemeDuCoup("8/4k1q1/8/8/3N4/8/1B6/7K w - - 0 1", "d4c6", "d4c6 e7e6 b2g7");
