@@ -1152,6 +1152,12 @@ namespace BrunoGUI_GenII
             //                un moteur qui s'arrête tout seul est signalé et relancé (l'analyste d'office) ; analyse : échec
             //                double, échec et attaque à la découverte, fausse « attaque double » corrigée ; menu Partie rangé
             //                (Résultat avant Arrêter le moteur) ; aide avec les captures des nouveaux menus ; réflexion de 1 à 600 s
+            // Version 1.29 = analyse de partie plus proche de ChessBase : moins de bruit (rien dans une partie déjà décidée, deux
+            //                commentaires au plus par coup), combinaisons qui concluent récompensées, menaces calmes très fortes
+            //                et flèche rouge de menace, mat forcé annoncé ; PGN enregistré : variantes courtes avec symbole
+            //                d'évaluation, alternative des coups nettement moins bons, appréciation en symboles (±, +-), bilan
+            //                après le dernier coup, flèches [%cal] de ChessBase et Lichess lues et affichées ; évaluation du coup
+            //                sur la 1re ligne sous l'échiquier
             // (le numéro de version vient du .csproj, <Version> : il n'est plus écrit ici)
             _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version " + VersionAffichee + "\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", T("A propos de"),
