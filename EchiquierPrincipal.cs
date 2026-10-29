@@ -1158,6 +1158,9 @@ namespace BrunoGUI_GenII
             //                d'évaluation, alternative des coups nettement moins bons, appréciation en symboles (±, +-), bilan
             //                après le dernier coup, flèches [%cal] de ChessBase et Lichess lues et affichées ; évaluation du coup
             //                sur la 1re ligne sous l'échiquier
+            // Version 1.30 = menaces et pièges aussi dans l'analyse rapide ; commentaires plus clairs : pièce qui prend nommée
+            //                (« imprenable par le pion »), nom complet de l'annotation, pas d'appréciation après une
+            //                réfutation, conseil (« — meilleur : … ») en gris ; captures de l'aide refaites
             // (le numéro de version vient du .csproj, <Version> : il n'est plus écrit ici)
             _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version " + VersionAffichee + "\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", T("A propos de"),
