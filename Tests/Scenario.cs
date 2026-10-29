@@ -750,6 +750,41 @@ public static class Scenario
         ResultatChargementPgn chargementFenIncomplete = ChargementPartie.ChargerPartiePgn(pgnFenIncomplete, partieChargee);
         Verifie("PGN avec balise FEN incomplète : signalée, coups joués depuis la position initiale",
             chargementFenIncomplete.FenIncomplete && chargementFenIncomplete.DemiCoupsJoues == 2 && !partieChargee.DepuisPosition, $"{chargementFenIncomplete.DemiCoupsJoues} demi-coups");
+        // Lecture à part (analyse d'un fichier en arrière-plan) : les mêmes coups et le même PGN que le chargement dans la partie,
+        // sans toucher à la partie (départ FEN, prise en passant, promotion, échec, mat, commentaire, évaluation, coup illégal)
+        foreach (string texteTeste in new[] {
+            $"[Event \"x\"]\n[SetUp \"1\"]\n[FEN \"{fenNoirsAuTrait}\"]\n\n3... Nf6 4. Bc4 Bc5 5. c3 d6 *",
+            "[Event \"x\"]\n[Result \"1-0\"]\n\n1. e4 d5 2. e5 f5 3. exf6 {e.p.} gxf6 4. Qh5+ Kd7 5. Qxh7 {[%eval 3.2]} a6 6. Qxh8 a5 7. Qxg8 a4 8. h4 a3 9. h5 axb2 10. h6 bxa1=Q 11. h7 Qxa2 12. h8=N 1-0",
+            "[Event \"x\"]\n\n1. f3 e5 2. g4?? Qh4# 0-1",
+            "[Event \"x\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Qh7 Nf6 0-1" })
+        {
+            PartieEchecsPGN pgnTeste = FichierPartiePgn.DecodePartiePGN(texteTeste);
+            ResultatChargementPgn dansLaPartie = ChargementPartie.ChargerPartiePgn(pgnTeste, partieChargee);
+            string attendu = GestionPartiePgn.RetourneContenuPgn(pgnTeste, "Intl", true);
+            string fenDeLaPartie = L.RetourneChaineFenActuel();
+            int coupsDeLaPartie = L.ListeCoups.Count;
+            var (aPart, resultatAPart) = ChargementPartie.CoupsDuPgn(pgnTeste);
+            string obtenu = GestionPartiePgn.RetourneContenuPgn(pgnTeste, "Intl", true, aPart);
+            Verifie($"Partie lue à part ({pgnTeste.CoupsPartiePGN[..12]}…) : mêmes coups et même PGN, partie intacte",
+                obtenu == attendu && resultatAPart == dansLaPartie && L.ListeCoups.Count == coupsDeLaPartie && L.RetourneChaineFenActuel() == fenDeLaPartie
+                && string.Join(" ", aPart.Select(c => c.Fen + c.Nal + c.Uci)) == string.Join(" ", L.ListeCoups.Select(c => c.Fen + c.Nal + c.Uci)),
+                obtenu.Replace("\n", " "));
+        }
+        // Analyse d'un fichier : une partie déjà écrite dans le fichier de sortie, avec son analyse (évaluations, commentaires,
+        // variantes, bilan, ECO complété), est reconnue et sautée à la relance
+        PartieEchecsPGN partieDuFichier = FichierPartiePgn.DecodePartiePGN("[Event \"Club\"]\n[White \"A\"]\n[Black \"B\"]\n[Result \"1-0\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 1-0");
+        var (coupsDuFichier, _) = ChargementPartie.CoupsDuPgn(partieDuFichier);
+        coupsDuFichier[3].EvaluationApres = new Evaluation(35, null);
+        coupsDuFichier[3].CommentaireAuto = "Menace : 4. Fxc6";
+        coupsDuFichier[4].Annotation = "?!";
+        coupsDuFichier[4].AnnotationProposee = true;
+        string cleAvant = AnalyseurDeFichier.Cle(partieDuFichier);
+        partieDuFichier.Bilan = "Blancs — précision 99 %\n   0 imprécision, 0 erreur, 0 gaffe\nNoirs — précision 90 %\n   1 imprécision, 0 erreur, 0 gaffe";
+        partieDuFichier.ECO = "C60";
+        string ecrite = GestionPartiePgn.RetourneContenuPgn(partieDuFichier, "Intl", pourFichier: true, coupsDuFichier);
+        Verifie("Analyse d'un fichier : partie déjà analysée reconnue (même clé après l'analyse), fichier de sortie « _analyse »",
+            AnalyseurDeFichier.Cle(FichierPartiePgn.DecodePartiePGN(ecrite)) == cleAvant
+            && AnalyseurDeFichier.FichierDeSortie(@"C:\Parties\Club.pgn") == @"C:\Parties\Club_analyse.pgn", ecrite.Replace("\n", " "));
 
         string ErreurFen(string fen) => ChargementPartie.ErreurFen(fen) ?? "aucune";
         Verifie("FEN valides acceptées (position initiale, espaces en trop, en passant)",

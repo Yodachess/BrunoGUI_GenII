@@ -250,13 +250,6 @@ namespace BrunoGUI_GenII
             _fenetreAnalyse = null;
             fenetre?.Close();
         }
-        private static string TexteBilan(string camp, BilanCamp bilan) =>
-            // Ex : "Blancs — précision 87 %" puis "   1 imprécision, 0 erreur, 2 gaffes" (explications dans l'infobulle du bilan)
-            T("{0} — précision {1} %", camp, bilan.Precision) + "\n   " + Pluriel(bilan.Imprecisions, T("imprécision"), T("imprécisions"))
-            + ", " + Pluriel(bilan.Erreurs, T("erreur"), T("erreurs")) + ", " + Pluriel(bilan.Gaffes, T("gaffe"), T("gaffes"));
-        private static string Pluriel(int nombre, string singulier, string pluriel) =>
-            // Pluriel au-delà de 1 en français ("0 erreur"), dès que le nombre n'est pas 1 en anglais ("0 mistakes")
-            $"{nombre} {(nombre > 1 || (nombre == 0 && !EstFrancais) ? pluriel : singulier)}";
         private readonly ToolTip _infobulleBilan = new() { AutoPopDelay = 20000 };
         private static string TexteCoupCritique(Coup coup) =>
             // Ex : "Coup critique (clic) :" puis "   25... c5??   score -0.23 → 2.73" (évaluation avant, avec le meilleur coup, et après)
@@ -290,6 +283,158 @@ namespace BrunoGUI_GenII
                 AfficheCoupDeLaPartie(index);
         }
 
+        // ═══ Analyse d'un fichier PGN en arrière-plan (voir AnalyseFichier.cs) : menu Analyse ═══
+        // Les parties choisies sont analysées une à une par deux Stockfish à part (analyse rapide, durée par position réglée),
+        // hors du thread de l'interface : on peut jouer, parcourir ou analyser une autre partie pendant ce temps. Chaque partie
+        // finie est ajoutée à « <fichier>_analyse.pgn » ; une interruption (menu, fermeture) garde les précédentes. L'avancement
+        // est écrit sur la 1re ligne de variante quand elle est libre (ni parcours ni autre analyse), et dans le menu
+        private AnalyseurDeFichier? _analyseurDeFichier;            // null : aucune analyse de fichier en cours
+        private CancellationTokenSource? _arretAnalyseFichier;
+        private ToolStripMenuItem? _menuAnalyseFichier;
+        private string? _texteAnalyseFichier;                      // ce qui a été écrit sur la 1re ligne de variante (effacé à la fin)
+        private FenetreAnalyse? _fenetreAnalyseFichier;             // fenêtre de suivi (null : fermée par sa croix, l'analyse continue)
+
+        private void OuvreSuiviAnalyseFichier(string titre)
+        {   // Fenêtre de suivi, placée comme celle de l'analyse de partie (à droite de la fenêtre principale s'il y a la place,
+            // sinon par-dessus sa colonne de boutons)
+            FenetreAnalyse suivi = new(titre, T("Interrompre"));
+            Rectangle ecran = Screen.FromControl(this).WorkingArea;
+            int x = Right + 8 + suivi.Width <= ecran.Right ? Right + 8 : Right - suivi.Width - 16;
+            suivi.Location = new Point(Math.Max(ecran.Left, x), Math.Max(ecran.Top, Top + 120));
+            suivi.Interrompre += AnalyseFichier_Click;
+            suivi.FormClosed += (s, e) => { if (_fenetreAnalyseFichier == suivi) _fenetreAnalyseFichier = null; };   // croix : l'analyse continue
+            _fenetreAnalyseFichier = suivi;
+            suivi.Show(this);
+        }
+
+        private bool LigneLibrePourAnalyseFichier =>
+            // La 1re ligne de variante n'est pas occupée : ni coup regardé (parcours), ni analyse de partie ou de position, ni coup
+            // demandé au moteur (sa réflexion s'y affiche) ; un texte plus ancien (dernière variante du moteur…) est remplacé
+            _positionAffichee == null && _analyseDePartie == null && _pilote.Demande == TypeDemande.Aucune;
+
+        private async void AnalyseFichier_Click()
+        {   // "Analyser un fichier PGN…", ou "Interrompre l'analyse du fichier" pendant qu'elle tourne
+            if (_analyseurDeFichier != null)
+            {
+                _arretAnalyseFichier?.Cancel();
+                _analyseurDeFichier.Dispose();      // (la question en cours au moteur s'arrête tout de suite)
+                return;
+            }
+            using OpenFileDialog choix = new() { Filter = T("Fichier PGN (*.pgn)|*.pgn"), Title = T("Analyser un fichier PGN") };
+            if (choix.ShowDialog(this) != DialogResult.OK)
+                return;
+            string fichier = choix.FileName, sortie = AnalyseurDeFichier.FichierDeSortie(fichier);
+            List<PartieEchecsPGN> parties;
+            HashSet<string> deja;
+            try
+            {
+                parties = [.. FichierPartiePgn.DecodeFichierPGN(fichier).Select(FichierPartiePgn.DecodePartiePGN)];
+                deja = AnalyseurDeFichier.PartiesDejaAnalysees(sortie);
+            }
+            catch (Exception ex)
+            {   // fichier illisible ou contenu inattendu (erreurs variées : lecture, décodage) : expliqué et noté dans le journal
+                Journal.Erreur("Analyse du fichier PGN " + fichier, ex);
+                KryptonMessageBox.Show(T("Impossible de lire ce fichier PGN :\n{0}", ex.Message), T("Analyse d'un fichier PGN"),
+                    KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+                return;
+            }
+            List<PartieEchecsPGN> aProposer = [.. parties.Where(p => !deja.Contains(AnalyseurDeFichier.Cle(p)))];
+            if (aProposer.Count == 0)
+            {
+                KryptonMessageBox.Show(parties.Count == 0 ? T("Aucune partie dans ce fichier.") : T("Toutes les parties de ce fichier sont déjà analysées dans {0}.", Path.GetFileName(sortie)),
+                    T("Analyse d'un fichier PGN"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                return;
+            }
+            // Durée estimée : au plus la durée par position (le moteur s'arrête souvent avant, à la profondeur visée), environ
+            // 80 positions par partie
+            string Estimation(int nombre) => T("au plus {0}", TexteDuree(TimeSpan.FromMilliseconds(80.0 * nombre * DureeAnalyseParPosition)));
+            using FenetreAnalyseFichier fenetre = new(Path.GetFileName(fichier), Path.GetFileName(sortie), aProposer, parties.Count - aProposer.Count, Estimation);
+            if (fenetre.ShowDialog(this) != DialogResult.OK)
+                return;
+            await AnalyseLeFichier(fenetre.PartiesChoisies, sortie);
+        }
+
+        private void AfficheAvancementFichier(string texte)
+        {
+            if (!LigneLibrePourAnalyseFichier)
+                return;
+            _texteAnalyseFichier = texte;
+            VarianteMoteurUci1.Text = texte;
+        }
+
+        private async Task AnalyseLeFichier(List<PartieEchecsPGN> parties, string sortie)
+        {
+            // Threads : ceux de l'utilisateur, au plus la moitié des cœurs (il reste de quoi jouer contre le moteur) ; son hachage
+            int threads = Math.Clamp(MoteurUci.NombreThreads ?? 1, 1, Math.Max(1, Environment.ProcessorCount / 2));
+            AnalyseurDeFichier analyseur = new(CheminStockfish, threads, MoteurUci.TailleHachageMo ?? 64, DureeAnalyseParPosition,
+                                               PolyglotBibliotheque.ContientCoup, CatalogueDesOuvertures());
+            CancellationTokenSource arret = new();
+            _analyseurDeFichier = analyseur;
+            _arretAnalyseFichier = arret;
+            OuvreSuiviAnalyseFichier(T("Analyse du fichier {0}", Path.GetFileName(sortie)));
+            AfficheAvancementFichier(T("Analyse du fichier : démarrage…"));
+            Stopwatch chrono = Stopwatch.StartNew();
+            int ajoutees = 0, positionsAvant = 0, partiePrecedente = 0, positionsDeLaPartie = 0;
+            void Montre(EtatAnalyseFichier etat)
+            {   // Partie et position en cours ; temps restant estimé au rythme des positions déjà faites (80 par partie à venir)
+                if (etat.Partie != partiePrecedente)
+                {
+                    positionsAvant += positionsDeLaPartie;
+                    partiePrecedente = etat.Partie;
+                }
+                positionsDeLaPartie = etat.PositionsTotal;
+                int faites = positionsAvant + etat.PositionsFaites;
+                int restantes = etat.PositionsTotal - etat.PositionsFaites + 80 * (etat.NombreParties - etat.Partie);
+                string reste = faites > 0 ? T("Temps restant : environ {0}", TexteDuree(chrono.Elapsed / faites * restantes)) : "";
+                if (_menuAnalyseFichier != null)
+                    _menuAnalyseFichier.Text = T("Interrompre l'analyse du fichier ({0}/{1})", etat.Partie, etat.NombreParties);
+                AfficheAvancementFichier(T("Analyse du fichier : partie {0}/{1} ({2}), position {3}/{4}", etat.Partie, etat.NombreParties, etat.NomPartie,
+                                           Math.Min(etat.PositionsFaites + 1, etat.PositionsTotal), etat.PositionsTotal) + (reste != "" ? " — " + reste : ""));
+                _fenetreAnalyseFichier?.MontreEtape(T("Partie {0}/{1} : {2}", etat.Partie, etat.NombreParties, etat.NomPartie), "",
+                                                    etat.PositionsFaites, etat.PositionsTotal, reste);
+                _fenetreAnalyseFichier?.MontreScore(T("position {0}/{1}", Math.Min(etat.PositionsFaites + 1, etat.PositionsTotal), etat.PositionsTotal), "");
+            }
+            string? erreur = null;
+            bool interrompue;
+            try
+            {
+                ajoutees = await Task.Run(() => analyseur.Analyser(parties, sortie, etat => SurLeThreadInterface(() => Montre(etat)), arret.Token));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {   // fichier de sortie impossible à écrire (verrouillé, protégé...)
+                Journal.Erreur("Analyse du fichier : écriture de " + sortie, ex);
+                erreur = ex.Message;
+            }
+            finally
+            {   // (toujours : sinon, après une erreur imprévue, le menu resterait sur « Interrompre » et les moteurs tourneraient)
+                interrompue = arret.IsCancellationRequested;
+                analyseur.Dispose();
+                arret.Dispose();
+                _analyseurDeFichier = null;
+                _arretAnalyseFichier = null;
+                if (!IsDisposed && !Disposing)
+                {
+                    _fenetreAnalyseFichier?.Close();
+                    if (_texteAnalyseFichier != null && VarianteMoteurUci1.Text == _texteAnalyseFichier)
+                        VarianteMoteurUci1.Text = "";
+                    _texteAnalyseFichier = null;
+                    if (_menuAnalyseFichier != null)
+                        _menuAnalyseFichier.Text = T("Analyser un fichier PGN…");
+                }
+            }
+            if (IsDisposed || Disposing)
+                return;     // (application fermée pendant l'analyse)
+            string bilan = erreur != null ? T("Analyse du fichier arrêtée : {0}", erreur)
+                : interrompue ? T("Analyse du fichier interrompue : {0} partie(s) ajoutée(s) à {1} (la suite reprendra à la prochaine analyse de ce fichier).", ajoutees, Path.GetFileName(sortie))
+                : T("Analyse du fichier terminée : {0} partie(s) ajoutée(s) à {1}.", ajoutees, Path.GetFileName(sortie));
+            if (ajoutees > 0 && KryptonMessageBox.Show(bilan + "\n\n" + T("Afficher la liste des parties analysées ?"), T("Analyse d'un fichier PGN"),
+                                                        KryptonMessageBoxButtons.YesNo, KryptonMessageBoxIcon.Information) == DialogResult.Yes)
+                OuvreListePartiesPgn(sortie);
+            else if (ajoutees == 0)
+                KryptonMessageBox.Show(bilan, T("Analyse d'un fichier PGN"), KryptonMessageBoxButtons.OK,
+                    erreur != null ? KryptonMessageBoxIcon.Warning : KryptonMessageBoxIcon.Information);
+        }
+
         private void TermineAnalyseDePartie(bool interrompue)
         {   // Fin (ou interruption) : les résultats vont dans les coups (annotations proposées, plus pâles), puis le bilan
             AnalyseDePartie? analyse = _analyseDePartie;
@@ -305,9 +450,8 @@ namespace BrunoGUI_GenII
                 MoteurUci.DefinitMultiPV(multiPv);      // nombre de variantes choisi par l'utilisateur, forcé à 2 pendant l'analyse
             _multiPvAvantAnalyse = null;
             analyse.AppliqueAuxCoups(LogiqueMouvements.ListeCoups);
-            BilanCamp blancs = analyse.Bilan(ColorPiece.Blanc), noirs = analyse.Bilan(ColorPiece.Noir);
             // (en tête du bilan : le coup critique, le moment où la partie a basculé ; -1 : aucun)
-            AfficheBilan(TexteBilan(T("Blancs"), blancs) + "\n" + TexteBilan(T("Noirs"), noirs), analyse.CoupCritique()?.IndexCoup ?? -1);
+            AfficheBilan(analyse.TexteBilan(), analyse.CoupCritique()?.IndexCoup ?? -1);
             BarreAnalysePartie.Visible = false;
             BoutonAnalysePartie.Values.Text = T("Analyse rapide");
             BoutonAnalysePartie.Width = BoutonAnalyseComplete.Left - 4 - BoutonAnalysePartie.Left;

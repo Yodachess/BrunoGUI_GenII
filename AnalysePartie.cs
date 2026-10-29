@@ -1231,6 +1231,17 @@ namespace BrunoGUI_GenII
             }
         }
 
+        public string TexteBilan() =>
+            // Le bilan affiché sous la feuille et écrit dans le PGN : "Blancs — précision 87 %" puis "   1 imprécision, 0 erreur,
+            // 2 gaffes", pour chaque camp (explications dans l'infobulle du bilan)
+            TexteBilan(Langue.T("Blancs"), Bilan(ColorPiece.Blanc)) + "\n" + TexteBilan(Langue.T("Noirs"), Bilan(ColorPiece.Noir));
+        private static string TexteBilan(string camp, BilanCamp bilan) =>
+            Langue.T("{0} — précision {1} %", camp, bilan.Precision) + "\n   " + Pluriel(bilan.Imprecisions, Langue.T("imprécision"), Langue.T("imprécisions"))
+            + ", " + Pluriel(bilan.Erreurs, Langue.T("erreur"), Langue.T("erreurs")) + ", " + Pluriel(bilan.Gaffes, Langue.T("gaffe"), Langue.T("gaffes"));
+        private static string Pluriel(int nombre, string singulier, string pluriel) =>
+            // Pluriel au-delà de 1 en français ("0 erreur"), dès que le nombre n'est pas 1 en anglais ("0 mistakes")
+            $"{nombre} {(nombre > 1 || (nombre == 0 && !Langue.EstFrancais) ? pluriel : singulier)}";
+
         public BilanCamp Bilan(ColorPiece camp)
         {   // Imprécisions, erreurs, gaffes et précision moyenne (en %) des coups jugés du camp, hors coups de la bibliothèque
             List<JugementCoup> jugements = [.. Jugements().Where(j => j.Camp == camp && !EstCoupDeBibliotheque(j.IndexCoup))];
