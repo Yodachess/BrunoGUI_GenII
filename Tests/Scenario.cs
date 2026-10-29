@@ -1129,10 +1129,20 @@ public static class Scenario
             $"« {coupAnalyse.Annotation} » / « {coupDuJoueur.Annotation} »");
         string pgnAnalyseFichier = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "1-0" }, "Intl", pourFichier: true);
         string pgnAnalyseAffiche = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "1-0" }, "Intl");
-        Verifie("PGN enregistré après analyse : %eval après chaque coup, variante courte avec son symbole (notation anglaise) après l'erreur, numéro repris, appréciation en symbole ($18 = +-)",
+        Verifie("PGN enregistré après analyse : %eval après chaque coup, variante courte avec son symbole (notation anglaise) après l'erreur, numéro repris, pas d'appréciation après une réfutation",
             pgnAnalyseFichier.Replace("\n", " ").Contains("2. Qh5?! {[%auto] [%eval -0.60]} (2. Nf3 $14 Nc6) 2... Nc6 {[%eval -0.40]}")
-            && pgnAnalyseFichier.Replace("\n", " ").Contains("3... Nf6! $18 {Réfutation : 4. Dxf7# [%autocom] [%eval #1]} 4. Qxf7#") && pgnAnalyseFichier.Contains("1. e4 {[%eval 0.30]} 1... e5"),
+            && pgnAnalyseFichier.Replace("\n", " ").Contains("3... Nf6! {Réfutation : 4. Dxf7# [%autocom] [%eval #1]} 4. Qxf7#") && pgnAnalyseFichier.Contains("1. e4 {[%eval 0.30]} 1... e5"),
             pgnAnalyseFichier.Replace("\n", " "));
+        // (2... Cc6 : un changement d'appréciation, écrit en symbole après le coup à la place de son texte)
+        L.ListeCoups[3].NiveauAppreciation = -1;
+        L.ListeCoups[3].CommentaireAuto = JugementCoups.TexteAppreciation(-1, new Evaluation(-40, null));
+        string pgnAppreciation = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "1-0" }, "Intl", pourFichier: true);
+        L.ListeCoups[3].NiveauAppreciation = null;
+        L.ListeCoups[3].CommentaireAuto = null;
+        Verifie("PGN : changement d'appréciation écrit en symbole ($17 = ∓) et relu",
+            pgnAppreciation.Replace("\n", " ").Contains("2... Nc6 $17 {[%eval -0.40]}")
+            && FichierPartiePgn.DecodePartiePGN(pgnAppreciation).Appreciations.ElementAtOrDefault(3) == -1,
+            pgnAppreciation.Replace("\n", " "));
         Verifie("PGN affiché après analyse : ni %eval ni variante",
             !pgnAnalyseAffiche.Contains("%eval") && !pgnAnalyseAffiche.Contains('(') && pgnAnalyseAffiche.Contains("2. Qh5?! Nc6"),
             pgnAnalyseAffiche.Replace("\n", " "));
@@ -1161,7 +1171,7 @@ public static class Scenario
             && dh5Relu.PerteAnalyse > JugementCoups.SeuilImprecision && !dh5Relu.MeilleurJoue && dh5Relu.CoupJoueLong == "Dd1-h5"
             && L.ListeCoups[0].EvaluationApres == new Evaluation(30, null) && !L.ListeCoups[0].VarianteLue
             && dh5Relu.Annotation == "?!" && dh5Relu.AnnotationProposee && L.ListeCoups[5].Annotation == "!" && !L.ListeCoups[5].AnnotationProposee
-            && L.ListeCoups[5].NiveauAppreciation == 2 && L.ListeCoups[5].CommentaireAuto == "Réfutation : 4. Dxf7#. Mat en 1 pour les Blancs",
+            && L.ListeCoups[5].NiveauAppreciation == null && L.ListeCoups[5].CommentaireAuto == "Réfutation : 4. Dxf7#",
             $"{dh5Relu.EvaluationApres?.Texte} / {dh5Relu.MeilleurCoupUci} / {dh5Relu.VarianteMeilleure} / {dh5Relu.EvaluationMeilleur?.Texte} / {dh5Relu.CoupJoueLong}");
         string pgnCommente = "[Event \"Test\"]\n[Result \"*\"]\n\n1. e4 {Le coup du roi\n des pions [%clk 0:01:00]} e5 (1... c5 2. Nf3 (2. c3) d6) 2. Nf3 {[%eval #-3]} *";
         Verifie("PGN relu : commentaire (texte seul, sur deux lignes), variante d'un coup noir (sous-variante sautée), mat en [%eval]",
@@ -1273,7 +1283,7 @@ public static class Scenario
         sansPiege.PiegesAChercher();
         sansPiege.EnregistrePiege(0, "d2d5", -10, null, "d2d5");       // la prise ne perdait presque rien : pas un piège
         Verifie("Piège : la prise tentante non jouée est demandée, « La tour d5 est imprenable » si elle perd au moins une erreur",
-            piegesDemandes.Count == 1 && piegesDemandes[0].PriseUci == "d2d5" && avecPiege.Positions[0].TextePiege == "La tour d5 est imprenable : 1. Dxd5+? (-5.00)"
+            piegesDemandes.Count == 1 && piegesDemandes[0].PriseUci == "d2d5" && avecPiege.Positions[0].TextePiege == "La tour d5 est imprenable par la dame : 1. Dxd5+? (-5.00)"
             && sansPiege.Positions[0].TextePiege == null && avecPiege.PiegesAChercher().Count == 0,
             $"{piegesDemandes.Count} demande(s) / « {avecPiege.Positions[0].TextePiege} » / « {sansPiege.Positions[0].TextePiege} »");
         // Thèmes tactiques : 1. Cc7+ (échec au roi e8, la tour a8 en prise) puis Cxa8 : fourchette ; 1. Fxh7+ Rxh7 2. Dh5+ :
