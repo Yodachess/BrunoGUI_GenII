@@ -912,8 +912,8 @@ namespace BrunoGUI_GenII
 
         public void EnregistrePiege(int indexPosition, string priseUci, int? centipions, int? matEn, string? varianteUci)
         {   // Réponse du 2e moteur pour la prise tentante (score du point de vue du camp au trait ; rien : null). C'est un piège si elle
-            // fait perdre au moins une erreur (SeuilErreur) par rapport au meilleur coup : "La tour g6 est imprenable : 22. Fxg6? fxg6
-            // 23. g4 Tc8 (-5.57)" (partie Parkhov–Bruzon : pourquoi 22. g4 et pas 22. Fxg6 ?)
+            // fait perdre au moins une erreur (SeuilErreur) par rapport au meilleur coup : "La tour g6 est imprenable par le fou : 22.
+            // Fxg6? fxg6 23. g4 Tc8 (-5.57)" (partie Parkhov–Bruzon : pourquoi 22. g4 et pas 22. Fxg6 ?)
             PositionAnalysee avant = _positions[indexPosition];
             avant.PiegeCherche = true;
             if ((centipions == null && matEn == null) || avant.Evaluation is not Evaluation meilleure)
@@ -936,14 +936,26 @@ namespace BrunoGUI_GenII
                 mots[premier] += "?";       // la prise tentante est une erreur
             string variante = Langue.Notation(string.Join(" ", mots)) + $" ({prise.Texte})";
             avant.CasePiege = caseCible;
-            avant.TextePiege = position.Pieces[RenvoieCaseIndex120(caseCible)] switch
+            string cible = position.Pieces[RenvoieCaseIndex120(caseCible)] switch
             {
-                TypePiece.ReineBlanche or TypePiece.ReineNoire => Langue.T("La dame {0} est imprenable : {1}", caseCible, variante),
-                TypePiece.TourBlanche or TypePiece.TourNoire => Langue.T("La tour {0} est imprenable : {1}", caseCible, variante),
-                TypePiece.FouBlanc or TypePiece.FouNoir => Langue.T("Le fou {0} est imprenable : {1}", caseCible, variante),
-                TypePiece.CavalierBlanc or TypePiece.CavalierNoir => Langue.T("Le cavalier {0} est imprenable : {1}", caseCible, variante),
-                _ => Langue.T("Le pion {0} est imprenable : {1}", caseCible, variante)
+                TypePiece.ReineBlanche or TypePiece.ReineNoire => Langue.T("La dame {0}", caseCible),
+                TypePiece.TourBlanche or TypePiece.TourNoire => Langue.T("La tour {0}", caseCible),
+                TypePiece.FouBlanc or TypePiece.FouNoir => Langue.T("Le fou {0}", caseCible),
+                TypePiece.CavalierBlanc or TypePiece.CavalierNoir => Langue.T("Le cavalier {0}", caseCible),
+                _ => Langue.T("Le pion {0}", caseCible)
             };
+            // (la pièce qui prend est nommée : « Le cavalier e5 est imprenable » sur 12. Cxe5, qui le prenait, semblait faux ;
+            // c'est 12. dxe5? qui perdait, 2026-10-29)
+            string preneur = position.Pieces[RenvoieCaseIndex120(priseUci[..2])] switch
+            {
+                TypePiece.ReineBlanche or TypePiece.ReineNoire => Langue.T("la dame"),
+                TypePiece.TourBlanche or TypePiece.TourNoire => Langue.T("la tour"),
+                TypePiece.FouBlanc or TypePiece.FouNoir => Langue.T("le fou"),
+                TypePiece.CavalierBlanc or TypePiece.CavalierNoir => Langue.T("le cavalier"),
+                TypePiece.RoiBlanc or TypePiece.RoiNoir => Langue.T("le roi"),
+                _ => Langue.T("le pion")
+            };
+            avant.TextePiege = Langue.T("{0} est imprenable par {1} : {2}", cible, preneur, variante);
         }
 
         public List<(int IndexPosition, string FenCoupNul)> MenacesAChercher()
@@ -1195,12 +1207,16 @@ namespace BrunoGUI_GenII
                 HashSet<string> gardes = [.. new[] { jugement.Commentaire, refutationOuMenace, parade, piege }.OfType<string>().Take(EvenementsParCoup)];
                 string? Garde(string? evenement) => evenement != null && gardes.Contains(evenement) ? evenement : null;
                 coup.MenaceUci = Garde(menace) != null ? _positions[k + 1].MenaceUci : null;       // (sa flèche rouge)
+                // (pas d'appréciation non plus après une réfutation : « Réfutation : 12. Cxe5. Gain Blanc », le gain allait de soi,
+                // 2026-10-29)
+                bool sansAppreciation = matManque || (refutation && Garde(refutationOuMenace) != null);
                 string?[] textes = [ouverture.GetValueOrDefault(jugement.IndexCoup), Garde(jugement.Commentaire), Garde(parade),
                                     Garde(refutationOuMenace), Garde(piege),
-                                    finales.GetValueOrDefault(jugement.IndexCoup), matManque ? null : appreciations.GetValueOrDefault(jugement.IndexCoup)];
+                                    finales.GetValueOrDefault(jugement.IndexCoup), sansAppreciation ? null : appreciations.GetValueOrDefault(jugement.IndexCoup)];
                 coup.CommentaireAuto = textes.Any(t => t != null) ? string.Join(". ", textes.OfType<string>()) : null;
-                // (le niveau du changement d'appréciation : son symbole dans le fichier PGN, voir Coup.NiveauAppreciation)
-                coup.NiveauAppreciation = !matManque && niveaux.TryGetValue(jugement.IndexCoup, out var appreciation) ? appreciation.Niveau : null;
+                // (le niveau du changement d'appréciation : son symbole dans le fichier PGN, voir Coup.NiveauAppreciation ; aucun
+                // sans son texte, sinon la relecture du PGN le referait)
+                coup.NiveauAppreciation = !sansAppreciation && niveaux.TryGetValue(jugement.IndexCoup, out var appreciation) ? appreciation.Niveau : null;
                 coup.CommentaireTactique = jugement.Commentaire;    // (sacrifice, thème, mat manqué : l'essentiel, pour la feuille)
                 // (la notation NAL du coup est en lettres anglaises : la notation longue française est calculée ici)
                 PositionAnalysee positionAvant = _positions[_indexCoups.IndexOf(jugement.IndexCoup)];

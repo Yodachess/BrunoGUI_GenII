@@ -243,15 +243,16 @@ namespace BrunoGUI_GenII
                 foreach (RichTextBox ligne in new[] { VarianteMoteurUci1, VarianteMoteurUci2, VarianteMoteurUci3 })
                     _infobulleBilan.SetToolTip(ligne, commentaire != null ? T("Commentaire : {0}", commentaire) : null);
                 if (coup.EvaluationApres != null || coup.MeilleurCoup != null)
-                {   // Le texte complet s'il tient sur la ligne, sinon sans le nom de l'annotation
+                {   // Le texte avec le nom complet de l'annotation s'il tient sur la ligne, sinon avec son nom court, sinon sans
                     int largeur = VarianteMoteurUci2.ClientSize.Width - 14;
                     bool bibliotheque = PolyglotBibliotheque.ContientCoup(index == 0 ? FenDepart : LogiqueMouvements.ListeCoups[index - 1].Fen, coup.Uci);
                     // (le symbole de l'évaluation reste toujours, 2026-10-21 : seul le nom de l'annotation peut tomber)
-                    string texte = TexteAnalyseDuCoup(coup, true, bibliotheque) is string complet
-                        && TextRenderer.MeasureText(complet, _policesLignes[VarianteMoteurUci2].Grasse).Width <= largeur
-                        ? complet : TexteAnalyseDuCoup(coup, false, bibliotheque);
-                    if (texte != "")
-                        AfficheLigneCentree(VarianteMoteurUci2, texte);
+                    (string Analyse, string Conseil) texte = new[] { NomAnnotation.Complet, NomAnnotation.Court }
+                        .Select(nom => TexteAnalyseDuCoup(coup, nom, bibliotheque))
+                        .FirstOrDefault(t => TextRenderer.MeasureText(t.Analyse + t.Conseil, _policesLignes[VarianteMoteurUci2].Grasse).Width <= largeur,
+                                        TexteAnalyseDuCoup(coup, NomAnnotation.Aucun, bibliotheque));
+                    if (texte.Analyse + texte.Conseil != "")
+                        AfficheLigneCentree(VarianteMoteurUci2, texte.Analyse + texte.Conseil, conseilDepuis: texte.Analyse.Length);
                     else if (commentaire != null)
                     {   // (meilleur coup joué, sans annotation ni commentaire de l'analyse : la ligne reste au commentaire du PGN)
                         AfficheLigneCentree(VarianteMoteurUci2, commentaire);
@@ -377,27 +378,39 @@ namespace BrunoGUI_GenII
             'O' => Color.FromArgb(230, 120, 0),
             _ => Color.FromArgb(200, 30, 30)
         };
-        private static string TexteAnalyseDuCoup(Coup coup, bool nomAnnotation, bool bibliotheque)
-        {   // 2e ligne : "[Bon] Sacrifice du cavalier. Menace : 16. Cxh8", ou "— meilleur : ⩲ Dd3-g3 (0.55)" : le nom de l'annotation, le
-            // commentaire de l'analyse, puis le meilleur coup avec SON évaluation s'il en est un autre. Le coup joué, son annotation et
-            // son évaluation sont sur la 1re ligne (2026-10-28 : « +- joué Ce5-g6 ! (3.71) » y répétait le coup).
+        private enum NomAnnotation { Complet, Court, Aucun }
+        private static (string Analyse, string Conseil) TexteAnalyseDuCoup(Coup coup, NomAnnotation nom, bool bibliotheque)
+        {   // 2e ligne : "[Bon coup] Sacrifice du cavalier. Menace : 16. Cxh8", puis le conseil "  — meilleur : ⩲ Dd3-g3 (0.55)" : le nom
+            // de l'annotation, le commentaire de l'analyse, puis le meilleur coup avec SON évaluation s'il en est un autre, rendu
+            // séparément pour être écrit d'une autre couleur (2026-10-29 : séparer le commentaire du conseil). Le coup joué, son
+            // annotation et son évaluation sont sur la 1re ligne (2026-10-28 : « +- joué Ce5-g6 ! (3.71) » y répétait le coup).
             // Si le coup joué ne perd presque rien (ex : mat en 3 au lieu de 2), le meilleur n'est qu'une préférence : "— moteur : Rd3
-            // (0.00)" ("meilleur" serait inadapté, ", écart négligeable" inutile). Coups en notation longue, avec la case
-            // de départ : "Dd8-d7". nomAnnotation à false raccourcit (le texte doit tenir sur la ligne en police 10).
-            // Coup connu de la bibliothèque d'ouvertures : "— coup de la bibliothèque" au lieu du meilleur coup : la
+            // (0.00)" ("meilleur" serait inadapté, ", écart négligeable" inutile). Conseil seul : "Meilleur : …", sans le tiret qui
+            // restait seul en tête de ligne. Coups en notation longue, avec la case de départ : "Dd8-d7". Le nom de l'annotation est
+            // complet ("[Bon coup]" : "[Bon]" seul était un peu court), court ou absent selon la place (police 10).
+            // Coup connu de la bibliothèque d'ouvertures : "— coup de la bibliothèque —" au lieu du meilleur coup : la
             // théorie n'est pas jugée (ni annotée par l'analyse ; le meilleur coup du moteur reste sur la 3e ligne)
-            string texte = coup.Annotation != "" && nomAnnotation ? $"[{Annotations.NomCourt(coup.Annotation)}]" : "";
+            string texte = coup.Annotation == "" ? "" : nom switch
+            {
+                NomAnnotation.Complet => $"[{Annotations.Nom(coup.Annotation)}]",
+                NomAnnotation.Court => $"[{Annotations.NomCourt(coup.Annotation)}]",
+                _ => ""
+            };
             if (bibliotheque)
-                return (texte + "  — " + T("coup de la bibliothèque") + " —").Trim();   // (tirets des deux côtés)
+                return ((texte + "  — " + T("coup de la bibliothèque") + " —").Trim(), "");   // (tirets des deux côtés)
             if (!string.IsNullOrEmpty(coup.CommentaireAuto))
                 texte += " " + coup.CommentaireAuto;     // commentaire de l'analyse, ex : "Sacrifice du cavalier"
-            if (!coup.MeilleurJoue && coup.MeilleurCoup != null)
-            {   // (le meilleur coup a lui aussi le symbole de son évaluation devant lui : "meilleur : +- Dd1-e1 (2.00)")
-                string meilleur = (coup.EvaluationMeilleur is Evaluation symboleMeilleur ? symboleMeilleur.Symbole + " " : "")
-                    + Notation(coup.MeilleurCoupLong ?? coup.MeilleurCoup) + (coup.EvaluationMeilleur is Evaluation e ? $" ({e.Texte})" : "");
-                texte += FeuilleDePartie.EcartNegligeable(coup) ? "  — " + T("moteur : {0}", meilleur) : "  — " + T("meilleur : {0}", meilleur);
-            }
-            return texte.Trim();
+            texte = texte.Trim();
+            if (coup.MeilleurJoue || coup.MeilleurCoup == null)
+                return (texte, "");
+            // (le meilleur coup a lui aussi le symbole de son évaluation devant lui : "meilleur : +- Dd1-e1 (2.00)")
+            string meilleur = (coup.EvaluationMeilleur is Evaluation symboleMeilleur ? symboleMeilleur.Symbole + " " : "")
+                + Notation(coup.MeilleurCoupLong ?? coup.MeilleurCoup) + (coup.EvaluationMeilleur is Evaluation e ? $" ({e.Texte})" : "");
+            bool negligeable = FeuilleDePartie.EcartNegligeable(coup);
+            string conseil = texte == ""
+                ? (negligeable ? T("Moteur : {0}", meilleur) : T("Meilleur : {0}", meilleur))
+                : "  — " + (negligeable ? T("moteur : {0}", meilleur) : T("meilleur : {0}", meilleur));
+            return (texte, conseil);
         }
 
         // Les lignes de variante 1 et 2 servent aussi aux variantes du moteur (à gauche, police normale) : pendant le parcours, le coup
@@ -423,15 +436,24 @@ namespace BrunoGUI_GenII
         }
         // Meilleure suite (3e ligne) : bleu foncé, pour la distinguer de l'analyse du coup sur la 2e ligne
         private static readonly Color CouleurSuite = Color.FromArgb(0, 70, 150);
-        private void AfficheLigneCentree(RichTextBox ligne, string texte, Color? couleur = null)
+        // Conseil de la 2e ligne ("— meilleur : …") : gris ardoise, pour le séparer du commentaire (un gris argent clair ne se lisait
+        // pas sur le fond de la ligne)
+        private static readonly Color CouleurConseil = Color.FromArgb(95, 105, 120);
+        private void AfficheLigneCentree(RichTextBox ligne, string texte, Color? couleur = null, int? conseilDepuis = null)
         {   // Texte centré en gras, toujours dans la police de la ligne (pas de police réduite) ; couleur : celle de
-            // l'annotation du coup regardé (1re ligne), sinon la couleur normale de la ligne
+            // l'annotation du coup regardé (1re ligne), sinon la couleur normale de la ligne ; à partir de conseilDepuis, le
+            // conseil en CouleurConseil
             _ecritureCentree = true;
             ligne.Text = texte;
             ligne.SelectAll();
             ligne.SelectionAlignment = HorizontalAlignment.Center;
             ligne.SelectionFont = _policesLignes[ligne].Grasse;
             ligne.SelectionColor = couleur ?? ligne.ForeColor;
+            if (conseilDepuis is int debut && debut < texte.Length)
+            {
+                ligne.Select(debut, texte.Length - debut);
+                ligne.SelectionColor = CouleurConseil;
+            }
             if (PoliceSymboles(ligne) is Font policeSymboles)
                 foreach (Match symbole in Regex.Matches(texte, @"(?<=^|\s)(\+-|-\+|=|±|∓|⩲|⩱|#\+|#-)(?=\s|$)"))
                 {   // les symboles d'évaluation en très gras : en Segoe UI gras, "-+", "+-" et "=" restent aussi fins qu'en normal
