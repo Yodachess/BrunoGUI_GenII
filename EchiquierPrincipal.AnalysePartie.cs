@@ -201,8 +201,7 @@ namespace BrunoGUI_GenII
                     return;
                 analyse.EnregistreDifficulte(index, JugementCoups.ProfondeurDecouverte(meilleurs, coup));
             }
-            if (!_analyseComplete)
-                return;     // les pièges ne sont cherchés que par l'analyse complète (pour commencer)
+            // (pièges et menaces : dans les deux analyses depuis le 2026-10-29, ils ne coûtent que quelques secondes par partie)
             foreach ((int index, string fen, string prise) in analyse.PiegesAChercher())
             {   // la prise tentante que le joueur n'a pas jouée : que donnait-elle ? (une ou deux secondes chacune)
                 var resultat = await Task.Run(() => moteur.Cherche(fen, prise, JugementCoups.ProfondeurPiege));
