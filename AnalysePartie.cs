@@ -191,11 +191,11 @@ namespace BrunoGUI_GenII
         // ProfondeurDecouverte) ; mesurée seulement pour un seul bon coup (DifficultesAMesurer) ; null : inconnue (règle sans difficulté)
         public int? ProfondeurDecouverte { get; set; }
         public bool DifficulteMesuree { get; set; }
-        // Piège (analyse complète) : une prise tentante, pas jouée, qui perdait ("La tour g6 est imprenable : 22. Fxg6? fxg6 …")
+        // Piège : une prise tentante, pas jouée, qui perdait ("La tour g6 est imprenable : 22. Fxg6? fxg6 …")
         public bool PiegeCherche { get; set; }
         public string? TextePiege { get; set; }
         public string? CasePiege { get; set; }     // case de la pièce imprenable (annoncée seulement la 1re fois : AppliqueAuxCoups)
-        // Menace (analyse complète) du joueur qui vient de jouer le coup menant à cette position : son coup suivant si l'adversaire
+        // Menace du joueur qui vient de jouer le coup menant à cette position : son coup suivant si l'adversaire
         // ne faisait rien (coup nul), "15. Cxf7" ; null : pas de menace sérieuse (ou pas cherchée)
         public bool MenaceCherchee { get; set; }
         public string? MenaceUci { get; set; }
@@ -878,7 +878,7 @@ namespace BrunoGUI_GenII
         }
 
         public List<(int IndexPosition, string Fen, string PriseUci)> PiegesAChercher()
-        {   // Analyse complète : pour chaque coup jugeable, la prise la plus tentante (au moins SacrificeMinimum de matériel gagné à
+        {   // Pour chaque coup jugeable, la prise la plus tentante (au moins SacrificeMinimum de matériel gagné à
             // première vue) que le joueur n'a pas jouée et qui n'est pas le meilleur coup ; l'interface la fait chercher par le 2e
             // moteur (EnregistrePiege). Une position sans prise tentante est notée cherchée tout de suite
             List<(int, string, string)> demandes = [];
@@ -959,7 +959,7 @@ namespace BrunoGUI_GenII
         }
 
         public List<(int IndexPosition, string FenCoupNul)> MenacesAChercher()
-        {   // Analyse complète : pour chaque position analysée après un coup, la même position avec le trait rendu au joueur qui vient
+        {   // Pour chaque position analysée après un coup, la même position avec le trait rendu au joueur qui vient
             // de jouer (coup nul) ; l'interface demande au 2e moteur ce qu'il y jouerait (EnregistreMenace). Pas de menace cherchée
             // après un coup de la bibliothèque, après une prise (la reprise attendue serait la "menace") ou un échec (pas de coup nul
             // possible), ni quand un mat est déjà annoncé ou la partie décidée ; une telle position est notée cherchée tout de suite
