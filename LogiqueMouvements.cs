@@ -268,7 +268,6 @@ namespace BrunoGUI_GenII
             if (caseSource != caseDestination && Regles.EstLegal(PositionActuelle, caseSource, caseDestination))
             {
                 AfficheInfoEchec?.Invoke(string.Empty);
-                MouvementCoup = Regles.Notation(PositionActuelle, caseSource, caseDestination).Coup;
                 int indexSource = RenvoieCaseIndex120(caseSource), indexDestination = RenvoieCaseIndex120(caseDestination);
                 if (promotion == TypePiece.Vide && Regles.EstPromotion(PositionActuelle, indexSource, indexDestination))
                 {   // le pion est montré sur sa case d'arrivée pendant que le joueur choisit sa pièce (une dame si personne ne répond)
@@ -277,89 +276,16 @@ namespace BrunoGUI_GenII
                     promotion = ChoixPromotion?.Invoke(CouleurCase(indexSource)) ?? TypePiece.Vide;
                 }
                 List<TypePiece> avant = [.. PiecesEchiquier];
-                ResultatCoup resultat = Regles.Jouer(PositionActuelle, caseSource, caseDestination, promotion);
+                CoupNote note = JoueEtNote(PositionActuelle, caseSource, caseDestination, promotion);
                 for (int i = 21; i <= 98; i++)      // les cases changées (avec la tour du roque et le pion pris en passant)
                     if (PiecesEchiquier[i] != avant[i])
                         DessinePiece?.Invoke(i, PiecesEchiquier[i]);
                 AfficheTour?.Invoke(QuiJoue);
-                Echec = Regles.CampAuTraitEnEchec(PositionActuelle);   // (échec direct, à la découverte, ou par la pièce promue)
-
-                string lettrePromo = resultat.PiecePromue switch
-                {   // On rajoute la pièce promue avant de stocker dans le PGN
-                    TypePiece.ReineBlanche or TypePiece.ReineNoire => "D",
-                    TypePiece.TourBlanche or TypePiece.TourNoire => "T",
-                    TypePiece.FouBlanc or TypePiece.FouNoir => "F",
-                    TypePiece.CavalierBlanc or TypePiece.CavalierNoir => "C",
-                    _ => ""
-                };
-                MouvementCoup += lettrePromo;
-
-                string ChaineFen = RetourneChaineFenActuel();       // Position après le coup
-
-                string MouvementCoupPgn = NotationInternationale(MouvementCoup);   // PGN international (lettres anglaises des pièces)
-                string MouvementCoupNal;
-
-                // Traitement de la notation algébrique longue
-                if (MouvementCoupPgn.Contains('x'))
-                {
-                    if (char.IsLower(MouvementCoupPgn[0]))
-                    {   // C'est un coup de Pion
-                        MouvementCoupNal = caseSource + 'x' + caseDestination + LettrePromotionUci(lettrePromo).ToUpper();
-                    }
-                    else
-                    {   // C'est un coup de Pièce
-                        MouvementCoupNal = MouvementCoupPgn[0] + caseSource + 'x' + caseDestination;   // la case d'arrivée, pas des positions fixes dans le PGN (ex : Cgxe2)
-                    }
-                }
-                else
-                {   // Pas de prise
-                    if (char.IsLower(MouvementCoupPgn[0]))
-                    {   // C'est un coup de Pion
-                        MouvementCoupNal = caseSource + '-' + MouvementCoupPgn;
-                    }
-                    else
-                    {   // C'est un coup de Pièce
-                        if (MouvementCoupPgn.Contains('O'))
-                        {   // C'est un roque
-                            MouvementCoupNal = MouvementCoupPgn;
-                        }
-                        else
-                        {   // Ce n'est pas un roque
-                            MouvementCoupNal = MouvementCoupPgn[0] + caseSource + '-' + caseDestination;
-                        }
-                    }
-                }
-                // Traitement de la prise en passant
-                if (resultat.EnPassant)
-                {                                                           // Correction de bug par ajout de caseSource
-                    MouvementCoup = caseSource[0] + "x" + MouvementCoup;    // on enlève " e.p"; pas d'indication de la prise en passant en PGN
-                    MouvementCoupPgn = caseSource[0] + "x" + MouvementCoupPgn;
-                    MouvementCoupNal = MouvementCoupPgn + " e.p";           // en Nal, on indique la prise en passant par "e.p" après le coup
-                    if (resultat.SecondPion)
-                    {       // on précise la colonne car deux pions peuvent faire la prise en passant
-                        MouvementCoup = caseSource[..1] + MouvementCoup;
-                        MouvementCoupPgn = caseSource[..1] + MouvementCoupPgn;
-                        MouvementCoupNal = caseSource[..1] + MouvementCoupPgn;
-                    }
-                }
-
-                string[] FenTableau = ChaineFen.Split(' '); // On decoupe les champs du FEN
-                string NumeroCoup = FenTableau[5];  // Champ 6 = numéro du coup de la partie (incrémenté à chaque coup des blancs)
-
-                // Fin du coup : "#" si mat, "+" si échec, puis un espace (pas de symbole en UCI)
-                AucunCoupJouable = !ResteCoupsValidesJouables();
+                Echec = note.Echec;
+                MouvementCoup = note.NotationFr;
+                AucunCoupJouable = note.AucunCoupJouable;
                 DernierCoupTerminePartie = AucunCoupJouable;    // mat ou pat : lu par RaisonNulle pendant les événements du coup
-                string Fin = Echec ? (AucunCoupJouable ? "# " : "+ ") : " ";
-                // Le numéro n'est écrit que devant un coup blanc (après un coup blanc, c'est aux Noirs de jouer : champ 2 = "b")
-                string Numero = FenTableau[1] == "b" ? NumeroCoup + ". " : "";
-                AjouteCoup(new Coup
-                {
-                    Fen = ChaineFen,
-                    PgnIntl = Numero + MouvementCoupPgn + Fin,
-                    PgnFr = Numero + MouvementCoup + Fin,
-                    Nal = Numero + MouvementCoupNal + Fin,
-                    Uci = caseSource + caseDestination + LettrePromotionUci(lettrePromo) + " ",
-                });
+                AjouteCoup(note.Coup);
 
                 // Affiche si le roi est en échec
                 if (Echec)
@@ -397,6 +323,94 @@ namespace BrunoGUI_GenII
                     }
                 }
             }
+        }
+
+        // Un coup joué et noté : l'objet Coup (toutes ses notations, FEN d'après), sa notation française sans numéro ni symbole
+        // (« Cxe5 », pour l'affichage), l'échec qu'il donne, et s'il ne laisse aucun coup à l'adversaire (mat ou pat)
+        public record CoupNote(Coup Coup, string NotationFr, bool Echec, bool AucunCoupJouable);
+
+        public static CoupNote JoueEtNote(Position position, string caseSource, string caseDestination, TypePiece promotion)
+        {   // Joue le coup (légal : à vérifier avant) sur cette position et le note, sans rien dessiner ni toucher à la partie :
+            // sert à la partie (ExecutionCoup) et à la lecture d'une partie PGN hors de la partie affichée (analyse d'un fichier)
+            string MouvementCoup = Regles.Notation(position, caseSource, caseDestination).Coup;
+            ResultatCoup resultat = Regles.Jouer(position, caseSource, caseDestination, promotion);
+            bool echec = Regles.CampAuTraitEnEchec(position);   // (échec direct, à la découverte, ou par la pièce promue)
+            string lettrePromo = resultat.PiecePromue switch
+            {   // On rajoute la pièce promue avant de stocker dans le PGN
+                TypePiece.ReineBlanche or TypePiece.ReineNoire => "D",
+                TypePiece.TourBlanche or TypePiece.TourNoire => "T",
+                TypePiece.FouBlanc or TypePiece.FouNoir => "F",
+                TypePiece.CavalierBlanc or TypePiece.CavalierNoir => "C",
+                _ => ""
+            };
+            MouvementCoup += lettrePromo;
+
+            string ChaineFen = Regles.Fen(position);         // Position après le coup
+
+            string MouvementCoupPgn = NotationInternationale(MouvementCoup);   // PGN international (lettres anglaises des pièces)
+            string MouvementCoupNal;
+
+            // Traitement de la notation algébrique longue
+            if (MouvementCoupPgn.Contains('x'))
+            {
+                if (char.IsLower(MouvementCoupPgn[0]))
+                {   // C'est un coup de Pion
+                    MouvementCoupNal = caseSource + 'x' + caseDestination + LettrePromotionUci(lettrePromo).ToUpper();
+                }
+                else
+                {   // C'est un coup de Pièce
+                    MouvementCoupNal = MouvementCoupPgn[0] + caseSource + 'x' + caseDestination;   // la case d'arrivée, pas des positions fixes dans le PGN (ex : Cgxe2)
+                }
+            }
+            else
+            {   // Pas de prise
+                if (char.IsLower(MouvementCoupPgn[0]))
+                {   // C'est un coup de Pion
+                    MouvementCoupNal = caseSource + '-' + MouvementCoupPgn;
+                }
+                else
+                {   // C'est un coup de Pièce
+                    if (MouvementCoupPgn.Contains('O'))
+                    {   // C'est un roque
+                        MouvementCoupNal = MouvementCoupPgn;
+                    }
+                    else
+                    {   // Ce n'est pas un roque
+                        MouvementCoupNal = MouvementCoupPgn[0] + caseSource + '-' + caseDestination;
+                    }
+                }
+            }
+            // Traitement de la prise en passant
+            if (resultat.EnPassant)
+            {                                                           // Correction de bug par ajout de caseSource
+                MouvementCoup = caseSource[0] + "x" + MouvementCoup;    // on enlève " e.p"; pas d'indication de la prise en passant en PGN
+                MouvementCoupPgn = caseSource[0] + "x" + MouvementCoupPgn;
+                MouvementCoupNal = MouvementCoupPgn + " e.p";           // en Nal, on indique la prise en passant par "e.p" après le coup
+                if (resultat.SecondPion)
+                {       // on précise la colonne car deux pions peuvent faire la prise en passant
+                    MouvementCoup = caseSource[..1] + MouvementCoup;
+                    MouvementCoupPgn = caseSource[..1] + MouvementCoupPgn;
+                    MouvementCoupNal = caseSource[..1] + MouvementCoupPgn;
+                }
+            }
+
+            string[] FenTableau = ChaineFen.Split(' '); // On decoupe les champs du FEN
+            string NumeroCoup = FenTableau[5];  // Champ 6 = numéro du coup de la partie (incrémenté à chaque coup des blancs)
+
+            // Fin du coup : "#" si mat, "+" si échec, puis un espace (pas de symbole en UCI)
+            bool AucunCoupJouable = !Regles.ResteCoupsJouables(position);
+            string Fin = echec ? (AucunCoupJouable ? "# " : "+ ") : " ";
+            // Le numéro n'est écrit que devant un coup blanc (après un coup blanc, c'est aux Noirs de jouer : champ 2 = "b")
+            string Numero = FenTableau[1] == "b" ? NumeroCoup + ". " : "";
+            Coup coup = new()
+            {
+                Fen = ChaineFen,
+                PgnIntl = Numero + MouvementCoupPgn + Fin,
+                PgnFr = Numero + MouvementCoup + Fin,
+                Nal = Numero + MouvementCoupNal + Fin,
+                Uci = caseSource + caseDestination + LettrePromotionUci(lettrePromo) + " ",
+            };
+            return new CoupNote(coup, MouvementCoup, echec, AucunCoupJouable);
         }
 
         public static bool TripleRepetition()

@@ -66,23 +66,26 @@ namespace BrunoGUI_GenII
 
     public class GestionPartiePgn
     {   // Spécification détaillée du format PGN = https://fr.wikipedia.org/wiki/Portable_Game_Notation
-        public static string RetourneContenuPgn(PartieEchecsPGN partieEnCours, string localisation, bool pourFichier = false)
+        public static string RetourneContenuPgn(PartieEchecsPGN partieEnCours, string localisation, bool pourFichier = false,
+                                                IReadOnlyList<Coup>? coups = null)
         {   // Met au format Pgn la partieEnCours pour visualisation et sauvegarde ...
             // pourFichier : seulement dans le fichier enregistré, pas dans l'affichage, en commentaire après chaque coup,
             // l'évaluation de l'analyse de partie "[%eval 0.35]" et le temps restant de la pendule "[%clk 0:02:51]" (format de Lichess
             // et ChessBase) ; après un coup annoté ?!, ? ou ?? par l'analyse, la meilleure variante entre parenthèses (comme ChessBase)
+            // coups : ceux de la partie par défaut, ou ceux d'une partie lue hors de la partie affichée (analyse d'un fichier)
+            coups ??= ListeCoups;
             List<string> mots = [];
             bool apresCommentaire = false;      // un coup noir qui suit un commentaire ou une variante reprend son numéro ("1... e5")
             // Partie commençant par un coup noir (départ FEN, Noirs au trait) : le PGN exige "n... coup"
-            Coup? premier = ListeCoups.FirstOrDefault(c => !c.EstPositionDeDepart);
+            Coup? premier = coups.FirstOrDefault(c => !c.EstPositionDeDepart);
             if (premier != null && !premier.EstCoupBlanc)
                 apresCommentaire = true;
-            for (int i = 0; i < ListeCoups.Count; i++)
+            for (int i = 0; i < coups.Count; i++)
             {
-                Coup coup = ListeCoups[i];
+                Coup coup = coups[i];
                 if (coup.EstPositionDeDepart)
                     continue;
-                string texteCoup = (localisation == "Fr" ? ListeCoupsPgnFr[i] : ListeCoupsPgnIntl[i]).Trim() + coup.Annotation;  // "15. Ng5?!"
+                string texteCoup = (localisation == "Fr" ? coup.PgnFr : coup.PgnIntl).Trim() + coup.Annotation;  // "15. Ng5?!"
                 if (!coup.EstCoupBlanc && apresCommentaire)
                     texteCoup = coup.NumeroDuCoup + "... " + texteCoup;
                 apresCommentaire = false;
@@ -141,7 +144,7 @@ namespace BrunoGUI_GenII
             if (pourFichier && !string.IsNullOrWhiteSpace(partieEnCours.Bilan) && mots.Count > 0)
                 mots.Add("{" + BilanSurUneLigne(partieEnCours.Bilan) + " [%bilan]}");    // (après le dernier coup : relu comme bilan)
             mots.Add(ResultatPgn(partieEnCours));   // Rajout du résultat à la fin de la partie
-            return RetourneEntetePgn(partieEnCours) + LignesDe80(string.Join(" ", mots));
+            return RetourneEntetePgn(partieEnCours, coups) + LignesDe80(string.Join(" ", mots));
         }
 
         public static string BilanSurUneLigne(string bilan) =>
@@ -248,8 +251,9 @@ namespace BrunoGUI_GenII
         }
         private static string ResultatPgn(PartieEchecsPGN partie) =>
             string.IsNullOrWhiteSpace(partie.Result) ? "*" : partie.Result;     // partie en cours : "*" (exigé par le format PGN)
-        public static string RetourneEntetePgn(PartieEchecsPGN partieEnCours)
+        public static string RetourneEntetePgn(PartieEchecsPGN partieEnCours, IReadOnlyList<Coup>? coups = null)
         {   // Retourne l'en-tête de la partie au format PGN, avec les balises obligatoires et optionnelles
+            coups ??= ListeCoups;
             string enTetePgn = "";
             // Ajout de l'en-tête complet respectant le format PGN (mes Balises optionnelles préférées)
             enTetePgn = "[PlyCount \"" + partieEnCours.CompteDePLy + "\"]\n\n" + enTetePgn;  // Nombre de 1/2 coups
@@ -259,8 +263,8 @@ namespace BrunoGUI_GenII
             if (!string.IsNullOrWhiteSpace(partieEnCours.TimeControl))
                 enTetePgn = "[TimeControl \"" + partieEnCours.TimeControl + "\"]\n" + enTetePgn;   // Cadence de la pendule
             // Partie commençant à une position (chargée depuis un FEN) : balises SetUp et FEN, sinon le fichier serait illisible
-            if (ListeCoups.Count > 0 && ListeCoups[0].EstPositionDeDepart)
-                enTetePgn = "[SetUp \"1\"]\n[FEN \"" + ListeCoups[0].Fen + "\"]\n" + enTetePgn;
+            if (coups.Count > 0 && coups[0].EstPositionDeDepart)
+                enTetePgn = "[SetUp \"1\"]\n[FEN \"" + coups[0].Fen + "\"]\n" + enTetePgn;
 
             // Ajout de l'en-tête complet respectant le format PGN (Balises obligatoires)
             enTetePgn = "[Result \"" + ResultatPgn(partieEnCours) + "\"]\n" + enTetePgn;        // Résultat Partie
@@ -281,16 +285,25 @@ namespace BrunoGUI_GenII
             // Renvoie false si le coup est illisible ou illégal (rien n'est joué) ; un numéro de coup ou un résultat est ignoré (true)
             if (string.IsNullOrWhiteSpace(coupPartie) || EstNumeroOuResultat(coupPartie))
                 return true;
+            if (DecodeCoupPgn(PositionActuelle, coupPartie) is not var (source, destination, promotion))
+                return false;
+            LogiqueMouvements.ExecutionCoup(source, destination, promotion);   // (jamais de choix demandé au joueur)
+            return LogiqueMouvements.CoupValide;
+        }
+        public static (string Source, string Destination, TypePiece Promotion)? DecodeCoupPgn(Position position, string coupPartie)
+        {   // Un coup PGN ("Nbd7", "exd5", "e8=Q", "O-O") pour le camp au trait de cette position : ses cases et sa pièce de promotion,
+            // ou null s'il est illisible ou illégal ; rien n'est joué (sert à la partie et à la lecture d'un fichier hors de la partie)
             try
             {
-                return DecodeEtJoueCoup(coupPartie);
+                return DecodeCoup(position, coupPartie) is var (source, destination, promotion)
+                       && Regles.EstLegal(position, source, destination) ? (source, destination, promotion) : null;
             }
             catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentOutOfRangeException || ex is FormatException)
             {   // coup trop mal formé pour être décodé (ex : "e9") : rien n'est joué
-                return false;
+                return null;
             }
         }
-        private static bool DecodeEtJoueCoup(string coupPartie)
+        private static (string, string, TypePiece)? DecodeCoup(Position position, string coupPartie)
         {
             char dernierCaractereCoup;
             TypePiece promotion = TypePiece.ReineBlanche;   // pièce de promotion (dame si le coup ne la précise pas ; couleur du pion)
@@ -303,14 +316,14 @@ namespace BrunoGUI_GenII
                 CoupPGN = CoupPGN.Replace('0', 'O');    // roque noté avec des zéros (0-0, 0-0-0) : forme officielle O-O
             if (CoupPGN.Length > 0)     // Il faut s'assurer qu'il y a au moins un coup, sinon erreur "L'index se trouve en dehors des limites du tableau."
             {
-                couleurQuiJoue = QuiJoue;   // camp au trait de la partie (une partie FEN peut commencer par les Noirs)
+                couleurQuiJoue = position.QuiJoue;   // camp au trait de la position (une partie FEN peut commencer par les Noirs)
                 dernierCaractereCoup = CoupPGN[CoupPGN.Length - 1];    // Nettoyage des signes "+" et "#" à la fin du coup qui signalent les echecs
                 // Enlève le "+" ou le "#" final pour avoir la case de destination dans les 2 derniers caractères
                 // (l'échec et le mat sont calculés par ExecutionCoup : rien n'est forcé ici sur la position d'avant le coup)
                 if (dernierCaractereCoup == '+' || dernierCaractereCoup == '#')
                     CoupPGN = CoupPGN.TrimEnd('+', '#');
                 if (CoupPGN.Length < 2)
-                    return false;
+                    return null;
                 if (CoupPGN.Length >= 3 && char.IsLower(CoupPGN[0]) && "QRBN".Contains(CoupPGN[^1]) && !CoupPGN.Contains('='))
                     CoupPGN = CoupPGN[..^1] + "=" + CoupPGN[^1];    // promotion sans "=" (vieux fichiers : "e8Q", "dxe8N") : "e8=Q"
                 // Début du traitement du coup, il faut trouver la case de départ et de destination pour pouvoir executer le coup sur l'échiquier-
@@ -320,7 +333,7 @@ namespace BrunoGUI_GenII
                         CaseDestination = CoupPGN.Substring(CoupPGN.Length - 2, 2);     // La CaseDestination = 2 derniers caractères de CoupPGN
                         pieceQuiJoue = (couleurQuiJoue == ColorPiece.Blanc) ? TypePiece.RoiBlanc : TypePiece.RoiNoir;
                         for (int i = 21; i <= 98; i++)
-                            if (PiecesEchiquier[i] == pieceQuiJoue)
+                            if (position.Pieces[i] == pieceQuiJoue)
                             {
                                 CaseSource = LogiqueMouvements.NomCaseAlgebrique(i);    // La CaseSource = Case où est le Roi qui joue
                             }
@@ -380,9 +393,9 @@ namespace BrunoGUI_GenII
                     CoupPGN = CoupPGN.Replace("x", "");
                     string LeveeDeDoute = CoupPGN[1..^2];
                     // On ne retient que les coups LÉGAUX : une pièce clouée n'est pas candidate (et le PGN ne la mentionne pas)
-                    foreach (var (source, destination) in LogiqueMouvements.CoupsLegaux())
+                    foreach (var (source, destination) in Regles.CoupsLegaux(position))
                     {
-                        if (destination != CaseDestination || PiecesEchiquier[RenvoieCaseIndex120(source)] != pieceQuiJoue)
+                        if (destination != CaseDestination || position.Pieces[RenvoieCaseIndex120(source)] != pieceQuiJoue)
                             continue;
                         if (LeveeDeDoute.All(c => source.Contains(c)))     // chaque caractère de la levée de doute correspond à la case de départ
                             CaseSource = source;
@@ -421,14 +434,14 @@ namespace BrunoGUI_GenII
                         if (couleurQuiJoue == ColorPiece.Blanc)
                         {       // Le Pion est Blanc
                             pieceQuiJoue = TypePiece.PionBlanc;
-                            CaseSource = PiecesEchiquier[RenvoieCaseIndex120(CaseDestination) - 10] == TypePiece.PionBlanc ?
+                            CaseSource = position.Pieces[RenvoieCaseIndex120(CaseDestination) - 10] == TypePiece.PionBlanc ?
                                 LogiqueMouvements.NomCaseAlgebrique(RenvoieCaseIndex120(CaseDestination) - 10) : // Déplacement d'une case
                                 LogiqueMouvements.NomCaseAlgebrique(RenvoieCaseIndex120(CaseDestination) - 20); // Déplacement de 2 cases
                         }
                         else
                         {   // Le Pion est Noir
                             pieceQuiJoue = TypePiece.PionNoir;
-                            CaseSource = PiecesEchiquier[RenvoieCaseIndex120(CaseDestination) + 10] == TypePiece.PionNoir ?
+                            CaseSource = position.Pieces[RenvoieCaseIndex120(CaseDestination) + 10] == TypePiece.PionNoir ?
                                 LogiqueMouvements.NomCaseAlgebrique(RenvoieCaseIndex120(CaseDestination) + 10) : // Déplacement d'une case
                                 LogiqueMouvements.NomCaseAlgebrique(RenvoieCaseIndex120(CaseDestination) + 20); // Déplacement de 2 cases
                         }
@@ -437,12 +450,11 @@ namespace BrunoGUI_GenII
                 if (string.IsNullOrWhiteSpace(CaseSource) || string.IsNullOrWhiteSpace(CaseDestination)
                     || RenvoieCaseIndex120(CaseSource) < 0 || RenvoieCaseIndex120(CaseDestination) < 0)
                 {   // Coup illisible (cases non déterminées) : rien n'est joué
-                    return false;
+                    return null;
                 }
-                LogiqueMouvements.ExecutionCoup(CaseSource, CaseDestination, promotion);   // (jamais de choix demandé au joueur)
-                return LogiqueMouvements.CoupValide;    // false : coup illégal dans cette position
+                return (CaseSource, CaseDestination, promotion);    // (légalité vérifiée par DecodeCoupPgn)
             }
-            return false;
+            return null;
         }
 
     public class SaisieBalises : KryptonForm

@@ -154,12 +154,7 @@ namespace BrunoGUI_GenII
             partie.Commencer(Joueur.Humain, Joueur.Humain, depuisPosition);
             partie.RejeuPgn = true;     // pas de nulle automatique pendant le rejeu : c'est le résultat du PGN qui compte
             string? coupIllisible = null;
-            int demiCoupsJoues = 0;
-            // Temps de pendule ([%clk] après chaque coup) : chaque coup note le temps de son camp et le dernier temps connu de l'autre
-            // (au départ : le temps initial de la balise TimeControl, s'il y en a une)
-            Cadence cadence = Cadence.Lire(pgn.TimeControl);
-            TimeSpan? tempsBlancs = cadence.EstSansPendule ? null : cadence.TempsInitial, tempsNoirs = tempsBlancs;
-            Evaluation? evaluationAvant = null;     // [%eval] du coup précédent : évaluation de la position avant le coup
+            DonneesDuPgn donnees = new(pgn);
             try
             {
                 foreach (string element in ElementsDesCoups(pgn.CoupsPartiePGN))  // numéros de coups et résultat compris (ignorés)
@@ -170,39 +165,8 @@ namespace BrunoGUI_GenII
                         coupIllisible = element;
                         break;
                     }
-                    if (GestionPartiePgn.EstNumeroOuResultat(element))
-                        continue;
-                    TimeSpan? temps = Element(pgn.TempsCoups, demiCoupsJoues);
-                    Coup coup = ListeCoups[^1];
-                    coup.TempsReflexion = Element(pgn.TempsReflexion, demiCoupsJoues);
-                    coup.Annotation = Element(pgn.Annotations, demiCoupsJoues) ?? "";
-                    // [%auto] : annotation posée par une analyse de BrunoGUI, de nouveau "proposée" (plus pâle, remplaçable par une
-                    // nouvelle analyse) ; sans cette marque, l'annotation est celle d'un joueur ou d'un auteur : jamais remplacée
-                    coup.AnnotationProposee = coup.Annotation != "" && Element(pgn.AnnotationsAuto, demiCoupsJoues);
-                    coup.CommentaireAuto = Element(pgn.CommentairesAuto, demiCoupsJoues);     // ([%autocom] : écrit par une analyse de BrunoGUI)
-                    coup.CommentaireTactique = Element(pgn.CommentairesTactiques, demiCoupsJoues);   // ([%tac] : sa partie essentielle)
-                    coup.FlechesAuteur = Element(pgn.FlechesAuteur, demiCoupsJoues);     // ([%cal] de l'auteur, ChessBase…)
-                    // ([%cal R…] du bloc de l'analyse : la menace ; "Re5g6" → "e5g6")
-                    coup.MenaceUci = Element(pgn.FlechesMenace, demiCoupsJoues)?.Split(',')[0] is { Length: 5 } fleche ? fleche[1..] : null;
-                    RangeAnalyseLue(coup, fenAvant, Element(pgn.Commentaires, demiCoupsJoues), Element(pgn.Evaluations, demiCoupsJoues),
-                                    Element(pgn.Variantes, demiCoupsJoues), evaluationAvant);
-                    if (Element(pgn.Appreciations, demiCoupsJoues) is int niveau)
-                    {   // appréciation écrite en symbole ($18) : son texte ("Gain Blanc") revient à la fin du commentaire de l'analyse
-                        string appreciation = JugementCoups.TexteAppreciation(niveau, coup.EvaluationApres ?? new Evaluation(0, null));
-                        coup.NiveauAppreciation = niveau;
-                        coup.CommentaireAuto = coup.CommentaireAuto == null ? appreciation : coup.CommentaireAuto + ". " + appreciation;
-                    }
-                    evaluationAvant = coup.EvaluationApres;
-                    demiCoupsJoues++;
-                    if (temps != null && coup.EstCoupBlanc)
-                        tempsBlancs = temps;
-                    else if (temps != null)
-                        tempsNoirs = temps;
-                    if (tempsBlancs != null || tempsNoirs != null)
-                    {
-                        coup.TempsBlancs = tempsBlancs;
-                        coup.TempsNoirs = tempsNoirs;
-                    }
+                    if (!GestionPartiePgn.EstNumeroOuResultat(element))
+                        donnees.Range(ListeCoups[^1], fenAvant);
                 }
             }
             finally
@@ -210,7 +174,88 @@ namespace BrunoGUI_GenII
                 partie.RejeuPgn = false;
             }
             partie.PasserEnLectureSeule();
-            return new ResultatChargementPgn(fenIncomplete, coupIllisible, demiCoupsJoues);
+            return new ResultatChargementPgn(fenIncomplete, coupIllisible, donnees.DemiCoups);
+        }
+
+        public static (List<Coup> Coups, ResultatChargementPgn Resultat) CoupsDuPgn(PartieEchecsPGN pgn)
+        {   // Les coups d'une partie PGN, rejoués sur une position à part, sans toucher à la partie ni rien dessiner (analyse d'un
+            // fichier en arrière-plan) : les mêmes objets Coup que ChargerPartiePgn, jusqu'au premier coup illisible ou illégal
+            List<Coup> coups = [];
+            bool fenIncomplete = false;
+            Position position = PositionDepuisFen(FenDepart);
+            if (!string.IsNullOrWhiteSpace(pgn.Fen))
+            {
+                if (EstFenComplete(pgn.Fen))
+                {
+                    position = PositionDepuisFen(NormaliseFen(pgn.Fen));
+                    coups.Add(Coup.PositionDeDepart(NormaliseFen(pgn.Fen)));
+                }
+                else
+                    fenIncomplete = true;
+            }
+            string? coupIllisible = null;
+            DonneesDuPgn donnees = new(pgn);
+            foreach (string element in ElementsDesCoups(pgn.CoupsPartiePGN))
+            {
+                if (string.IsNullOrWhiteSpace(element) || GestionPartiePgn.EstNumeroOuResultat(element))
+                    continue;
+                string fenAvant = Regles.Fen(position);
+                if (GestionPartiePgn.DecodeCoupPgn(position, element) is not var (source, destination, promotion))
+                {
+                    coupIllisible = element;
+                    break;
+                }
+                Coup coup = JoueEtNote(position, source, destination, promotion).Coup;
+                coups.Add(coup);
+                donnees.Range(coup, fenAvant);
+            }
+            return (coups, new ResultatChargementPgn(fenIncomplete, coupIllisible, donnees.DemiCoups));
+        }
+
+        private sealed class DonneesDuPgn(PartieEchecsPGN pgn)
+        {   // Ce que le PGN dit de chaque coup (temps, annotation, commentaires, analyse), rangé dans le Coup au fur et à mesure du rejeu
+            public int DemiCoups { get; private set; }
+            // Temps de pendule ([%clk] après chaque coup) : chaque coup note le temps de son camp et le dernier temps connu de l'autre
+            // (au départ : le temps initial de la balise TimeControl, s'il y en a une)
+            private TimeSpan? _tempsBlancs = TempsInitial(pgn), _tempsNoirs = TempsInitial(pgn);
+            private static TimeSpan? TempsInitial(PartieEchecsPGN pgn) =>
+                Cadence.Lire(pgn.TimeControl) is { EstSansPendule: false } cadence ? cadence.TempsInitial : null;
+            private Evaluation? _evaluationAvant;      // [%eval] du coup précédent : évaluation de la position avant le coup
+
+            public void Range(Coup coup, string fenAvant)
+            {
+                int n = DemiCoups;
+                TimeSpan? temps = Element(pgn.TempsCoups, n);
+                coup.TempsReflexion = Element(pgn.TempsReflexion, n);
+                coup.Annotation = Element(pgn.Annotations, n) ?? "";
+                // [%auto] : annotation posée par une analyse de BrunoGUI, de nouveau "proposée" (plus pâle, remplaçable par une
+                // nouvelle analyse) ; sans cette marque, l'annotation est celle d'un joueur ou d'un auteur : jamais remplacée
+                coup.AnnotationProposee = coup.Annotation != "" && Element(pgn.AnnotationsAuto, n);
+                coup.CommentaireAuto = Element(pgn.CommentairesAuto, n);     // ([%autocom] : écrit par une analyse de BrunoGUI)
+                coup.CommentaireTactique = Element(pgn.CommentairesTactiques, n);   // ([%tac] : sa partie essentielle)
+                coup.FlechesAuteur = Element(pgn.FlechesAuteur, n);     // ([%cal] de l'auteur, ChessBase…)
+                // ([%cal R…] du bloc de l'analyse : la menace ; "Re5g6" → "e5g6")
+                coup.MenaceUci = Element(pgn.FlechesMenace, n)?.Split(',')[0] is { Length: 5 } fleche ? fleche[1..] : null;
+                RangeAnalyseLue(coup, fenAvant, Element(pgn.Commentaires, n), Element(pgn.Evaluations, n),
+                                Element(pgn.Variantes, n), _evaluationAvant);
+                if (Element(pgn.Appreciations, n) is int niveau)
+                {   // appréciation écrite en symbole ($18) : son texte ("Gain Blanc") revient à la fin du commentaire de l'analyse
+                    string appreciation = JugementCoups.TexteAppreciation(niveau, coup.EvaluationApres ?? new Evaluation(0, null));
+                    coup.NiveauAppreciation = niveau;
+                    coup.CommentaireAuto = coup.CommentaireAuto == null ? appreciation : coup.CommentaireAuto + ". " + appreciation;
+                }
+                _evaluationAvant = coup.EvaluationApres;
+                DemiCoups++;
+                if (temps != null && coup.EstCoupBlanc)
+                    _tempsBlancs = temps;
+                else if (temps != null)
+                    _tempsNoirs = temps;
+                if (_tempsBlancs != null || _tempsNoirs != null)
+                {
+                    coup.TempsBlancs = _tempsBlancs;
+                    coup.TempsNoirs = _tempsNoirs;
+                }
+            }
         }
 
         private static T? Element<T>(List<T>? liste, int index) =>
