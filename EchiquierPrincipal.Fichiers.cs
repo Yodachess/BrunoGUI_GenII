@@ -49,9 +49,11 @@ namespace BrunoGUI_GenII
         {   // --- Affiche la boîte de dialogue et traite le fichier PGN sélectionné  ---
             // Ouvrir un fichier ne change pas la partie en cours (ni la réflexion du moteur) : seul le choix d'une partie
             // dans la liste la remplace (ChargerPartieDepuisPgn). "Annuler" ne change donc rien
-            if (ChargerPartiesPgn.ShowDialog() != DialogResult.OK)
-                return;
-            string cheminFichier = ChargerPartiesPgn.FileName;
+            if (ChargerPartiesPgn.ShowDialog() == DialogResult.OK)
+                OuvreListePartiesPgn(ChargerPartiesPgn.FileName);
+        }
+        private void OuvreListePartiesPgn(string cheminFichier)
+        {   // La liste des parties du fichier (aussi à la fin de l'analyse d'un fichier : le fichier analysé)
             try
             {
                 string fullPath = Path.GetFullPath(cheminFichier);
@@ -68,7 +70,7 @@ namespace BrunoGUI_GenII
             }
             catch (Exception ex)
             {   // fichier illisible ou contenu inattendu (erreurs variées : lecture, décodage) : expliqué et noté dans le journal
-                Journal.Erreur("Ouverture du fichier PGN " + ChargerPartiesPgn.FileName, ex);
+                Journal.Erreur("Ouverture du fichier PGN " + cheminFichier, ex);
                 KryptonMessageBox.Show(T("Impossible de lire ce fichier PGN :\n{0}", ex.Message), T("Ouvrir fichier PGN"),
                     KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
             }

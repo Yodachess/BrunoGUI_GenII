@@ -24,11 +24,71 @@ namespace BrunoGUI_GenII
     public sealed class MoteurAuxiliaire : IDisposable
     {
         private readonly string _chemin;
+        private readonly int _threads, _hachage;
         private readonly object _verrou = new();    // une seule question à la fois
         private Process? _processus;
         private volatile bool _arrete;              // échec du démarrage ou Dispose : plus aucune question
+        private int _variantes = 1;                 // MultiPV envoyé au moteur
 
-        public MoteurAuxiliaire(string chemin) => _chemin = chemin;
+        // threads, hachage : 1 et 16 Mo pour mesurer la difficulté (un joueur qui repart de zéro) ; ceux de l'utilisateur pour
+        // l'analyse d'un fichier en arrière-plan (Analyse)
+        public MoteurAuxiliaire(string chemin, int threads = 1, int hachage = 16)
+        {
+            _chemin = chemin;
+            _threads = Math.Max(1, threads);
+            _hachage = Math.Max(16, hachage);
+        }
+
+        public void NouvellePartie()
+        {   // Table de hachage vidée (Analyse la garde d'une position à l'autre de la même partie, comme l'analyse de partie)
+            lock (_verrou)
+            {
+                if (Demarre() is Process processus)
+                    EnvoieSansErreur(processus, "ucinewgame");
+            }
+        }
+
+        public (LigneAnalyse? Meilleure, LigneAnalyse? Seconde)? Analyse(string fen, int profondeur, int dureeMaxMs, int variantes = 2)
+        {   // Analyse de la position comme l'analyse de partie ("go depth … movetime …", au moins 2 variantes : la 2e dit si le
+            // meilleur coup était le seul bon) : la meilleure et la 2e variante, du point de vue des Blancs ; null si le moteur ne
+            // répond pas. La table de hachage est gardée (NouvellePartie la vide)
+            lock (_verrou)
+            {
+                if (Demarre() is not Process processus)
+                    return null;
+                try
+                {
+                    if (variantes != _variantes)
+                    {
+                        Envoie(processus, $"setoption name MultiPV value {variantes}");
+                        _variantes = variantes;
+                    }
+                    Position position = LogiqueMouvements.PositionDepuisFen(fen);
+                    SuiviAnalyse suivi = new();
+                    Envoie(processus, "position fen " + fen);
+                    Envoie(processus, $"go depth {profondeur} movetime {Math.Max(1000, dureeMaxMs)}");
+                    // Sécurité : passé le délai (et une marge), "stop" (le moteur répond alors bestmove)
+                    using Timer arret = new(_ => EnvoieSansErreur(processus, "stop"), null, Math.Max(1000, dureeMaxMs) + 5000, Timeout.Infinite);
+                    string? ligne;
+                    while ((ligne = processus.StandardOutput.ReadLine()) != null && !ligne.StartsWith("bestmove"))
+                    {
+                        LigneUci info = LigneUci.Analyser(ligne);
+                        if (info.Profondeur != null)
+                            suivi.Ajouter(info, position);
+                    }
+                    if (ligne != null)
+                        return (suivi.Meilleure, suivi.Seconde);
+                    Arrete();
+                }
+                catch (Exception ex) when (ex is IOException or InvalidOperationException)
+                {
+                    if (!_arrete)
+                        Journal.Erreur("Moteur de l'analyse d'un fichier", ex);
+                    Arrete();
+                }
+                return null;
+            }
+        }
 
         public List<(int Profondeur, string Coup)> MeilleursCoupsParProfondeur(string fen, int profondeurMax, int delaiMaxMs = 15000)
         {   // Meilleur coup (1re variante) annoncé à chaque profondeur jusqu'à profondeurMax ; liste vide si le moteur ne répond pas
@@ -129,8 +189,9 @@ namespace BrunoGUI_GenII
                 }) ?? throw new InvalidOperationException("processus non lancé");
                 _processus = processus;
                 Envoie(processus, "uci");
-                Envoie(processus, "setoption name Threads value 1");
-                Envoie(processus, "setoption name Hash value 16");
+                Envoie(processus, $"setoption name Threads value {_threads}");
+                Envoie(processus, $"setoption name Hash value {_hachage}");
+                _variantes = 1;
                 Envoie(processus, "isready");
                 string? ligne;
                 while ((ligne = processus.StandardOutput.ReadLine()) != null && ligne != "readyok") { }

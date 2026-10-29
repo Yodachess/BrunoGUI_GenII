@@ -91,6 +91,8 @@ namespace BrunoGUI_GenII
             ActiveSon.Width = Math.Max(ActiveSon.Width, ActiveSon.PreferredSize.Width);
             TraductionFenetres.TraduitDialogues(SauvegardeFen, SauvegardeFichier, OuvertureChoixBibliotheque, OuvertureChoixMoteur, ChargerPartiesPgn, ChargerPositionFen);
             CreeMenuLangue();
+            _menuAnalyseFichier = new ToolStripMenuItem(T("Analyser un fichier PGN…"), null, (s, e) => AnalyseFichier_Click());
+            AnalyseMenu.DropDownItems.Add(_menuAnalyseFichier);
             AnalyseMenu.DropDownItems.Add(new ToolStripMenuItem(T("Durées de l'analyse de partie…"), Properties.Resources.Pendule, (s, e) => ChoisitDureesAnalyse()));
             nouvellePartieToolStripMenuItem.DropDownOpening += (s, e) => MetAJourMenus();
             AnalyseMenu.DropDownOpening += (s, e) => MetAJourMenus();
@@ -1270,6 +1272,8 @@ namespace BrunoGUI_GenII
             MoteurUci.Quitte();     // arrête le processus du moteur (de force s'il ignore "quit", comme Sargon)
             _moteurAnalyse.Quitte();        // le Stockfish d'analyse
             _moteurAuxiliaire?.Dispose();   // et celui de l'analyse de partie, si elle était en cours
+            _arretAnalyseFichier?.Cancel(); // et ceux de l'analyse d'un fichier (les parties déjà finies sont dans le fichier)
+            _analyseurDeFichier?.Dispose();
         }
         private void SauvePreferences()
         {   // Enregistre les réglages faits dans l'interface dans BrunoGUI.preferences.ini (à côté de l'exécutable)
