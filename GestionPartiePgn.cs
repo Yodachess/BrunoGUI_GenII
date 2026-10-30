@@ -154,7 +154,7 @@ namespace BrunoGUI_GenII
         public static string BilanDepuisLigne(string ligne) =>
             ligne.Replace(" ; ", "\n").Replace(" : ", "\n   ");
 
-        public const int DemiCoupsVarianteCourte = 4;       // longueur des variantes du moteur dans le fichier PGN (ChessBase : 2 à 6)
+        public const int DemiCoupsVarianteCourte = 8;       // longueur des variantes du moteur dans le fichier PGN (ChessBase : 2 à 6 ; 4 jusqu'au 2026-10-30, trop court à la relecture)
 
         public static string VarianteCourte(string varianteFr, Evaluation? evaluation)
         {   // La variante du moteur limitée à DemiCoupsVarianteCourte demi-coups, en lettres anglaises, avec le symbole NAG de son
