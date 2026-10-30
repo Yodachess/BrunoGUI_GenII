@@ -1181,13 +1181,13 @@ public static class Scenario
         Verifie("PGN affiché après analyse : ni %eval ni variante",
             !pgnAnalyseAffiche.Contains("%eval") && !pgnAnalyseAffiche.Contains('(') && pgnAnalyseAffiche.Contains("2. Qh5?! Nc6"),
             pgnAnalyseAffiche.Replace("\n", " "));
-        string varianteCourte = GestionPartiePgn.VarianteCourte("17 ... Db6 18. Dd3 c5 19. Dg3 Rh8 20. dxc5", new Evaluation(10, null));
+        string varianteCourte = GestionPartiePgn.VarianteCourte("17 ... Db6 18. Dd3 c5 19. Dg3 Rh8 20. dxc5 Fe6 21. Tfe1 Tc8", new Evaluation(10, null));
         string fenApresCoupBlanc = L.FenDepart.Replace(" w ", " b ");
         Coup moinsBon = new() { Fen = fenApresCoupBlanc, EvaluationMeilleur = new Evaluation(55, null), EvaluationApres = new Evaluation(7, null), PerteAnalyse = 0.089 };
         Coup moinsBonDecide = new() { Fen = fenApresCoupBlanc, EvaluationMeilleur = new Evaluation(700, null), EvaluationApres = new Evaluation(500, null), PerteAnalyse = 0.06 };
         Coup presqueAussiBon = new() { Fen = fenApresCoupBlanc, EvaluationMeilleur = new Evaluation(40, null), EvaluationApres = new Evaluation(30, null), PerteAnalyse = 0.02 };
-        Verifie("PGN : variante du moteur courte (4 demi-coups) avec le symbole de son évaluation ; alternative d'un coup nettement moins bon, pas dans une partie décidée ni pour un écart minime",
-            varianteCourte == "17... Qb6 $10 18. Qd3 c5 19. Qg3" && GestionPartiePgn.AlternativeAMontrer(moinsBon)
+        Verifie("PGN : variante du moteur courte (8 demi-coups) avec le symbole de son évaluation ; alternative d'un coup nettement moins bon, pas dans une partie décidée ni pour un écart minime",
+            varianteCourte == "17... Qb6 $10 18. Qd3 c5 19. Qg3 Kh8 20. dxc5 Be6 21. Rfe1" && GestionPartiePgn.AlternativeAMontrer(moinsBon)
             && !GestionPartiePgn.AlternativeAMontrer(moinsBonDecide) && !GestionPartiePgn.AlternativeAMontrer(presqueAussiBon), varianteCourte);
         const string bilanTexte = "Blancs — précision 87 %\n   1 imprécision, 0 erreur, 2 gaffes\nNoirs — précision 62 %\n   0 imprécision, 1 erreur, 0 gaffe";
         string pgnBilan = GestionPartiePgn.RetourneContenuPgn(new PartieEchecsPGN { Result = "1-0", Bilan = bilanTexte }, "Intl", pourFichier: true);
