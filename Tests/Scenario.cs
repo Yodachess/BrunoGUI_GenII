@@ -841,6 +841,126 @@ public static class Scenario
             }
         }
 
+        // ═══════════════ Robustesse : FEN et PGN abîmés au hasard ═══════════════
+        // Des milliers de textes abîmés (graine fixe : les mêmes à chaque exécution) : refus propre ou lecture, jamais d'exception ;
+        // ce qui est accepté se joue, s'écrit et se relit à l'identique
+        Random hasard = new(20261030);
+        string Abime(string texte, string alphabet, int changements)
+        {   // Caractère remplacé, retiré ou ajouté, morceau répété, texte coupé
+            System.Text.StringBuilder abime = new(texte);
+            for (int k = 0; k < changements && abime.Length > 0; k++)
+            {
+                int i = hasard.Next(abime.Length);
+                switch (hasard.Next(9))
+                {
+                    case 0: case 1: abime[i] = alphabet[hasard.Next(alphabet.Length)]; break;
+                    case 2: case 3: abime.Remove(i, 1); break;
+                    case 4: case 5: abime.Insert(i, alphabet[hasard.Next(alphabet.Length)]); break;
+                    case 6: case 7: abime.Insert(i, abime.ToString(i, Math.Min(hasard.Next(1, 12), abime.Length - i))); break;
+                    default: abime.Length = i; break;
+                }
+            }
+            return abime.ToString();
+        }
+        string Probleme(List<string> problemes) => problemes.Count == 0 ? "" : $" ; 1er : {problemes[0].Replace("\n", " ")}";
+
+        string[] fensDeBase = [L.FenDepart,
+            "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",      // Kiwipete
+            "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1",
+            "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",
+            "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8",
+            "rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3"];
+        int fensEssayees = complet ? 25000 : 10000, fensAcceptees = 0;
+        List<string> problemesFen = [];
+        for (int k = 0; k < fensEssayees; k++)
+        {
+            string fen = Abime(fensDeBase[k % fensDeBase.Length], "pnbrqkPNBRQK12345678/ -wKQkqabcdefgh0123456789x", 1 + hasard.Next(3));
+            try
+            {
+                if (ChargementPartie.ErreurFen(fen) != null)
+                    continue;
+                fensAcceptees++;
+                Position position = L.PositionDepuisFen(fen);
+                string relue = Regles.Fen(position);
+                if (ChargementPartie.ErreurFen(relue) != null || Regles.Fen(L.PositionDepuisFen(relue)) != relue)
+                    problemesFen.Add($"{fen} → {relue} : relue autrement");
+                foreach ((string source, string destination) in Regles.CoupsLegaux(position))
+                {   // chaque coup légal, joué et noté sur une copie, mène à une position que la FEN accepte
+                    Position apres = position.Copier();
+                    L.JoueEtNote(apres, source, destination, L.TypePiece.Vide);
+                    if (ChargementPartie.ErreurFen(Regles.Fen(apres)) is string erreur)
+                        problemesFen.Add($"{fen}, {source}{destination} → {Regles.Fen(apres)} : {erreur}");
+                }
+            }
+            catch (Exception ex)
+            {
+                problemesFen.Add($"{fen} : {ex.GetType().Name} {ex.Message}");
+            }
+        }
+        Verifie($"Robustesse : {fensEssayees} FEN abîmées au hasard, refusées proprement ou jouables (jamais d'exception)",
+            problemesFen.Count == 0, $"{fensAcceptees} acceptées, {problemesFen.Count} problème(s){Probleme(problemesFen)}");
+
+        string[] pgnsDeBase = [.. partiesAnnotees,
+            $"[Event \"x\"]\n[SetUp \"1\"]\n[FEN \"{fenNoirsAuTrait}\"]\n\n3... Nf6 4. Bc4 Bc5 5. c3 d6 *",
+            "[Event \"x\"]\n[Result \"1-0\"]\n\n1. e4 d5 2. e5 f5 3. exf6 {e.p.} gxf6 4. Qh5+ Kd7 5. Qxh7 {[%eval 3.2]} a6 6. Qxh8 a5 7. Qxg8 a4 8. h4 a3 9. h5 axb2 10. h6 bxa1=Q 11. h7 Qxa2 12. h8=N 1-0",
+            "[Event \"x\"]\n[TimeControl \"300+3\"]\n\n1. e4 {[%clk 0:05:01]} e5 {[%clk 0:05:00] [%emt 0:00:02]} 2. Nf3 $1 (2. f4 exf4 (2... d5 {[%eval -0.2]}) 3. Nf3) Nc6 ; fin\n3. Bb5?! a6 $6 4. O-O {[%cal Re1e8,Gb5c6]} * "];
+        int pgnsEssayes = complet ? 1500 : 600, pgnsLus = 0;
+        List<string> problemesPgn = [];
+        for (int k = 0; k < pgnsEssayes; k++)
+        {
+            string texteAbime = Abime(pgnsDeBase[k % pgnsDeBase.Length], "{}()[]$;!?.-+#=0123456789abcdefghKQRBNOx %\"\n*/", 1 + hasard.Next(5));
+            try
+            {
+                PartieEchecsPGN pgn = FichierPartiePgn.DecodePartiePGN(texteAbime);
+                var (coups, _) = ChargementPartie.CoupsDuPgn(pgn);
+                string ecrit = GestionPartiePgn.RetourneContenuPgn(pgn, "Intl", pourFichier: true, coups);
+                GestionPartiePgn.RetourneContenuPgn(pgn, "Fr", false, coups);
+                var (coupsRelus, relecture) = ChargementPartie.CoupsDuPgn(FichierPartiePgn.DecodePartiePGN(ecrit));
+                pgnsLus++;
+                if (relecture.CoupIllisible != null || string.Join(" ", coupsRelus.Select(c => c.Uci)) != string.Join(" ", coups.Select(c => c.Uci)))
+                    problemesPgn.Add($"{texteAbime} → {ecrit} : relu autrement ({relecture.CoupIllisible})");
+            }
+            catch (Exception ex)
+            {
+                problemesPgn.Add($"{texteAbime} : {ex.GetType().Name} {ex.Message}");
+            }
+        }
+        Verifie($"Robustesse : {pgnsEssayes} PGN abîmés au hasard, lus sans exception, écrits puis relus avec les mêmes coups",
+            problemesPgn.Count == 0, $"{pgnsLus} lus, {problemesPgn.Count} problème(s){Probleme(problemesPgn)}");
+
+        // (trouvé par l'essai ci-dessus) balise [Result] hors des quatre valeurs du format PGN : recopiée à la fin des coups, elle
+        // était relue comme un coup illisible
+        PartieEchecsPGN nulleAutrement = FichierPartiePgn.DecodePartiePGN("[Event \"x\"]\n[Result \"1/2\"]\n\n1. e4 e5 2. Nf3 Nc6");
+        PartieEchecsPGN resultatInconnu = FichierPartiePgn.DecodePartiePGN("[Event \"x\"]\n[Result \"1-=\"]\n\n1. e4 e5");
+        Verifie("Balise [Result] non standard : « 1/2 » lu comme nulle, valeur inconnue comme « * », aucun coup illisible",
+            nulleAutrement.Result == "1/2-1/2" && resultatInconnu.Result == "*"
+            && ChargementPartie.CoupsDuPgn(nulleAutrement).Resultat.CoupIllisible == null && ChargementPartie.CoupsDuPgn(resultatInconnu).Resultat.CoupIllisible == null,
+            $"« {nulleAutrement.Result} », « {resultatInconnu.Result} », illisible : {ChargementPartie.CoupsDuPgn(nulleAutrement).Resultat.CoupIllisible ?? "aucun"}");
+
+        // Fichiers aux octets abîmés (encodage, fins de ligne, marques UTF-8) : découpés en parties, chacune lue sans exception
+        string fichierAbime = Path.Combine(Path.GetTempPath(), $"BrunoGUI_robustesse_{Environment.ProcessId}.pgn");
+        byte[] octetsDeBase = System.Text.Encoding.UTF8.GetBytes(string.Join("\r\n\r\n", pgnsDeBase) + "\r\n[Event \"Défense\"]\r\n\r\n1. e4 {pondérée} *");
+        List<string> problemesFichier = [];
+        for (int k = 0; k < (complet ? 150 : 60); k++)
+        {
+            byte[] octets = (byte[])octetsDeBase.Clone();
+            for (int n = 1 + hasard.Next(20); n > 0; n--)
+                octets[hasard.Next(octets.Length)] = (byte)(hasard.Next(4) == 0 ? new byte[] { 0xEF, 0xBB, 0xBF, 0xE9, (byte)'\n', (byte)'\r', (byte)'[' }[hasard.Next(7)] : hasard.Next(256));
+            try
+            {
+                File.WriteAllBytes(fichierAbime, octets);
+                foreach (string partieDuFichierAbime in FichierPartiePgn.DecodeFichierPGN(fichierAbime))
+                    ChargementPartie.CoupsDuPgn(FichierPartiePgn.DecodePartiePGN(partieDuFichierAbime));
+            }
+            catch (Exception ex)
+            {
+                problemesFichier.Add($"essai {k} : {ex.GetType().Name} {ex.Message}");
+            }
+        }
+        File.Delete(fichierAbime);
+        Verifie("Robustesse : fichiers PGN aux octets abîmés au hasard, découpés et lus sans exception",
+            problemesFichier.Count == 0, $"{problemesFichier.Count} problème(s){Probleme(problemesFichier)}");
+
         // Fichier aux encodages mélangés (cas réel : BrunoAllGames.pgn) : marque UTF-8 au début, lignes UTF-8 et quelques lignes Latin-1
         byte[] fichierMelange = [.. new byte[] { 0xEF, 0xBB, 0xBF },
             .. System.Text.Encoding.UTF8.GetBytes("[Event \"Défense\"]\r\n[White \"Müller\"]\r\n\r\n1. e4 {pondérée} e5\r\n"),

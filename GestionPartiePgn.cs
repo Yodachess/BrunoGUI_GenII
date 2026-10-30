@@ -250,7 +250,15 @@ namespace BrunoGUI_GenII
             return string.Join(" ", mots);
         }
         private static string ResultatPgn(PartieEchecsPGN partie) =>
-            string.IsNullOrWhiteSpace(partie.Result) ? "*" : partie.Result;     // partie en cours : "*" (exigé par le format PGN)
+            string.IsNullOrWhiteSpace(partie.Result) ? "*" : ResultatNormalise(partie.Result);     // partie en cours : "*" (exigé par le format PGN)
+        public static string ResultatNormalise(string resultat) => resultat.Trim() switch
+        {   // Une des quatre valeurs du format PGN : écrite telle quelle à la fin des coups, toute autre serait relue comme un coup
+            // illisible ; les nulles écrites autrement par certains logiciels ("1/2", "½-½") sont reconnues, le reste devient "*"
+            "1-0" or "0-1" or "1/2-1/2" or "*" => resultat.Trim(),
+            "1/2" or "½-½" or "½" or "0.5-0.5" or "=" => "1/2-1/2",
+            "" => "",
+            _ => "*"
+        };
         public static string RetourneEntetePgn(PartieEchecsPGN partieEnCours, IReadOnlyList<Coup>? coups = null)
         {   // Retourne l'en-tête de la partie au format PGN, avec les balises obligatoires et optionnelles
             coups ??= ListeCoups;

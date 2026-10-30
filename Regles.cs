@@ -48,7 +48,7 @@ namespace BrunoGUI_GenII
 
         public static void LireFenDans(Position p, string fen)
         {   // Lit la FEN dans la position (Echec et EchecetMat, absents de la FEN, ne sont pas touchés)
-            string[] champs = fen.Split(' ');
+            string[] champs = fen.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);  // (espaces multiples ou tabulations acceptés, comme ErreurFen)
             p.QuiJoue = champs[1] == "w" ? ColorPiece.Blanc : ColorPiece.Noir;
             // numéro du coup : x si c'est aux Blancs de jouer, x + 0.5 si c'est aux Noirs
             p.NombreCoupsJoues = p.QuiJoue == ColorPiece.Blanc ? int.Parse(champs[5]) : int.Parse(champs[5]) + 0.5f;
