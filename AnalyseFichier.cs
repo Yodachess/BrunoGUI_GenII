@@ -90,7 +90,8 @@ namespace BrunoGUI_GenII
                     break;
                 // (moteur qui ne répond pas : la position est sautée, comme une position sans score)
                 analyse.Enregistre(index, reponse?.Meilleure, reponse?.Meilleure != null ? reponse?.Seconde : null);
-                Mesures(analyse, arret);
+                // (comme l'analyse de partie ; ce thread n'a pas de contexte de synchronisation : attendre ici ne bloque rien)
+                _mesures.Mesure(analyse, () => !arret.IsCancellationRequested).GetAwaiter().GetResult();
                 faites++;
             }
             if (arret.IsCancellationRequested)
@@ -101,32 +102,6 @@ namespace BrunoGUI_GenII
             if (string.IsNullOrWhiteSpace(pgn.ECO) && ouvertures?.DerniereConnue(coups) is (_, Ouverture ouverture))
                 pgn.ECO = ouverture.Eco;
             return coups;
-        }
-
-        private void Mesures(AnalyseDePartie analyse, CancellationToken arret)
-        {   // Comme EchiquierPrincipal.MesureDifficultes : profondeur où les bons coups sont trouvés, prises tentantes qui perdaient,
-            // menaces (coup nul) ; par le 2e moteur, qui repart de zéro à chaque question
-            foreach ((int index, string fen, string coup) in analyse.DifficultesAMesurer().ToList())
-            {
-                if (arret.IsCancellationRequested)
-                    return;
-                analyse.EnregistreDifficulte(index, JugementCoups.ProfondeurDecouverte(
-                    _mesures.MeilleursCoupsParProfondeur(fen, JugementCoups.ProfondeurMesureDifficulte), coup));
-            }
-            foreach ((int index, string fen, string prise) in analyse.PiegesAChercher())
-            {
-                if (arret.IsCancellationRequested)
-                    return;
-                var resultat = _mesures.Cherche(fen, prise, JugementCoups.ProfondeurPiege);
-                analyse.EnregistrePiege(index, prise, resultat?.Centipions, resultat?.MatEn, resultat?.Variante);
-            }
-            foreach ((int index, string fenCoupNul) in analyse.MenacesAChercher())
-            {
-                if (arret.IsCancellationRequested)
-                    return;
-                var resultat = _mesures.Cherche(fenCoupNul, null, JugementCoups.ProfondeurMenace);
-                analyse.EnregistreMenace(index, resultat?.Centipions, resultat?.MatEn, resultat?.Variante);
-            }
         }
 
         public void Dispose()

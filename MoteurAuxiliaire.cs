@@ -8,7 +8,8 @@
 // Moteur auxiliaire de l'analyse de partie, sans interface graphique : un 2e processus Stockfish, indépendant du moteur
 // principal, interrogé de façon SYNCHRONE (à appeler hors du thread de l'interface, ex : Task.Run)
 // └─ Classe "MoteurAuxiliaire"
-//              └─ "MeilleursCoupsParProfondeur"   le meilleur coup à chaque profondeur, table de hachage vidée avant
+//              ├─ "MeilleursCoupsParProfondeur"   le meilleur coup à chaque profondeur, table de hachage vidée avant
+//              └─ "Mesure"                        difficulté, pièges et menaces d'une analyse de partie (commun aux deux analyses)
 // Pourquoi un 2e moteur : le principal analyse la partie de la fin vers le début, sa table de hachage connaît déjà les positions
 // suivantes et il "trouverait" tout de suite un coup difficile ; celui-ci repart de zéro (1 thread, petite table), comme un joueur.
 // Il est lancé à la première question et arrêté par Dispose (fin de l'analyse de partie), même au milieu d'une question.
@@ -17,7 +18,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace BrunoGUI_GenII
 {
@@ -167,6 +170,40 @@ namespace BrunoGUI_GenII
                     Arrete();
                 }
                 return null;
+            }
+        }
+
+        public async Task Mesure(AnalyseDePartie analyse, Func<bool> continuer)
+        {   // Les mesures devenues possibles après une position analysée (analyse de partie et analyse d'un fichier) : profondeur où
+            // les seuls bons coups sont trouvés, prises tentantes qui perdaient (pièges), menaces (coup nul). Chaque question part
+            // hors du thread de l'appelant, et sa réponse est enregistrée sur ce thread (celui de l'interface pour l'analyse de
+            // partie : rien ne touche l'analyse en même temps) ; arrêt dès que continuer() est faux (analyse interrompue)
+            foreach ((int index, string fen, string coup) in analyse.DifficultesAMesurer().ToList())
+            {   // (quelques dixièmes de seconde chacun)
+                if (!continuer())
+                    return;
+                List<(int, string)> meilleurs = await Task.Run(() => MeilleursCoupsParProfondeur(fen, JugementCoups.ProfondeurMesureDifficulte));
+                if (!continuer())
+                    return;
+                analyse.EnregistreDifficulte(index, JugementCoups.ProfondeurDecouverte(meilleurs, coup));
+            }
+            foreach ((int index, string fen, string prise) in analyse.PiegesAChercher())
+            {   // la prise tentante que le joueur n'a pas jouée : que donnait-elle ? (une ou deux secondes chacune)
+                if (!continuer())
+                    return;
+                var resultat = await Task.Run(() => Cherche(fen, prise, JugementCoups.ProfondeurPiege));
+                if (!continuer())
+                    return;
+                analyse.EnregistrePiege(index, prise, resultat?.Centipions, resultat?.MatEn, resultat?.Variante);
+            }
+            foreach ((int index, string fenCoupNul) in analyse.MenacesAChercher())
+            {   // la menace du coup joué : ce que son auteur jouerait si l'adversaire ne faisait rien (coup nul, environ 0,5 s)
+                if (!continuer())
+                    return;
+                var resultat = await Task.Run(() => Cherche(fenCoupNul, null, JugementCoups.ProfondeurMenace));
+                if (!continuer())
+                    return;
+                analyse.EnregistreMenace(index, resultat?.Centipions, resultat?.MatEn, resultat?.Variante);
             }
         }
 

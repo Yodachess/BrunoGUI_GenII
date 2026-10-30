@@ -190,32 +190,10 @@ namespace BrunoGUI_GenII
             AnalysePositionSuivante();
         }
         private async Task MesureDifficultes(AnalyseDePartie analyse)
-        {   // Seuls bons coups devenus jugeables : le 2e moteur dit à quelle profondeur il les trouve (quelques dixièmes de seconde
-            // chacun, hors du thread de l'interface ; le moteur principal attend, rien ne tourne en même temps)
-            if (_moteurAuxiliaire is not MoteurAuxiliaire moteur)
-                return;
-            foreach ((int index, string fen, string coup) in analyse.DifficultesAMesurer().ToList())
-            {
-                List<(int, string)> meilleurs = await Task.Run(() => moteur.MeilleursCoupsParProfondeur(fen, JugementCoups.ProfondeurMesureDifficulte));
-                if (_analyseDePartie != analyse)
-                    return;
-                analyse.EnregistreDifficulte(index, JugementCoups.ProfondeurDecouverte(meilleurs, coup));
-            }
-            // (pièges et menaces : dans les deux analyses depuis le 2026-10-29, ils ne coûtent que quelques secondes par partie)
-            foreach ((int index, string fen, string prise) in analyse.PiegesAChercher())
-            {   // la prise tentante que le joueur n'a pas jouée : que donnait-elle ? (une ou deux secondes chacune)
-                var resultat = await Task.Run(() => moteur.Cherche(fen, prise, JugementCoups.ProfondeurPiege));
-                if (_analyseDePartie != analyse)
-                    return;
-                analyse.EnregistrePiege(index, prise, resultat?.Centipions, resultat?.MatEn, resultat?.Variante);
-            }
-            foreach ((int index, string fenCoupNul) in analyse.MenacesAChercher())
-            {   // la menace du coup joué : ce que son auteur jouerait si l'adversaire ne faisait rien (coup nul, environ 0,5 s)
-                var resultat = await Task.Run(() => moteur.Cherche(fenCoupNul, null, JugementCoups.ProfondeurMenace));
-                if (_analyseDePartie != analyse)
-                    return;
-                analyse.EnregistreMenace(index, resultat?.Centipions, resultat?.MatEn, resultat?.Variante);
-            }
+        {   // Difficulté des seuls bons coups, pièges et menaces, par le 2e moteur (MoteurAuxiliaire.Mesure, commun avec l'analyse
+            // d'un fichier ; le moteur principal attend, rien ne tourne en même temps), arrêtées si l'analyse est interrompue
+            if (_moteurAuxiliaire is MoteurAuxiliaire moteur)
+                await moteur.Mesure(analyse, () => _analyseDePartie == analyse);
         }
         private void ChoisitDureesAnalyse()
         {   // Options > Durées de l'analyse de partie : valables dès la position suivante (même pendant une analyse)
