@@ -298,7 +298,7 @@ namespace BrunoGUI_GenII
                         PartiePGN.Black = ValeurBalise;
                         break;
                     case "Result":   //  Balise obligatoire
-                        PartiePGN.Result = ValeurBalise;
+                        PartiePGN.Result = GestionPartiePgn.ResultatNormalise(ValeurBalise);     // ("1/2" → "1/2-1/2", inconnu → "*")
                         break;
                     case "ECO":
                         PartiePGN.ECO = ValeurBalise;
