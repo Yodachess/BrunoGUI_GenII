@@ -1165,6 +1165,8 @@ namespace BrunoGUI_GenII
             //                réfutation, conseil (« — meilleur : … ») en gris ; captures de l'aide refaites
             // Version 1.31 = analyse d'un fichier PGN entier en arrière-plan (menu Analyse : parties cochées, résultat dans
             //                « <fichier>_analyse.pgn », reprise après une interruption, avancement sous l'échiquier)
+            // Version 1.32 = variantes du moteur plus longues dans le PGN (8 demi-coups) ; fiabilité : résultat PGN non standard
+            //                (« 1/2 ») relu sans coup illisible, FEN à espaces multiples, tests de robustesse, code simplifié
             // (le numéro de version vient du .csproj, <Version> : il n'est plus écrit ici)
             _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version " + VersionAffichee + "\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", T("A propos de"),
