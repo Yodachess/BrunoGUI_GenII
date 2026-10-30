@@ -26,6 +26,10 @@
       <DependentUpon>EchiquierPrincipal.cs</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <!-- Fichiers partiels de l'analyse de partie (AnalyseDePartie), rangés sous AnalysePartie.cs -->
+    <Compile Update="AnalysePartie.BonsCoups.cs;AnalysePartie.Tactique.cs;AnalysePartie.PiegesMenaces.cs">
+      <DependentUpon>AnalysePartie.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <!-- Le projet de tests a son propre .csproj : on l'exclut de l'application -->
