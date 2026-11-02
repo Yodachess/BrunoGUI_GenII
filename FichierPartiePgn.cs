@@ -521,8 +521,8 @@ namespace BrunoGUI_GenII
             TableauPartiesPgn.RowHeadersVisible = false;    // supprime la colonne d’entêtes de lignes
             foreach (var partie in listeParties)    // Ajout manuel des données ligne par ligne (par mesure de sécurité)
             {   // Crée une nouvelle ligne avec les données de la partie
-                int rowIndex = TableauPartiesPgn.Rows.Add(partie.White, partie.WhiteElo, partie.Black, partie.BlackElo, partie.Result, partie.CompteDePLy, 
-                    partie.ECO, partie.Tournoi, partie.Ronde, partie.Lieu, partie.Date);
+                int rowIndex = TableauPartiesPgn.Rows.Add(partie.White, partie.WhiteElo, partie.Black, partie.BlackElo, partie.Result, partie.CompteDePLy,
+                    partie.ACommentaires, partie.ECO, partie.Tournoi, partie.Ronde, partie.Lieu, partie.Date);
                 TableauPartiesPgn.Rows[rowIndex].Tag = partie;      // Ajoute l'objet PartieEchecsPgn comme 'Tag' de la ligne
             }
             // Mise en valeur des joueurs et du résultat (une seule police, créée une fois : avant, trois à chaque fichier chargé)

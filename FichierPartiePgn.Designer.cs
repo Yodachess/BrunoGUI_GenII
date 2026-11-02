@@ -24,6 +24,7 @@ namespace BrunoGUI_GenII
             gridEloNoir = new DataGridViewTextBoxColumn();
             gridResultat = new DataGridViewTextBoxColumn();
             gridNombreCoups = new DataGridViewTextBoxColumn();
+            gridCommentaires = new DataGridViewCheckBoxColumn();
             gridCodeEco = new DataGridViewTextBoxColumn();
             gridTournoi = new DataGridViewTextBoxColumn();
             gridRonde = new DataGridViewTextBoxColumn();
@@ -57,7 +58,7 @@ namespace BrunoGUI_GenII
             // 
             TableauPartiesPgn.BackgroundColor = Color.Silver;
             TableauPartiesPgn.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            TableauPartiesPgn.Columns.AddRange([gridJoueurBlanc, gridEloBlanc, gridJoueurNoir, gridEloNoir, gridResultat, gridNombreCoups, gridCodeEco, gridTournoi, gridRonde, gridSite, gridDate]);
+            TableauPartiesPgn.Columns.AddRange([gridJoueurBlanc, gridEloBlanc, gridJoueurNoir, gridEloNoir, gridResultat, gridNombreCoups, gridCommentaires, gridCodeEco, gridTournoi, gridRonde, gridSite, gridDate]);
             TableauPartiesPgn.Location = new Point(0, 33);
             TableauPartiesPgn.Name = "TableauPartiesPgn";
             TableauPartiesPgn.Size = new Size(933, 529);
@@ -97,7 +98,15 @@ namespace BrunoGUI_GenII
             gridNombreCoups.HeaderText = "Nbre coups";
             gridNombreCoups.Name = "gridNombreCoups";
             gridNombreCoups.Width = 50;
-            // 
+            //
+            // gridCommentaires
+            //
+            gridCommentaires.HeaderText = "Comm.";
+            gridCommentaires.Name = "gridCommentaires";
+            gridCommentaires.ReadOnly = true;
+            gridCommentaires.SortMode = DataGridViewColumnSortMode.Automatic;
+            gridCommentaires.Width = 50;
+            //
             // gridCodeEco
             // 
             gridCodeEco.HeaderText = "ECO";
@@ -120,12 +129,14 @@ namespace BrunoGUI_GenII
             // 
             gridSite.HeaderText = "Site";
             gridSite.Name = "gridSite";
-            // 
+            gridSite.Width = 75;
+            //
             // gridDate
             // 
             gridDate.HeaderText = "Date";
             gridDate.Name = "gridDate";
-            // 
+            gridDate.Width = 75;
+            //
             // FichierPartiePgn
             // 
             ClientSize = new Size(934, 561);
@@ -146,6 +157,7 @@ namespace BrunoGUI_GenII
         private DataGridViewTextBoxColumn gridEloNoir;
         private DataGridViewTextBoxColumn gridResultat;
         private DataGridViewTextBoxColumn gridNombreCoups;
+        private DataGridViewCheckBoxColumn gridCommentaires;
         private DataGridViewTextBoxColumn gridCodeEco;
         private DataGridViewTextBoxColumn gridTournoi;
         private DataGridViewTextBoxColumn gridRonde;

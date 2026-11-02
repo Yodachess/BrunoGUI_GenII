@@ -30,6 +30,7 @@ namespace BrunoGUI_GenII
     public class VueEchiquier
     {
         private readonly PictureBox _plateau;           // l'image de l'échiquier, sur laquelle sont posées les cases
+        private readonly Bitmap? _cadreOrigine;         // l'image telle que livrée (voir DessineCadre)
         private readonly Control _proprietaireCurseur;   // la fenêtre dont le curseur devient la pièce déplacée
         private readonly List<PictureBox> _cases = [];   // les 120 cases, indexées comme le tableau "mailbox" (a1 = 21, h8 = 98)
         private readonly Dictionary<TypePiece, Bitmap?> _images = new()
@@ -70,6 +71,28 @@ namespace BrunoGUI_GenII
             CaseSombre = sombre;
             CaseSource = source;
             CaseDestination = destination;
+            _cadreOrigine = plateau.Image is Image cadre ? new Bitmap(cadre) : null;
+            DessineCadre();
+        }
+
+        private void DessineCadre()
+        {   // L'image du plateau a ses lettres et ses chiffres à l'envers en haut et à droite (pour un adversaire assis en face), et
+            // à l'endroit une fois tournée de 180°. Tout est mis à l'endroit : le côté bas est recopié en haut, le côté gauche à droite
+            // (les cases couvrent x de 21 à 501 et y de 20 à 500 ; le cadre fait 18 à 19 pixels)
+            if (_cadreOrigine == null)
+                return;
+            Bitmap image = new(_cadreOrigine);
+            if (CoteNoir)
+                image.RotateFlip(RotateFlipType.Rotate180FlipNone);
+            using (Bitmap source = new(image))
+            using (Graphics dessin = Graphics.FromImage(image))
+            {
+                dessin.DrawImage(source, new Rectangle(501, 0, 19, 520), new Rectangle(0, 0, 19, 520), GraphicsUnit.Pixel);
+                dessin.DrawImage(source, new Rectangle(0, 1, 520, 18), new Rectangle(0, 502, 520, 18), GraphicsUnit.Pixel);
+            }
+            Image? ancienne = _plateau.Image;
+            _plateau.Image = image;
+            ancienne?.Dispose();
         }
 
         public Image? ImagePiece(TypePiece piece) => _images[piece];
@@ -267,9 +290,9 @@ namespace BrunoGUI_GenII
             if (_dernierCoupMontre)
                 CouleursNormales();
             _cases.Reverse();
-            _plateau.Image?.RotateFlip(RotateFlipType.Rotate180FlipNone);
-            _plateau.Refresh();
             CoteNoir = !CoteNoir;
+            DessineCadre();
+            _plateau.Refresh();
             DessinePosition(aDessiner);
             Colore();
         }

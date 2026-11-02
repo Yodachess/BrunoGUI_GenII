@@ -91,14 +91,28 @@ namespace BrunoGUI_GenII
             ActiveSon.Width = Math.Max(ActiveSon.Width, ActiveSon.PreferredSize.Width);
             TraductionFenetres.TraduitDialogues(SauvegardeFen, SauvegardeFichier, OuvertureChoixBibliotheque, OuvertureChoixMoteur, ChargerPartiesPgn, ChargerPositionFen);
             CreeMenuLangue();
-            _menuAnalyseFichier = new ToolStripMenuItem(T("Analyser un fichier PGN…"), null, (s, e) => AnalyseFichier_Click());
+            _menuAnalyseFichier = new ToolStripMenuItem(T("Analyser un fichier PGN…"), Properties.Resources.Fichier_avecLoupe, (s, e) => AnalyseFichier_Click());
             AnalyseMenu.DropDownItems.Add(_menuAnalyseFichier);
             AnalyseMenu.DropDownItems.Add(new ToolStripMenuItem(T("Durées de l'analyse de partie…"), Properties.Resources.Pendule, (s, e) => ChoisitDureesAnalyse()));
             nouvellePartieToolStripMenuItem.DropDownOpening += (s, e) => MetAJourMenus();
             AnalyseMenu.DropDownOpening += (s, e) => MetAJourMenus();
             OptionsMenu.DropDownOpening += (s, e) => MetAJourMenus();
-            // Icônes des options qui n'en avaient pas  : celles qui existaient déjà dans les ressources
+            // Icônes des options qui n'en avaient pas : celles des ressources quand l'une convient, sinon dessinées (voir plus bas)
             BtnMiseAJour.Image = Properties.Resources.Stockfish;
+            ListePartiesMenu.Image = Properties.Resources.Dossiers;
+            SaisiePositionMenu.Image = Properties.Resources.Saisie;
+            RetourArriereMenu.Image = Properties.Resources.Bouton_inverse_48pixel;
+            OrdinateurJoueMenu.Image = Properties.Resources.Bouton_lecture_48pixel;
+            ResultatMenu.Image = IconeDemiRois();
+            GainBlancMenu.Image = Properties.Resources.RoiBlanc;
+            GainNoirMenu.Image = Properties.Resources.RoiNoir;
+            NulleMenu.Image = IconeNulle();
+            AnalysePositionMenu.Image = IconeLoupe();
+            AnalyseRapideMenu.Image = Properties.Resources.Bouton_piste_suivante_48pixel;
+            AnalyseCompleteMenu.Image = Properties.Resources.Options;
+            TournerEchiquierMenu.Image = IconeTourner();
+            VariantesMenu.Image = Properties.Resources.Arborescence;
+            ProtocoleMenu.Image = Properties.Resources.Ordinateur;
             if (Icon != null)
                 Apropos.Image = new Icon(Icon, 16, 16).ToBitmap();     // l'icône de BrunoGUI
             InformationsPartie.AutoEllipsis = true;     // message trop long pour le cadre : "…" et texte complet au survol de la souris
@@ -425,6 +439,54 @@ namespace BrunoGUI_GenII
             }
             OptionsMenu.DropDownItems.Add(menuLangue);
         }
+        private static Bitmap IconeDemiRois()
+        {   // Résultat : un roi moitié blanc, moitié noir
+            Bitmap image = new(16, 16);
+            using Graphics g = Graphics.FromImage(image);
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+            using Bitmap blanc = Properties.Resources.RoiBlanc, noir = Properties.Resources.RoiNoir;
+            g.DrawImage(blanc, new Rectangle(0, 0, 8, 16), new Rectangle(0, 0, blanc.Width / 2, blanc.Height), GraphicsUnit.Pixel);
+            g.DrawImage(noir, new Rectangle(8, 0, 8, 16), new Rectangle(noir.Width / 2, 0, noir.Width / 2, noir.Height), GraphicsUnit.Pixel);
+            return image;
+        }
+
+        private static Bitmap IconeNulle()
+        {   // Nulle : le « ½ » de la feuille de partie
+            Bitmap image = new(16, 16);
+            using Graphics g = Graphics.FromImage(image);
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+            using Font police = new("Segoe UI", 13, FontStyle.Bold, GraphicsUnit.Pixel);
+            using StringFormat centre = new() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+            g.DrawString("½", police, Brushes.Black, new RectangleF(0, 0, 16, 16), centre);
+            return image;
+        }
+
+        private static Bitmap IconeLoupe()
+        {   // Analyser la position : une loupe
+            Bitmap image = new(16, 16);
+            using Graphics g = Graphics.FromImage(image);
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            using SolidBrush verre = new(Color.FromArgb(190, 225, 250));
+            g.FillEllipse(verre, 1, 1, 10, 10);
+            using Pen cadre = new(Color.FromArgb(40, 70, 110), 1.5f);
+            g.DrawEllipse(cadre, 1, 1, 10, 10);
+            using Pen manche = new(Color.FromArgb(120, 75, 30), 3) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round };
+            g.DrawLine(manche, 10.5f, 10.5f, 14, 14);
+            return image;
+        }
+
+        private static Bitmap IconeTourner()
+        {   // Tourner l'échiquier : deux flèches en cercle
+            Bitmap image = new(16, 16);
+            using Graphics g = Graphics.FromImage(image);
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            using System.Drawing.Drawing2D.AdjustableArrowCap pointe = new(3, 3);
+            using Pen fleche = new(Color.FromArgb(30, 100, 190), 1.6f) { CustomEndCap = pointe };
+            g.DrawArc(fleche, 2, 2, 12, 12, 190, 130);
+            g.DrawArc(fleche, 2, 2, 12, 12, 10, 130);
+            return image;
+        }
+
         private static Bitmap Drapeau(string code)
         {   // Petit drapeau dessiné (16 x 16, drapeau de 16 x 11 au milieu) : Windows n'affiche pas les drapeaux en emoji.
             // Français : bleu, blanc, rouge ; anglais : Union Jack simplifié (fond bleu, croix et diagonales blanches et rouges)
@@ -903,15 +965,14 @@ namespace BrunoGUI_GenII
             InformationPourJoueur.Text = T("Arrêt réflexion Moteur");
         }
 
-        private void CaseSombre_Click(object? sender, EventArgs e)
-        {   // Permet de choisir la couleur des cases sombres de l'échiquier (enregistrée dans les préférences à la fermeture)
-            if (CouleurDialogue.ShowDialog() == DialogResult.OK)
-                _vue.ChangeCouleurs(_vue.CaseClaire, CouleurDialogue.Color);
-        }
-        private void CaseClaire_Click(object? sender, EventArgs e)
-        {   // Permet de choisir la couleur des cases claires de l'échiquier (enregistrée dans les préférences à la fermeture)
-            if (CouleurDialogue.ShowDialog() == DialogResult.OK)
-                _vue.ChangeCouleurs(CouleurDialogue.Color, _vue.CaseSombre);
+        private void CouleursCases_Click(object? sender, EventArgs e)
+        {   // Couleurs des cases de l'échiquier, montrées dessus à chaque choix ; sans OK, les anciennes reviennent
+            // (enregistrées dans les préférences à la fermeture)
+            Color claire = _vue.CaseClaire, sombre = _vue.CaseSombre;
+            using FenetreCouleurs fenetre = new(claire, sombre, _vue.ChangeCouleurs);
+            PlaceADroite(fenetre);
+            if (fenetre.ShowDialog(this) != DialogResult.OK)
+                _vue.ChangeCouleurs(claire, sombre);
         }
 
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐

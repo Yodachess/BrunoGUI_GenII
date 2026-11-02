@@ -928,6 +928,13 @@ public static class Scenario
         Verifie($"Robustesse : {pgnsEssayes} PGN abîmés au hasard, lus sans exception, écrits puis relus avec les mêmes coups",
             problemesPgn.Count == 0, $"{pgnsLus} lus, {problemesPgn.Count} problème(s){Probleme(problemesPgn)}");
 
+        // Liste des parties, colonne « Comm. » : un texte d'un auteur ou de l'analyse, pas les marques seules
+        static bool AvecCommentaires(string coups) => FichierPartiePgn.DecodePartiePGN("[Event \"x\"]\n\n" + coups).ACommentaires;
+        Verifie("Partie avec commentaires : texte d'un auteur ou de l'analyse, pas [%clk], [%eval] ni [%auto] seuls",
+            AvecCommentaires("1. e4 {Bien joué} e5 *") && AvecCommentaires("1. e4 {Sacrifice du cavalier [%autocom]} e5 *")
+            && !AvecCommentaires("1. e4 e5 *") && !AvecCommentaires("1. e4 {[%clk 0:05:00]} e5 {[%eval 0.3] [%emt 0:00:02]} *") && !AvecCommentaires("1. e4?! {[%auto]} e5 *"),
+            $"auteur : {AvecCommentaires("1. e4 {Bien joué} e5 *")}, marques seules : {AvecCommentaires("1. e4 {[%clk 0:05:00]} e5 *")}");
+
         // (trouvé par l'essai ci-dessus) balise [Result] hors des quatre valeurs du format PGN : recopiée à la fin des coups, elle
         // était relue comme un coup illisible
         PartieEchecsPGN nulleAutrement = FichierPartiePgn.DecodePartiePGN("[Event \"x\"]\n[Result \"1/2\"]\n\n1. e4 e5 2. Nf3 Nc6");

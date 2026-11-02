@@ -62,6 +62,8 @@ namespace BrunoGUI_GenII
         public List<string?> FlechesAuteur { get; set; } = [];      // [%cal …] hors bloc de l'analyse : Coup.FlechesAuteur ("Re7h7,Oe5g6")
         public List<string?> FlechesMenace { get; set; } = [];      // [%cal …] du bloc [%autocom] : la flèche de la menace (Coup.MenaceUci)
         public List<string?> CommentairesTactiques { get; set; } = [];  // [%tac] : sa partie essentielle (Coup.CommentaireTactique)
+        // Un coup au moins a un texte de commentaire, d'un auteur ou de l'analyse ; pas les marques seules ([%clk], [%eval]…)
+        public bool ACommentaires => Commentaires.Concat(CommentairesAuto).Any(c => !string.IsNullOrWhiteSpace(c));
     }
 
     public class GestionPartiePgn

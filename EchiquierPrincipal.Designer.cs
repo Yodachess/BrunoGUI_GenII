@@ -92,8 +92,6 @@ namespace BrunoGUI_GenII
             Sargon1_1978 = new System.Windows.Forms.ToolStripMenuItem();
             OptionsMenu = new System.Windows.Forms.ToolStripMenuItem();
             Personnaliser = new System.Windows.Forms.ToolStripMenuItem();
-            CaseSombre = new System.Windows.Forms.ToolStripMenuItem();
-            CaseClaire = new System.Windows.Forms.ToolStripMenuItem();
             VisualiserPgn = new System.Windows.Forms.ToolStripMenuItem();
             OptionBalises = new System.Windows.Forms.ToolStripMenuItem();
             AideDocumentation = new System.Windows.Forms.ToolStripMenuItem();
@@ -101,7 +99,6 @@ namespace BrunoGUI_GenII
             toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
             SauvegardeFen = new System.Windows.Forms.SaveFileDialog();
             SauvegardeFichier = new System.Windows.Forms.SaveFileDialog();
-            CouleurDialogue = new System.Windows.Forms.ColorDialog();
             GroupPromo = new System.Windows.Forms.GroupBox();
             Promo3 = new System.Windows.Forms.PictureBox();
             Promo2 = new System.Windows.Forms.PictureBox();
@@ -573,28 +570,12 @@ namespace BrunoGUI_GenII
             // 
             // Personnaliser
             // 
-            Personnaliser.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { CaseSombre, CaseClaire });
             Personnaliser.Image = (System.Drawing.Image)resources.GetObject("Personnaliser.Image");
             Personnaliser.Name = "Personnaliser";
             Personnaliser.Size = new System.Drawing.Size(192, 22);
             Personnaliser.Text = "Couleurs des cases";
-            // 
-            // CaseSombre
-            // 
-            CaseSombre.Image = (System.Drawing.Image)resources.GetObject("CaseSombre.Image");
-            CaseSombre.Name = "CaseSombre";
-            CaseSombre.Size = new System.Drawing.Size(143, 22);
-            CaseSombre.Text = "Case Sombre";
-            CaseSombre.Click += CaseSombre_Click;
-            // 
-            // CaseClaire
-            // 
-            CaseClaire.Image = (System.Drawing.Image)resources.GetObject("CaseClaire.Image");
-            CaseClaire.Name = "CaseClaire";
-            CaseClaire.Size = new System.Drawing.Size(143, 22);
-            CaseClaire.Text = "Case Claire";
-            CaseClaire.Click += CaseClaire_Click;
-            // 
+            Personnaliser.Click += CouleursCases_Click;
+            //
             // VisualiserPgn
             // 
             VisualiserPgn.Image = (System.Drawing.Image)resources.GetObject("VisualiserPgn.Image");
@@ -1536,9 +1517,6 @@ namespace BrunoGUI_GenII
         private System.Windows.Forms.SaveFileDialog SauvegardeFichier;
         private System.Windows.Forms.ToolStripMenuItem OptionsMenu;
         private System.Windows.Forms.ToolStripMenuItem Personnaliser;
-        private System.Windows.Forms.ToolStripMenuItem CaseSombre;
-        private System.Windows.Forms.ToolStripMenuItem CaseClaire;
-        private System.Windows.Forms.ColorDialog CouleurDialogue;
         private System.Windows.Forms.ToolStripMenuItem StockfishMoteur;
         private System.Windows.Forms.ToolStripMenuItem AnalyseMenu;
         private System.Windows.Forms.ToolStripMenuItem AideMenu;

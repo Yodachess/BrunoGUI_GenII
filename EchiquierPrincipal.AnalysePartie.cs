@@ -209,14 +209,18 @@ namespace BrunoGUI_GenII
             OuvreFenetreSuivi(complete ? T("Analyse complète de la partie") : T("Analyse rapide de la partie"), T("Interrompre"),
                               () => TermineAnalyseDePartie(interrompue: true));
         }
+        private void PlaceADroite(Form fenetre)
+        {   // À droite de la fenêtre principale s'il y a la place à l'écran, sinon par-dessus sa colonne de droite : l'échiquier reste visible
+            Rectangle ecran = Screen.FromControl(this).WorkingArea;
+            int x = Right + 8 + fenetre.Width <= ecran.Right ? Right + 8 : Right - fenetre.Width - 16;
+            fenetre.Location = new Point(Math.Max(ecran.Left, x), Math.Max(ecran.Top, Top + 120));
+        }
         private void OuvreFenetreSuivi(string titre, string texteBouton, Action arret)
         {   // Fenêtre de suivi, non bloquante (la barre sous la feuille était trop discrète) : à droite de la
             // fenêtre principale s'il y a la place à l'écran, sinon par-dessus sa colonne de boutons ; une seule à la fois
             FermeFenetreAnalyse();
             FenetreAnalyse fenetre = new(titre, texteBouton);
-            Rectangle ecran = Screen.FromControl(this).WorkingArea;
-            int x = Right + 8 + fenetre.Width <= ecran.Right ? Right + 8 : Right - fenetre.Width - 16;
-            fenetre.Location = new Point(Math.Max(ecran.Left, x), Math.Max(ecran.Top, Top + 120));
+            PlaceADroite(fenetre);
             fenetre.Interrompre += arret;
             fenetre.FormClosed += (s, e) => { if (_fenetreAnalyse == fenetre) _fenetreAnalyse = null; };     // croix : l'analyse continue
             _fenetreAnalyse = fenetre;
