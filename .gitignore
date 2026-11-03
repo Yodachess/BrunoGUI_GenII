@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# PDF de l'aide (fabriqués par .github/aide-pdf.ps1, joints à chaque Release)
+/BrunoGUI_Aide_*.pdf
+
 # User-specific files
 *.rsuser
 *.suo

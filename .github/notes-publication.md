@@ -8,6 +8,8 @@ Si Windows affiche « Windows a protégé votre ordinateur » (SmartScreen), cli
 
 Nécessite le **.NET 10 Desktop Runtime** : https://dotnet.microsoft.com/download/dotnet/10.0
 
+L'aide du programme est aussi disponible en PDF, ci-dessous : `BrunoGUI_Aide_fr.pdf`.
+
 ---
 
 ### Installation (portable archive)
@@ -19,3 +21,5 @@ Nécessite le **.NET 10 Desktop Runtime** : https://dotnet.microsoft.com/downloa
 If Windows shows “Windows protected your PC” (SmartScreen), click “More info” if needed, then **“Run anyway”**. This warning comes from the program, which is free, not being digitally signed: it does not indicate a problem with the program.
 
 Requires the **.NET 10 Desktop Runtime**: https://dotnet.microsoft.com/download/dotnet/10.0
+
+The program's help is also available as a PDF, below: `BrunoGUI_Aide_en.pdf`.

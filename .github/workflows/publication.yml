@@ -19,7 +19,7 @@ jobs:
       - name: Récupération du code
         uses: actions/checkout@v7
 
-      - name: Installation de .NET 8
+      - name: Installation de .NET 10
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
@@ -61,11 +61,16 @@ jobs:
           Remove-Item "$sortie/*.application", "$sortie/*.manifest", "$sortie/*.pdb" -Force -ErrorAction SilentlyContinue
           Compress-Archive -Path "$sortie/*" -DestinationPath "BrunoGUI_GenII-${{ github.ref_name }}.zip"
 
+      - name: PDF de l'aide (français et anglais)
+        timeout-minutes: 5
+        run: ./.github/aide-pdf.ps1
+
       # Notes de la release : installation, déblocage du zip et avertissement SmartScreen (programme non signé), en français et en anglais
       - name: Création de la Release GitHub
         env:
           GH_TOKEN: ${{ github.token }}
         run: >
           gh release create "${{ github.ref_name }}" "BrunoGUI_GenII-${{ github.ref_name }}.zip"
+          BrunoGUI_Aide_fr.pdf BrunoGUI_Aide_en.pdf
           --title "BrunoGUI GenII ${{ github.ref_name }}"
           --notes-file .github/notes-publication.md
