@@ -6,6 +6,15 @@
 # PDF de l'aide (fabriqués par .github/aide-pdf.ps1, joints à chaque Release)
 /BrunoGUI_Aide_*.pdf
 
+# Moteurs gardés sur le disque, pas dans le dépôt : ceux dont la licence ne permet pas (ou pas sûrement) de les republier, et les anciens Stockfish
+/Moteurs_UCI/*
+!/Moteurs_UCI/Rodent_IV/
+!/Moteurs_UCI/sargon1978/
+!/Moteurs_UCI/Bersek/
+!/Moteurs_UCI/Fruit-Reloaded/
+!/Moteurs_UCI/LeilaChessZero/
+!/Moteurs_UCI/ct800/
+
 # User-specific files
 *.rsuser
 *.suo
