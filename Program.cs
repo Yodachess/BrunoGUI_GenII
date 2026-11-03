@@ -44,7 +44,22 @@ namespace BrunoGUI_GenII
                 Application.DoEvents(); // laisse le formulaire se peindre
             }
             // *** Fin du Splash ***
-            Application.Run(new EchiquierPrincipal());
+            EchiquierPrincipal fenetre = new();
+            Application.Run(fenetre);
+            if (fenetre.RedemarrageDemande)
+                Relance();
+        }
+
+        private static void Relance()
+        {   // Changement de langue : l'application repart une fois la fenêtre fermée (préférences enregistrées)
+            try
+            {
+                System.Diagnostics.Process.Start(Application.ExecutablePath);
+            }
+            catch (Exception ex) when (ex is System.ComponentModel.Win32Exception || ex is InvalidOperationException)
+            {   // la nouvelle langue vaudra au prochain lancement manuel
+                Journal.Erreur("Redémarrage impossible", ex);
+            }
         }
 
         internal static void ErreurImprevue(Exception exception)

@@ -423,7 +423,7 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         //  Langue de l'interface (voir Langue.cs)
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
-        private bool _redemarrageDemande;     // changement de langue : fermeture sans confirmation, puis relance (Application.Restart)
+        internal bool RedemarrageDemande { get; private set; }     // changement de langue : fermeture sans confirmation, puis relance (Program.Main)
         private void CreeMenuLangue()
         {   // Menu Options > Langue ; les noms des langues ne sont jamais traduits (chacun reconnaît la sienne)
             // (icônes : le drapeau de chaque langue, et celui de la langue en cours pour "Langue")
@@ -528,8 +528,10 @@ namespace BrunoGUI_GenII
             if (KryptonMessageBox.Show(T("La nouvelle langue sera utilisée au prochain démarrage de BrunoGUI.\n\nRedémarrer maintenant ? Une partie en cours non enregistrée sera perdue."),
                     T("Langue"), KryptonMessageBoxButtons.YesNo, KryptonMessageBoxIcon.Question) != DialogResult.Yes)
                 return;
-            _redemarrageDemande = true;     // pas de "Quitter l'application ?" (voir EchiquierPrincipal_FormClosing)
-            Application.Restart();          // ferme (préférences enregistrées, moteur arrêté) puis relance l'application
+            RedemarrageDemande = true;      // pas de "Quitter l'application ?" (voir EchiquierPrincipal_FormClosing)
+            // Pas d'Application.Restart : une fenêtre secondaire masquée (paramètres, protocole, PGN) y annule la fermeture, et
+            // l'ancienne fenêtre restait ouverte à côté de la nouvelle. Ici, préférences enregistrées et moteurs arrêtés, puis relance
+            Close();
         }
 
         private void AfficheTour(ColorPiece couleur)
@@ -1311,7 +1313,7 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void EchiquierPrincipal_FormClosing(object? sender, FormClosingEventArgs e)
         {   // Demande de confirmation avant de quitter l'application
-            if (!_redemarrageDemande && KryptonMessageBox.Show(T("Quitter l'application ?"), T("Confirmer"),
+            if (!RedemarrageDemande && KryptonMessageBox.Show(T("Quitter l'application ?"), T("Confirmer"),
                 KryptonMessageBoxButtons.YesNo, KryptonMessageBoxIcon.Question) == DialogResult.No)
             {
                 e.Cancel = true; // Annule la fermeture
