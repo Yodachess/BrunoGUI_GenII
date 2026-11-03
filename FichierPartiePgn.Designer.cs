@@ -56,6 +56,7 @@ namespace BrunoGUI_GenII
             // 
             // TableauPartiesPgn
             // 
+            TableauPartiesPgn.AllowUserToAddRows = false;
             TableauPartiesPgn.BackgroundColor = Color.Silver;
             TableauPartiesPgn.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             TableauPartiesPgn.Columns.AddRange([gridJoueurBlanc, gridEloBlanc, gridJoueurNoir, gridEloNoir, gridResultat, gridNombreCoups, gridCommentaires, gridCodeEco, gridTournoi, gridRonde, gridSite, gridDate]);
