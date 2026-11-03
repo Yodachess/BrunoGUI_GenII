@@ -434,6 +434,18 @@ public static class Scenario
             $"{lignesPrefs.Length} lignes");
         Verifie("Préférences lues par-dessus les valeurs par défaut", p2.CaseSombre == "#8080FF" && p2.ForceMoteur == 2026 && p2.Palette == "Office2010Silver" && p2.EloHumain == "1767", $"{p2.CaseSombre}, {p2.ForceMoteur}, {p2.Palette}");
         Verifie("Le fichier des valeurs par défaut n'est jamais modifié", System.IO.File.ReadAllText(cheminDefaut) == defautAvant, Parametres.FichierParDefaut);
+        // Écriture sans risque : un échec laisse l'ancien fichier intact, sans fichier temporaire
+        Verifie("Préférences : pas de fichier temporaire après l'écriture", !System.IO.File.Exists(cheminPrefs + ".tmp"), "");
+        string prefsAvant = System.IO.File.ReadAllText(cheminPrefs);
+        p1.ForceMoteur = 2100;
+        bool ecritureRefusee = false;
+        using (System.IO.FileStream verrou = new(cheminPrefs, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.None))
+        {
+            try { p1.SauverPreferences(cheminPrefs); }
+            catch (Exception ex) when (ex is System.IO.IOException || ex is UnauthorizedAccessException) { ecritureRefusee = true; }
+        }
+        Verifie("Préférences : fichier verrouillé, erreur signalée, ancien contenu intact, pas de fichier temporaire",
+            ecritureRefusee && System.IO.File.ReadAllText(cheminPrefs) == prefsAvant && !System.IO.File.Exists(cheminPrefs + ".tmp"), $"refusée : {ecritureRefusee}");
         // Vérification automatique de Stockfish : au plus tous les VerificationMiseAJourJours jours, date gardée dans les préférences
         var jour = new DateTime(2026, 9, 27);
         Parametres m = new();

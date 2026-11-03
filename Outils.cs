@@ -361,7 +361,29 @@ namespace BrunoGUI_GenII
             }
             foreach (var (cle, valeur) in valeurs)      // clés absentes du fichier
                 lignes.Add($"{cle} = {valeur}");
-            File.WriteAllLines(chemin, lignes);
+            EcritSansRisque(chemin, lignes);
+        }
+
+        private static void EcritSansRisque(string chemin, List<string> lignes)
+        {   // Le fichier n'est remplacé qu'une fois le nouveau contenu écrit à part et sur le disque : une coupure ou un plantage
+            // pendant l'écriture laisse l'ancien fichier intact, au lieu d'un fichier vide ou tronqué
+            string temporaire = chemin + ".tmp";
+            try
+            {
+                using (StreamWriter ecriture = new(temporaire))     // (UTF-8 sans marque, comme File.WriteAllLines)
+                {
+                    foreach (string ligne in lignes)
+                        ecriture.WriteLine(ligne);
+                    ecriture.Flush();
+                    ((FileStream)ecriture.BaseStream).Flush(flushToDisk: true);
+                }
+                File.Move(temporaire, chemin, overwrite: true);
+            }
+            catch
+            {
+                File.Delete(temporaire);
+                throw;
+            }
         }
     }
 }
