@@ -185,6 +185,23 @@ namespace BrunoGUI_GenII
                 }
             };
         }
+        public static string RemplaceEnGardantUneCopie(string chemin, string contenu)
+        {   // Remplace un fichier existant et renvoie le chemin de la copie de l'ancien, datée pour ne jamais en effacer une précédente.
+            // Le contenu est d'abord écrit à part : en cas d'échec (disque plein, fichier verrouillé), l'ancien fichier reste intact
+            string copie = $"{chemin}.{DateTime.Now:yyyy-MM-dd-HHmmss}.bak";
+            string temporaire = chemin + ".tmp";
+            File.WriteAllText(temporaire, contenu);
+            try
+            {
+                File.Replace(temporaire, chemin, copie);
+            }
+            catch
+            {
+                File.Delete(temporaire);
+                throw;
+            }
+            return copie;
+        }
         public static string LireTextePgn(string fichierPgn)
         {   // Beaucoup de fichiers PGN sont en Latin-1 (ISO-8859-1), pas en UTF-8, et certains mélangent les deux (parties de
             // plusieurs logiciels mises bout à bout). Chaque LIGNE est donc lue en UTF-8 strict si elle en est, sinon en Latin-1 :

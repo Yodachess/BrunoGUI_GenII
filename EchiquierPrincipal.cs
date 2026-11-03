@@ -127,7 +127,7 @@ namespace BrunoGUI_GenII
                 Parametres.ConvertitCouleur(parametres.CaseSombre, Parametres.LichessCaseSombre),
                 Parametres.ConvertitCouleur(parametres.CouleurCaseSource, Parametres.LichessCaseSource),
                 Parametres.ConvertitCouleur(parametres.CouleurCaseDestination, Parametres.LichessCaseDestination));
-            _nomHumain = parametres.NomHumain;
+            _nomHumain = string.IsNullOrWhiteSpace(parametres.NomHumain) ? T("Joueur") : parametres.NomHumain;
             _joueurElo = parametres.EloHumain;
             _dureeReflexionMilliSeconde = parametres.DureeReflexionSeconde * 1000;
             _dureeAnalyseRapide = Math.Clamp(parametres.DureeAnalyseRapide, FenetreDureesAnalyse.Minimum, FenetreDureesAnalyse.Maximum);
@@ -143,7 +143,7 @@ namespace BrunoGUI_GenII
             maNouvellePartieForceModule.ForceMaximale = parametres.ForceMaximale;
             maNouvellePartieForceModule.ForceModule = parametres.ForceMoteur;
             maNouvellePartieForceModule.DureeReflexionSeconde = parametres.DureeReflexionSeconde;
-            maNouvellePartieForceModule.NomAdversaire = parametres.NomHumain;
+            maNouvellePartieForceModule.NomAdversaire = _nomHumain;
             TempsReflexionSecondes.Value = Math.Clamp(parametres.DureeReflexionSeconde, (int)TempsReflexionSecondes.Minimum, (int)TempsReflexionSecondes.Maximum);
             foreach (Cadence cadence in Cadence.Proposees)
                 ListePendule.Items.Add(cadence);

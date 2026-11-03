@@ -147,23 +147,21 @@ namespace BrunoGUI_GenII
                     {
                         string cheminPgn = SauvegardeFichier.FileName;
                         if (File.Exists(cheminPgn))                         // Si le fichier existe déjà
-                        {   // On demande à l'utilisateur s'il veut écraser le fichier ou ajouter la partie
-                            DialogResult resultat = KryptonMessageBox.Show(T("ATTENTION, le fichier {0} existe déjà. \nCliquer Oui pour ajouter la partie à la fin.\nCliquer Non pour écraser le fichier existant.\nAnnuler pour afficher le fichier PGN.", Path.GetFileName(cheminPgn)),
+                        {   // Ajouter la partie, remplacer le fichier ou ne rien faire
+                            DialogResult resultat = KryptonMessageBox.Show(T("Le fichier {0} existe déjà.\n\nOui : ajouter la partie à la fin du fichier.\nNon : remplacer tout le fichier par cette partie (une copie de l'ancien fichier est gardée).\nAnnuler : ne rien enregistrer.", Path.GetFileName(cheminPgn)),
                                T("Fichier existant"), KryptonMessageBoxButtons.YesNoCancel, KryptonMessageBoxIcon.Warning);
                             if (resultat == DialogResult.No)
-                            {   // Écrase le fichier existant avec la nouvelle partie
-                                File.WriteAllText(cheminPgn, contenuPgn);
+                            {   // Remplace le fichier : il peut contenir des centaines de parties, une copie en est toujours gardée
+                                string copie = FichierPartiePgn.RemplaceEnGardantUneCopie(cheminPgn, contenuPgn);
                                 InformationPourJoueur.Text = T("La partie est écrite dans le fichier {0}", Path.GetFileName(cheminPgn));
+                                KryptonMessageBox.Show(T("Le fichier {0} est remplacé.\nCopie de l'ancien fichier : {1}", Path.GetFileName(cheminPgn), Path.GetFileName(copie)),
+                                    T("Fichier existant"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                             }
                             else if (resultat == DialogResult.Yes)
                             {   // Ajoute la nouvelle partie à la fin du fichier existant, sans réécrire ce qu'il contient (relu puis réécrit
                                 // en UTF-8, un fichier aux lignes Latin-1 aurait perdu ses accents)
                                 File.AppendAllText(cheminPgn, "\r\n\r\n" + contenuPgn);
                                 InformationPourJoueur.Text = T("La partie est ajoutée dans le fichier {0}", Path.GetFileName(cheminPgn));
-                            }
-                            else if (resultat == DialogResult.Cancel)
-                            {   // Affiche la nouvelle partie (sans les temps de la pendule : ils ne vont que dans le fichier)
-                                KryptonMessageBox.Show(T("Fichier PGN :") + "\n " + GestionPartiePgn.RetourneContenuPgn(PartieEnCours, "Intl"), T("Affichage fichier PGN"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                             }
                         }
                         else

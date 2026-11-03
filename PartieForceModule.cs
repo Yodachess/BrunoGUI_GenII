@@ -29,7 +29,7 @@ namespace BrunoGUI_GenII
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public LogiqueMouvements.ColorPiece ChoixCouleur { get; set; } = LogiqueMouvements.ColorPiece.Noir;    // camp joué par le moteur
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public string NomAdversaire { get; set; } = "Bruno";    // nom du joueur humain
+        public string NomAdversaire { get; set; } = "";    // nom du joueur humain
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int ForceModule { get; set; } = 1850;            // Elo du moteur si pas force maximale
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]

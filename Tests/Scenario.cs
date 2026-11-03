@@ -1754,6 +1754,24 @@ public static class Scenario
         Verifie("Journal : un fichier impossible à écrire ne lève aucune exception", !File.Exists(Journal.Chemin), "");
         Directory.Delete(dossierJournal, recursive: true);
 
+        // ═══════════════ Remplacement d'un fichier PGN ═══════════════
+        Console.WriteLine("── Remplacement d'un fichier PGN ──");
+
+        string dossierRemplacement = Path.Combine(Path.GetTempPath(), "BrunoGUI_tests_remplacement_" + Guid.NewGuid());
+        Directory.CreateDirectory(dossierRemplacement);
+        string fichierARemplacer = Path.Combine(dossierRemplacement, "parties.pgn");
+        File.WriteAllText(fichierARemplacer, "anciennes parties");
+        string copieDuFichier = FichierPartiePgn.RemplaceEnGardantUneCopie(fichierARemplacer, "nouvelle partie");
+        Verifie("Remplacement : nouveau contenu, ancien gardé dans une copie .bak, pas de fichier temporaire",
+            File.ReadAllText(fichierARemplacer) == "nouvelle partie" && copieDuFichier.EndsWith(".bak") && File.ReadAllText(copieDuFichier) == "anciennes parties"
+            && !File.Exists(fichierARemplacer + ".tmp"), copieDuFichier);
+        string fichierAbsent = Path.Combine(dossierRemplacement, "absent.pgn");
+        bool echecSignale = false;
+        try { FichierPartiePgn.RemplaceEnGardantUneCopie(fichierAbsent, "partie"); }
+        catch (IOException) { echecSignale = true; }
+        Verifie("Remplacement : un échec est signalé, sans laisser de fichier temporaire", echecSignale && !File.Exists(fichierAbsent + ".tmp"), "");
+        Directory.Delete(dossierRemplacement, recursive: true);
+
         // ═══════════════ Saisie d'une position ═══════════════
         Console.WriteLine("── Saisie d'une position ──");
 

@@ -200,8 +200,8 @@ namespace BrunoGUI_GenII
         public const string LichessCaseDestination = "#C4C87F";         // RVB 196, 200, 127
         public string CaseSombre { get; set; } = LichessCaseSombre;
         public string CaseClaire { get; set; } = LichessCaseClaire;
-        public string NomHumain { get; set; } =  "Bruno";
-        public string EloHumain { get; set; } = "1767";
+        public string NomHumain { get; set; } = "";     // vide : « Joueur » (dans la langue de l'interface)
+        public string EloHumain { get; set; } = "";     // vide : inconnu
         public string CouleurCaseSource { get; set; } = LichessCaseSource;
         public string CouleurCaseDestination { get; set; } = LichessCaseDestination;
         public int DureeReflexionSeconde { get; set; } = 3;
