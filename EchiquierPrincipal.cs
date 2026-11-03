@@ -1215,6 +1215,10 @@ namespace BrunoGUI_GenII
             //                « <fichier>_analyse.pgn », reprise après une interruption, avancement sous l'échiquier)
             // Version 1.32 = variantes du moteur plus longues dans le PGN (8 demi-coups) ; fiabilité : résultat PGN non standard
             //                (« 1/2 ») relu sans coup illisible, FEN à espaces multiples, tests de robustesse, code simplifié
+            // Version 1.33 = menus simplifiés (menu Stockfish et paramètres avancés retirés, commandes dans le menu Moteur), fenêtre des
+            //                couleurs, icônes des menus, repères sur les quatre côtés ; changement de langue sans fenêtre restante, un seul
+            //                BrunoGUI par dossier, copie gardée au remplacement d'un PGN, préférences écrites sans risque, joueur par défaut
+            //                « Joueur », bibliothèques Komodo retirées, 2 bibliothèques ajoutées ; aide en PDF jointe à la version
             // (le numéro de version vient du .csproj, <Version> : il n'est plus écrit ici)
             _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version " + VersionAffichee + "\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", T("A propos de"),
