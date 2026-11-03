@@ -93,7 +93,6 @@ namespace BrunoGUI_GenII
             OptionBalises = new System.Windows.Forms.ToolStripMenuItem();
             AideDocumentation = new System.Windows.Forms.ToolStripMenuItem();
             Apropos = new System.Windows.Forms.ToolStripMenuItem();
-            toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
             SauvegardeFen = new System.Windows.Forms.SaveFileDialog();
             SauvegardeFichier = new System.Windows.Forms.SaveFileDialog();
             GroupPromo = new System.Windows.Forms.GroupBox();
@@ -225,7 +224,7 @@ namespace BrunoGUI_GenII
             // MenuInterfaceGraphique
             // 
             MenuInterfaceGraphique.Font = new System.Drawing.Font("Segoe UI", 9F);
-            MenuInterfaceGraphique.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { FichierMenu, nouvellePartieToolStripMenuItem, AnalyseMenu, moteursBibliothequesToolStripMenuItem, OptionsMenu, AideMenu, toolStripMenuItem2 });
+            MenuInterfaceGraphique.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { FichierMenu, nouvellePartieToolStripMenuItem, AnalyseMenu, moteursBibliothequesToolStripMenuItem, OptionsMenu, AideMenu });
             MenuInterfaceGraphique.Location = new System.Drawing.Point(0, 0);
             MenuInterfaceGraphique.Name = "MenuInterfaceGraphique";
             MenuInterfaceGraphique.Size = new System.Drawing.Size(944, 24);
@@ -581,12 +580,6 @@ namespace BrunoGUI_GenII
             Apropos.Size = new System.Drawing.Size(200, 22);
             Apropos.Text = "À propos de BrunoGUI";
             Apropos.Click += Apropos_Click;
-            // 
-            // toolStripMenuItem2
-            // 
-            toolStripMenuItem2.Name = "toolStripMenuItem2";
-            toolStripMenuItem2.Size = new System.Drawing.Size(22, 20);
-            toolStripMenuItem2.Text = " ";
             // 
             // SauvegardeFen
             // 
@@ -1520,7 +1513,6 @@ namespace BrunoGUI_GenII
         private System.Windows.Forms.ToolStripSeparator SeparateurReglagesMoteur;
         private System.Windows.Forms.ToolStripSeparator SeparateurBibliotheque;
         private System.Windows.Forms.ToolStripMenuItem NouvellePartieStockfish;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem2;
         private System.Windows.Forms.GroupBox GroupPromo;
         private System.Windows.Forms.PictureBox Promo2;
         private System.Windows.Forms.PictureBox Promo1;

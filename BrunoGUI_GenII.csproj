@@ -113,6 +113,12 @@
     <None Update="BibliothèquesPolyglot\Performance.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="BibliothèquesPolyglot\ph-exoticbook.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="BibliothèquesPolyglot\ph-gambitbook.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="BibliothèquesPolyglot\rodent.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -133,9 +139,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Moteurs_UCI\sargon1978\sargon1978_1_01b.exe">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="rodent.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
