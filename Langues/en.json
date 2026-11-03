@@ -101,6 +101,7 @@
   "Bienvenue": "Welcome",
   "Bruno vous souhaite une bonne partie !": "Bruno wishes you a good game!",
   "Joueur": "Player",
+  "BrunoGUI est déjà ouvert depuis ce dossier.": "BrunoGUI is already open from this folder.",
   "Cette position est terminée (mat ou pat) : choisissez une position antérieure avec Préc.": "This position is over (mate or stalemate): choose an earlier position with Prev.",
   "Chargement FEN": "FEN loading",
   "Commentaire : {0}": "Comment: {0}",

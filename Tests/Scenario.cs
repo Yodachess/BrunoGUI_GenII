@@ -1772,6 +1772,23 @@ public static class Scenario
         Verifie("Remplacement : un échec est signalé, sans laisser de fichier temporaire", echecSignale && !File.Exists(fichierAbsent + ".tmp"), "");
         Directory.Delete(dossierRemplacement, recursive: true);
 
+        // ═══════════════ Un seul BrunoGUI par dossier ═══════════════
+        Console.WriteLine("── Un seul BrunoGUI par dossier ──");
+
+        string dossierInstance = Path.Combine(Path.GetTempPath(), "BrunoGUI_tests_instance_" + Guid.NewGuid());
+        using (InstanceUnique premiere = new(dossierInstance))
+        {
+            using InstanceUnique memeDossier = new(dossierInstance.ToUpperInvariant() + Path.DirectorySeparatorChar);
+            using InstanceUnique autreDossier = new(dossierInstance + "_autre");
+            Verifie("Instance : refusée dans le même dossier (casse et « \\ » final ignorés), permise dans un autre",
+                premiere.Seule && !memeDossier.Seule && autreDossier.Seule, $"{premiere.Seule}, {memeDossier.Seule}, {autreDossier.Seule}");
+            memeDossier.Dispose();
+            premiere.Dispose();
+            premiere.Dispose();     // (relance après un changement de langue, puis fin de Main)
+            using InstanceUnique apresLiberation = new(dossierInstance);
+            Verifie("Instance : le dossier est libre une fois la précédente libérée (relance après un changement de langue)", apresLiberation.Seule, "");
+        }
+
         // ═══════════════ Saisie d'une position ═══════════════
         Console.WriteLine("── Saisie d'une position ──");
 

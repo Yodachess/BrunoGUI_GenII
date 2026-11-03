@@ -42,7 +42,7 @@ dotnet test Tests
 
 ## Architecture
 
-**Point d'entrée** : `Program.cs` affiche le splash (`EcranDemarrage`), puis lance `EchiquierPrincipal` (palette par défaut de Krypton 95, pas de `KryptonManager`).
+**Point d'entrée** : `Program.cs` refuse un second lancement depuis le même dossier (`InstanceUnique.cs`, testé : verrou système par dossier, car deux fenêtres y partageraient préférences et `stockfish.exe` ; libéré avant la relance d'un changement de langue), affiche le splash (`EcranDemarrage`), puis lance `EchiquierPrincipal` (palette par défaut de Krypton 95, pas de `KryptonManager`).
 
 **`EchiquierPrincipal`** est le formulaire central : il gère l'échiquier, les menus, la feuille de partie, l'analyse et l'orchestration du moteur. Il est découpé en **fichiers partiels par sujet** (rangés sous `EchiquierPrincipal.cs` dans Visual Studio, `DependentUpon` + `SubType Code` dans le `.csproj`) : `EchiquierPrincipal.cs` (initialisation, clics sur l'échiquier, menus, boutons, résultats, état des commandes `MetAJourCommandes`, feuille), `.Moteur.cs` (réponses UCI, coup du moteur, bibliothèque, réflexion à temps fixe, `AbandonneReflexion`), `.Pendule.cs`, `.Parcours.cs` (boutons et clavier du parcours, position affichée, analyse du coup regardé, flèches, lignes de variantes), `.Fichiers.cs` (PGN, FEN, saisie de position, chargement d'une partie PGN), `.AnalysePartie.cs`. Un nouveau sujet va dans son fichier ; un nouveau fichier partiel est à déclarer dans le `.csproj`.
 

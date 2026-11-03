@@ -34,6 +34,12 @@ namespace BrunoGUI_GenII
             Parametres parametres = Parametres.Charger(Chemins.RepertoireRacine);
             Langue.Choisir(parametres.Langue, Chemins.RepertoireRacine);
             ConfigureKrypton(parametres.Palette);
+            using InstanceUnique instance = new(Chemins.RepertoireRacine);
+            if (!instance.Seule)
+            {
+                KryptonMessageBox.Show(Langue.T("BrunoGUI est déjà ouvert depuis ce dossier."), "BrunoGUI", KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                return;
+            }
             // *** Splash Screen ***
             EcranDemarrage demarrage = new();
             demarrage.Show();
@@ -47,7 +53,10 @@ namespace BrunoGUI_GenII
             EchiquierPrincipal fenetre = new();
             Application.Run(fenetre);
             if (fenetre.RedemarrageDemande)
+            {
+                instance.Dispose();     // avant la relance : la nouvelle fenêtre serait sinon refusée
                 Relance();
+            }
         }
 
         private static void Relance()
