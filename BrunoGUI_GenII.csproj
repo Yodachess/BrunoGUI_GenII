@@ -104,12 +104,6 @@
     <None Update="BibliothèquesPolyglot\gm2600.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="BibliothèquesPolyglot\komodo.bin">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="BibliothèquesPolyglot\KomodoVariety.bin">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="BibliothèquesPolyglot\Performance.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

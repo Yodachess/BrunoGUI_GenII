@@ -403,16 +403,6 @@ namespace BrunoGUI_GenII.Properties {
         /// <summary>
         ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Komodo {
-            get {
-                object obj = ResourceManager.GetObject("Komodo", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
-        /// </summary>
         internal static System.Drawing.Bitmap Menace {
             get {
                 object obj = ResourceManager.GetObject("Menace", resourceCulture);
