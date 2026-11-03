@@ -36,7 +36,7 @@
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <h2 id="demarrage">1. Démarrage rapide</h2>
 <ol>
-    <li>Menu <b>Stockfish &gt; Nouvelle partie contre Stockfish…</b> (Ctrl+N) : choisissez votre couleur, la force du moteur et la pendule, puis <span class="bouton">OK</span>.</li>
+    <li>Menu <b>Moteur &gt; Nouvelle partie contre Stockfish…</b> (Ctrl+N) : choisissez votre couleur, la force du moteur et la pendule, puis <span class="bouton">OK</span>.</li>
     <li>Jouez en cliquant sur une pièce, puis sur sa case d'arrivée. Les cases possibles sont marquées.</li>
     <li>Le moteur répond tout seul. Ses coups s'inscrivent sur la feuille de partie, à droite de l'échiquier.</li>
     <li>À la fin, cliquez sur <span class="bouton">Analyse rapide</span> sous la feuille : le moteur juge chaque coup et donne votre précision.</li>
@@ -55,14 +55,14 @@
     <li><b>À droite de l'échiquier</b> : le tournoi, la feuille de partie avec sa courbe d'évaluation, puis le cadre « Bilan partie » et les boutons d'analyse.</li>
     <li><b>Tout à droite</b> : les boutons de jeu (Retour arrière, résultat, Tourne échiquier, Ordinateur joue…) et les coups connus de la bibliothèque d'ouvertures.</li>
     <li><b>Sous l'échiquier</b> : trois lignes pour les variantes du moteur ou l'analyse du coup regardé, le choix de la pendule et du temps de réflexion, puis la barre d'état.</li>
-    <li><b>Les menus</b> : <b>Fichier</b> (ouvrir, enregistrer, en-tête PGN, liste des parties), <b>Partie</b> (parties contre le moteur en cours ou entre humains, saisie d'une position, retour arrière, résultat), <b>Analyse</b> (analyse de la position ou de la partie), <b>Stockfish</b> (nouvelle partie contre Stockfish, le choisir comme adversaire, ses réglages avancés et sa mise à jour), <b>Moteur</b> (les autres moteurs, réglages du moteur, bibliothèque d'ouvertures), <b>Affichage</b> (échiquier, couleurs, variantes, langue) et <b>Aide</b>. Les commandes des boutons y sont aussi.</li>
+    <li><b>Les menus</b> : <b>Fichier</b> (ouvrir, enregistrer, en-tête PGN, liste des parties), <b>Partie</b> (parties contre le moteur en cours ou entre humains, saisie d'une position, retour arrière, résultat), <b>Analyse</b> (analyse de la position ou de la partie), <b>Moteur</b> (nouvelle partie contre Stockfish, les autres moteurs, réglages du moteur, bibliothèque d'ouvertures, mise à jour de Stockfish), <b>Affichage</b> (échiquier, couleurs, variantes, langue) et <b>Aide</b>. Les commandes des boutons y sont aussi.</li>
     <li><b>Raccourcis clavier</b> : Ctrl+N nouvelle partie contre Stockfish, Ctrl+O ouvrir une partie PGN, Ctrl+I ouvrir une position FEN, Ctrl+S enregistrer la partie, Ctrl+F enregistrer la position, Ctrl+Z retour arrière, F5 analyser la position, F1 aide ; flèches, Début et Fin pour parcourir la partie.</li>
 </ul>
 
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <h2 id="jouer">3. Jouer une partie</h2>
 <h3>Contre Stockfish</h3>
-<p>Menu <b>Stockfish &gt; Nouvelle partie contre Stockfish…</b> (Ctrl+N). Cette commande reprend toujours Stockfish comme adversaire, même si un autre moteur était choisi. Rien ne change tant que vous n'avez pas cliqué sur <span class="bouton">OK</span> : <span class="bouton">Annuler</span> laisse la partie en cours intacte.</p>
+<p>Menu <b>Moteur &gt; Nouvelle partie contre Stockfish…</b> (Ctrl+N). Cette commande reprend toujours Stockfish comme adversaire, même si un autre moteur était choisi. Rien ne change tant que vous n'avez pas cliqué sur <span class="bouton">OK</span> : <span class="bouton">Annuler</span> laisse la partie en cours intacte.</p>
 <figure>
     <img src="images/02-nouvelle-partie.png" alt="Fenêtre Nouvelle partie contre Stockfish">
     <figcaption>La couleur du moteur, sa force (maximale, ou limitée à un Elo), la pendule ou le temps de réflexion par coup, et votre nom.</figcaption>
@@ -70,7 +70,7 @@
 <h3>Contre un autre moteur, ou entre humains</h3>
 <ul>
     <li>Menu <b>Partie</b> : <i>Jouer les Blancs contre …</i> ou <i>Jouer les Noirs contre …</i> (avec le nom du moteur en cours), ou <i>Entre humains (ou saisie d'une partie)</i> : le moteur ne joue pas, pour une partie entre amis ou pour saisir une partie (aussi par le bouton <span class="bouton">Saisie partie</span>).</li>
-    <li>Le moteur utilisé est celui choisi dans le menu <b>Moteur</b> (ou <b>Stockfish &gt; Jouer contre Stockfish</b>), à la force réglée dans <b>Moteur &gt; Paramètres du moteur…</b> (voir <a href="#moteurs">chapitre 11</a>).</li>
+    <li>Le moteur utilisé est celui choisi dans le menu <b>Moteur</b>, à la force réglée dans <b>Moteur &gt; Paramètres du moteur…</b> (voir <a href="#moteurs">chapitre 11</a>).</li>
 </ul>
 <h3>Pendant la partie</h3>
 <ul>
@@ -233,14 +233,13 @@
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <h2 id="moteurs">11. Moteurs et bibliothèques</h2>
 <ul>
-    <li>Menu <b>Stockfish</b> : tout ce qui concerne Stockfish, le moteur par défaut, l'un des plus forts du monde : nouvelle partie contre lui (Ctrl+N), <b>Jouer contre Stockfish</b> (le reprendre comme adversaire, coché s'il l'est), ses paramètres avancés et sa mise à jour. Menu <b>Moteur</b> : les autres moteurs (le moteur en cours est coché). <b>Rodent IV</b> (fort et polyvalent) et <b>Sargon I</b> (le premier moteur sur micro-ordinateur, 1978) sont fournis.</li>
+    <li>Menu <b>Moteur</b> : le moteur en cours y est coché. <b>Nouvelle partie contre Stockfish…</b> (Ctrl+N) reprend Stockfish, le moteur par défaut, l'un des plus forts du monde. <b>Rodent IV</b> (fort et polyvalent) et <b>Sargon I</b> (le premier moteur sur micro-ordinateur, 1978) sont fournis.</li>
     <li><b>Rodent IV ▸</b> : ses personnalités, en sous-menu ; en choisir une fait jouer Rodent avec ce style de jeu, imitant un champion (Morphy, Lasker, Alekhine, Tal, Petrosian, Spassky, Kortchnoï, Fischer, Karpov, Kasparov) ou un style (Dynamique, Fougueux, Défenseur, Étrangleur, Sacrifieur de pions, Positions fermées). La personnalité change le style, pas la force : la force reste l'Elo réglé. Le choix est gardé pour les parties suivantes ; « Style par défaut » rend à Rodent son style d'origine.</li>
     <li><b>Autre moteur…</b> : tout autre moteur au protocole UCI.</li>
     <li>Le moteur choisi ne sert qu'à <b>jouer</b> contre vous. Les <b>analyses</b> (analyse de position, analyse rapide ou complète de la partie) sont toujours faites par <b>Stockfish</b>, lancé à part, avec vos réglages de variantes, de threads et de table de hachage : vous pouvez jouer contre Rodent IV ou Sargon et garder une analyse de qualité.</li>
     <li><b>Bibliothèque d'ouvertures…</b> (en bas du menu Moteur) : un livre d'ouvertures au format Polyglot (*.bin). Des bibliothèques spécialisées sont fournies pour travailler une ouverture.</li>
     <li>À droite de l'échiquier, la liste des coups connus de la bibliothèque ; ⭐ marque celui que le moteur a joué. Les cases <b>Bibliothèque</b> et <b>Aléatoire</b> activent la bibliothèque et font choisir un coup au hasard, pour varier les ouvertures.</li>
     <li><b>Paramètres du moteur…</b> : réglages du moteur en cours, dont le nom figure dans le titre de la fenêtre : force (Elo, dans la plage que ce moteur accepte, par exemple 800 à 2800 pour Rodent IV et 1320 à 3190 pour Stockfish ; grisée pour un moteur qui ne règle pas sa force par l'Elo, comme Sargon), nombre de variantes, threads, temps de réflexion. L'Elo n'est envoyé que si vous l'avez changé : un moteur en pleine force y reste. Les Elo de deux moteurs ne se comparent pas : « 1800 » ne donne pas la même force chez Rodent et chez Stockfish.</li>
-    <li><b>Paramètres avancés de Stockfish…</b> : les options propres à Stockfish (table de hachage, fichiers NNUE, tables Syzygy…), seulement quand Stockfish est le moteur en cours. Ces réglages sont facultatifs.</li>
 </ul>
 <figure>
     <img src="images/12-parametres.png" alt="Paramètres du moteur">
@@ -265,7 +264,7 @@
 <h2 id="programme">13. Mise à jour et fichiers du programme</h2>
 <ul>
     <li><b>Installation</b> : BrunoGUI se publie sous forme d'archive zip, sans installation. Avant de la décompresser, faites un clic droit sur le zip &gt; <b>Propriétés</b> &gt; cochez <b>« Débloquer »</b>. Sinon, au premier lancement, Windows affiche « Windows a protégé votre ordinateur » (SmartScreen) : cliquez sur « Informations complémentaires » si besoin, puis sur <b>« Exécuter quand même »</b>. Cet avertissement vient de ce que le programme, libre et gratuit, n'est pas signé numériquement ; il ne signale pas un problème du programme.</li>
-    <li><b>Mise à jour de Stockfish</b> : le programme vérifie de temps en temps s'il existe une nouvelle version et propose de l'installer. Menu <b>Stockfish &gt; Mise à jour de Stockfish</b> pour vérifier tout de suite.</li>
+    <li><b>Mise à jour de Stockfish</b> : le programme vérifie de temps en temps s'il existe une nouvelle version et propose de l'installer. Menu <b>Moteur &gt; Mise à jour de Stockfish</b> pour vérifier tout de suite.</li>
     <li><b>Moteur qui s'arrête</b> : si un moteur s'arrête tout seul (plantage), un message le signale et propose de le relancer ; s'il devait jouer, il rejoue son coup. Le Stockfish qui analyse est relancé d'office.</li>
     <li><b>BrunoGUI.ini</b>, à côté du programme : les réglages par défaut (moteur, couleurs, palette…).</li>
     <li><b>BrunoGUI.preferences.ini</b> : vos préférences, enregistrées à la fermeture (couleurs, nom, temps de réflexion, langue…). Supprimez-le pour revenir aux réglages par défaut.</li>

@@ -14,7 +14,6 @@
 //                      ├─ "PositionFenUci"             Position Fen courante envoyée au Moteur UCI
 //                      ├─ "JeuMoteurUci"               Envoie au moteur UCI le Fen actuel
 //                      ├─ "DefinitForce"               Force pour jouer : un Elo (UCI_LimitStrength + UCI_Elo), ou pleine force
-//                      ├─ "DefinitNiveau"              "Skill Level" pour jouer
 //                      ├─ "AppliqueForce"              Force limitée pour jouer, pleine force pour analyser (avant chaque "go")
 //                      ├─ "DefinitMultiPV"            Nombre de variantes demandées au moteur
 //                      ├─ "DefinitThreads" / "DefinitHachage"   Threads et table de hachage (mémorisés pour les redémarrages)
@@ -63,14 +62,11 @@ namespace BrunoGUI_GenII
         public (int Minimum, int Maximum)? PlageElo { get; private set; }
         public string? NomAnnonce { get; private set; }  // nom annoncé par le moteur ("id name ..."), ex : Stockfish 19
 
-        // Force du moteur : limitée pour jouer (Elo, niveau), jamais pour analyser. Ce qui est voulu pour jouer est mémorisé, et ce
+        // Force du moteur : limitée pour jouer (Elo), jamais pour analyser. Ce qui est voulu pour jouer est mémorisé, et ce
         // qui est actuellement réglé dans le moteur aussi : avant chaque "go", JeuMoteurUci n'envoie que ce qui doit changer
         public int? EloVoulu { get; private set; }  // force pour jouer : Elo limité (UCI_LimitStrength + UCI_Elo) ; null : pleine force
         private bool _limiteEloVoulue;          // UCI_LimitStrength voulu pour jouer (EloVoulu != null)
         private bool _limiteEloDansMoteur;      // valeur actuelle de UCI_LimitStrength dans le moteur
-        public int? NiveauVoulu { get; private set; }   // "Skill Level" réglé pour jouer (null : jamais réglé, 20 chez Stockfish)
-        private int? _niveauDansMoteur;
-        public const int NiveauMaximal = 20;
 
         // Numérotation des demandes ("go") : une réponse à une demande abandonnée (retour arrière, nouvelle partie, résultat...)
         // est ignorée, ce qui permet de laisser l'interface active pendant la réflexion du moteur
@@ -127,7 +123,6 @@ namespace BrunoGUI_GenII
             _optionsDemarrageEnvoyees = false;
             _limiteEloDansMoteur = false;       // un moteur qui démarre a ses réglages par défaut (l'Elo voulu est envoyé à "uciok")
             _limiteEloVoulue = EloVoulu != null;
-            NiveauVoulu = _niveauDansMoteur = null;
             Demandes.Reinitialiser();
             StandardInputDataToUci("uci");  // On demande les infos au moteur (il répond par ses options puis "uciok")
         }
@@ -296,18 +291,13 @@ namespace BrunoGUI_GenII
             // L'Elo ramené dans la plage du moteur (l'Elo voulu est gardé quand on change de moteur : 1100 réglé pour Rodent est
             // envoyé 1320 à Stockfish : une valeur hors de sa plage pourrait être refusée ou ignorée)
             PlageElo is (int minimum, int maximum) ? Math.Clamp(elo, minimum, maximum) : elo;
-        public void DefinitNiveau(int niveau)
-        {   // "Skill Level" (0 à 20 chez Stockfish) pour jouer ; une analyse se fait toujours au niveau maximal
-            NiveauVoulu = _niveauDansMoteur = niveau;
-            StandardInputDataToUci("setoption name Skill Level value " + niveau);
-        }
         private void AppliqueForce(bool forceMaximale)
-        {   // Avant un "go" : force limitée (Elo, niveau) pour jouer, pleine force pour analyser.
+        {   // Avant un "go" : force limitée (Elo) pour jouer, pleine force pour analyser.
             // Comportement de Stockfish (vérifié dans stockfish\src\search.cpp) :
             //  - UCI_Elo est une option à part, gardée par le moteur : "UCI_LimitStrength value false" ne fait que l'ignorer, et
             //    "value true" la réutilise sans qu'il faille la renvoyer (à chaque recherche : Skill(Skill Level, LimitStrength ? UCI_Elo : 0)).
             //    Elle n'est perdue qu'au redémarrage du moteur (retour à 1320).
-            //  - Avec une force limitée (Elo, ou Skill Level < 20), Stockfish cherche au moins 4 variantes en coulisse, choisit un coup
+            //  - Avec une force limitée, Stockfish cherche au moins 4 variantes en coulisse, choisit un coup
             //    moins bon (Skill::pick_best), puis l'ÉCHANGE avec la vraie meilleure variante avant de l'afficher : la variante 1
             //    annoncée est ce coup faible, souvent très courte, et son score vaut 0 si sa recherche n'est pas allée au bout
             //    (-VALUE_INFINITE affiché VALUE_ZERO). Une analyse avec la limite donnait donc des "meilleurs coups" absurdes à 0.00.
@@ -317,15 +307,6 @@ namespace BrunoGUI_GenII
             {
                 StandardInputDataToUci("setoption name UCI_LimitStrength value " + (limite ? "true" : "false"));
                 _limiteEloDansMoteur = limite;
-            }
-            if (NiveauVoulu is int niveauVoulu && OptionsUci.Contains("Skill Level"))
-            {
-                int niveau = forceMaximale ? NiveauMaximal : niveauVoulu;
-                if (niveau != _niveauDansMoteur)
-                {
-                    StandardInputDataToUci("setoption name Skill Level value " + niveau);
-                    _niveauDansMoteur = niveau;
-                }
             }
         }
         public void SpecialeSargon()

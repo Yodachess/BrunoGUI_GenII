@@ -72,7 +72,6 @@ namespace BrunoGUI_GenII
         public GestionPartiePgn GestionPartiePgn = new();
         public PartieForceModule maNouvellePartieForceModule = new();
         public PartieEchecsPGN PartieEnCours = new();
-        public ParametresUciStockfish mesParametresUciStockfish;    // créée dans le constructeur (elle règle MoteurUci)
         public ParametresDeBase mesparametresDeBase;        // mesparametresDeBase est déclarée, mais elle n’est instanciée qu'après "InitializeComponent();"
         private AffichePgn? affichePgn = new();   // affichePgn est à la fois déclarée et instanciée. Prêt à être utilisé dès le début
         private readonly FichierPartiePgn fichierPartiePgn = new();     // liste des parties d'un fichier PGN (masquée, jamais détruite)
@@ -122,7 +121,6 @@ namespace BrunoGUI_GenII
             MoteurUci.TailleHachageMo = parametres.TailleHachageMo;
             CreeMenuPersonnalites();
             moteursBibliothequesToolStripMenuItem.DropDownOpening += MenuMoteurs_DropDownOpening;
-            StockfishMenu.DropDownOpening += MenuMoteurs_DropDownOpening;
             // Mise à jour des variables à partir des données du fichier
             _vue = new VueEchiquier(Plateau, this,      // vue côté Blancs au départ ; couleurs du .ini (style Lichess par défaut)
                 Parametres.ConvertitCouleur(parametres.CaseClaire, Parametres.LichessCaseClaire),
@@ -193,7 +191,6 @@ namespace BrunoGUI_GenII
             PartieEnCours.Result = "*";
             AfficheJoueursDeLaPartie();     // avant toute partie : l'humain avec les Blancs, le moteur avec les Noirs (étiquettes et en-tête PGN)
             mesparametresDeBase = new ParametresDeBase(this);
-            mesParametresUciStockfish = new ParametresUciStockfish(MoteurUci);
             fichierPartiePgn.VisibleChanged += (s, e) => MetAJourBoutonListeParties();   // bouton "Affiche/Masque liste parties"
             // Les options suivent l'état initial des cases à cocher du designer (le son était inversé : case cochée, son coupé)
             _emetUnSon = ActiveSon.Checked;
@@ -727,19 +724,11 @@ namespace BrunoGUI_GenII
             // L'Elo affiché à côté du moteur : celui qui lui est réellement envoyé (gardé quand on change de moteur, borné à son
             // maximum), ou sa pleine force (2026-10-23 : Rodent réglé à 1800 s'affichait « +- 3000 »)
             MoteurUci.EloVoulu is int elo ? Math.Min(elo, eloMaximal).ToString() : pleineForce;
-        private void StockfishMoteur_Click(object? sender, EventArgs e)
-        {   // Menu Stockfish > Jouer contre Stockfish : Stockfish redevient le moteur qui joue (2026-10-23 : avant,
-            // il fallait passer par « Nouvelle partie contre Stockfish »)
-            DemarreStockfish();
-        }
         private void MenuMoteurs_DropDownOpening(object? sender, EventArgs e)
-        {   // Menus Stockfish et Moteur (un menu à part pour Stockfish, 2026-10-23) : le moteur en cours est
-            // coché ; « Paramètres avancés de Stockfish » n'a de sens qu'avec Stockfish
-            bool stockfish = string.Equals(Path.GetFullPath(_cheminMoteur), CheminStockfish, StringComparison.OrdinalIgnoreCase);
-            StockfishMoteur.Checked = stockfish;
+        {   // Menu Moteur : le moteur en cours est coché (Stockfish sur « Nouvelle partie contre Stockfish », sa seule commande de choix)
+            NouvellePartieStockfish.Checked = string.Equals(Path.GetFullPath(_cheminMoteur), CheminStockfish, StringComparison.OrdinalIgnoreCase);
             RodentIV.Checked = _cheminMoteur.Contains("rodent", StringComparison.OrdinalIgnoreCase);
             Sargon1_1978.Checked = _cheminMoteur.Contains("sargon", StringComparison.OrdinalIgnoreCase);
-            ParametresAvances.Enabled = stockfish;
         }
         private void RodentIV_Click(object? sender, EventArgs e)
         {   //  https://echecs-et-informatique.franceserv.com/rodent-iv.html
@@ -952,10 +941,6 @@ namespace BrunoGUI_GenII
         private void ParametresDeBase_Click(object? sender, EventArgs e)
         {   // Affiche les paramètres de base du moteur UCI
             mesparametresDeBase.Show();
-        }
-        private void ParametresAvances_Click(object? sender, EventArgs e)
-        {   // Affiche les paramètres avancés du moteur UCI
-            mesParametresUciStockfish.Show();
         }
         private void StopMoteur_Click(object? sender, EventArgs e)
         {   // Arrête le moteur UCI (utilise si réflexion infinie)

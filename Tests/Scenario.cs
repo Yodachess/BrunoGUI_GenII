@@ -2002,10 +2002,7 @@ public static class Scenario
                     .Select(m => Desechappe(m.Groups[1].Value)));
             // Textes de toutes les fenêtres du designer (sauf noms propres, options UCI, valeurs, textes remplacés à l'ouverture)
             string[] nonTraduits = ["-:--", "[Elo] Joueur Blanc", "[Elo] Joueur Noir", "Affichage Variante UCI", "kryptonStatusStrip1",
-                                    "Menu Interface Graphique", "Stockfish", "Rodent IV", "Sargon I 1978", "OK", "ECO", "ELO", "ELO ", "Date", "Site",
-                                    "Debug Log ", "Numa Policy ", "Ponder", "UCI_Chess960 ", "Clear Hash", "UCI_LimitStrength",
-                                    "UCI_ShowWDL", "SyzygyPath", "Syzygy50MoveRule", "EvalFile", "EvalFileSmall", "auto", "<empty>",
-                                    "nn-1111cefa1111.nnue", "nn-37f18f62d772.nnue"];
+                                    "Menu Interface Graphique", "Rodent IV", "Sargon I 1978", "OK", "ECO", "ELO", "ELO ", "Date", "Site"];
             List<string> textesDesigner = Directory.GetFiles(racine, "*.Designer.cs")
                 .SelectMany(fichier => System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(fichier),
                     @"(?:\.|^\s*)(?:Text|Heading|HeaderText|Description|Filter|FileName)\s*=\s*""((?:[^""\\]|\\.)*)""", System.Text.RegularExpressions.RegexOptions.Multiline))
