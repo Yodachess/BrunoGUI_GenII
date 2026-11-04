@@ -1784,6 +1784,26 @@ public static class Scenario
         Verifie("Remplacement : un échec est signalé, sans laisser de fichier temporaire", echecSignale && !File.Exists(fichierAbsent + ".tmp"), "");
         Directory.Delete(dossierRemplacement, recursive: true);
 
+        // Partie non enregistrée : tout ce qui serait écrit dans le fichier compte, et rien d'autre
+        PartieEchecsPGN partieSignee = FichierPartiePgn.DecodePartiePGN("[Event \"Test\"]\n[White \"A\"]\n[Black \"B\"]\n[Result \"*\"]\n\n1. e4 e5 *");
+        ChargementPartie.ChargerPartiePgn(partieSignee, new Partie());
+        string signature = GestionPartiePgn.SignaturePartie(partieSignee);
+        bool signatureStable = GestionPartiePgn.SignaturePartie(partieSignee) == signature;
+        L.ListeCoups[0].Annotation = "!";
+        bool annotationVue = GestionPartiePgn.SignaturePartie(partieSignee) != signature;
+        L.ListeCoups[0].Annotation = "";
+        L.ListeCoups[1].Commentaire = "Une idée";
+        bool commentaireVu = GestionPartiePgn.SignaturePartie(partieSignee) != signature;
+        L.ListeCoups[1].Commentaire = null;
+        bool retourVu = GestionPartiePgn.SignaturePartie(partieSignee) == signature;
+        partieSignee.White = "C";
+        bool enTeteVu = GestionPartiePgn.SignaturePartie(partieSignee) != signature;
+        L.RetireDernierCoup();
+        partieSignee.White = "A";
+        Verifie("Partie non enregistrée : stable sans changement, annotation, commentaire, en-tête et coup vus, retour à l'identique reconnu",
+            signatureStable && annotationVue && commentaireVu && retourVu && enTeteVu && GestionPartiePgn.SignaturePartie(partieSignee) != signature,
+            $"{signatureStable}, {annotationVue}, {commentaireVu}, {retourVu}, {enTeteVu}");
+
         // ═══════════════ Un seul BrunoGUI par dossier ═══════════════
         Console.WriteLine("── Un seul BrunoGUI par dossier ──");
 

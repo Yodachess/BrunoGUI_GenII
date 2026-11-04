@@ -149,6 +149,11 @@ namespace BrunoGUI_GenII
             return RetourneEntetePgn(partieEnCours, coups) + LignesDe80(string.Join(" ", mots));
         }
 
+        public static string SignaturePartie(PartieEchecsPGN partieEnCours) =>
+            // La partie telle qu'elle serait enregistrée (coups, en-tête, annotations, commentaires, analyse) : si elle diffère de celle
+            // du dernier enregistrement ou chargement, il y a quelque chose à enregistrer. Rien à marquer à chaque modification
+            RetourneContenuPgn(partieEnCours, "Intl", pourFichier: true);
+
         public static string BilanSurUneLigne(string bilan) =>
             // Le bilan affiché (sur 4 lignes) en une phrase pour le PGN : "Blancs — précision 87 % : 1 imprécision, 0 erreur, 2 gaffes ;
             // Noirs — précision 62 % : …" (BilanDepuisLigne fait l'inverse à la relecture)

@@ -268,7 +268,7 @@ namespace BrunoGUI_GenII
         private void NouvellePartieStockfish_Click(object? sender, EventArgs e)
         {   // Nouvelle partie contre Stockfish, avec la possibilité de régler la force du moteur et le temps de réflexion.
             // Rien ne change avant la validation : "Annuler" laisse la partie en cours intacte (et le moteur continue à réfléchir)
-            if (maNouvellePartieForceModule.ShowDialog() == DialogResult.OK)
+            if (maNouvellePartieForceModule.ShowDialog() == DialogResult.OK && ProposeEnregistrement())
             {   // Utilise les sélections faites par l'utilisateur
                 AbandonneReflexion();   // nouvelle partie
                 QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
@@ -525,8 +525,8 @@ namespace BrunoGUI_GenII
             if (code == Langue.Code)
                 return;
             parametres.Langue = code;
-            if (KryptonMessageBox.Show(T("La nouvelle langue sera utilisée au prochain démarrage de BrunoGUI.\n\nRedémarrer maintenant ? Une partie en cours non enregistrée sera perdue."),
-                    T("Langue"), KryptonMessageBoxButtons.YesNo, KryptonMessageBoxIcon.Question) != DialogResult.Yes)
+            if (KryptonMessageBox.Show(T("La nouvelle langue sera utilisée au prochain démarrage de BrunoGUI.\n\nRedémarrer maintenant ?"),
+                    T("Langue"), KryptonMessageBoxButtons.YesNo, KryptonMessageBoxIcon.Question) != DialogResult.Yes || !ProposeEnregistrement())
                 return;
             RedemarrageDemande = true;      // pas de "Quitter l'application ?" (voir EchiquierPrincipal_FormClosing)
             // Pas d'Application.Restart : une fenêtre secondaire masquée (paramètres, protocole, PGN) y annule la fermeture, et
@@ -644,7 +644,7 @@ namespace BrunoGUI_GenII
             // On demande d'abord confirmation (la partie est remise à zéro) : "Annuler" laisse la partie en cours intacte
             string confirmation = T("Vous aurez les Blancs contre {0}.\nToute position précédente sera effacée,\n confirmez avec OK, sinon Annuler", _nomMoteur);
             DialogResult Resultat = KryptonMessageBox.Show(confirmation, T("Le joueur a les Blancs, l'ordinateur les Noirs"), KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
-            if (Resultat == DialogResult.OK)
+            if (Resultat == DialogResult.OK && ProposeEnregistrement())
             {
                 AbandonneReflexion();   // nouvelle partie
                 QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
@@ -663,7 +663,7 @@ namespace BrunoGUI_GenII
             // On demande d'abord confirmation (la partie est remise à zéro) : "Annuler" laisse la partie en cours intacte
             string confirmation = T("Vous aurez les Noirs contre {0}.\nToute position précédente sera effacée,\n confirmez avec OK, sinon Annuler", _nomMoteur);
             DialogResult Resultat = KryptonMessageBox.Show(confirmation, T("Le joueur a les Noirs, l'ordinateur les Blancs"), KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
-            if (Resultat == DialogResult.OK)
+            if (Resultat == DialogResult.OK && ProposeEnregistrement())
             {
                 AbandonneReflexion();   // nouvelle partie
                 QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
@@ -683,7 +683,7 @@ namespace BrunoGUI_GenII
             // On demande d'abord confirmation (la partie est remise à zéro) : "Annuler" laisse la partie en cours intacte
             string confirmation = T("Vous jouez contre votre ami/partenaire,\nou vous saisissez une partie ...\nToute position précédente sera effacée,\n confirmez avec OK, sinon Annuler");
             DialogResult Resultat = KryptonMessageBox.Show(confirmation, T("Jeu entre amis, ou saisie de partie"), KryptonMessageBoxButtons.OKCancel, KryptonMessageBoxIcon.Information);
-            if (Resultat == DialogResult.OK)
+            if (Resultat == DialogResult.OK && ProposeEnregistrement())
             {
                 AbandonneReflexion();   // nouvelle partie
                 QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
@@ -1316,9 +1316,9 @@ namespace BrunoGUI_GenII
         //  Fermeture Programme
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         private void EchiquierPrincipal_FormClosing(object? sender, FormClosingEventArgs e)
-        {   // Demande de confirmation avant de quitter l'application
-            if (!RedemarrageDemande && KryptonMessageBox.Show(T("Quitter l'application ?"), T("Confirmer"),
-                KryptonMessageBoxButtons.YesNo, KryptonMessageBoxIcon.Question) == DialogResult.No)
+        {   // Avant de quitter l'application : proposition d'enregistrer la partie s'il le faut, sinon simple confirmation
+            if (!RedemarrageDemande && !(PartieNonEnregistree ? ProposeEnregistrement() : KryptonMessageBox.Show(T("Quitter l'application ?"), T("Confirmer"),
+                KryptonMessageBoxButtons.YesNo, KryptonMessageBoxIcon.Question) != DialogResult.No))
             {
                 e.Cancel = true; // Annule la fermeture
                 return;

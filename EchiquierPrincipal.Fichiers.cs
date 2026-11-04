@@ -110,6 +110,8 @@ namespace BrunoGUI_GenII
         }
         private void ChargeFenDansLaPartie(string contenuFen, string libelle, string detail)
         {   // Une position (FEN déjà contrôlée par ChargementPartie.ErreurFen) devient une nouvelle partie : fichier FEN ou saisie
+            if (!ProposeEnregistrement())
+                return;
             AbandonneReflexion();   // chargement d'une position
             QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
             ListeParties.Clear();    // On vide la liste des parties
@@ -131,8 +133,21 @@ namespace BrunoGUI_GenII
             VarianteMoteurUci3.Text = _pendule != null ? "   " + T("Pendule {0} : elle démarre au premier coup", _pendule.Cadence.Nom) : "...";
             MetAJourCommandes();
         }
-        private void EnregistrerPgn_Click(object? sender, EventArgs e)
-        {   // Enregistre la partie au format PGN
+        private string? _partieEnregistree;     // SignaturePartie au dernier enregistrement ou chargement
+        private bool PartieNonEnregistree => DemiCoupsJoues > 0 && SignaturePartie(PartieEnCours) != _partieEnregistree;
+        private bool ProposeEnregistrement()
+        {   // Avant d'abandonner la partie (fermeture, nouvelle partie, chargement) : vrai si l'on peut continuer. Une partie saisie et
+            // analysée pendant de longues minutes se perdait sinon d'un clic
+            if (!PartieNonEnregistree)
+                return true;
+            DialogResult reponse = KryptonMessageBox.Show(T("La partie en cours n'est pas enregistrée.\n\nOui : l'enregistrer.\nNon : continuer sans l'enregistrer.\nAnnuler : revenir à la partie."),
+                T("Partie non enregistrée"), KryptonMessageBoxButtons.YesNoCancel, KryptonMessageBoxIcon.Warning);
+            return reponse == DialogResult.No || (reponse == DialogResult.Yes && EnregistrePartiePgn());
+        }
+        private void EnregistrerPgn_Click(object? sender, EventArgs e) => EnregistrePartiePgn();
+        private bool EnregistrePartiePgn()
+        {   // Enregistre la partie au format PGN ; vrai si elle a été écrite (faux si l'utilisateur a annulé, ou en cas d'erreur)
+            bool ecrite = false;
             try
             {
                 // La partie au format PGN, avec les temps de la pendule après chaque coup (seulement dans le fichier, pas à l'affichage)
@@ -153,6 +168,7 @@ namespace BrunoGUI_GenII
                             if (resultat == DialogResult.No)
                             {   // Remplace le fichier : il peut contenir des centaines de parties, une copie en est toujours gardée
                                 string copie = FichierPartiePgn.RemplaceEnGardantUneCopie(cheminPgn, contenuPgn);
+                                ecrite = true;
                                 InformationPourJoueur.Text = T("La partie est écrite dans le fichier {0}", Path.GetFileName(cheminPgn));
                                 KryptonMessageBox.Show(T("Le fichier {0} est remplacé.\nCopie de l'ancien fichier : {1}", Path.GetFileName(cheminPgn), Path.GetFileName(copie)),
                                     T("Fichier existant"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
@@ -161,13 +177,17 @@ namespace BrunoGUI_GenII
                             {   // Ajoute la nouvelle partie à la fin du fichier existant, sans réécrire ce qu'il contient (relu puis réécrit
                                 // en UTF-8, un fichier aux lignes Latin-1 aurait perdu ses accents)
                                 File.AppendAllText(cheminPgn, "\r\n\r\n" + contenuPgn);
+                                ecrite = true;
                                 InformationPourJoueur.Text = T("La partie est ajoutée dans le fichier {0}", Path.GetFileName(cheminPgn));
                             }
                         }
                         else
                         {   // Si le fichier n'existe pas, écrire simplement la nouvelle partie
                             File.WriteAllText(cheminPgn, contenuPgn);               // Ecriture du fichier au format PGN
+                            ecrite = true;
                         }
+                        if (ecrite)
+                            _partieEnregistree = SignaturePartie(PartieEnCours);
                     }
                 }
             }
@@ -177,6 +197,7 @@ namespace BrunoGUI_GenII
                 KryptonMessageBox.Show(T("Une erreur s'est produite : {0}", ex.Message), T("Enregistrement du fichier PGN"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                 Debug.WriteLine($"StackTrace : {ex.StackTrace}");
             }
+            return ecrite;
         }
         private void EnregistrerFen_Click(object? sender, EventArgs e)
         {   // Ecriture du fichier FEN (position courante)
@@ -195,6 +216,8 @@ namespace BrunoGUI_GenII
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         public void ChargerPartieDepuisPgn(PartieEchecsPGN partie)
         {   // --- Charge UNE partie depuis un fichier PGN lorsque'on double-clique ---
+            if (!ProposeEnregistrement())
+                return;
             AbandonneReflexion();
             QuitteParcours();       // nouvelle partie : l'échiquier suit la partie
             _vue.EffaceDernierCoup();    // les cases du dernier coup de la partie précédente
@@ -227,6 +250,7 @@ namespace BrunoGUI_GenII
             if (!string.IsNullOrWhiteSpace(partie.Bilan) && chargement.CoupIllisible == null)
                 AfficheBilan(partie.Bilan);     // partie analysée puis enregistrée : son bilan revient sous la feuille
             AfficheResultatPartiePgn();
+            _partieEnregistree = SignaturePartie(PartieEnCours);    // telle que dans le fichier : rien à enregistrer tant qu'on n'y touche pas
         }
         private void AfficheResultatPartiePgn()
         {   // Partie PGN rejouée : son résultat est affiché, et l'échiquier montre la partie depuis le début
