@@ -224,24 +224,26 @@ namespace BrunoGUI_GenII
             return Math.Max(0, demiCoupsJoues - 1);
         }
 
-        public static void DessineMouvements(string caseSource, bool visu)
+        public static void DessineMouvements(string caseSource, bool visu, Position? position = null)
         {   // Dessin des mouvements possibles pour une pièce ainsi que les menaces adverses pour cette même pièce
-            foreach (string mouvement in Regles.Mouvements(PositionActuelle, caseSource))
+            // (position : celle d'un coup essayé ; par défaut, la position de la partie)
+            Position p = position ?? PositionActuelle;
+            foreach (string mouvement in Regles.Mouvements(p, caseSource))
             {
                 string caseDestination = mouvement[^2..];
-                TypeSymbole symbole = !Regles.EstLegal(PositionActuelle, caseSource, caseDestination) ? TypeSymbole.SymboleMouvementInterdit
+                TypeSymbole symbole = !Regles.EstLegal(p, caseSource, caseDestination) ? TypeSymbole.SymboleMouvementInterdit
                                     : mouvement.StartsWith('x') ? TypeSymbole.SymboleMenacePiece        // mouvement possible avec prise
                                     : TypeSymbole.SymboleMouvementSansPrise;
                 int indexCase = RenvoieCaseIndex120(caseDestination);
-                ListeMouvementsPiece.Add(indexCase, PiecesEchiquier[indexCase]);
+                ListeMouvementsPiece.Add(indexCase, p.Pieces[indexCase]);
                 if (visu)
                     DessineSymbole?.Invoke(indexCase, symbole);
             }
             // (les menaces sur la pièce choisie ne sont pas dessinées : ce n'était pas assez clair)
-            foreach (string menace in Regles.CasesPiecesMenacantes(PositionActuelle, caseSource))
+            foreach (string menace in Regles.CasesPiecesMenacantes(p, caseSource))
             {
                 int indexCase = RenvoieCaseIndex120(menace);
-                ListeMenacesPiece.Add(indexCase, PiecesEchiquier[indexCase]);
+                ListeMenacesPiece.Add(indexCase, p.Pieces[indexCase]);
             }
         }
 

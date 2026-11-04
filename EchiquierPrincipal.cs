@@ -346,6 +346,12 @@ namespace BrunoGUI_GenII
         {   // Le joueur sélectionne la case source ou destination avec la souris
             try
             {
+                if (_essai != null)
+                {   // « Et si j'avais joué un autre coup ? » : le coup est joué sur une copie, jamais dans la partie
+                    if (sender is PictureBox caseEssai)
+                        CaseCliqueeEssai(_vue.IndexDeLaCase(caseEssai));
+                    return;
+                }
                 if (PartieEnLectureSeule)
                     return;     // partie PGN chargée : on ne joue pas de coup
                 if (ParcoursEnCours)
@@ -419,6 +425,8 @@ namespace BrunoGUI_GenII
             _vue.LibereCurseurPiece();
             LogiqueMouvements.EffaceSymboles(true);
             _vue.DessinePiece(_indexSource120, _pieceSource);
+            if (_essai != null)
+                _vue.DessinePosition(_essai.Courante);  // (coup essayé : pendant le parcours, l'effacement des symboles ne dessine rien)
         }
         // ┌▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄┐
         //  Langue de l'interface (voir Langue.cs)
@@ -990,7 +998,9 @@ namespace BrunoGUI_GenII
             // Fenêtre de suivi, comme pour l'analyse de partie : position, score et meilleure suite en direct, temps
             // restant ; "Arrêter" demande au moteur de répondre tout de suite (le résultat est affiché comme à la fin du temps)
             OuvreFenetreSuivi(T("Analyse de la position"), T("Arrêter"), () => MoteurQuiAnalyse.StandardInputDataToUci("stop"));
-            _fenetreAnalyse?.MontreEtape(NomDeLaPosition(ParcoursEnCours ? _indexAffiche : LogiqueMouvements.ListeCoups.Count - 1), "",
+            string nomPosition = _essai is { NombreCoups: > 0 } ? T("Position après {0}", Notation(_essai.TexteSuite()))
+                : NomDeLaPosition(ParcoursEnCours ? _indexAffiche : LogiqueMouvements.ListeCoups.Count - 1);
+            _fenetreAnalyse?.MontreEtape(nomPosition, "",
                                          0, _dureeReflexionMilliSeconde, TexteTempsRestant(TimeSpan.FromMilliseconds(_dureeReflexionMilliSeconde)));
         }
         private static string TexteTempsRestant(TimeSpan reste) =>
@@ -1447,8 +1457,8 @@ namespace BrunoGUI_GenII
             if (!_vue.CasesCreees)
                 return;     // cases pas encore créées
             // Pendant la pause (clic sur une pendule) et l'analyse de la partie, on ne joue pas : l'échiquier est bloqué
-            bool actif = !_pauseJoueur && _analyseDePartie == null && !ParcoursEnCours
-                && _plateauAutorise && (_partie.Mode == ModePartie.EnCours || _partie.Mode == ModePartie.AucunePartie);
+            bool actif = _essai != null || (!_pauseJoueur && _analyseDePartie == null && !ParcoursEnCours
+                && _plateauAutorise && (_partie.Mode == ModePartie.EnCours || _partie.Mode == ModePartie.AucunePartie));
             _vue.ActiverCases(actif);
         }
 
@@ -1466,7 +1476,7 @@ namespace BrunoGUI_GenII
             RetourArriere.Enabled = (enCours || _partie.Mode == ModePartie.Terminee) && coupsJoues && !ParcoursEnCours;
             groupParcoursPartie.Enabled = coupsJoues;
             // Reprendre ici : pendant le parcours (position passée), ou sur une partie PGN en lecture seule (y compris sa position finale)
-            BoutonReprendreIci.Enabled = (ParcoursEnCours && _partie.Mode != ModePartie.AucunePartie) || PartieEnLectureSeule;
+            BoutonReprendreIci.Enabled = _essai == null && ((ParcoursEnCours && _partie.Mode != ModePartie.AucunePartie) || PartieEnLectureSeule);
             _clavierActif = coupsJoues;     // flèches du clavier (Echap les coupe jusqu'au prochain calcul)
             AnalysePosition.Enabled = _partie.Mode != ModePartie.AucunePartie;
             BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = enCours;
@@ -1505,7 +1515,9 @@ namespace BrunoGUI_GenII
             int indexAffiche = ParcoursEnCours ? _indexAffiche : LogiqueMouvements.ListeCoups.Count - 1;
             // (sous un coup, son commentaire essentiel, à la façon de Lichess : erreur et meilleur coup, sacrifice, thème)
             IReadOnlyList<Coup> coups = LogiqueMouvements.ListeCoups;
-            FeuilleDesCoups.MetAJour(coups, indexAffiche, PartieEnCours.Result, i => FeuilleDePartie.CommentaireEssentiel(coups[i]));
+            FeuilleDesCoups.MetAJour(coups, indexAffiche, PartieEnCours.Result, i => CommentaireDeLaFeuille(coups[i]));
+            if (_essai is { AGarder: true })
+                FeuilleDesCoups.RendVisible(_indexCoupEssaye);      // (la suite s'écrit sous le coup remplacé, pas sous le coup surligné)
             AfficheTournoi();
         }
         private void AfficheTournoi()
@@ -1542,6 +1554,7 @@ namespace BrunoGUI_GenII
             menu.Items.Add(ElementAnnotation(coup, "", Annotations.Nom("")));
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(new ToolStripMenuItem(FeuilleDePartie.CommentaireEssentiel(coup) == null ? T("Écrire un commentaire…") : T("Modifier le commentaire…"), null, (s, e) => EcritCommentaire(index, coup)));
+            menu.Items.Add(new ToolStripMenuItem(T("Et si j'avais joué un autre coup ?"), null, (s, e) => CommenceEssai(index)) { Enabled = EssaiPossible && !coup.EstPositionDeDepart });
             menu.Closed += (s, e) => BeginInvoke(new Action(menu.Dispose));     // libéré après le traitement du clic
             menu.Show(FeuilleDesCoups, position);
         }
@@ -1558,8 +1571,8 @@ namespace BrunoGUI_GenII
                 return;
             coup.Commentaire = texte;
             MetAJourFeuille();
-            if (_positionAffichee != null && _indexAffiche == index)
-                AfficheTextesDuCoup(index, _positionAffichee);      // (sous l'échiquier aussi, si c'est le coup regardé)
+            if (_essai == null && _positionAffichee != null && _indexAffiche == index)
+                AfficheTextesDuCoup(index, _positionAffichee);      // (sous l'échiquier aussi, si c'est le coup regardé ; pas pendant un essai, ses lignes restent)
         }
         private Font? _policeMenuAnnotations;    // créée une seule fois (une police par élément et par clic droit ne serait jamais libérée)
         private ToolStripMenuItem ElementAnnotation(Coup coup, string annotation, string texte)

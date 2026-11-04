@@ -216,8 +216,14 @@ namespace BrunoGUI_GenII
                         if (conseil is { Length: >= 4 } && RenvoieCaseIndex120(conseil[..2]) > 0 && RenvoieCaseIndex120(conseil[2..4]) > 0)
                             _vue.MontreFleches((RenvoieCaseIndex120(conseil[..2]), RenvoieCaseIndex120(conseil[2..4]), CouleurFlecheMeilleurCoup));
                         MetAJourCommandes();
-                        _ = KryptonMessageBox.Show(T("La meilleure suite est : {0}\n Evaluation --- {1} --- ({2})\n{3}",
-                            Notation(meilleure.Debut), meilleure.TexteScore, appreciation, Notation(meilleure.VariantePgn)), titre, KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                        if (_essai is { NombreCoups: > 0 })
+                        {   // (suite de coups essayée : pas de boîte de message à fermer à chaque coup)
+                            _essai.EvaluationCourante = meilleure.Evaluation;
+                            AfficheResultatEssai();
+                        }
+                        else
+                            _ = KryptonMessageBox.Show(T("La meilleure suite est : {0}\n Evaluation --- {1} --- ({2})\n{3}",
+                                Notation(meilleure.Debut), meilleure.TexteScore, appreciation, Notation(meilleure.VariantePgn)), titre, KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
                     }
                     MetAJourCommandes();
                 }

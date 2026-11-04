@@ -1804,6 +1804,47 @@ public static class Scenario
             relectureCommentee is { CoupIllisible: null, DemiCoupsJoues: 3 } && L.ListeCoups[1].Commentaire == commentaireNet && L.ListeCoups[0].Commentaire == null,
             L.ListeCoups[1].Commentaire ?? "null");
 
+        // « Et si j'avais joué un autre coup ? » : une suite de coups, sur une copie, sans toucher à la partie
+        PartieEchecsPGN partieEssai = FichierPartiePgn.DecodePartiePGN("[Event \"Test\"]\n[White \"A\"]\n[Black \"B\"]\n[Result \"*\"]\n\n1. e4 e5 2. Nf3 *");
+        ChargementPartie.ChargerPartiePgn(partieEssai, new Partie());
+        string fenPartieAvantEssai = L.RetourneChaineFenActuel();
+        Coup coupDeLaPartie = L.ListeCoups[2];
+        EssaiDeCoup essai = new(L.PositionDepuisFen(L.ListeCoups[1].Fen), coupDeLaPartie);
+        bool essaiIllegal = !essai.Jouer("e4", "e6") && essai.NombreCoups == 0;
+        bool pieceAdverseRefusee = !essai.PieceJouable("e5") && essai.PieceJouable("g1");
+        bool essaiJoue = essai.Jouer("f1", "c4");
+        bool traitPasse = essai.PieceJouable("g8") && !essai.PieceJouable("g1");
+        bool reponseJouee = essai.Jouer("g8", "f6") && essai.Jouer("g1", "f3");
+        Verifie("Essai d'un coup : une suite de coups légaux des deux camps, la partie n'est pas touchée",
+            essaiIllegal && pieceAdverseRefusee && essaiJoue && traitPasse && reponseJouee && essai.TexteSuite() == "2. Fc4 Cf6 3. Cf3"
+            && essai.Courante.Pieces[L.RenvoieCaseIndex120("c4")] == L.TypePiece.FouBlanc
+            && L.RetourneChaineFenActuel() == fenPartieAvantEssai && L.ListeCoups.Count == 3,
+            essai.TexteSuite());
+        Verifie("Essai d'un coup : comparaison avec le coup de la partie",
+            essai.TexteComparaison() == "Dans la partie : 2. Cf3 (coup pas encore analysé).", essai.TexteComparaison());
+        string noteSansEvaluation = essai.TexteCommentaire();
+        essai.EvaluationCourante = new Evaluation(35, null);
+        string noteAvecEvaluation = essai.TexteCommentaire();
+        essai.Jouer("f8", "c5");
+        Verifie("Essai d'un coup : texte noté en commentaire, évaluation seulement pour la position atteinte",
+            noteSansEvaluation == "Et si 2. Fc4 Cf6 3. Cf3" && noteAvecEvaluation == "Et si 2. Fc4 Cf6 3. Cf3 ⩲ (0.35)"
+            && essai.TexteCommentaire() == "Et si 2. Fc4 Cf6 3. Cf3 Fc5"
+            && Annotations.NettoieCommentaire(noteAvecEvaluation) == noteAvecEvaluation
+            && essai.CommentaireAvec(null) == essai.TexteCommentaire() && essai.CommentaireAvec("Mon texte") == "Mon texte " + essai.TexteCommentaire(),
+            noteAvecEvaluation + " / " + essai.TexteCommentaire());
+        EssaiDeCoup essaiVide = new(L.PositionDepuisFen(L.ListeCoups[1].Fen), coupDeLaPartie);
+        bool videAGarder = essaiVide.AGarder;
+        essaiVide.Jouer("g1", "f3");
+        bool memeCoupAGarder = essaiVide.AGarder;
+        essaiVide.Jouer("g8", "f6");
+        Verifie("Essai d'un coup : à garder seulement s'il donne une autre suite que la partie", !videAGarder && !memeCoupAGarder && essaiVide.AGarder && essai.AGarder, "");
+        EssaiDeCoup essaiMemeCoup = new(L.PositionDepuisFen(L.ListeCoups[1].Fen), coupDeLaPartie);
+        essaiMemeCoup.Jouer("g1", "f3");
+        Verifie("Essai d'un coup : le coup de la partie est reconnu", essaiMemeCoup.EstLeCoupDeLaPartie, essaiMemeCoup.TexteComparaison());
+        EssaiDeCoup essaiPromotion = new(L.PositionDepuisFen("8/P6k/8/8/8/8/8/K7 w - - 0 1"), coupDeLaPartie);
+        essaiPromotion.Jouer("a7", "a8", L.TypePiece.CavalierBlanc);
+        Verifie("Essai d'un coup : promotion choisie", essaiPromotion.Courante.Pieces[L.RenvoieCaseIndex120("a8")] == L.TypePiece.CavalierBlanc, "");
+
         // Partie non enregistrée : tout ce qui serait écrit dans le fichier compte, et rien d'autre
         PartieEchecsPGN partieSignee = FichierPartiePgn.DecodePartiePGN("[Event \"Test\"]\n[White \"A\"]\n[Black \"B\"]\n[Result \"*\"]\n\n1. e4 e5 *");
         ChargementPartie.ChargerPartiePgn(partieSignee, new Partie());

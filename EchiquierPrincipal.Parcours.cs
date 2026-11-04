@@ -180,6 +180,7 @@ namespace BrunoGUI_GenII
         {   // Affiche la position après le coup n° index de ListeCoups (-1 : position initiale), sans modifier la partie.
             // Au-delà du dernier coup : retour à la position courante
             ArreteRejeu(reaffiche: false);  // (meilleure suite en cours de rejeu : la nouvelle position la remplace)
+            TermineEssai();                 // (coup essayé : se déplacer dans la partie y met fin)
             int dernier = LogiqueMouvements.ListeCoups.Count - 1;
             if (index >= dernier)
             {
@@ -506,6 +507,7 @@ namespace BrunoGUI_GenII
         public void RetourPositionCourante()
         {   // Fin du parcours : l'échiquier montre de nouveau la partie
             ArreteRejeu(reaffiche: false);
+            TermineEssai();
             if (!ParcoursEnCours)
                 return;
             _positionAffichee = null;
@@ -521,6 +523,7 @@ namespace BrunoGUI_GenII
         private void QuitteParcours()
         {   // La partie va être remplacée (nouvelle partie, chargement, "Reprendre ici") : l'échiquier suivra la partie
             ArreteRejeu(reaffiche: false);
+            TermineEssai(proposeDeGarder: false);
             _positionAffichee = null;
             _vue.DernierCoupMasque = false;
             _vue.EffaceFleches();

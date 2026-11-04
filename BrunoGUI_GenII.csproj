@@ -22,7 +22,7 @@
   <ItemGroup>
     <!-- Fichiers partiels du formulaire principal (découpé par sujet) : rangés sous EchiquierPrincipal.cs dans Visual Studio,
          et ouverts comme du code (pas dans le concepteur de formulaires) -->
-    <Compile Update="EchiquierPrincipal.Moteur.cs;EchiquierPrincipal.Pendule.cs;EchiquierPrincipal.Parcours.cs;EchiquierPrincipal.Fichiers.cs;EchiquierPrincipal.AnalysePartie.cs">
+    <Compile Update="EchiquierPrincipal.Moteur.cs;EchiquierPrincipal.Pendule.cs;EchiquierPrincipal.Parcours.cs;EchiquierPrincipal.Fichiers.cs;EchiquierPrincipal.AnalysePartie.cs;EchiquierPrincipal.Essai.cs">
       <DependentUpon>EchiquierPrincipal.cs</DependentUpon>
       <SubType>Code</SubType>
     </Compile>

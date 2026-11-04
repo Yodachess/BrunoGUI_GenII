@@ -233,7 +233,7 @@ namespace BrunoGUI_GenII
 
         private int LigneDuCoup(int index) => _lignes.FindIndex(l => !l.EstCommentaire && (l.Blanc == index || l.Noir == index));
 
-        private void RendVisible(int index)
+        public void RendVisible(int index)
         {   // Fait défiler la feuille pour que le coup soit visible, avec son commentaire (le dernier coup joué reste en vue, avec
             // le résultat en dessous)
             int ligne = LigneDuCoup(index);
