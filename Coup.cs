@@ -43,7 +43,7 @@ namespace BrunoGUI_GenII
         public string? VarianteMeilleure { get; set; }           // la suite prévue par le moteur après le meilleur coup ("19 ... Tac8 20. Cf3")
         public string? VarianteMeilleureUci { get; set; }        // la même au format UCI ("a8c8 g1f3 ...") : rejouée sur l'échiquier (ligne 3)
         public string? CoupJoueLong { get; set; }                // le coup lui-même avec sa case de départ, en français ("Dd8-d7")
-        public string? Commentaire { get; set; }                 // texte du commentaire du coup dans le PGN chargé (null : aucun), réécrit à l'enregistrement
+        public string? Commentaire { get; set; }                 // commentaire du coup, lu dans le PGN ou écrit par le joueur (null : aucun), réécrit à l'enregistrement
         // Commentaire écrit par l'analyse de partie (ex : "Sacrifice du cavalier"), remplacé à chaque analyse ; dans le PGN, un bloc
         // à part marqué [%autocom], relu comme tel (jamais confondu avec le commentaire d'un joueur ou d'un auteur)
         public string? CommentaireAuto { get; set; }
@@ -117,6 +117,14 @@ namespace BrunoGUI_GenII
             "?!" => Langue.T("Douteux"), "?" => Langue.T("Mauvais"), "??" => Langue.T("Gaffe"), _ => Nom(annotation)
         };
 
+        public static string? NettoieCommentaire(string texte)
+        {   // Le texte saisi par le joueur, prêt pour le PGN : sur une ligne, sans accolades (elles fermeraient le commentaire) ni « [% »
+            // (relu comme une marque du programme) ; null s'il est vide
+            string net = string.Join(" ", texte.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
+                .Replace("{", "(").Replace("}", ")").Replace("[%", "[");
+            return net == "" ? null : net;
+        }
+
         public static (string Coup, string Annotation) Separe(string coupPgn)
         {   // "Ng5?!" -> ("Ng5", "?!") ; une suite de ! et ? qui n'est pas une annotation connue (ex : "!!!") est retirée sans être gardée
             int fin = coupPgn.Length;
@@ -172,8 +180,11 @@ namespace BrunoGUI_GenII
         }
 
         public static string? CommentaireEssentiel(Coup coup)
-        {   // Le commentaire de la feuille de partie, seulement l'essentiel : une erreur (?!, ?, ??) et le coup qu'il
-            // fallait jouer ("Gaffe. Dc6 s'imposait.", PhraseErreur), puis le sacrifice, le thème tactique ou le mat manqué ; null : rien
+        {   // Le commentaire de la feuille de partie, seulement l'essentiel : celui du joueur ou de l'auteur du PGN, seul s'il y en a un (il
+            // remplace les phrases de l'analyse, qu'on peut reprendre en l'écrivant : EcritCommentaire) ; sinon une erreur (?!, ?, ??) et
+            // le coup qu'il fallait jouer ("Gaffe. Dc6 s'imposait.", PhraseErreur), puis le sacrifice, le thème tactique ou le mat manqué ; null : rien
+            if (!string.IsNullOrWhiteSpace(coup.Commentaire))
+                return coup.Commentaire;
             List<string> phrases = [];
             // (une annotation de l'auteur du PGN sur un coup que le moteur juge bon, ou presque : il n'y a pas mieux à proposer, et
             // la feuille dit le désaccord, choix B, 16... f5? de Smirin–Grischuk, meilleur coup pour Stockfish)

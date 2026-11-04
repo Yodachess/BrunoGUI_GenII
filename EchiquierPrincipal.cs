@@ -1532,16 +1532,34 @@ namespace BrunoGUI_GenII
             AfficheCoupDeLaPartie(index);
         }
         private void FeuilleDesCoups_CoupCliqueDroit(int index, Point position)
-        {   // Clic droit sur un coup de la feuille : menu des annotations (!!, !, !?, ?!, ?, ??), l'annotation actuelle cochée.
-            // L'annotation est rangée dans le coup (Coup.Annotation) et écrite dans le PGN
+        {   // Clic droit sur un coup de la feuille : menu des annotations (!!, !, !?, ?!, ?, ??), l'annotation actuelle cochée, et commentaire.
+            // L'annotation est rangée dans le coup (Coup.Annotation) et écrite dans le PGN, le commentaire aussi (Coup.Commentaire)
             Coup coup = LogiqueMouvements.ListeCoups[index];
             ContextMenuStrip menu = new();
             foreach (string annotation in Annotations.Toutes)
                 menu.Items.Add(ElementAnnotation(coup, annotation, $"{annotation}\t{Annotations.Nom(annotation)}"));
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(ElementAnnotation(coup, "", Annotations.Nom("")));
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(new ToolStripMenuItem(FeuilleDePartie.CommentaireEssentiel(coup) == null ? T("Écrire un commentaire…") : T("Modifier le commentaire…"), null, (s, e) => EcritCommentaire(index, coup)));
             menu.Closed += (s, e) => BeginInvoke(new Action(menu.Dispose));     // libéré après le traitement du clic
             menu.Show(FeuilleDesCoups, position);
+        }
+        private void EcritCommentaire(int index, Coup coup)
+        {   // Le commentaire du joueur sur un coup : sous le coup dans la feuille, et dans le PGN enregistré. La fenêtre part du texte que
+            // montre la feuille, phrases de l'analyse comprises : on le modifie au lieu d'écrire à côté, et le texte validé le remplace
+            string nom = Langue.Notation(coup.PgnFr.Trim());
+            string? texteAffiche = FeuilleDePartie.CommentaireEssentiel(coup);
+            using FenetreCommentaire fenetre = new(coup.EstCoupBlanc ? nom : $"{coup.NumeroDuCoup}... {nom}", texteAffiche);
+            if (fenetre.ShowDialog(this) != DialogResult.OK)
+                return;
+            string? texte = Annotations.NettoieCommentaire(fenetre.Texte);
+            if (texte == texteAffiche)      // (rien de changé : une phrase de l'analyse ne devient pas pour autant un commentaire du joueur)
+                return;
+            coup.Commentaire = texte;
+            MetAJourFeuille();
+            if (_positionAffichee != null && _indexAffiche == index)
+                AfficheTextesDuCoup(index, _positionAffichee);      // (sous l'échiquier aussi, si c'est le coup regardé)
         }
         private Font? _policeMenuAnnotations;    // créée une seule fois (une police par élément et par clic droit ne serait jamais libérée)
         private ToolStripMenuItem ElementAnnotation(Coup coup, string annotation, string texte)

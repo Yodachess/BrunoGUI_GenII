@@ -1784,6 +1784,26 @@ public static class Scenario
         Verifie("Remplacement : un échec est signalé, sans laisser de fichier temporaire", echecSignale && !File.Exists(fichierAbsent + ".tmp"), "");
         Directory.Delete(dossierRemplacement, recursive: true);
 
+        // Commentaire écrit par le joueur : nettoyé, affiché dans la feuille, retrouvé à la relecture
+        string commentaireNet = Annotations.NettoieCommentaire("  J'ai eu peur {du clouage}\r\n[%eval 3] ; zeitnot  ");
+        Verifie("Commentaire du joueur : sur une ligne, sans accolades ni « [% », vide = aucun",
+            commentaireNet == "J'ai eu peur (du clouage) [eval 3] ; zeitnot" && Annotations.NettoieCommentaire(" \r\n ") == null, commentaireNet ?? "null");
+        PartieEchecsPGN partieCommentee = FichierPartiePgn.DecodePartiePGN("[Event \"Test\"]\n[White \"A\"]\n[Black \"B\"]\n[Result \"*\"]\n\n1. e4 e5 2. Nf3 *");
+        ChargementPartie.ChargerPartiePgn(partieCommentee, new Partie());
+        L.ListeCoups[1].Commentaire = commentaireNet;
+        Verifie("Commentaire du joueur : dans la feuille de partie", FeuilleDePartie.CommentaireEssentiel(L.ListeCoups[1]) == commentaireNet, FeuilleDePartie.CommentaireEssentiel(L.ListeCoups[1]) ?? "null");
+        Coup coupCommenteEtAnalyse = new() { Fen = L.FenDepart, Annotation = "?", MeilleurCoup = "Cc4", CommentaireTactique = "Sacrifice du cavalier" };
+        string phrasesAnalyse = FeuilleDePartie.CommentaireEssentiel(coupCommenteEtAnalyse);
+        coupCommenteEtAnalyse.Commentaire = "Mon texte";
+        Verifie("Commentaire du joueur : remplace les phrases de l'analyse dans la feuille",
+            phrasesAnalyse != null && phrasesAnalyse.Contains("Cc4") && phrasesAnalyse.Contains("Sacrifice") && FeuilleDePartie.CommentaireEssentiel(coupCommenteEtAnalyse) == "Mon texte",
+            $"{phrasesAnalyse} / {FeuilleDePartie.CommentaireEssentiel(coupCommenteEtAnalyse)}");
+        string pgnCommente2 = GestionPartiePgn.RetourneContenuPgn(partieCommentee, "Intl", pourFichier: true);
+        ResultatChargementPgn relectureCommentee = ChargementPartie.ChargerPartiePgn(FichierPartiePgn.DecodePartiePGN(pgnCommente2), new Partie());
+        Verifie("Commentaire du joueur : retrouvé à la relecture du PGN, avec tous les coups",
+            relectureCommentee is { CoupIllisible: null, DemiCoupsJoues: 3 } && L.ListeCoups[1].Commentaire == commentaireNet && L.ListeCoups[0].Commentaire == null,
+            L.ListeCoups[1].Commentaire ?? "null");
+
         // Partie non enregistrée : tout ce qui serait écrit dans le fichier compte, et rien d'autre
         PartieEchecsPGN partieSignee = FichierPartiePgn.DecodePartiePGN("[Event \"Test\"]\n[White \"A\"]\n[Black \"B\"]\n[Result \"*\"]\n\n1. e4 e5 *");
         ChargementPartie.ChargerPartiePgn(partieSignee, new Partie());
