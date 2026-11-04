@@ -17,6 +17,9 @@ namespace BrunoGUI_GenII
         {
             NombrePartiesFichier = new Label();
             lblDoubleClick = new Label();
+            lblFiltreJoueur = new Krypton.Toolkit.KryptonLabel();
+            FiltreJoueur = new Krypton.Toolkit.KryptonTextBox();
+            lblPartiesFiltrees = new Krypton.Toolkit.KryptonLabel();
             TableauPartiesPgn = new DataGridView();
             gridJoueurBlanc = new DataGridViewTextBoxColumn();
             gridEloBlanc = new DataGridViewTextBoxColumn();
@@ -53,14 +56,38 @@ namespace BrunoGUI_GenII
             lblDoubleClick.TabIndex = 1;
             lblDoubleClick.Text = "Double-cliquez sur la partie que vous voulez consulter";
             lblDoubleClick.TextAlign = ContentAlignment.MiddleCenter;
-            // 
+            //
+            // lblFiltreJoueur
+            //
+            lblFiltreJoueur.Location = new Point(6, 36);
+            lblFiltreJoueur.Name = "lblFiltreJoueur";
+            lblFiltreJoueur.Size = new Size(60, 20);
+            lblFiltreJoueur.TabIndex = 3;
+            lblFiltreJoueur.Values.Text = "Joueur :";
+            //
+            // FiltreJoueur
+            //
+            FiltreJoueur.Location = new Point(75, 35);
+            FiltreJoueur.Name = "FiltreJoueur";
+            FiltreJoueur.Size = new Size(250, 23);
+            FiltreJoueur.TabIndex = 4;
+            FiltreJoueur.TextChanged += FiltreJoueur_TextChanged;
+            //
+            // lblPartiesFiltrees
+            //
+            lblPartiesFiltrees.Location = new Point(335, 36);
+            lblPartiesFiltrees.Name = "lblPartiesFiltrees";
+            lblPartiesFiltrees.Size = new Size(250, 20);
+            lblPartiesFiltrees.TabIndex = 5;
+            lblPartiesFiltrees.Values.Text = "";
+            //
             // TableauPartiesPgn
             // 
             TableauPartiesPgn.AllowUserToAddRows = false;
             TableauPartiesPgn.BackgroundColor = Color.Silver;
             TableauPartiesPgn.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             TableauPartiesPgn.Columns.AddRange([gridJoueurBlanc, gridEloBlanc, gridJoueurNoir, gridEloNoir, gridResultat, gridNombreCoups, gridCommentaires, gridCodeEco, gridTournoi, gridRonde, gridSite, gridDate]);
-            TableauPartiesPgn.Location = new Point(0, 33);
+            TableauPartiesPgn.Location = new Point(0, 64);
             TableauPartiesPgn.Name = "TableauPartiesPgn";
             TableauPartiesPgn.Size = new Size(933, 529);
             TableauPartiesPgn.TabIndex = 2;
@@ -140,7 +167,10 @@ namespace BrunoGUI_GenII
             //
             // FichierPartiePgn
             // 
-            ClientSize = new Size(934, 561);
+            ClientSize = new Size(934, 592);
+            Controls.Add(lblPartiesFiltrees);
+            Controls.Add(FiltreJoueur);
+            Controls.Add(lblFiltreJoueur);
             Controls.Add(TableauPartiesPgn);
             Controls.Add(lblDoubleClick);
             Controls.Add(NombrePartiesFichier);
@@ -152,6 +182,9 @@ namespace BrunoGUI_GenII
         }
         public Label NombrePartiesFichier;
         private Label lblDoubleClick;
+        private Krypton.Toolkit.KryptonLabel lblFiltreJoueur;
+        private Krypton.Toolkit.KryptonTextBox FiltreJoueur;
+        private Krypton.Toolkit.KryptonLabel lblPartiesFiltrees;
         private DataGridViewTextBoxColumn gridJoueurBlanc;
         private DataGridViewTextBoxColumn gridEloBlanc;
         private DataGridViewTextBoxColumn gridJoueurNoir;

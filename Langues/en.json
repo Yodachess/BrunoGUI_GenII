@@ -570,6 +570,7 @@
   "{0} partie(s) déjà dans {1}, non proposée(s).": "{0} game(s) already in {1}, not offered.",
   "Résultat : {0}": "Result: {0}",
   "Joueur :": "Player:",
+  "{0} partie(s) sur {1}": "{0} game(s) of {1}",
   "Tout cocher": "Check all",
   "Tout décocher": "Uncheck all",
   "Le fichier d'origine n'est jamais modifié ; une analyse interrompue reprend où elle s'était arrêtée.": "The original file is never modified; an interrupted analysis resumes where it stopped.",

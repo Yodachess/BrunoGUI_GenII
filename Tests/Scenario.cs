@@ -1845,6 +1845,15 @@ public static class Scenario
         essaiPromotion.Jouer("a7", "a8", L.TypePiece.CavalierBlanc);
         Verifie("Essai d'un coup : promotion choisie", essaiPromotion.Courante.Pieces[L.RenvoieCaseIndex120("a8")] == L.TypePiece.CavalierBlanc, "");
 
+        // Filtre par joueur de la liste des parties : blancs ou noirs, sans majuscules ni accents, un mot à la fois
+        PartieEchecsPGN partieFiltree = new() { White = "Courtois, Bruno", Black = "Müller, Élodie" };
+        Verifie("Filtre par joueur : l'un ou l'autre camp, majuscules et accents ignorés, chaque mot doit figurer, filtre vide = toutes",
+            FichierPartiePgn.CorrespondAuFiltre(partieFiltree, "courtois") && FichierPartiePgn.CorrespondAuFiltre(partieFiltree, "MULLER")
+            && FichierPartiePgn.CorrespondAuFiltre(partieFiltree, "elodie") && FichierPartiePgn.CorrespondAuFiltre(partieFiltree, "bruno courtois")
+            && FichierPartiePgn.CorrespondAuFiltre(partieFiltree, "courtois müller") && FichierPartiePgn.CorrespondAuFiltre(partieFiltree, "  ")
+            && !FichierPartiePgn.CorrespondAuFiltre(partieFiltree, "dupont") && !FichierPartiePgn.CorrespondAuFiltre(partieFiltree, "courtois dupont")
+            && !FichierPartiePgn.CorrespondAuFiltre(new PartieEchecsPGN(), "courtois"), "");
+
         // Partie non enregistrée : tout ce qui serait écrit dans le fichier compte, et rien d'autre
         PartieEchecsPGN partieSignee = FichierPartiePgn.DecodePartiePGN("[Event \"Test\"]\n[White \"A\"]\n[Black \"B\"]\n[Result \"*\"]\n\n1. e4 e5 *");
         ChargementPartie.ChargerPartiePgn(partieSignee, new Partie());

@@ -534,6 +534,7 @@ namespace BrunoGUI_GenII
                 return;
             }
             TableauPartiesPgn.Rows.Clear();         // On vide explicitement toutes les lignes
+            FiltreJoueur.Text = "";                 // (un autre fichier : le filtre du précédent ne vaut plus)
             TableauPartiesPgn.DataSource = null;    // Réinitialisation complète du DataSource
             TableauPartiesPgn.RowHeadersVisible = false;    // supprime la colonne d’entêtes de lignes
             foreach (var partie in listeParties)    // Ajout manuel des données ligne par ligne (par mesure de sécurité)
@@ -546,6 +547,25 @@ namespace BrunoGUI_GenII
             foreach (int colonne in new[] { 0, 2, 4 })
                 TableauPartiesPgn.Columns[colonne].DefaultCellStyle.Font = PoliceGrasTableau;
             TableauPartiesPgn.Refresh();        // Rafraîchir la DataGridView pour s'assurer que les données sont bien affichées
+        }
+        public static bool CorrespondAuFiltre(PartieEchecsPGN partie, string filtre)
+        {   // Chaque mot du filtre figure dans le nom d'un des deux joueurs, sans tenir compte des majuscules ni des accents :
+            // "muller" trouve "Müller", "bruno courtois" trouve "Courtois, Bruno", "courtois dupont" leurs parties entre eux
+            static bool Contient(string nom, string mot) => System.Globalization.CultureInfo.CurrentCulture.CompareInfo.IndexOf(nom, mot,
+                System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreNonSpace) >= 0;
+            return filtre.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).All(mot => Contient(partie.White, mot) || Contient(partie.Black, mot));
+        }
+        private void FiltreJoueur_TextChanged(object? sender, EventArgs e)
+        {   // Les lignes sont masquées, pas retirées : le tri et le double-clic restent les mêmes
+            TableauPartiesPgn.CurrentCell = null;       // (une ligne masquée ne peut pas rester la ligne en cours)
+            int affichees = 0;
+            foreach (DataGridViewRow ligne in TableauPartiesPgn.Rows)
+            {
+                ligne.Visible = ligne.Tag is PartieEchecsPGN partie && CorrespondAuFiltre(partie, FiltreJoueur.Text);
+                if (ligne.Visible)
+                    affichees++;
+            }
+            lblPartiesFiltrees.Values.Text = string.IsNullOrWhiteSpace(FiltreJoueur.Text) ? "" : Langue.T("{0} partie(s) sur {1}", affichees, TableauPartiesPgn.Rows.Count);
         }
         private void TableauPartiesPgn_CellDoubleClick(object? sender, DataGridViewCellEventArgs e)
         {   // Charge la partie sélectionnée par le double-click

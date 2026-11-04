@@ -89,8 +89,7 @@ namespace BrunoGUI_GenII
             for (int i = 0; i < _parties.Count; i++)
             {
                 PartieEchecsPGN p = _parties[i];
-                if (filtre != "" && !p.White.Contains(filtre, StringComparison.CurrentCultureIgnoreCase)
-                                 && !p.Black.Contains(filtre, StringComparison.CurrentCultureIgnoreCase))
+                if (!FichierPartiePgn.CorrespondAuFiltre(p, filtre))
                     continue;
                 _affichees.Add(i);
                 _liste.SetItemChecked(_liste.Items.Add(Description(p)), _cochees[i]);
