@@ -1229,6 +1229,9 @@ namespace BrunoGUI_GenII
             //                couleurs, icônes des menus, repères sur les quatre côtés ; changement de langue sans fenêtre restante, un seul
             //                BrunoGUI par dossier, copie gardée au remplacement d'un PGN, préférences écrites sans risque, joueur par défaut
             //                « Joueur », bibliothèques Komodo retirées, 2 bibliothèques ajoutées ; aide en PDF jointe à la version
+            // Version 1.34 = « Et si j'avais joué un autre coup ? » (suite de coups essayée, écrite en direct dans la feuille, à garder en
+            //                commentaire), commentaire du joueur sur un coup, proposition d'enregistrer une partie modifiée avant de
+            //                l'abandonner, filtre par joueur dans la liste des parties
             // (le numéro de version vient du .csproj, <Version> : il n'est plus écrit ici)
             _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version " + VersionAffichee + "\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", T("A propos de"),
