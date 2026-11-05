@@ -121,6 +121,7 @@ namespace BrunoGUI_GenII
             LabelJoueurBlanc = new EtiquetteUneLigne();
             LabelTournoi = new System.Windows.Forms.Label();
             LabelDetailsTournoi = new EtiquetteUneLigne();
+            LabelOuverture = new System.Windows.Forms.Label();
             groupBilanPartie = new System.Windows.Forms.GroupBox();
             PenduleBlanc = new EtiquetteUneLigne();
             PenduleNoir = new EtiquetteUneLigne();
@@ -185,7 +186,7 @@ namespace BrunoGUI_GenII
             // 
             // MontreDonneesUci
             // 
-            MontreDonneesUci.Location = new System.Drawing.Point(802, 666);
+            MontreDonneesUci.Location = new System.Drawing.Point(802, 697);
             MontreDonneesUci.Name = "MontreDonneesUci";
             MontreDonneesUci.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             MontreDonneesUci.Size = new System.Drawing.Size(130, 25);
@@ -689,7 +690,7 @@ namespace BrunoGUI_GenII
             // 
             // BoutonAnalysePartie
             // 
-            BoutonAnalysePartie.Location = new System.Drawing.Point(538, 616);
+            BoutonAnalysePartie.Location = new System.Drawing.Point(538, 644);
             BoutonAnalysePartie.Name = "BoutonAnalysePartie";
             BoutonAnalysePartie.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             BoutonAnalysePartie.Size = new System.Drawing.Size(140, 25);
@@ -708,7 +709,7 @@ namespace BrunoGUI_GenII
             //
             // BoutonAnalyseComplete
             //
-            BoutonAnalyseComplete.Location = new System.Drawing.Point(682, 616);
+            BoutonAnalyseComplete.Location = new System.Drawing.Point(682, 644);
             BoutonAnalyseComplete.Name = "BoutonAnalyseComplete";
             BoutonAnalyseComplete.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             BoutonAnalyseComplete.Size = new System.Drawing.Size(104, 25);
@@ -747,7 +748,7 @@ namespace BrunoGUI_GenII
             groupBilanPartie.BackColor = System.Drawing.Color.WhiteSmoke;
             groupBilanPartie.Controls.Add(BarreAnalysePartie);
             groupBilanPartie.Controls.Add(BilanAnalyse);
-            groupBilanPartie.Location = new System.Drawing.Point(538, 644);
+            groupBilanPartie.Location = new System.Drawing.Point(538, 672);
             groupBilanPartie.Name = "groupBilanPartie";
             groupBilanPartie.Size = new System.Drawing.Size(248, 112);
             groupBilanPartie.TabIndex = 47;
@@ -913,11 +914,11 @@ namespace BrunoGUI_GenII
             //
             // LabelTournoi
             //
-            LabelTournoi.BackColor = System.Drawing.Color.White;
+            LabelTournoi.BackColor = System.Drawing.Color.FromArgb(232, 235, 239);
             LabelTournoi.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             LabelTournoi.AutoEllipsis = true;
             LabelTournoi.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
-            LabelTournoi.ForeColor = System.Drawing.Color.Black;
+            LabelTournoi.ForeColor = System.Drawing.Color.FromArgb(43, 48, 56);
             LabelTournoi.Location = new System.Drawing.Point(538, 28);
             LabelTournoi.Name = "LabelTournoi";
             LabelTournoi.Size = new System.Drawing.Size(248, 36);
@@ -927,16 +928,30 @@ namespace BrunoGUI_GenII
             //
             // LabelDetailsTournoi
             //
-            LabelDetailsTournoi.BackColor = System.Drawing.Color.White;
+            LabelDetailsTournoi.BackColor = System.Drawing.Color.FromArgb(232, 235, 239);
             LabelDetailsTournoi.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             LabelDetailsTournoi.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            LabelDetailsTournoi.ForeColor = System.Drawing.Color.FromArgb(90, 95, 105);
+            LabelDetailsTournoi.ForeColor = System.Drawing.Color.FromArgb(43, 48, 56);
             LabelDetailsTournoi.Location = new System.Drawing.Point(538, 68);
             LabelDetailsTournoi.Name = "LabelDetailsTournoi";
             LabelDetailsTournoi.Size = new System.Drawing.Size(248, 19);
             LabelDetailsTournoi.TabIndex = 46;
             LabelDetailsTournoi.Padding = new System.Windows.Forms.Padding(6, 0, 2, 0);
             LabelDetailsTournoi.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // LabelOuverture
+            //
+            LabelOuverture.AutoEllipsis = true;
+            LabelOuverture.BackColor = System.Drawing.Color.FromArgb(232, 235, 239);
+            LabelOuverture.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            LabelOuverture.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
+            LabelOuverture.ForeColor = System.Drawing.Color.FromArgb(43, 48, 56);
+            LabelOuverture.Location = new System.Drawing.Point(538, 606);
+            LabelOuverture.Name = "LabelOuverture";
+            LabelOuverture.Padding = new System.Windows.Forms.Padding(6, 0, 2, 0);
+            LabelOuverture.Size = new System.Drawing.Size(248, 34);
+            LabelOuverture.TabIndex = 48;
+            LabelOuverture.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
             // PenduleBlanc
             //
@@ -993,7 +1008,7 @@ namespace BrunoGUI_GenII
             // 
             // MontreVariantesUci
             // 
-            MontreVariantesUci.Location = new System.Drawing.Point(802, 635);
+            MontreVariantesUci.Location = new System.Drawing.Point(802, 666);
             MontreVariantesUci.Name = "MontreVariantesUci";
             MontreVariantesUci.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             MontreVariantesUci.Size = new System.Drawing.Size(130, 25);
@@ -1015,7 +1030,7 @@ namespace BrunoGUI_GenII
             FeuilleDesCoups.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
             FeuilleDesCoups.Location = new System.Drawing.Point(538, 90);
             FeuilleDesCoups.Name = "FeuilleDesCoups";
-            FeuilleDesCoups.Size = new System.Drawing.Size(248, 520);
+            FeuilleDesCoups.Size = new System.Drawing.Size(248, 512);
             FeuilleDesCoups.TabIndex = 28;
             // 
             // Plateau
@@ -1080,7 +1095,7 @@ namespace BrunoGUI_GenII
             // 
             // KryptonQuitter
             // 
-            KryptonQuitter.Location = new System.Drawing.Point(802, 726);
+            KryptonQuitter.Location = new System.Drawing.Point(802, 759);
             KryptonQuitter.Name = "KryptonQuitter";
             KryptonQuitter.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             KryptonQuitter.Size = new System.Drawing.Size(130, 25);
@@ -1102,7 +1117,7 @@ namespace BrunoGUI_GenII
             CoupsBibliothequeBox.BackColor = System.Drawing.Color.WhiteSmoke;
             CoupsBibliothequeBox.Location = new System.Drawing.Point(802, 489);
             CoupsBibliothequeBox.Name = "CoupsBibliothequeBox";
-            CoupsBibliothequeBox.Size = new System.Drawing.Size(120, 137);
+            CoupsBibliothequeBox.Size = new System.Drawing.Size(120, 168);
             CoupsBibliothequeBox.TabIndex = 33;
             CoupsBibliothequeBox.Text = "";
             // 
@@ -1342,7 +1357,7 @@ namespace BrunoGUI_GenII
             // 
             // KryptonApropos
             // 
-            KryptonApropos.Location = new System.Drawing.Point(802, 697);
+            KryptonApropos.Location = new System.Drawing.Point(802, 728);
             KryptonApropos.Name = "KryptonApropos";
             KryptonApropos.PaletteMode = Krypton.Toolkit.PaletteMode.Microsoft365SilverDarkMode;
             KryptonApropos.Size = new System.Drawing.Size(130, 25);
@@ -1421,6 +1436,7 @@ namespace BrunoGUI_GenII
             Controls.Add(LabelJoueurBlanc);
             Controls.Add(LabelTournoi);
             Controls.Add(LabelDetailsTournoi);
+            Controls.Add(LabelOuverture);
             Controls.Add(groupBilanPartie);
             Controls.Add(PenduleBlanc);
             Controls.Add(LabelJoueurNoir);
@@ -1533,6 +1549,7 @@ namespace BrunoGUI_GenII
         private EtiquetteUneLigne LabelJoueurBlanc;
         private System.Windows.Forms.Label LabelTournoi;
         private EtiquetteUneLigne LabelDetailsTournoi;
+        private System.Windows.Forms.Label LabelOuverture;
         private System.Windows.Forms.GroupBox groupBilanPartie;
         private System.Windows.Forms.Label InformationsPartie;
         private Krypton.Toolkit.KryptonButton MontreVariantesUci;

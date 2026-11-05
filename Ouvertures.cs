@@ -24,6 +24,15 @@ namespace BrunoGUI_GenII
         public string NomFrancais => TraductionOuvertures.Traduit(NomAnglais);
         public string Nom => Langue.EstFrancais ? NomFrancais : NomAnglais;     // dans la langue de l'interface
         public string Texte => $"{Nom} ({Eco})";                                // "Défense sicilienne : variante Najdorf (B90)"
+        public string TexteSurDeuxLignes
+        {   // Sous la feuille : "B90 — Défense sicilienne :", les variantes sur la 2e ligne (" : " en français, ": " en anglais)
+            get
+            {
+                string nom = Nom;
+                int deuxPoints = nom.IndexOf(':');
+                return deuxPoints < 0 ? $"{Eco} — {nom}" : $"{Eco} — {nom[..(deuxPoints + 1)]}\n{nom[(deuxPoints + 1)..].Trim()}";
+            }
+        }
     }
 
     public class CatalogueOuvertures

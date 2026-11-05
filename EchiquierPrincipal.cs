@@ -1522,6 +1522,16 @@ namespace BrunoGUI_GenII
             if (_essai is { AGarder: true })
                 FeuilleDesCoups.RendVisible(_indexCoupEssaye);      // (la suite s'écrit sous le coup remplacé, pas sous le coup surligné)
             AfficheTournoi();
+            AfficheOuverture(indexAffiche);
+        }
+        private void AfficheOuverture(int indexAffiche)
+        {   // Sous la feuille : le code ECO et le nom de l'ouverture à la position affichée, gardés une fois sortie de la théorie
+            // (infobulle : le nom en entier, s'il ne tient pas sur les deux lignes)
+            string texte = CatalogueDesOuvertures()?.OuvertureAuCoup(LogiqueMouvements.ListeCoups, indexAffiche)?.TexteSurDeuxLignes ?? "";
+            if (LabelOuverture.Text == texte)
+                return;
+            LabelOuverture.Text = texte;
+            _infobulleBilan.SetToolTip(LabelOuverture, texte);
         }
         private void AfficheTournoi()
         {   // Au-dessus de la feuille, à droite des joueurs : le tournoi (balise Event, sur deux lignes), puis la ronde et la date

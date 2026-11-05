@@ -2073,6 +2073,11 @@ public static class Scenario
             NomAuCoup(1) == "Défense française" && NomAuCoup(2) == "Défense française" && NomAuCoup(3) == "Défense française"
             && NomAuCoup(4) == "Défense française : variante d'avance",
             string.Join(" / ", Enumerable.Range(1, 4).Select(NomAuCoup)));
+        Ouverture ouvertureAvecVariantes = new("B90", "Sicilian Defense: Najdorf Variation, English Attack", 11);
+        Verifie("Ouvertures : sous la feuille, le code ECO et la famille, les variantes sur la 2e ligne",
+            ouvertureAvecVariantes.TexteSurDeuxLignes == "B90 — Défense sicilienne :\nvariante Najdorf, attaque anglaise"
+            && new Ouverture("C00", "French Defense", 2).TexteSurDeuxLignes == "C00 — Défense française",
+            ouvertureAvecVariantes.TexteSurDeuxLignes);
         Charger(L.FenDepart);
         Joue("g1f3", "d7d5", "d2d4");       // 1. Cf3 d5 2. d4 : même position que 1. d4 d5 2. Cf3
         var transposition = catalogue.Trouver(L.ListeCoups[^1].Fen);
