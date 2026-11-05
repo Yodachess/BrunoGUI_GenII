@@ -198,7 +198,7 @@ namespace BrunoGUI_GenII
             ["Formation"] = ("formation", true), ["Trap"] = ("piège", false), ["Counterattack"] = ("contre-attaque", true),
             ["Dragon"] = ("dragon", false), ["Setup"] = ("dispositif", false), ["Structure"] = ("structure", true),
             ["Invitation"] = ("invitation", true), ["Sacrifice"] = ("sacrifice", false), ["Fianchetto"] = ("fianchetto", false),
-            ["Exchange"] = ("échange", false),
+            ["Exchange"] = ("échange", false), ["Hybrid"] = ("variante hybride", true),
         };
 
         // Adjectifs (masculin, féminin), placés après le nom
@@ -236,6 +236,7 @@ namespace BrunoGUI_GenII
             ["Danish"] = ("danois", "danoise"), ["Swiss"] = ("suisse", "suisse"), ["Czech"] = ("tchèque", "tchèque"),
             ["Romanian"] = ("roumain", "roumaine"), ["Belgian"] = ("belge", "belge"), ["Swedish"] = ("suédois", "suédoise"),
             ["German"] = ("allemand", "allemande"), ["Portuguese"] = ("portugais", "portugaise"), ["Vienna"] = ("viennois", "viennoise"),
+            ["Franco-Sicilian"] = ("franco-sicilien", "franco-sicilienne"),
         };
 
         // Adjectifs placés en dernier ("Botvinnik System Reversed" → "système Botvinnik inversé")

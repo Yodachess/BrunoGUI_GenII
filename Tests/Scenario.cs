@@ -2078,6 +2078,14 @@ public static class Scenario
             ouvertureAvecVariantes.TexteSurDeuxLignes == "B90 — Défense sicilienne :\nvariante Najdorf, attaque anglaise"
             && new Ouverture("C00", "French Defense", 2).TexteSurDeuxLignes == "C00 — Défense française",
             ouvertureAvecVariantes.TexteSurDeuxLignes);
+        string hybrideVienne = TraductionOuvertures.Traduit("Bishop's Opening: Vienna Hybrid, Spielmann Attack");
+        Verifie("Ouvertures : les variantes « Hybrid » sont traduites",
+            hybrideVienne == "Ouverture du fou : variante hybride viennoise, attaque Spielmann"
+            && TraductionOuvertures.Traduit("Benoni Defense: Franco-Sicilian Hybrid").EndsWith(" : variante hybride franco-sicilienne")
+            && TraductionOuvertures.Traduit("Ruy Lopez: Closed, Breyer Defense, Zaitsev Hybrid").EndsWith(", variante hybride Zaitsev")
+            && TraductionOuvertures.Traduit("Ruy Lopez: Closed, Smyslov-Breyer-Zaitsev Hybrid").EndsWith(", variante hybride Smyslov-Breyer-Zaitsev")
+            && TraductionOuvertures.Traduit("Nimzo-Indian Defense: Romanishin Variation, English Hybrid").EndsWith(", variante hybride anglaise"),
+            hybrideVienne);
         Charger(L.FenDepart);
         Joue("g1f3", "d7d5", "d2d4");       // 1. Cf3 d5 2. d4 : même position que 1. d4 d5 2. Cf3
         var transposition = catalogue.Trouver(L.ListeCoups[^1].Fen);
