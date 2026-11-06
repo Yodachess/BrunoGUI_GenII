@@ -42,6 +42,7 @@
     <li>At the end, click <span class="bouton">Quick analysis</span> under the score sheet: the engine judges every move and gives your accuracy.</li>
     <li>Menu <b>File &gt; Save the game</b> (Ctrl+S) to keep the game in PGN format.</li>
 </ol>
+<p>Game already played? At the club: button <span class="bouton">Enter game</span>, then play the moves of both sides from your score sheet. Online: menu <b>File &gt; Import my online games…</b> (Lichess or Chess.com, with your username), or copy the game on the site then <b>File &gt; Paste a game or a position</b> (Ctrl+Shift+V). Then <span class="bouton">Quick analysis</span>.</p>
 
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <h2 id="window">2. The main window</h2>
@@ -55,7 +56,7 @@
     <li><b>Right of the board</b>: the event, the score sheet with its evaluation graph, the ECO code and name of the opening at the displayed position, then the analysis buttons and the “Game summary” box.</li>
     <li><b>Far right</b>: the game buttons (Take back, result, Flip board, Computer moves…) and the moves known by the opening book.</li>
     <li><b>Under the board</b>: three lines for the engine's lines or the analysis of the move being viewed, the clock and thinking time settings, then the status bar.</li>
-    <li><b>The menus</b>: <b>File</b> (open, save, PGN header, list of games), <b>Game</b> (games against the current engine or between humans, position setup, take back, result), <b>Analysis</b> (analysis of the position or of the game), <b>Engine</b> (new game against Stockfish, the other engines, engine settings, opening book, Stockfish update), <b>View</b> (board, colors, lines, language) and <b>Help</b>. The commands of the buttons are there too.</li>
+    <li><b>The menus</b>: <b>File</b> (open, paste, import my online games, save, PGN header, list of games), <b>Game</b> (games against the current engine or between humans, position setup, take back, result), <b>Analysis</b> (analysis of the position or of the game), <b>Engine</b> (new game against Stockfish, the other engines, engine settings, opening book, Stockfish update), <b>View</b> (board, colors, lines, language) and <b>Help</b>. The commands of the buttons are there too.</li>
     <li><b>Keyboard shortcuts</b>: Ctrl+N new game against Stockfish, Ctrl+O open a PGN game, Ctrl+I open a FEN position, Ctrl+S save the game, Ctrl+F save the position, Ctrl+Z take back, F5 analyze the position, F1 help; arrows, Home and End to browse the game.</li>
 </ul>
 
@@ -268,7 +269,7 @@
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <h2 id="program">13. Updates and program files</h2>
 <ul>
-    <li><b>Installation</b>: BrunoGUI is published as a zip archive, with no installer. Before extracting it, right-click the zip &gt; <b>Properties</b> &gt; tick <b>“Unblock”</b>. Otherwise, on first launch, Windows shows “Windows protected your PC” (SmartScreen): click “More info” if needed, then <b>“Run anyway”</b>. This warning comes from the program, which is free, not being digitally signed; it does not indicate a problem with the program.</li>
+    <li><b>Installation</b>: BrunoGUI is published as a zip archive, with no installer and nothing else to install (.NET is included since version 1.35). Before extracting it, right-click the zip &gt; <b>Properties</b> &gt; tick <b>“Unblock”</b>. Otherwise, on first launch, Windows shows “Windows protected your PC” (SmartScreen): click “More info” if needed, then <b>“Run anyway”</b>. This warning comes from the program, which is free, not being digitally signed; it does not indicate a problem with the program.</li>
     <li><b>Stockfish update</b>: the program checks from time to time whether a new version exists and offers to install it. Menu <b>Engine &gt; Stockfish update</b> to check right away.</li>
     <li><b>Engine that stops</b>: if an engine stops by itself (crash), a message says so and offers to restart it; if it was its turn, it plays its move again. The analysis Stockfish is restarted automatically.</li>
     <li><b>Only one window per folder</b>: a second launch from the same folder is refused, with a message, because both windows would share your preferences and Stockfish. Another copy of the program, in another folder, can stay open at the same time.</li>
