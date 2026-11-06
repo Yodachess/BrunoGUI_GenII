@@ -1232,6 +1232,9 @@ namespace BrunoGUI_GenII
             // Version 1.34 = « Et si j'avais joué un autre coup ? » (suite de coups essayée, écrite en direct dans la feuille, à garder en
             //                commentaire), commentaire du joueur sur un coup, proposition d'enregistrer une partie modifiée avant de
             //                l'abandonner, filtre par joueur dans la liste des parties
+            // Version 1.35 = parties en ligne : coller une partie ou une position (Ctrl+Maj+V), importer ses parties par pseudo
+            //                (Lichess, Chess.com) ; zip autonome, .NET inclus ; code ECO et ouverture sous la feuille, disposition
+            //                revue ; « Hors bibliothèque chargée », « variante hybride » ; captures de l'aide refaites
             // (le numéro de version vient du .csproj, <Version> : il n'est plus écrit ici)
             _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version " + VersionAffichee + "\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", T("A propos de"),
