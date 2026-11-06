@@ -39,6 +39,11 @@ jobs:
       - name: Tests (une version n'est publiée que si tous les tests passent)
         run: dotnet run --project Tests -c Release --no-build -- --complet
 
+      # Archive autonome : .NET 10 y est inclus, l'utilisateur n'a rien à installer (avant, il fallait le .NET 10 Desktop Runtime,
+      # une étape où un joueur occasionnel risque d'abandonner) ; seulement les ressources françaises et anglaises du runtime
+      - name: Publication autonome (avec .NET)
+        run: dotnet publish BrunoGUI_GenII.csproj -c Release -r win-x64 --self-contained true -p:SatelliteResourceLanguages="fr%3Ben" -o publie
+
       - name: Dernière version de Stockfish (évite un téléchargement au premier lancement)
         env:
           GH_TOKEN: ${{ github.token }}
@@ -51,14 +56,14 @@ jobs:
           Invoke-WebRequest $fichier.browser_download_url -OutFile stockfish.zip
           Expand-Archive stockfish.zip -DestinationPath stockfish_extrait
           $exe = Get-ChildItem stockfish_extrait -Recurse -Filter *.exe | Select-Object -First 1
-          Copy-Item $exe.FullName bin/Release/net10.0-windows/stockfish/stockfish.exe -Force
+          Copy-Item $exe.FullName publie/stockfish/stockfish.exe -Force
 
       - name: Archive portable
         run: |
-          $sortie = "bin/Release/net10.0-windows"
-          # Fichiers de publication ClickOnce et de débogage : inutiles dans une archive portable
-          Remove-Item "$sortie/publish" -Recurse -Force -ErrorAction SilentlyContinue
-          Remove-Item "$sortie/*.application", "$sortie/*.manifest", "$sortie/*.pdb" -Force -ErrorAction SilentlyContinue
+          $sortie = "publie"
+          # Fichiers de débogage : inutiles dans une archive portable
+          Remove-Item "$sortie/*.pdb" -Force -ErrorAction SilentlyContinue
+          if (-not (Test-Path "$sortie/BrunoGUI_GenII.exe") -or -not (Test-Path "$sortie/stockfish/stockfish.exe") -or -not (Test-Path "$sortie/Aide/fr/index.html")) { throw "Archive incomplète" }
           Compress-Archive -Path "$sortie/*" -DestinationPath "BrunoGUI_GenII-${{ github.ref_name }}.zip"
 
       - name: PDF de l'aide (français et anglais)

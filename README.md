@@ -88,7 +88,7 @@ L’application s’adresse aussi bien aux joueurs débutants qu’aux joueurs a
 ## 🧩 Prérequis / Requirements
 
 - Windows 10 ou 11 (x64)
-- Pour utiliser l’application / to run : [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
+- Pour utiliser l’application / to run : rien à installer, .NET est inclus dans l’archive publiée / nothing to install, .NET is included in the released archive
 - Pour compiler / to build : [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (ou Visual Studio 2026)
 - Moteurs d’échecs compatibles UCI / UCI chess engines (Stockfish est fourni et mis à jour automatiquement au démarrage / Stockfish is included and updated automatically at startup)
 
