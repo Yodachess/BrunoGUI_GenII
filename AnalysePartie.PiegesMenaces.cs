@@ -76,7 +76,8 @@ namespace BrunoGUI_GenII
             int premier = mots.FindIndex(m => m.Any(char.IsLetter));
             if (premier >= 0)
                 mots[premier] += "?";       // la prise tentante est une erreur
-            string variante = Langue.Notation(string.Join(" ", mots)) + $" ({prise.Texte})";
+            // ("15... exf5?" comme ailleurs, et non "15 ... exf5?" de VarianteUciVersPgn)
+            string variante = Langue.Notation(string.Join(" ", mots).Replace(" ... ", "... ")) + $" ({prise.Texte})";
             avant.CasePiege = caseCible;
             string cible = position.Pieces[RenvoieCaseIndex120(caseCible)] switch
             {

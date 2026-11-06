@@ -44,6 +44,7 @@ namespace BrunoGUI_GenII
             ChargePartiesPgn = new System.Windows.Forms.ToolStripMenuItem();
             ChargePositionFen = new System.Windows.Forms.ToolStripMenuItem();
             CollerPartie = new System.Windows.Forms.ToolStripMenuItem();
+            ImporterEnLigne = new System.Windows.Forms.ToolStripMenuItem();
             EnregistrerPgn = new System.Windows.Forms.ToolStripMenuItem();
             EnregistrerFen = new System.Windows.Forms.ToolStripMenuItem();
             Quitter = new System.Windows.Forms.ToolStripMenuItem();
@@ -235,7 +236,7 @@ namespace BrunoGUI_GenII
             // 
             // FichierMenu
             // 
-            FichierMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { ChargePartiesPgn, ChargePositionFen, CollerPartie, SeparateurFichier1, EnregistrerPgn, EnregistrerFen, SeparateurFichier2, OptionBalises, VisualiserPgn, ListePartiesMenu, SeparateurFichier3, Quitter });
+            FichierMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { ChargePartiesPgn, ChargePositionFen, CollerPartie, ImporterEnLigne, SeparateurFichier1, EnregistrerPgn, EnregistrerFen, SeparateurFichier2, OptionBalises, VisualiserPgn, ListePartiesMenu, SeparateurFichier3, Quitter });
             FichierMenu.Name = "FichierMenu";
             FichierMenu.Size = new System.Drawing.Size(54, 20);
             FichierMenu.Text = "Fichier";
@@ -266,6 +267,14 @@ namespace BrunoGUI_GenII
             CollerPartie.Size = new System.Drawing.Size(216, 22);
             CollerPartie.Text = "Coller une partie ou une position";
             CollerPartie.Click += CollerPartie_Click;
+            //
+            // ImporterEnLigne
+            //
+            ImporterEnLigne.Image = (System.Drawing.Image)resources.GetObject("ChargePartiesPgn.Image");
+            ImporterEnLigne.Name = "ImporterEnLigne";
+            ImporterEnLigne.Size = new System.Drawing.Size(216, 22);
+            ImporterEnLigne.Text = "Importer mes parties en ligne…";
+            ImporterEnLigne.Click += ImporterEnLigne_Click;
             // 
             // EnregistrerPgn
             // 
@@ -1618,6 +1627,7 @@ namespace BrunoGUI_GenII
         private System.Windows.Forms.OpenFileDialog ChargerPositionFen;
         private System.Windows.Forms.ToolStripMenuItem ChargePositionFen;
         private System.Windows.Forms.ToolStripMenuItem CollerPartie;
+        private System.Windows.Forms.ToolStripMenuItem ImporterEnLigne;
     }
 }
 

@@ -138,8 +138,8 @@ namespace BrunoGUI_GenII
                 textes[IndexOuverture] = Ouverture.Texte;
             int? horsBibliotheque = _indexCoups.Cast<int?>().FirstOrDefault(i => !EstCoupDeBibliotheque(i!.Value));
             if (horsBibliotheque is int sortie && _indexCoups.IndexOf(sortie) > 0)
-                textes[sortie] = textes.TryGetValue(sortie, out string? nom) ? nom + ". " + Langue.T("Hors bibliothèque")
-                                                                              : Langue.T("Hors bibliothèque");
+                textes[sortie] = textes.TryGetValue(sortie, out string? nom) ? nom + ". " + Langue.T("Hors bibliothèque chargée")
+                                                                              : Langue.T("Hors bibliothèque chargée");     // (le livre chargé, pas la théorie : un livre de gambits ignore la Caro-Kann)
             return textes;
         }
 

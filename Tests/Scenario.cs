@@ -1860,6 +1860,28 @@ public static class Scenario
             && colleTexte is { Fen: null, Parties.Count: 0 } && FichierPartiePgn.LireTexteColle("  \r\n") is { Fen: null, Parties.Count: 0 },
             $"{colleUne.Parties.Count} / {colleDeux.Parties.Count} / {colleCoupsSeuls.Parties.Count} / {colleFen.Fen} / {colleTexte.Parties.Count}");
 
+        // Import en ligne (le réseau n'est pas testé) : pseudo, adresses, archives de Chess.com, dernières parties d'abord
+        string moisAncien = "[Event \"Live Chess\"]\n[White \"Ancien\"]\n[Black \"B\"]\n\n1. e4 e5 1-0\n\n[Event \"Live Chess\"]\n[White \"Moyen\"]\n[Black \"B\"]\n\n1. d4 d5 0-1";
+        string moisRecent = "[Event \"Live Chess\"]\n[White \"Avant-dernier\"]\n[Black \"B\"]\n\n1. c4 e5 1-0\n\n[Event \"Live Chess\"]\n[White \"Dernier\"]\n[Black \"B\"]\n\n1. Nf3 d5 1-0";
+        List<string> dernieres = ImportEnLigne.DernieresParties([moisRecent, moisAncien], 3);
+        List<string> archives = ImportEnLigne.ArchivesChessCom("{\"archives\":[\"https://api.chess.com/pub/player/bruno/games/2026/09\",\"https://api.chess.com/pub/player/bruno/games/2026/10\",\"https://ailleurs.example/x\"]}");
+        Verifie("Import en ligne : pseudo contrôlé, adresses Lichess et Chess.com, archives lues, les plus récentes d'abord",
+            ImportEnLigne.PseudoValable("Bruno_C-1") && !ImportEnLigne.PseudoValable("a") && !ImportEnLigne.PseudoValable("bruno/../x") && !ImportEnLigne.PseudoValable("bru no")
+            && ImportEnLigne.AdresseLichess("Bruno_C", 20).AbsoluteUri == "https://lichess.org/api/games/user/Bruno_C?max=20&clocks=true&evals=true&opening=true&sort=dateDesc"
+            && ImportEnLigne.AdresseArchivesChessCom("Bruno_C").AbsoluteUri == "https://api.chess.com/pub/player/bruno_c/games/archives"
+            && archives.Count == 2 && archives[1].EndsWith("/2026/10") && ImportEnLigne.ArchivesChessCom("{}").Count == 0
+            && dernieres.Count == 3 && dernieres[0].Contains("\"Dernier\"") && dernieres[1].Contains("Avant-dernier") && dernieres[2].Contains("Moyen")
+            && FichierPartiePgn.LireTexteColle(string.Join("\n\n", dernieres)).Parties.Count == 3,
+            string.Join(" | ", dernieres.Select(p => p.Split('\n')[1])));
+        Parametres prefsEnLigne = new() { SiteEnLigne = "Chess.com", PseudoLichess = "Bruno_L", PseudoChessCom = "Bruno_C", NombrePartiesEnLigne = 35 };
+        string fichierPrefsEnLigne = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"prefs-en-ligne-{Guid.NewGuid()}.ini");
+        prefsEnLigne.SauverPreferences(fichierPrefsEnLigne);
+        Parametres relusEnLigne = new();
+        relusEnLigne.ChargerDepuisIni(fichierPrefsEnLigne);
+        System.IO.File.Delete(fichierPrefsEnLigne);
+        Verifie("Import en ligne : site, pseudos et nombre de parties gardés dans les préférences",
+            relusEnLigne is { SiteEnLigne: "Chess.com", PseudoLichess: "Bruno_L", PseudoChessCom: "Bruno_C", NombrePartiesEnLigne: 35 }, "");
+
         // Filtre par joueur de la liste des parties : blancs ou noirs, sans majuscules ni accents, un mot à la fois
         PartieEchecsPGN partieFiltree = new() { White = "Courtois, Bruno", Black = "Müller, Élodie" };
         Verifie("Filtre par joueur : l'un ou l'autre camp, majuscules et accents ignorés, chaque mot doit figurer, filtre vide = toutes",
@@ -2123,7 +2145,7 @@ public static class Scenario
         Dictionary<int, string> commentairesOuverture = analyseOuverture.CommentairesOuverture();
         Verifie("Ouvertures : nom au dernier coup connu de la table (6. h3, attaque Adams), suivi de « Hors bibliothèque » (1er coup hors de la bibliothèque)",
             commentairesOuverture.Count == 1
-            && commentairesOuverture.GetValueOrDefault(10) == "Défense sicilienne : variante Najdorf, attaque Adams (B90). Hors bibliothèque",
+            && commentairesOuverture.GetValueOrDefault(10) == "Défense sicilienne : variante Najdorf, attaque Adams (B90). Hors bibliothèque chargée",
             string.Join(" / ", commentairesOuverture.Select(c => $"{c.Key} : {c.Value}")));
         AnalyseDePartie sansBibliotheque = new(L.ListeCoups, coupDeBibliotheque: (fen, uci) => false, ouvertures: catalogue);
         Verifie("Ouvertures : sans aucun coup de la bibliothèque, pas de « Hors bibliothèque »",

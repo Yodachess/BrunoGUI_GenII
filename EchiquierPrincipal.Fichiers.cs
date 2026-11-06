@@ -15,6 +15,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Media;
+using System.Net.Http;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -101,6 +102,59 @@ namespace BrunoGUI_GenII
             else
                 KryptonMessageBox.Show(T("Le presse-papiers ne contient ni partie PGN ni position FEN.\n\nSur Lichess ou Chess.com, copiez la partie au format PGN, puis recommencez."),
                     T("Coller une partie ou une position"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+        }
+        private bool _importEnCours;
+        private async void ImporterEnLigne_Click(object? sender, EventArgs e)
+        {   // Ses dernières parties sur Lichess ou Chess.com, par pseudo : elles vont dans la liste des parties (double-clic pour en
+            // charger une). Le téléchargement ne bloque pas la fenêtre ; la partie en cours ne change pas avant ce choix
+            if (_importEnCours)
+                return;
+            SiteEnLigne site = parametres.SiteEnLigne == ImportEnLigne.NomDuSite(SiteEnLigne.ChessCom) ? SiteEnLigne.ChessCom : SiteEnLigne.Lichess;
+            using FenetreImportEnLigne fenetre = new(site, parametres.PseudoLichess, parametres.PseudoChessCom, parametres.NombrePartiesEnLigne);
+            if (fenetre.ShowDialog(this) != DialogResult.OK)
+                return;
+            parametres.SiteEnLigne = ImportEnLigne.NomDuSite(fenetre.SiteChoisi);     // (préférences écrites à la fermeture)
+            parametres.PseudoLichess = fenetre.PseudoLichess;
+            parametres.PseudoChessCom = fenetre.PseudoChessCom;
+            parametres.NombrePartiesEnLigne = fenetre.Nombre;
+            string nomSite = ImportEnLigne.NomDuSite(fenetre.SiteChoisi);
+            _importEnCours = true;
+            ImporterEnLigne.Enabled = false;
+            UseWaitCursor = true;
+            StatusProgramme.Text = T("Téléchargement des parties de {0} sur {1}…", fenetre.Pseudo, nomSite);
+            try
+            {
+                string pgn = await ImportEnLigne.TelechargerPgn(fenetre.SiteChoisi, fenetre.Pseudo, fenetre.Nombre);
+                if (IsDisposed)
+                    return;     // (application fermée pendant le téléchargement)
+                List<PartieEchecsPGN> parties = FichierPartiePgn.LireTexteColle(pgn).Parties;
+                if (parties.Count == 0)
+                    KryptonMessageBox.Show(T("Aucune partie trouvée pour {0} sur {1}.", fenetre.Pseudo, nomSite), T("Importer mes parties en ligne"),
+                        KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
+                else
+                    MontreListeParties(parties, T("{0} partie(s) de {1} sur {2}", parties.Count, fenetre.Pseudo, nomSite));
+            }
+            catch (ErreurImport ex)
+            {
+                KryptonMessageBox.Show(ex.Message, T("Importer mes parties en ligne"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
+            {   // pas de connexion, site indisponible, délai dépassé, réponse inattendue
+                Journal.Erreur($"Import des parties de {fenetre.Pseudo} sur {nomSite}", ex);
+                if (!IsDisposed)
+                    KryptonMessageBox.Show(T("Téléchargement impossible depuis {0} :\n{1}", nomSite, ex.Message), T("Importer mes parties en ligne"),
+                        KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+            }
+            finally
+            {
+                _importEnCours = false;
+                if (!IsDisposed)
+                {
+                    ImporterEnLigne.Enabled = true;
+                    UseWaitCursor = false;
+                    StatusProgramme.Text = "";
+                }
+            }
         }
         private void ChargePositionFen_Click(object? sender, EventArgs e)
         {

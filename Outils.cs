@@ -218,6 +218,10 @@ namespace BrunoGUI_GenII
         public string Palette { get; set; } = "";               // palette Krypton (ex : Microsoft365Silver) ; vide : palette par défaut
         public int DureeAnalyseRapide { get; set; } = 10;       // analyse de partie : secondes par position (1er passage)
         public int DureeAnalyseComplete { get; set; } = 30;     // analyse complète : secondes par position revue (coups douteux)
+        public string SiteEnLigne { get; set; } = "Lichess";    // import des parties en ligne : "Lichess" ou "Chess.com"
+        public string PseudoLichess { get; set; } = "";
+        public string PseudoChessCom { get; set; } = "";
+        public int NombrePartiesEnLigne { get; set; } = 20;
         public int VerificationMiseAJourJours { get; set; } = 30;       // intervalle entre deux vérifications automatiques de Stockfish (0 : jamais)
         public DateTime? DerniereVerificationMiseAJour { get; set; }    // date de la dernière vérification réussie (préférences)
 
@@ -293,6 +297,10 @@ namespace BrunoGUI_GenII
                     case "Langue": Langue = valeur; break;
                     case "DureeAnalyseRapide": DureeAnalyseRapide = PremierEntier(valeur) ?? DureeAnalyseRapide; break;
                     case "DureeAnalyseComplete": DureeAnalyseComplete = PremierEntier(valeur) ?? DureeAnalyseComplete; break;
+                    case "SiteEnLigne": SiteEnLigne = valeur; break;
+                    case "PseudoLichess": PseudoLichess = valeur; break;
+                    case "PseudoChessCom": PseudoChessCom = valeur; break;
+                    case "NombrePartiesEnLigne": NombrePartiesEnLigne = PremierEntier(valeur) ?? NombrePartiesEnLigne; break;
                     case "VerificationMiseAJourJours": VerificationMiseAJourJours = PremierEntier(valeur) ?? VerificationMiseAJourJours; break;
                     case "DerniereVerificationMiseAJour":
                         if (DateTime.TryParseExact(valeur, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime date))
@@ -340,6 +348,10 @@ namespace BrunoGUI_GenII
                 ["PersonnaliteRodent"] = PersonnaliteRodent,
                 ["DureeAnalyseRapide"] = DureeAnalyseRapide.ToString(),
                 ["DureeAnalyseComplete"] = DureeAnalyseComplete.ToString(),
+                ["SiteEnLigne"] = SiteEnLigne,
+                ["PseudoLichess"] = PseudoLichess,
+                ["PseudoChessCom"] = PseudoChessCom,
+                ["NombrePartiesEnLigne"] = NombrePartiesEnLigne.ToString(),
             };
             if (!string.IsNullOrWhiteSpace(Langue))
                 valeurs["Langue"] = Langue;
