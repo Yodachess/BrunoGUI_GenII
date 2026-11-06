@@ -1845,6 +1845,21 @@ public static class Scenario
         essaiPromotion.Jouer("a7", "a8", L.TypePiece.CavalierBlanc);
         Verifie("Essai d'un coup : promotion choisie", essaiPromotion.Courante.Pieces[L.RenvoieCaseIndex120("a8")] == L.TypePiece.CavalierBlanc, "");
 
+        // Texte collé : une FEN, une ou plusieurs parties PGN (Lichess, Chess.com), rien pour un texte quelconque
+        const string pgnColle = "[Event \"Rated blitz game\"]\r\n[Site \"https://lichess.org/abcd1234\"]\r\n[White \"A\"]\r\n[Black \"B\"]\r\n[Result \"1-0\"]\r\n\r\n1. e4 { [%clk 0:03:00] } 1... e5 2. Nf3 Nc6 3. Bb5 1-0\r\n";
+        FichierPartiePgn.TexteColle colleUne = FichierPartiePgn.LireTexteColle(pgnColle);
+        FichierPartiePgn.TexteColle colleDeux = FichierPartiePgn.LireTexteColle(pgnColle + "\r\n" + pgnColle.Replace("Bb5", "Bc4"));
+        FichierPartiePgn.TexteColle colleCoupsSeuls = FichierPartiePgn.LireTexteColle("1. d4 d5 2. c4");
+        FichierPartiePgn.TexteColle colleFen = FichierPartiePgn.LireTexteColle("  rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1 \r\n");
+        FichierPartiePgn.TexteColle colleTexte = FichierPartiePgn.LireTexteColle("Bonjour, voici ma partie d'hier soir");
+        Verifie("Texte collé : partie PGN de Lichess, deux parties, coups seuls, FEN, texte quelconque refusé, presse-papiers vide",
+            colleUne is { Fen: null, Parties.Count: 1 } && colleUne.Parties[0].White == "A"
+            && ChargementPartie.CoupsDuPgn(colleUne.Parties[0]).Resultat.DemiCoupsJoues == 5
+            && colleDeux.Parties.Count == 2 && colleCoupsSeuls.Parties.Count == 1
+            && colleFen is { Fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1", Parties.Count: 0 }
+            && colleTexte is { Fen: null, Parties.Count: 0 } && FichierPartiePgn.LireTexteColle("  \r\n") is { Fen: null, Parties.Count: 0 },
+            $"{colleUne.Parties.Count} / {colleDeux.Parties.Count} / {colleCoupsSeuls.Parties.Count} / {colleFen.Fen} / {colleTexte.Parties.Count}");
+
         // Filtre par joueur de la liste des parties : blancs ou noirs, sans majuscules ni accents, un mot à la fois
         PartieEchecsPGN partieFiltree = new() { White = "Courtois, Bruno", Black = "Müller, Élodie" };
         Verifie("Filtre par joueur : l'un ou l'autre camp, majuscules et accents ignorés, chaque mot doit figurer, filtre vide = toutes",

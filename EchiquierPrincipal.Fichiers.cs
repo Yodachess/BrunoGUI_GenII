@@ -59,14 +59,8 @@ namespace BrunoGUI_GenII
                 string fullPath = Path.GetFullPath(cheminFichier);
                 Debug.WriteLine("Chemin complet du fichier : " + fullPath);
                 ListeParties = FichierPartiePgn.DecodeFichierPGN(fullPath); // Récupère les parties PGN
-                ListePartiesPGN.Clear();
-                foreach (string partie in ListeParties)                     // On met chaque partie au format PartieEchecsPGN dans ListePartiePGN
-                    ListePartiesPGN.Add(FichierPartiePgn.DecodePartiePGN(partie));
-                fichierPartiePgn.NombrePartiesFichier.Text = T("{0} partie(s) dans le fichier  {1}", ListePartiesPGN.Count, Path.GetFileName(cheminFichier));
-                fichierPartiePgn.AfficherListeParties(ListePartiesPGN);
-                fichierPartiePgn.Show();
-                fichierPartiePgn.BringToFront();
-                MontrePartiesPGN.Enabled = true; // Active le bouton pour masquer/afficher la liste
+                List<PartieEchecsPGN> parties = [.. ListeParties.Select(FichierPartiePgn.DecodePartiePGN)];
+                MontreListeParties(parties, T("{0} partie(s) dans le fichier  {1}", parties.Count, Path.GetFileName(cheminFichier)));
             }
             catch (Exception ex)
             {   // fichier illisible ou contenu inattendu (erreurs variées : lecture, décodage) : expliqué et noté dans le journal
@@ -74,6 +68,39 @@ namespace BrunoGUI_GenII
                 KryptonMessageBox.Show(T("Impossible de lire ce fichier PGN :\n{0}", ex.Message), T("Ouvrir fichier PGN"),
                     KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
             }
+        }
+        private void MontreListeParties(List<PartieEchecsPGN> parties, string titre)
+        {   // La fenêtre de la liste des parties (fichier ouvert, ou parties collées) : un double-clic en charge une
+            ListePartiesPGN = parties;
+            fichierPartiePgn.NombrePartiesFichier.Text = titre;
+            fichierPartiePgn.AfficherListeParties(ListePartiesPGN);
+            fichierPartiePgn.Show();
+            fichierPartiePgn.BringToFront();
+            MontrePartiesPGN.Enabled = true; // Active le bouton pour masquer/afficher la liste
+        }
+        private void CollerPartie_Click(object? sender, EventArgs e)
+        {   // Une partie copiée sur Lichess ou Chess.com (« Copier le PGN »), ou une position FEN, sans passer par un fichier.
+            // Plusieurs parties : la liste, comme pour un fichier. Rien de reconnu : un message, la partie en cours ne change pas
+            string texte = "";
+            try
+            {
+                if (Clipboard.ContainsText())
+                    texte = Clipboard.GetText();
+            }
+            catch (ExternalException ex)
+            {   // presse-papiers occupé par une autre application
+                Journal.Erreur("Lecture du presse-papiers", ex);
+            }
+            FichierPartiePgn.TexteColle colle = FichierPartiePgn.LireTexteColle(texte);
+            if (colle.Fen != null)
+                ChargeFenDansLaPartie(colle.Fen, T("Position collée : "), "...");
+            else if (colle.Parties.Count == 1)
+                ChargerPartieDepuisPgn(colle.Parties[0]);
+            else if (colle.Parties.Count > 1)
+                MontreListeParties(colle.Parties, T("{0} parties collées", colle.Parties.Count));
+            else
+                KryptonMessageBox.Show(T("Le presse-papiers ne contient ni partie PGN ni position FEN.\n\nSur Lichess ou Chess.com, copiez la partie au format PGN, puis recommencez."),
+                    T("Coller une partie ou une position"), KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Information);
         }
         private void ChargePositionFen_Click(object? sender, EventArgs e)
         {

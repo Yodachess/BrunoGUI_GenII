@@ -43,6 +43,7 @@ namespace BrunoGUI_GenII
             FichierMenu = new System.Windows.Forms.ToolStripMenuItem();
             ChargePartiesPgn = new System.Windows.Forms.ToolStripMenuItem();
             ChargePositionFen = new System.Windows.Forms.ToolStripMenuItem();
+            CollerPartie = new System.Windows.Forms.ToolStripMenuItem();
             EnregistrerPgn = new System.Windows.Forms.ToolStripMenuItem();
             EnregistrerFen = new System.Windows.Forms.ToolStripMenuItem();
             Quitter = new System.Windows.Forms.ToolStripMenuItem();
@@ -234,7 +235,7 @@ namespace BrunoGUI_GenII
             // 
             // FichierMenu
             // 
-            FichierMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { ChargePartiesPgn, ChargePositionFen, SeparateurFichier1, EnregistrerPgn, EnregistrerFen, SeparateurFichier2, OptionBalises, VisualiserPgn, ListePartiesMenu, SeparateurFichier3, Quitter });
+            FichierMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { ChargePartiesPgn, ChargePositionFen, CollerPartie, SeparateurFichier1, EnregistrerPgn, EnregistrerFen, SeparateurFichier2, OptionBalises, VisualiserPgn, ListePartiesMenu, SeparateurFichier3, Quitter });
             FichierMenu.Name = "FichierMenu";
             FichierMenu.Size = new System.Drawing.Size(54, 20);
             FichierMenu.Text = "Fichier";
@@ -256,6 +257,15 @@ namespace BrunoGUI_GenII
             ChargePositionFen.Size = new System.Drawing.Size(216, 22);
             ChargePositionFen.Text = "Ouvrir une position FEN…";
             ChargePositionFen.Click += ChargePositionFen_Click;
+            //
+            // CollerPartie
+            //
+            CollerPartie.Image = (System.Drawing.Image)resources.GetObject("ChargePartiesPgn.Image");
+            CollerPartie.Name = "CollerPartie";
+            CollerPartie.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift | System.Windows.Forms.Keys.V;
+            CollerPartie.Size = new System.Drawing.Size(216, 22);
+            CollerPartie.Text = "Coller une partie ou une position";
+            CollerPartie.Click += CollerPartie_Click;
             // 
             // EnregistrerPgn
             // 
@@ -1607,6 +1617,7 @@ namespace BrunoGUI_GenII
         private System.Windows.Forms.ToolStripMenuItem BtnMiseAJour;
         private System.Windows.Forms.OpenFileDialog ChargerPositionFen;
         private System.Windows.Forms.ToolStripMenuItem ChargePositionFen;
+        private System.Windows.Forms.ToolStripMenuItem CollerPartie;
     }
 }
 

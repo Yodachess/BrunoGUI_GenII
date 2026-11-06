@@ -231,11 +231,29 @@ namespace BrunoGUI_GenII
             }
             return texte.Replace("﻿", "").ToString();
         }
-        public static List<string> DecodeFichierPGN(string fichierPgn)
-        {   // --- On découpe le fichier PGN pour obtenir la liste des parties contenues dans le fichier. ---
+        public static List<string> DecodeFichierPGN(string fichierPgn) => DecoupeParties(LireTextePgn(fichierPgn));
+
+        public record TexteColle(string? Fen, List<PartieEchecsPGN> Parties);
+        public static TexteColle LireTexteColle(string texte)
+        {   // Le texte collé depuis le presse-papiers (« Copier le PGN » de Lichess ou Chess.com) : une position FEN seule sur sa
+            // ligne, ou une ou plusieurs parties PGN. Seules sont gardées les parties dont au moins un coup se joue, ou qui commencent
+            // à une position FEN valable : un texte quelconque n'est pas pris pour une partie (ses mots seraient lus comme des coups)
+            string net = texte.Replace("﻿", "").Replace("\r", "").Trim();
+            if (net == "")
+                return new(null, []);
+            if (!net.Contains('\n') && ChargementPartie.ErreurFen(net) == null)
+                return new(ChargementPartie.NormaliseFen(net), []);
+            List<PartieEchecsPGN> parties = [.. DecoupeParties(net).Select(DecodePartiePGN)
+                .Where(p => ChargementPartie.CoupsDuPgn(p).Resultat.DemiCoupsJoues > 0
+                            || (!string.IsNullOrEmpty(p.Fen) && ChargementPartie.ErreurFen(p.Fen) == null))];
+            return new(null, parties);
+        }
+
+        public static List<string> DecoupeParties(string textePgn)
+        {   // --- On découpe le texte PGN (un fichier, ou un texte collé) pour obtenir la liste des parties qu'il contient. ---
             List<string> listeParties = [];
 
-            using (StringReader lecteur = new(LireTextePgn(fichierPgn)))
+            using (StringReader lecteur = new(textePgn))
             {
                 string? ligne;
                 StringBuilder partieCourante = new();
