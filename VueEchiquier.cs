@@ -10,7 +10,7 @@
 //              ├─ "CreerCases"             crée les 120 cases (64 visibles) sur le plateau
 //              ├─ "IndexDeLaCase"          index 120 de la case cliquée (en tenant compte de l'inversion)
 //              ├─ "DessinePiece", "DessineSymbole", "DessinePosition"
-//              ├─ "MontreDernierCoup", "EffaceDernierCoup", "DernierCoupMasque"   cases colorées du dernier coup du moteur
+//              ├─ "MontreDernierCoup", "EffaceDernierCoup", "DernierCoupMasque"   flèche bleu acier du dernier coup de la partie
 //              ├─ "MontreFleches", "EffaceFleches"   flèches de couleur (analyse : coup joué, meilleur coup)
 //              ├─ "Tourner"                vue côté Blancs / côté Noirs
 //              ├─ "ChangeCouleurs"         couleurs des cases claires et sombres
@@ -59,18 +59,14 @@ namespace BrunoGUI_GenII
 
         public Color CaseClaire { get; private set; }
         public Color CaseSombre { get; private set; }
-        public Color CaseSource { get; }            // couleurs des cases de départ et d'arrivée du dernier coup du moteur
-        public Color CaseDestination { get; }
         public bool CoteNoir { get; private set; }  // true quand les Noirs sont en bas de l'écran
 
-        public VueEchiquier(PictureBox plateau, Control proprietaireCurseur, Color claire, Color sombre, Color source, Color destination)
+        public VueEchiquier(PictureBox plateau, Control proprietaireCurseur, Color claire, Color sombre)
         {
             _plateau = plateau;
             _proprietaireCurseur = proprietaireCurseur;
             CaseClaire = claire;
             CaseSombre = sombre;
-            CaseSource = source;
-            CaseDestination = destination;
             _cadreOrigine = plateau.Image is Image cadre ? new Bitmap(cadre) : null;
             DessineCadre();
         }
@@ -180,45 +176,40 @@ namespace BrunoGUI_GenII
                 ancienne.Dispose();
         }
 
-        // ═══ Cases colorées du dernier coup du moteur ═══
-        private int _source, _destination;
-        private bool _dernierCoupMontre;    // un coup est à montrer
-        private bool _dernierCoupMasque;    // ... mais pas maintenant (parcours : une position passée est affichée)
+        // ═══ Flèche du dernier coup de la partie ═══
+        // Bleu acier transparent (le doré était trop proche de ChessBase), dessinée « à la plume » (FlecheDernierCoup ; a remplacé
+        // les cases colorées du coup du moteur) : on ne la confond pas avec les flèches fines et presque opaques de l'analyse,
+        // dessinées par-dessus, ni avec les couleurs des annotations
+        private static readonly Color CouleurDernierCoup = Color.FromArgb(185, 70, 110, 160);
+        private (int Source, int Destination)? _dernierCoup;    // null : aucun coup à montrer
+        private bool _dernierCoupMasque;    // ... pas maintenant (parcours : une position passée est affichée)
         public void MontreDernierCoup(int source, int destination)
         {
-            EffaceDernierCoup();            // le coup précédent (ex : le moteur a joué deux fois de suite)
-            _source = source;
-            _destination = destination;
-            _dernierCoupMontre = true;
-            Colore();
+            if (_dernierCoup == (source, destination))
+                return;                     // (appelée à chaque mise à jour des commandes : rien à redessiner)
+            _dernierCoup = (source, destination);
+            if (!_dernierCoupMasque)
+                RedessineCases();
         }
         public void EffaceDernierCoup()
         {
-            if (_dernierCoupMontre)
-                CouleursNormales();
-            _dernierCoupMontre = false;
+            if (_dernierCoup == null)
+                return;
+            _dernierCoup = null;
+            if (!_dernierCoupMasque)
+                RedessineCases();
         }
         public bool DernierCoupMasque
         {   // true pendant le parcours : le dernier coup de la partie n'a pas de sens sur une position passée
             get => _dernierCoupMasque;
             set
             {
+                if (_dernierCoupMasque == value)
+                    return;
                 _dernierCoupMasque = value;
-                if (value) { if (_dernierCoupMontre) CouleursNormales(); }
-                else Colore();
+                if (_dernierCoup != null)
+                    RedessineCases();
             }
-        }
-        private void Colore()
-        {
-            if (!_dernierCoupMontre || _dernierCoupMasque)
-                return;
-            _cases[_source].BackColor = CaseSource;
-            _cases[_destination].BackColor = CaseDestination;
-        }
-        private void CouleursNormales()
-        {
-            _cases[_source].BackColor = CouleurNormale(_source);
-            _cases[_destination].BackColor = CouleurNormale(_destination);
         }
 
         // ═══ Flèches (analyse de partie : coup joué, meilleur coup) ═══
@@ -248,12 +239,21 @@ namespace BrunoGUI_GenII
         }
         private void DessineFlechesSurLaCase(object? sender, PaintEventArgs e)
         {
-            if (_fleches.Count == 0)
+            // Flèche du dernier coup, sauf pendant le parcours ou si une flèche de l'analyse montre déjà ce coup
+            (int Source, int Destination)? dernier = _dernierCoupMasque || _dernierCoup is not { } coup
+                || _fleches.Exists(f => f.Source == coup.Source && f.Destination == coup.Destination) ? null : _dernierCoup;
+            if (_fleches.Count == 0 && dernier == null)
                 return;
             if (sender is not PictureBox caseJeu)
                 return;
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             e.Graphics.TranslateTransform(-caseJeu.Left, -caseJeu.Top);
+            if (dernier is { } d)
+            {
+                using System.Drawing.Drawing2D.GraphicsPath large = FlecheDernierCoup(Centre(d.Source), Centre(d.Destination));
+                using SolidBrush pinceauDernier = new(CouleurDernierCoup);
+                e.Graphics.FillPath(pinceauDernier, large);
+            }
             foreach (var (source, destination, couleur) in _fleches)
             {
                 using System.Drawing.Drawing2D.GraphicsPath fleche = Fleche(Centre(source), Centre(destination));
@@ -262,6 +262,42 @@ namespace BrunoGUI_GenII
             }
         }
         private PointF Centre(int index) => new(_cases[index].Left + _cases[index].Width / 2f, _cases[index].Top + _cases[index].Height / 2f);
+        private static System.Drawing.Drawing2D.GraphicsPath FlecheDernierCoup(PointF depart, PointF arrivee)
+        {   // Flèche du dernier coup, dessinée « à la plume » : corps droit et effilé (fin au départ, plus large près de la pointe),
+            // pointe acérée aux ailes rabattues vers l'arrière. Construite horizontalement (départ en 0, pointe en (longueur, 0)),
+            // puis tournée dans la bonne direction comme Fleche
+            const float retraitDepart = 6, retraitArrivee = 10;     // (cases de 60 px)
+            const float longueurPointe = 17, demiLargeurPointe = 9.5f, recul = 5;  // recul : les ailes reviennent en arrière
+            const float demiLargeurDebut = 0.6f, demiLargeurFin = 3.2f;
+            float dx = arrivee.X - depart.X, dy = arrivee.Y - depart.Y;
+            float longueur = MathF.Sqrt(dx * dx + dy * dy) - retraitArrivee;
+            System.Drawing.Drawing2D.GraphicsPath chemin = new();
+            if (longueur <= retraitDepart + longueurPointe)
+                return chemin;
+            float baseX = longueur - longueurPointe;    // base de la pointe, où finit le corps
+            // Bords du corps : la largeur croît un peu plus vite vers la pointe (puissance 1,3), d'où des bords à peine incurvés
+            const int pas = 12;
+            List<PointF> haut = [], bas = [];
+            for (int i = 0; i <= pas; i++)
+            {
+                float t = i / (float)pas, x = retraitDepart + (baseX - retraitDepart) * t;
+                float w = demiLargeurDebut + (demiLargeurFin - demiLargeurDebut) * MathF.Pow(t, 1.3f);
+                haut.Add(new(x, -w));
+                bas.Add(new(x, w));
+            }
+            List<PointF> contour = [.. haut];
+            contour.Add(new(baseX - recul, -demiLargeurPointe));    // aile
+            contour.Add(new(longueur, 0));                          // pointe
+            contour.Add(new(baseX - recul, demiLargeurPointe));     // autre aile
+            bas.Reverse();
+            contour.AddRange(bas);
+            chemin.AddPolygon([.. contour]);
+            using System.Drawing.Drawing2D.Matrix rotation = new();
+            rotation.Translate(depart.X, depart.Y);
+            rotation.Rotate(MathF.Atan2(dy, dx) * 180 / MathF.PI);
+            chemin.Transform(rotation);
+            return chemin;
+        }
         private static System.Drawing.Drawing2D.GraphicsPath Fleche(PointF depart, PointF arrivee)
         {   // Flèche pleine (corps + pointe) du centre de la case de départ vers celui de la case d'arrivée, construite
             // horizontalement puis tournée dans la bonne direction
@@ -285,24 +321,20 @@ namespace BrunoGUI_GenII
 
         // ═══ Vue, couleurs, activation ═══
         public void Tourner(Position aDessiner)
-        {   // Rotation de 180° : la liste des cases est inversée (les couleurs du dernier coup, posées sur les cases physiques,
-            // sont retirées avant et remises après), puis la position est redessinée
-            if (_dernierCoupMontre)
-                CouleursNormales();
+        {   // Rotation de 180° : la liste des cases est inversée, puis la position est redessinée (les flèches suivent :
+            // la position à l'écran d'une case est lue au moment du dessin)
             _cases.Reverse();
             CoteNoir = !CoteNoir;
             DessineCadre();
             _plateau.Refresh();
             DessinePosition(aDessiner);
-            Colore();
         }
         public void ChangeCouleurs(Color claire, Color sombre)
-        {   // Nouvelles couleurs des cases claires et sombres (le dernier coup reste coloré)
+        {   // Nouvelles couleurs des cases claires et sombres
             CaseClaire = claire;
             CaseSombre = sombre;
             for (int index = 0; index < _cases.Count; index++)
                 _cases[index].BackColor = CouleurNormale(index);
-            Colore();
         }
         public void ActiverCases(bool actives)
         {

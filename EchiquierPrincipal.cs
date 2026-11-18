@@ -125,9 +125,7 @@ namespace BrunoGUI_GenII
             // Mise à jour des variables à partir des données du fichier
             _vue = new VueEchiquier(Plateau, this,      // vue côté Blancs au départ ; couleurs du .ini (style Lichess par défaut)
                 Parametres.ConvertitCouleur(parametres.CaseClaire, Parametres.LichessCaseClaire),
-                Parametres.ConvertitCouleur(parametres.CaseSombre, Parametres.LichessCaseSombre),
-                Parametres.ConvertitCouleur(parametres.CouleurCaseSource, Parametres.LichessCaseSource),
-                Parametres.ConvertitCouleur(parametres.CouleurCaseDestination, Parametres.LichessCaseDestination));
+                Parametres.ConvertitCouleur(parametres.CaseSombre, Parametres.LichessCaseSombre));
             _nomHumain = string.IsNullOrWhiteSpace(parametres.NomHumain) ? T("Joueur") : parametres.NomHumain;
             _joueurElo = parametres.EloHumain;
             _dureeReflexionMilliSeconde = parametres.DureeReflexionSeconde * 1000;
@@ -400,7 +398,6 @@ namespace BrunoGUI_GenII
                             {   // Si le coup n'est pas valide, on remet la pièce sur sa case d'origine !
                                 _vue.DessinePiece(_indexSource120, _pieceSource);
                             }
-                            _vue.EffaceDernierCoup();
                         }
                     }
                 }
@@ -1352,8 +1349,6 @@ namespace BrunoGUI_GenII
         {   // Enregistre les réglages faits dans l'interface dans BrunoGUI.preferences.ini (à côté de l'exécutable)
             parametres.CaseSombre = Parametres.FormatCouleur(_vue.CaseSombre);
             parametres.CaseClaire = Parametres.FormatCouleur(_vue.CaseClaire);
-            parametres.CouleurCaseSource = Parametres.FormatCouleur(_vue.CaseSource);
-            parametres.CouleurCaseDestination = Parametres.FormatCouleur(_vue.CaseDestination);
             parametres.NomHumain = _nomHumain;
             parametres.DureeReflexionSeconde = (int)TempsReflexionSecondes.Value;
             parametres.DureeAnalyseRapide = _dureeAnalyseRapide;
@@ -1495,7 +1490,20 @@ namespace BrunoGUI_GenII
             BoutonSaisiePosition.Enabled = _analyseDePartie == null;      // (pas pendant une analyse de partie)
             MetAJourPlateau();
             MetAJourFeuille();      // (appelée partout où la partie ou le parcours change : la feuille les suit d'ici)
+            MontreDernierCoupDeLaPartie();
             MetAJourMenus();
+        }
+        private void MontreDernierCoupDeLaPartie()
+        {   // Flèche bleu acier du dernier coup de la partie (humain, moteur ou bibliothèque ; après un retour arrière, le coup d'avant),
+            // à la façon de ChessBase ; masquée pendant le parcours (DernierCoupMasque). Appelée par MetAJourCommandes : elle suit la partie
+            Coup? dernier = LogiqueMouvements.ListeCoups.Count > 0 ? LogiqueMouvements.ListeCoups[^1] : null;
+            string uci = dernier?.Uci.Trim() ?? "";
+            int source = uci.Length >= 4 ? RenvoieCaseIndex120(uci[..2]) : -1;
+            int destination = uci.Length >= 4 ? RenvoieCaseIndex120(uci[2..4]) : -1;
+            if (dernier == null || dernier.EstPositionDeDepart || source <= 0 || destination <= 0)
+                _vue.EffaceDernierCoup();
+            else
+                _vue.MontreDernierCoup(source, destination);
         }
         private void MetAJourMenus()
         {   // Les commandes de menu qui doublent un bouton (menus rangés, 2026-10-23) suivent son état : grisées

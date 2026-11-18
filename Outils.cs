@@ -196,14 +196,10 @@ namespace BrunoGUI_GenII
         // Couleurs par défaut (si absentes du .ini ou illisibles) : style Lichess
         public const string LichessCaseSombre = "#B58863";              // RVB 181, 136, 99
         public const string LichessCaseClaire = "#F0D9B5";              // RVB 240, 217, 181
-        public const string LichessCaseSource = "#86A66C";              // RVB 134, 166, 108
-        public const string LichessCaseDestination = "#C4C87F";         // RVB 196, 200, 127
         public string CaseSombre { get; set; } = LichessCaseSombre;
         public string CaseClaire { get; set; } = LichessCaseClaire;
         public string NomHumain { get; set; } = "";     // vide : « Joueur » (dans la langue de l'interface)
         public string EloHumain { get; set; } = "";     // vide : inconnu
-        public string CouleurCaseSource { get; set; } = LichessCaseSource;
-        public string CouleurCaseDestination { get; set; } = LichessCaseDestination;
         public int DureeReflexionSeconde { get; set; } = 3;
         public int ForceMoteur { get; set; } = 1850;            // Elo choisi dans "Nouvelle partie" (si pas force maximale)
         public bool ForceMaximale { get; set; } = true;         // "Nouvelle partie" : moteur à sa force maximale
@@ -278,8 +274,6 @@ namespace BrunoGUI_GenII
                     case "Sitemoteur": SiteMoteur = valeur; break;
                     case "Casesombre": CaseSombre = valeur; break;
                     case "Caseclaire": CaseClaire = valeur; break;
-                    case "CouleurCaseSource": CouleurCaseSource = valeur; break;
-                    case "CouleurCaseDestination": CouleurCaseDestination = valeur; break;
                     case "NomHumain": NomHumain = valeur; break;
                     case "EloHumain": EloHumain = valeur; break;
                     // Une valeur numérique illisible est ignorée (la valeur par défaut est conservée)
@@ -334,8 +328,6 @@ namespace BrunoGUI_GenII
             {
                 ["Casesombre"] = CaseSombre,
                 ["Caseclaire"] = CaseClaire,
-                ["CouleurCaseSource"] = CouleurCaseSource,
-                ["CouleurCaseDestination"] = CouleurCaseDestination,
                 ["NomHumain"] = NomHumain,
                 ["DureereflexionSeconde"] = DureeReflexionSeconde.ToString(),
                 ["Forcemoteur"] = ForceMoteur.ToString(),

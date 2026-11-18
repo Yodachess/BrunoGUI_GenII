@@ -178,8 +178,6 @@ namespace BrunoGUI_GenII
                     _caseSource = moteur.CoupAuFormatUci[..2];    // CoupAuFormatUci contient le "best move" sous la forme e2e4
                     _caseDestination = moteur.CoupAuFormatUci.Substring(2, 2);
                     PiloteMoteur.JouerCoupUci(moteur.CoupAuFormatUci);      // (rien n'est joué si la position est déjà un mat)
-                    // Cases de départ et d'arrivée du coup colorées (pendant le parcours : seulement au retour à la partie)
-                    _vue.MontreDernierCoup(RenvoieCaseIndex120(_caseSource), RenvoieCaseIndex120(_caseDestination));
                     LeMoteurARepondu();      // On réautorise si le moteur a fini de réfléchir
                     AfficheCoupDuMoteur();
                     if (ParcoursEnCours)
