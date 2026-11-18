@@ -56,7 +56,8 @@ namespace BrunoGUI_GenII
         private bool _nomsHumainMoteur;     // les joueurs affichés sont l'humain et le moteur (voir AfficheJoueursDeLaPartie)
         private string _cheminMoteur = "", _nomMoteurChoisi = "";
         private string _bibliotheque = "rodent.bin";
-        private bool _clickCaseSource, _visuSymbole, _montreDonneesBrutesUci, _montre3VariantesUci;
+        private bool _clickCaseSource = true;   // vrai : aucune pièce en main (le prochain clic choisit la pièce)
+        private bool _visuSymbole, _montreDonneesBrutesUci, _montre3VariantesUci;
         private bool _clavierActif, _emetUnSon, _bibliothequeAleatoire;
         private bool _bibliothequeActive = true;
         private int _dureeReflexionMilliSeconde = 5000;
@@ -1487,7 +1488,10 @@ namespace BrunoGUI_GenII
             AnalysePosition.Enabled = _partie.Mode != ModePartie.AucunePartie;
             BoutonGainBlanc.Enabled = BoutonGainNoir.Enabled = BoutonNulle.Enabled = enCours;
             OrdinateurJoue.Enabled = enCours;
-            BoutonBalises.Enabled = SaisiePartieBouton.Enabled = !PartieEnLectureSeule;
+            // Saisie partie : aussi après le chargement d'une partie PGN (l'enregistrement est proposé si elle a changé),
+            // mais pas pendant une analyse de partie ; l'en-tête PGN reste modifiable (corriger un nom, une date…)
+            SaisiePartieBouton.Enabled = _analyseDePartie == null;
+            BoutonBalises.Enabled = true;
             BoutonSaisiePosition.Enabled = _analyseDePartie == null;      // (pas pendant une analyse de partie)
             MetAJourPlateau();
             MetAJourFeuille();      // (appelée partout où la partie ou le parcours change : la feuille les suit d'ici)

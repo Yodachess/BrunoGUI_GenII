@@ -144,6 +144,11 @@ namespace BrunoGUI_GenII
             Si tu retournes base.ProcessCmdKey(...),
             → “je ne m’en occupe pas, laisse WinForms la gérer normalement”.
             */
+            if (keyData == Keys.Escape && !_clickCaseSource)
+            {   // Pièce prise en main (1er clic) : Échap la remet sur sa case, comme un clic droit
+                AnnuleSelectionPiece();
+                return true;
+            }
             if (!_clavierActif)
                 return base.ProcessCmdKey(ref msg, keyData);
 
