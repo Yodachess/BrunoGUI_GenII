@@ -228,6 +228,7 @@ namespace BrunoGUI_GenII
             InformationPourJoueur.Text = "   " + T("Bienvenue") + "   ";
 
             _vue.CreerCases(CaseMouseDown);     // les 120 cases (64 visibles), indexées comme le tableau "mailbox"
+            Plateau.MouseDown += PlateauMouseDown;  // clic droit sur des cases désactivées ou sur le cadre : image de la position
             LogiqueMouvements.InitialisationEchiquier();
             RecupereBibliotheque();
             MiseaZeroAffichages();
@@ -345,6 +346,15 @@ namespace BrunoGUI_GenII
         {   // Le joueur sélectionne la case source ou destination avec la souris
             try
             {
+                if (e.Button == MouseButtons.Right)
+                {   // Clic droit : avec une pièce en main, elle revient sur sa case (comme Échap ; avant, au-dessus d'une case
+                    // permise, il jouait le coup) ; sinon, copier ou enregistrer l'image de la position
+                    if (!_clickCaseSource)
+                        AnnuleSelectionPiece();
+                    else if (sender is Control caseClic)
+                        MenuImagePosition(caseClic, e.Location);
+                    return;
+                }
                 if (_essai != null)
                 {   // « Et si j'avais joué un autre coup ? » : le coup est joué sur une copie, jamais dans la partie
                     if (sender is PictureBox caseEssai)
@@ -1548,17 +1558,18 @@ namespace BrunoGUI_GenII
             LabelOuverture.Text = texte;
             _infobulleBilan.SetToolTip(LabelOuverture, texte);
         }
+        // Valeur d'une balise PGN, vide si elle est inconnue (« ? », « - »)
+        private static string ValeurBalise(string balise) => string.IsNullOrWhiteSpace(balise) || balise.Trim() is "?" or "-" ? "" : balise.Trim();
         private void AfficheTournoi()
         {   // Au-dessus de la feuille, à droite des joueurs : le tournoi (balise Event, sur deux lignes), puis la ronde et la date
             // (le lieu ne tient pas ; infobulle : le tout, lieu compris)
-            static string Valeur(string balise) => string.IsNullOrWhiteSpace(balise) || balise.Trim() is "?" or "-" ? "" : balise.Trim();
-            string date = Valeur(PartieEnCours.Date);
+            string date = ValeurBalise(PartieEnCours.Date);
             string[] morceaux = date.Split('.');            // "2026.04.19" -> "19/04/2026" (les parties inconnues "??" sont omises)
             if (morceaux.Length == 3)
                 date = string.Join("/", morceaux.Reverse().Where(m => m.All(char.IsDigit) && m != ""));
-            string ronde = Valeur(PartieEnCours.Ronde);
+            string ronde = ValeurBalise(PartieEnCours.Ronde);
             string details = string.Join("  ·  ", new[] { ronde != "" ? T("Ronde {0}", ronde) : "", date }.Where(t => t != ""));
-            string tournoi = Valeur(PartieEnCours.Tournoi), lieu = Valeur(PartieEnCours.Lieu);
+            string tournoi = ValeurBalise(PartieEnCours.Tournoi), lieu = ValeurBalise(PartieEnCours.Lieu);
             if (LabelTournoi.Text == tournoi && LabelDetailsTournoi.Text == details)
                 return;
             LabelTournoi.Text = tournoi;

@@ -12,6 +12,7 @@
 //              ├─ "DessinePiece", "DessineSymbole", "DessinePosition"
 //              ├─ "MontreDernierCoup", "EffaceDernierCoup", "DernierCoupMasque"   flèche bleu acier du dernier coup de la partie
 //              ├─ "MontreFleches", "EffaceFleches"   flèches de couleur (analyse : coup joué, meilleur coup)
+//              ├─ "ImagePosition"          image d'une position (cadre, cases, pièces, flèches, légende) à copier ou enregistrer
 //              ├─ "Tourner"                vue côté Blancs / côté Noirs
 //              ├─ "ChangeCouleurs"         couleurs des cases claires et sombres
 //              ├─ "ActiverCases"           cases cliquables ou non
@@ -237,29 +238,81 @@ namespace BrunoGUI_GenII
                 if (caseJeu.Visible)
                     caseJeu.Invalidate();
         }
+        // Flèche du dernier coup à dessiner : aucune pendant le parcours ou si une flèche de l'analyse montre déjà ce coup
+        private (int Source, int Destination)? DernierCoupADessiner =>
+            _dernierCoupMasque || _dernierCoup is not { } coup
+            || _fleches.Exists(f => f.Source == coup.Source && f.Destination == coup.Destination) ? null : _dernierCoup;
         private void DessineFlechesSurLaCase(object? sender, PaintEventArgs e)
         {
-            // Flèche du dernier coup, sauf pendant le parcours ou si une flèche de l'analyse montre déjà ce coup
-            (int Source, int Destination)? dernier = _dernierCoupMasque || _dernierCoup is not { } coup
-                || _fleches.Exists(f => f.Source == coup.Source && f.Destination == coup.Destination) ? null : _dernierCoup;
-            if (_fleches.Count == 0 && dernier == null)
+            if (_fleches.Count == 0 && DernierCoupADessiner == null)
                 return;
             if (sender is not PictureBox caseJeu)
                 return;
-            e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             e.Graphics.TranslateTransform(-caseJeu.Left, -caseJeu.Top);
-            if (dernier is { } d)
+            DessineFleches(e.Graphics);
+        }
+        private void DessineFleches(Graphics g)
+        {   // Toutes les flèches affichées, en coordonnées du plateau (écran : chaque case ; image de la position : le plateau entier)
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            if (DernierCoupADessiner is { } d)
             {
                 using System.Drawing.Drawing2D.GraphicsPath large = FlecheDernierCoup(Centre(d.Source), Centre(d.Destination));
                 using SolidBrush pinceauDernier = new(CouleurDernierCoup);
-                e.Graphics.FillPath(pinceauDernier, large);
+                g.FillPath(pinceauDernier, large);
             }
             foreach (var (source, destination, couleur) in _fleches)
             {
                 using System.Drawing.Drawing2D.GraphicsPath fleche = Fleche(Centre(source), Centre(destination));
                 using SolidBrush pinceau = new(Color.FromArgb(220, couleur));     // presque opaque (fine, elle cache peu la pièce)
-                e.Graphics.FillPath(pinceau, fleche);
+                g.FillPath(pinceau, fleche);
             }
+        }
+
+        // ═══ Image de la position (clic droit sur l'échiquier : copier ou enregistrer) ═══
+        public Bitmap ImagePosition(Position position, string titre, string sousTitre, string legende)
+        {   // L'échiquier tel qu'il est vu (cadre avec ses coordonnées, sens, couleurs des cases, flèches affichées), dessiné depuis
+            // la position et non copié de l'écran : ni pièce en main ni symbole de déplacement. Au-dessus, le titre (les joueurs) et
+            // le sous-titre (tournoi et année), seulement s'ils ne sont pas vides ; la légende va sous l'échiquier
+            const int hauteurTitre = 30, hauteurSousTitre = 22, hauteurLegende = 34, marge = 6;
+            int haut = (titre != "" ? hauteurTitre : 0) + (sousTitre != "" ? hauteurSousTitre : 0);
+            if (haut > 0)
+                haut += marge;
+            int largeur = _plateau.Width, hauteur = _plateau.Height;
+            Bitmap image = new(largeur, haut + hauteur + hauteurLegende);
+            using Graphics g = Graphics.FromImage(image);
+            g.Clear(Color.White);
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+            using StringFormat centre = new() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap };
+            using SolidBrush encre = new(Color.FromArgb(43, 48, 56));
+            using SolidBrush encrePale = new(Color.FromArgb(90, 98, 110));
+            using Font policeTitre = new("Segoe UI", 14, FontStyle.Bold);
+            using Font policeSousTitre = new("Segoe UI", 11);
+            using Font policeLegende = new("Segoe UI", 13, FontStyle.Bold);
+            float y = marge / 2f;
+            if (titre != "")
+            {
+                g.DrawString(titre, policeTitre, encre, new RectangleF(0, y, largeur, hauteurTitre), centre);
+                y += hauteurTitre;
+            }
+            if (sousTitre != "")
+                g.DrawString(sousTitre, policeSousTitre, encrePale, new RectangleF(0, y, largeur, hauteurSousTitre), centre);
+            g.TranslateTransform(0, haut);      // le plateau et ses flèches, en coordonnées du plateau
+            if (_plateau.Image is Image cadre)
+                g.DrawImage(cadre, 0, 0, largeur, hauteur);
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+            for (int index = 21; index <= 98; index++)
+            {
+                PictureBox caseJeu = _cases[index];
+                if (!caseJeu.Visible)
+                    continue;
+                using (SolidBrush fond = new(CouleurNormale(index)))
+                    g.FillRectangle(fond, caseJeu.Bounds);
+                if (_images.TryGetValue(position.Pieces[index], out Bitmap? piece) && piece != null)
+                    g.DrawImage(piece, caseJeu.Bounds);
+            }
+            DessineFleches(g);
+            g.DrawString(legende, policeLegende, encre, new RectangleF(0, hauteur, largeur, hauteurLegende), centre);
+            return image;
         }
         private PointF Centre(int index) => new(_cases[index].Left + _cases[index].Width / 2f, _cases[index].Top + _cases[index].Height / 2f);
         private static System.Drawing.Drawing2D.GraphicsPath FlecheDernierCoup(PointF depart, PointF arrivee)

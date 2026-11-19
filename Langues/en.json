@@ -600,5 +600,15 @@
   "Analyse du fichier {0}": "Analysis of the file {0}",
   "Partie {0}/{1} : {2}": "Game {0}/{1}: {2}",
   "position {0}/{1}": "position {0}/{1}",
-  "Analyse du fichier : partie {0}/{1} ({2}), position {3}/{4}": "File analysis: game {0}/{1} ({2}), position {3}/{4}"
+  "Analyse du fichier : partie {0}/{1} ({2}), position {3}/{4}": "File analysis: game {0}/{1} ({2}), position {3}/{4}",
+  "// Image de la position (clic droit sur l'échiquier)": "",
+  "Copier l'image de la position": "Copy the position as an image",
+  "Enregistrer l'image de la position…": "Save the position as an image…",
+  "Après {0}": "After {0}",
+  "Image PNG (*.png)|*.png": "PNG image (*.png)|*.png",
+  "Image de la position copiée : collez-la où vous voulez (Ctrl+V)": "Position image copied: paste it wherever you like (Ctrl+V)",
+  "Image enregistrée : {0}": "Image saved: {0}",
+  "Impossible de copier l'image : {0}": "Unable to copy the image: {0}",
+  "Impossible d'enregistrer l'image : {0}": "Unable to save the image: {0}",
+  "Image de la position": "Position image"
 }

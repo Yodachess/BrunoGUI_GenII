@@ -360,5 +360,81 @@ namespace BrunoGUI_GenII
             AfficheCoupDeLaPartie(IndexPremierePosition);
             InformationsPartie.Text = resultat;     // on garde le résultat de la partie affiché
         }
+
+        // ═══ Image de la position : clic droit sur l'échiquier (sans pièce en main), pour illustrer une position ═══
+        // Les cases désactivées (parcours, partie PGN, réflexion du moteur) ne reçoivent pas la souris : leur clic arrive au
+        // plateau en dessous (PlateauMouseDown) ; les cases actives le donnent à CaseMouseDown
+        private void PlateauMouseDown(object? sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right && _clickCaseSource && sender is Control plateau)
+                MenuImagePosition(plateau, e.Location);
+        }
+        private void MenuImagePosition(Control controle, Point position)
+        {
+            ContextMenuStrip menu = new();
+            menu.Items.Add(new ToolStripMenuItem(T("Copier l'image de la position"), null, (s, e) => CopieImagePosition()));
+            menu.Items.Add(new ToolStripMenuItem(T("Enregistrer l'image de la position…"), null, (s, e) => EnregistreImagePosition()));
+            menu.Closed += (s, e) => BeginInvoke(new Action(menu.Dispose));     // libéré après le traitement du clic
+            menu.Show(controle, position);
+        }
+        private Bitmap ImageDeLaPositionAffichee()
+        {   // La position affichée (partie, position passée du parcours ou « Et si… ? »), avec sa légende
+            Position position = _positionAffichee ?? LogiqueMouvements.PositionActuelle;
+            string legende;
+            int index = ParcoursEnCours ? _indexAffiche : LogiqueMouvements.ListeCoups.Count - 1;
+            if (_essai is { NombreCoups: > 0 })
+                legende = T("Après {0}", Notation(_essai.TexteSuite()));
+            else if (index < 0 || index >= LogiqueMouvements.ListeCoups.Count || LogiqueMouvements.ListeCoups[index].EstPositionDeDepart)
+                legende = T("Trait aux {0}", NomCamp(position.QuiJoue));
+            else
+                legende = T("Après {0}", Notation(LogiqueMouvements.ListeCoups[index].PgnFrNumerote.Trim()));
+            // Au-dessus : les joueurs (« Carlsen – Ernst »), puis le tournoi et l'année, chacun seulement s'il est connu
+            string blancs = ValeurBalise(PartieEnCours.White), noirs = ValeurBalise(PartieEnCours.Black);
+            string titre = blancs != "" || noirs != "" ? $"{(blancs != "" ? blancs : "?")} – {(noirs != "" ? noirs : "?")}" : "";
+            string date = ValeurBalise(PartieEnCours.Date);
+            string annee = date.Length >= 4 && date[..4].All(char.IsDigit) ? date[..4] : "";
+            string sousTitre = string.Join(" ", new[] { ValeurBalise(PartieEnCours.Tournoi), annee }.Where(t => t != ""));
+            return _vue.ImagePosition(position, titre, sousTitre, legende);
+        }
+        private void CopieImagePosition()
+        {
+            using Bitmap image = ImageDeLaPositionAffichee();
+            try
+            {
+                Clipboard.SetImage(image);      // (copie l'image : elle peut être libérée ensuite)
+                StatusProgramme.Text = T("Image de la position copiée : collez-la où vous voulez (Ctrl+V)");
+            }
+            catch (ExternalException ex)
+            {   // presse-papiers occupé par une autre application
+                Journal.Erreur("Copie de l'image de la position", ex);
+                KryptonMessageBox.Show(T("Impossible de copier l'image : {0}", ex.Message), T("Image de la position"),
+                    KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+            }
+        }
+        private void EnregistreImagePosition()
+        {
+            using SaveFileDialog dialogue = new()
+            {
+                Title = T("Enregistrer l'image de la position…"),
+                Filter = T("Image PNG (*.png)|*.png"),
+                FileName = "position.png",
+                AddExtension = true,
+                DefaultExt = "png"
+            };
+            if (dialogue.ShowDialog(this) != DialogResult.OK)
+                return;
+            using Bitmap image = ImageDeLaPositionAffichee();
+            try
+            {
+                image.Save(dialogue.FileName, System.Drawing.Imaging.ImageFormat.Png);
+                StatusProgramme.Text = T("Image enregistrée : {0}", Path.GetFileName(dialogue.FileName));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ExternalException)
+            {   // disque plein, fichier verrouillé, dossier interdit…
+                Journal.Erreur("Enregistrement de l'image de la position", ex);
+                KryptonMessageBox.Show(T("Impossible d'enregistrer l'image : {0}", ex.Message), T("Image de la position"),
+                    KryptonMessageBoxButtons.OK, KryptonMessageBoxIcon.Warning);
+            }
+        }
     }
 }
