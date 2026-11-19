@@ -69,6 +69,7 @@ namespace BrunoGUI_GenII
             Controls.AddRange([titre, libelleFiltre, _filtre, toutCocher, toutDecocher, _liste, aide, _estimation, _analyser, annuler]);
             AcceptButton = _analyser;
             CancelButton = annuler;
+            Palette.Applique(this);     // couleurs de l'interface (voir Palette.cs)
             RemplitLaListe();
         }
 

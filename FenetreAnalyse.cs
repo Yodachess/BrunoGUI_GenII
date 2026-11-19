@@ -45,10 +45,12 @@ namespace BrunoGUI_GenII
             ShowInTaskbar = false;
             ClientSize = new Size(Largeur + 24, 136);
             _temps.TextAlign = ContentAlignment.MiddleLeft;     // à la hauteur du bouton
-            _entete.ForeColor = Color.DarkGreen;
+            _entete.ForeColor = Palette.Accent;
+            _suite.ForeColor = _temps.ForeColor = Palette.Texte;
             KryptonButton interrompre = new() { Text = texteBouton, Location = new Point(Largeur + 12 - 118, 100), Size = new Size(118, 28) };
             interrompre.Click += (s, e) => Interrompre?.Invoke();
             Controls.AddRange([_entete, _suite, _barre, _temps, interrompre]);
+            Palette.Applique(this);     // couleurs de l'interface (voir Palette.cs)
         }
 
         private static Label Ligne(int y, int hauteur, Font police, int largeur = Largeur) => new()

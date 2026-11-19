@@ -68,6 +68,7 @@ namespace BrunoGUI_GenII
                 _message, importer, annuler]);
             AcceptButton = importer;
             CancelButton = annuler;
+            Palette.Applique(this);     // couleurs de l'interface (voir Palette.cs)
         }
 
         private void ChangeDeSite()

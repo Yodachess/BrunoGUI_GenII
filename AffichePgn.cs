@@ -37,6 +37,9 @@ namespace BrunoGUI_GenII
         {
             InitializeComponent();
             TraductionFenetres.Traduit(this);      // textes du designer dans la langue choisie (voir Langue.cs)
+            Palette.Applique(this);                // couleurs de l'interface (voir Palette.cs)
+            ZoneAffichage.StateCommon.Back.Color1 = Palette.FondInfo;
+            ZoneAffichage.StateCommon.Border.Color1 = Palette.BordBouton;
             afficheZone = this;
         }
         public void AffichePgnDansZone(string contenuPgnIntl, string contenuPgnFr, string contenuPgnCommente)

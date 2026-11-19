@@ -126,6 +126,7 @@ namespace BrunoGUI_GenII
             Controls.AddRange([ok, annuler]);
             AcceptButton = ok;
             CancelButton = annuler;
+            Palette.Applique(this);     // couleurs de l'interface (voir Palette.cs)
             MetAJour();
         }
 
@@ -158,8 +159,8 @@ namespace BrunoGUI_GenII
             caseChoix.Paint += (s, e) =>
             {
                 bool choisie = piece == _pieceChoisie;
-                e.Graphics.Clear(choisie ? Color.FromArgb(190, 212, 248) : Color.FromArgb(240, 240, 240));
-                using (Pen bord = new(choisie ? Color.FromArgb(40, 100, 220) : Color.Silver, choisie ? 3 : 1))
+                e.Graphics.Clear(choisie ? Palette.FondAccent : Palette.FondInfo);
+                using (Pen bord = new(choisie ? Palette.Accent : Palette.BordBouton, choisie ? 3 : 1))
                     e.Graphics.DrawRectangle(bord, 1, 1, TaillePalette - 3, TaillePalette - 3);
                 if (_image(piece) is Image image)
                     e.Graphics.DrawImage(image, 3, 3, TaillePalette - 6, TaillePalette - 6);
@@ -256,7 +257,7 @@ namespace BrunoGUI_GenII
             _fen.Text = _editeur.Fen;
             string? erreur = _editeur.Erreur;
             _etat.Text = _message ?? (erreur == null ? T("Position correcte : OK pour la jouer.") : T("Position incorrecte : {0}.", erreur));
-            _etat.ForeColor = _message == null && erreur == null ? Color.DarkGreen : Color.Firebrick;
+            _etat.ForeColor = _message == null && erreur == null ? Palette.Accent : Color.Firebrick;     // (rouge : erreur)
             _miseAJour = false;
             _plateau.Invalidate();
         }

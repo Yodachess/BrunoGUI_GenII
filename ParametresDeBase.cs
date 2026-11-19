@@ -25,6 +25,8 @@ namespace BrunoGUI_GenII
         {
             InitializeComponent();
             TraductionFenetres.Traduit(this);      // textes du designer dans la langue choisie (voir Langue.cs)
+            Palette.Applique(this);                // couleurs de l'interface (voir Palette.cs)
+            BackColor = GroupParametreDeBase.StateCommon.Back.Color1 = Palette.FondInfo;
             interfaceGraphique = brunoigInstance;
             MoteurUci = brunoigInstance.MoteurUci;
             this.FormClosing += ParametresDeBase_FormClosing;   // Gestion du click sur la croix rouge en haut à droite ...

@@ -176,6 +176,9 @@ namespace BrunoGUI_GenII
         {
             InitializeComponent();
             TraductionFenetres.Traduit(this);      // textes du designer dans la langue choisie (voir Langue.cs)
+            Palette.Applique(this);                // couleurs de l'interface (voir Palette.cs)
+            NombrePartiesFichier.BackColor = lblDoubleClick.BackColor = Palette.FondAccent;    // (vert vif et vert clair avant)
+            NombrePartiesFichier.ForeColor = lblDoubleClick.ForeColor = Palette.Accent;
             FormClosing += (s, e) =>
             {   // Croix rouge : la fenêtre est seulement masquée (la fenêtre principale la réaffiche avec "Affiche liste parties")
                 if (e.CloseReason == CloseReason.UserClosing)

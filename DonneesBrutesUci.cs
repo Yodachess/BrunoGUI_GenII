@@ -21,6 +21,9 @@ namespace BrunoGUI_GenII
         {   // Le formulaire ne se ferme jamais, même si l’utilisateur clique sur la croix. Il est simplement caché.
             InitializeComponent();
             TraductionFenetres.Traduit(this);      // textes du designer dans la langue choisie (voir Langue.cs)
+            Palette.Applique(this);                // couleurs de l'interface (voir Palette.cs)
+            BackColor = DonneesBrutesVue.BackColor = Palette.FondInfo;
+            DonneesBrutesVue.ForeColor = Palette.Accent;
             this.FormClosing += DonneesBrutesUci_FormClosing;   // Gestion du click sur la croix rouge en haut à droite ...
         }
         public void AjouteLigne(string texte)

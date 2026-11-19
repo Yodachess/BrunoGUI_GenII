@@ -550,6 +550,7 @@ namespace BrunoGUI_GenII
                 // Configuration de la fenêtre
                 this.Text = T("Saisie des en-têtes de parties");
                 this.Size = new Size(280, 450);
+                Palette.Applique(this);     // couleurs de l'interface (voir Palette.cs)
             }
             private static readonly Font PoliceLibelle = new("Arial", 10), PoliceChamp = new("Arial", 10, FontStyle.Bold | FontStyle.Italic);
             private KryptonTextBox CreationBalisesTextBox(string labelText, int x, int y)

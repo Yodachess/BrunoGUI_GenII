@@ -43,6 +43,8 @@ namespace BrunoGUI_GenII
         {
             InitializeComponent();
             TraductionFenetres.Traduit(this);      // textes du designer dans la langue choisie (voir Langue.cs)
+            Palette.Applique(this);                // couleurs de l'interface (voir Palette.cs)
+            BackColor = Palette.FondInfo;
             foreach (Cadence cadence in Cadence.Proposees)
                 ListePendule.Items.Add(cadence);
             ListePendule.DrawMode = DrawMode.OwnerDrawFixed;    // étoile dorée des cadences officielles

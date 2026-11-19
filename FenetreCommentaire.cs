@@ -36,6 +36,7 @@ namespace BrunoGUI_GenII
             Controls.AddRange([_texte, aide, ok, annuler]);
             AcceptButton = ok;
             CancelButton = annuler;
+            Palette.Applique(this);     // couleurs de l'interface (voir Palette.cs)
             ActiveControl = _texte;
             Shown += (s, e) => _texte.Select(_texte.Text.Length, 0);    // le curseur à la fin du texte, pour le compléter
         }

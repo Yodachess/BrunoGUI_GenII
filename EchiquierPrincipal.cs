@@ -85,6 +85,7 @@ namespace BrunoGUI_GenII
         {
             InitializeComponent();
             TraductionFenetres.Traduit(this);          // textes du designer dans la langue choisie (voir Langue.cs)
+            AppliquePalette();                         // couleurs de l'interface (voir Palette.cs)
             // Case « Son » juste après la case de la bibliothèque, à la largeur de son texte : en anglais, « Sound » était coupé
             // (« Sou… ») dans les 49 px prévus pour « Son », alors que « Book » laisse la place 
             ActiveSon.Left = ActiveBibliotheque.Left + Math.Min(ActiveBibliotheque.Width, ActiveBibliotheque.PreferredSize.Width) + 4;
@@ -329,6 +330,31 @@ namespace BrunoGUI_GenII
             MetAJourCommandes();
         }
 
+        private void AppliquePalette()
+        {   // Les couleurs de la fenêtre viennent de Palette (ardoise et bleu acier) : celles du designer ne sont que des valeurs
+            // de départ, remplacées ici (sauf Blancs sur blanc et Noirs sur noir, et les cases des pièces de promotion)
+            foreach (KryptonButton bouton in new[] { MontreDonneesUci, InverseEchiquier, BoutonBalises, RetourArriere, BoutonAnalysePartie,
+                         BoutonAnalyseComplete, BoutonSaisiePosition, VisualisationPgn, AnalysePosition, MontreVariantesUci, BoutonGainBlanc,
+                         BoutonGainNoir, BoutonNulle, KryptonQuitter, OrdinateurJoue, MontrePartiesPGN, KryptonApropos, SaisiePartieBouton })
+                ColoreBouton(bouton, Palette.Bouton);
+            foreach (KryptonButton bouton in new[] { BoutonReprendreIci, BoutonFin, BoutonDebut, BoutonSuivant, BoutonPrecedent })
+                ColoreBouton(bouton, Palette.BoutonParcours);
+            foreach (Control zone in new Control[] { groupBilanPartie, VarianteMoteurUci1, VarianteMoteurUci2, VarianteMoteurUci3, InformationsPartie,
+                         CoupsBibliothequeBox, CoupsBibliotheque, ActiveBibliotheque, ActiveSon, ActiveAleatoire, groupBoxTempsReflexion,
+                         LabelTournoi, LabelDetailsTournoi, LabelOuverture })
+            {
+                zone.BackColor = Palette.FondInfo;
+                zone.ForeColor = Palette.Texte;
+            }
+            // Lignes de variantes : la 1re (moteur, coup regardé) et la 3e (meilleure suite) en bleu acier, la 2e (analyse du coup) en
+            // anthracite ; les informations sur la partie et les coups de la bibliothèque en bleu acier
+            VarianteMoteurUci1.ForeColor = VarianteMoteurUci3.ForeColor = InformationsPartie.ForeColor = CoupsBibliotheque.ForeColor = Palette.Accent;
+            InformationPourJoueur.BackColor = GroupPromo.BackColor = Palette.FondAccent;
+            InformationPourJoueur.ForeColor = Palette.Accent;
+            groupParcoursPartie.BackColor = Palette.FondParcours;
+
+            static void ColoreBouton(KryptonButton bouton, Color fond) => Palette.ColoreBouton(bouton, fond);
+        }
         private void EnteteNouvellePartie()
         {   // En-tête PGN d'une nouvelle partie (contre le moteur, entre humains, ou depuis une position) : rien ne doit rester de la
             // partie précédente, en particulier d'une partie PGN chargée (sa date et son ECO se retrouvaient dans la partie suivante).
@@ -573,7 +599,7 @@ namespace BrunoGUI_GenII
         private void AfficheInfoEchec(string infoechec)
         {   // Affiche les informations d'échec ou de pat dans l'étiquette (le pat lui-même est traité par AffichePat)
             InformationsPartie.Text = infoechec;
-            InformationsPartie.ForeColor = Color.DarkGreen;
+            InformationsPartie.ForeColor = Palette.Accent;
         }
 
         private void AffichePat(ColorPiece couleurPat)

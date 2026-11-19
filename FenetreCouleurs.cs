@@ -53,6 +53,7 @@ namespace BrunoGUI_GenII
             AjouteLigne(68, PastillesSombres, () => _sombre, ChoisitSombre);
             AcceptButton = ok;
             CancelButton = annuler;
+            Palette.Applique(this);     // couleurs de l'interface (voir Palette.cs)
         }
 
         private void AjouteLigne(int y, string[] couleurs, Func<Color> actuelle, Action<Color> choisit)

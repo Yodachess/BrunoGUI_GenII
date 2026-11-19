@@ -47,6 +47,7 @@ namespace BrunoGUI_GenII
                 ok, annuler]);
             AcceptButton = ok;
             CancelButton = annuler;
+            Palette.Applique(this);     // couleurs de l'interface (voir Palette.cs)
         }
 
         private static KryptonLabel Libelle(string texte, int y) => new() { Text = texte, Location = new Point(12, y), AutoSize = true };

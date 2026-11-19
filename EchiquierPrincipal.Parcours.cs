@@ -440,11 +440,11 @@ namespace BrunoGUI_GenII
             };
             SendMessage(ligne.Handle, EM_SETRECT, IntPtr.Zero, ref zone);
         }
-        // Meilleure suite (3e ligne) : bleu foncé, pour la distinguer de l'analyse du coup sur la 2e ligne
-        private static readonly Color CouleurSuite = Color.FromArgb(0, 70, 150);
+        // Meilleure suite (3e ligne) : bleu acier, pour la distinguer de l'analyse du coup sur la 2e ligne (anthracite)
+        private static readonly Color CouleurSuite = Palette.Accent;
         // Conseil de la 2e ligne ("— meilleur : …") : gris ardoise, pour le séparer du commentaire (un gris argent clair ne se lisait
         // pas sur le fond de la ligne)
-        private static readonly Color CouleurConseil = Color.FromArgb(95, 105, 120);
+        private static readonly Color CouleurConseil = Palette.TexteSecondaire;
         private void AfficheLigneCentree(RichTextBox ligne, string texte, Color? couleur = null, int? conseilDepuis = null)
         {   // Texte centré en gras, toujours dans la police de la ligne (pas de police réduite) ; couleur : celle de
             // l'annotation du coup regardé (1re ligne), sinon la couleur normale de la ligne ; à partir de conseilDepuis, le
