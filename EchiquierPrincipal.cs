@@ -1269,6 +1269,9 @@ namespace BrunoGUI_GenII
             // Version 1.35 = parties en ligne : coller une partie ou une position (Ctrl+Maj+V), importer ses parties par pseudo
             //                (Lichess, Chess.com) ; zip autonome, .NET inclus ; code ECO et ouverture sous la feuille, disposition
             //                revue ; « Hors bibliothèque chargée », « variante hybride » ; captures de l'aide refaites
+            // Version 1.36 = remarques des testeurs : flèche bleu acier du dernier coup, image de la position par clic droit sur
+            //                l'échiquier (copier ou PNG), Échap et clic droit reposent la pièce prise en main, « Saisie partie » et
+            //                « En-tête PGN » actifs après un chargement PGN ; palette « ardoise et bleu acier » pour toute l'interface
             // (le numéro de version vient du .csproj, <Version> : il n'est plus écrit ici)
             _ = KryptonMessageBox.Show("      BrunoGUI GenII\n       Version " + VersionAffichee + "\n--  Bruno COURTOIS  -- " +
                                                                     "\n Copyright © 2026", T("A propos de"),
