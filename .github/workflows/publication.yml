@@ -64,7 +64,7 @@ jobs:
           # Fichiers de débogage : inutiles dans une archive portable
           Remove-Item "$sortie/*.pdb" -Force -ErrorAction SilentlyContinue
           if (-not (Test-Path "$sortie/BrunoGUI_GenII.exe") -or -not (Test-Path "$sortie/stockfish/stockfish.exe") -or -not (Test-Path "$sortie/Aide/fr/index.html")) { throw "Archive incomplète" }
-          Compress-Archive -Path "$sortie/*" -DestinationPath "BrunoGUI_GenII-${{ github.ref_name }}.zip"
+          Compress-Archive -Path "$sortie/*" -DestinationPath "BrunoGUI_GenII.zip"
 
       - name: PDF de l'aide (français et anglais)
         timeout-minutes: 5
@@ -75,7 +75,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: >
-          gh release create "${{ github.ref_name }}" "BrunoGUI_GenII-${{ github.ref_name }}.zip"
+          gh release create "${{ github.ref_name }}" "BrunoGUI_GenII.zip"
           BrunoGUI_Aide_fr.pdf BrunoGUI_Aide_en.pdf
           --title "BrunoGUI GenII ${{ github.ref_name }}"
           --notes-file .github/notes-publication.md

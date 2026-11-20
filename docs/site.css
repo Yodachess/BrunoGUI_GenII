@@ -1,0 +1,82 @@
+/* Page d'accueil de BrunoGUI (GitHub Pages, dossier docs) : style commun aux pages française et anglaise,
+   couleurs de la palette « ardoise et bleu acier » du programme (Palette.cs) */
+:root {
+    --fond: #f4f6f8;
+    --carte: #ffffff;
+    --texte: #2b3038;
+    --doux: #5f6978;
+    --accent: #1f4e80;
+    --accent-fort: #173d65;
+    --fond-accent: #d4dfec;
+    --cadre: #d6dce4;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --fond: #1b1f25;
+        --carte: #242931;
+        --texte: #e4e7eb;
+        --doux: #a3acb8;
+        --accent: #8db4e0;
+        --accent-fort: #a9c7ea;
+        --fond-accent: #2c3a4c;
+        --cadre: #39404b;
+    }
+}
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    background: var(--fond);
+    color: var(--texte);
+    font: 16px/1.55 "Segoe UI", system-ui, sans-serif;
+}
+.page { max-width: 860px; margin: 0 auto; padding: 0 16px 40px; }
+.langue { text-align: right; padding-top: 12px; font-size: 14px; }
+a { color: var(--accent); }
+header { text-align: center; padding: 20px 0 8px; }
+h1 { font-size: 34px; margin: 0; color: var(--accent); letter-spacing: 0.5px; }
+.sous-titre { font-size: 19px; margin: 6px 0 4px; }
+.precisions { color: var(--doux); font-size: 14px; margin: 0; }
+.telechargement { text-align: center; margin: 22px 0 26px; }
+.bouton {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    font-size: 20px;
+    font-weight: 600;
+    padding: 14px 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+.bouton:hover { background: var(--accent-fort); }
+@media (prefers-color-scheme: dark) { .bouton { color: #10161e; } }
+.taille { display: block; font-size: 14px; font-weight: 400; opacity: 0.85; }
+.liens { margin-top: 12px; font-size: 14px; color: var(--doux); }
+.capture { margin: 0 0 28px; text-align: center; }
+.capture img, .etape img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--cadre);
+    border-radius: 6px;
+}
+section {
+    background: var(--carte);
+    border: 1px solid var(--cadre);
+    border-radius: 8px;
+    padding: 4px 22px 18px;
+    margin-bottom: 22px;
+}
+h2 { font-size: 21px; color: var(--accent); margin: 16px 0 10px; }
+ol, ul { padding-left: 22px; margin: 0; }
+li { margin: 8px 0; }
+.etape img { display: block; width: 340px; margin: 10px 0 4px; }
+.note { color: var(--doux); font-size: 14px; margin: 12px 0 0; }
+.encadre { background: var(--fond-accent); border-radius: 6px; padding: 10px 14px; margin-top: 14px; font-size: 15px; }
+code { font-family: Consolas, monospace; font-size: 15px; }
+footer { text-align: center; color: var(--doux); font-size: 14px; line-height: 1.8; }
+@media (max-width: 520px) {
+    h1 { font-size: 28px; }
+    .sous-titre { font-size: 17px; }
+    .bouton { font-size: 18px; padding: 12px 20px; }
+    section { padding: 2px 14px 14px; }
+}

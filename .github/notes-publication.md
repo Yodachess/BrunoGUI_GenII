@@ -1,6 +1,6 @@
 ### Installation (archive portable)
 
-1. Téléchargez `BrunoGUI_GenII-<version>.zip` (ci-dessous).
+1. Téléchargez `BrunoGUI_GenII.zip` (ci-dessous).
 2. **Avant de décompresser** : clic droit sur le zip > **Propriétés** > cochez **« Débloquer »** > **OK**.
 3. Décompressez, puis lancez `BrunoGUI_GenII.exe`.
 
@@ -16,7 +16,7 @@ L'aide du programme est aussi disponible en PDF, ci-dessous : `BrunoGUI_Aide_fr.
 
 ### Installation (portable archive)
 
-1. Download `BrunoGUI_GenII-<version>.zip` (below).
+1. Download `BrunoGUI_GenII.zip` (below).
 2. **Before extracting**: right-click the zip > **Properties** > tick **“Unblock”** > **OK**.
 3. Extract it, then run `BrunoGUI_GenII.exe`.
 
